@@ -244,3 +244,19 @@ CI 接线：`ci.yml` 目前有其他并行改动未提交（前端覆盖率 jq �
 | `prod-directed` | 21 | RLS 收紧 / 平台语料归一 / 删表收口，前置断言按「与生产同源」状态编写；本库行数、策略数、列可空性与定性时不同故拒绝执行 |
 
 **与归档表的区别（重要）**：归档表 = 永不重放（本库该版本作废）；判读表 = 本库不适用、但目标环境（prod/空库）仍需执行。所以这 29 条不进 `migrations-archive.tsv`，以免被 prod 的迁移流程误跳过。`schema-health.sh` 现在对判读表做减法，输出「其中本库不适用 29 条」与「真实待办 107 条」。
+
+## 15. 发版应用顺序清单（136 条，机器可读）
+
+`scripts/db/release-plan.sh` 生成 `database/migrations-release-plan.tsv`（列 `version/description/stage/gate/note`），
+输入是「pending − 归档表」，输出按 stage 排序；`--check` 只比对不落盘，可用于 CI 防漂移（`ci.yml` 目前有并行未提交改动，待落定后加一步）。
+
+| stage | 条数 | 语义与前置 |
+| --- | --- | --- |
+| `stage1-canonical` | 26 | `*_schema_canonical`：**只在空库初始化时执行**。先以超管跑 `database/scripts/bootstrap_schemas.sql`，再按版本顺序建骨架；已有库重放会撞已有列/主键/FK |
+| `stage2-b-class` | 16 | B 类补列/补约束：目标环境**缺列才执行**。目标已达标时会主动 `RAISE`（"本迁移只补缺失列" 等）——这是预期行为，不是执行失败，别重试 |
+| `stage3-prod-directed` | 21 | RLS 收紧 / 平台语料归一 / 删表收口：执行前逐条核对前置断言里的行数、策略数、列可空性（判读表 `database/migrations-triage.tsv` 的 evidence 列就是本库当初不满足的具体值） |
+| `stage4-replay` | 68 | 常规迁移，按版本号顺序直接执行（本库已试跑通过或无副作用） |
+| `stage5-gated` | 5 | 破坏性清理，**必须**先 `SET app.<gate>=<value>`（清单 gate 列已给出完整变量与值）。执行前确认无依赖对象：本库 `20261120220000 wms.transfers`、`20261121230000 hrm.employees.organization_id` 都因对象依赖被拦下，正是这类风险 |
+
+发版执行顺序建议：备份 → `bootstrap_schemas.sql`（仅新库）→ stage1（仅新库）→ stage2 → stage3（逐条核对）→ stage4 → stage5（开 gate 后逐条、每条单独提交）。
+stage1/stage2/stage3/stage5 的目标环境互斥：新库跑 1/2、存量生产库跑 3/4/5，别在同一库把 1 和 4 混跑。

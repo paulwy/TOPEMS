@@ -1,0 +1,137 @@
+version	description	stage	gate	note
+20261120110000	ai schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120130000	tms schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120140000	master data schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120150000	ticket schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120160000	plugin registry schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120170000	finance schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120180000	portal schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120190000	ehs schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120200000	lims schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120210000	wms schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120230000	qms schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120235900	hrm schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261120235945	unified core schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121090000	scm schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121100000	erp schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121110000	mobile schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121120000	gis schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121130000	pm schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121140000	pdm schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121150000	srm schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121160000	mes schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121170000	crm schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121180000	integration schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121190000	rd schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121200000	analytics schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261121210000	communication schema canonical	stage1-canonical		空库骨架固化：先跑 database/scripts/bootstrap_schemas.sql；已有库勿重放
+20261115141200	b class erp holidays date	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115141300	b class finance voucher template 6cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115141400	b class gis tenant id 4tables	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115141500	b class portal todos 2cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115141600	b class monitor alerts 3cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115141700	b class core file permissions tenant id	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115141800	b class search logs query	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115141900	portal quick actions 11cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115142000	finance core vouchers 26cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115142100	qms quality standards inspections 69cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115142200	erp expenses 15cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115142300	pdm master data refs 13cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115142400	public platform 3tables 25cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261115142500	shell tail 7tables 13cols	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261116180000	report subs exec records tenant id	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261119190000	finance u8 import records create	stage2-b-class		B 类补列/补约束：目标环境缺列才执行；目标已达标时会主动 RAISE 并中止，属预期而非失败
+20261117120000	platform corpus null to nil	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261117180000	unified core rls strict	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261117220000	unified core rls strict prod	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261118090000	allow all residuals strict and deny	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261118103000	residual loose tables rls strict	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261118110000	platform corpus rls strict	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261118112000	gis map layers allow all strict	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261118113000	portal quick actions platform read strict	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261118130000	erp holidays platform corpus	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261118150000	batch0 active residual rls strict	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261118160000	flow shadow copies rename deprecated	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261119000001	iam permission identity guard	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261119130000	rls normalize batch1 drop duplicate legacy	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261119131000	rls normalize batch2 rename legacy	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261119141000	rls intentional policies guard	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261119151000	mobile oa announcement reads tenant rls	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261119210000	rls normalize erp consolidation policy rename	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261120220000	wms drop resurrected dead tables	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261121230000	w5c hrm drop redundant organization id	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261121235930	w5c hrm init status drop organization id	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261123150000	erp orders company scope rls	stage3-prod-directed		按生产同源状态编写的收口脚本：执行前先核对前置断言里的行数/策略数/可空性
+20261117233000	master data schema registry rls	stage4-replay		按版本顺序直接执行
+20261117234000	legacy permissive rls to strict	stage4-replay		按版本顺序直接执行
+20261117235500	engagement rls strict	stage4-replay		按版本顺序直接执行
+20261118093000	bi core tables rls strict	stage4-replay		按版本顺序直接执行
+20261118100000	qms inspection tables rls strict	stage4-replay		按版本顺序直接执行
+20261118111000	system only sessions rls finalize	stage4-replay		按版本顺序直接执行
+20261118120000	dict formula rls strict	stage4-replay		按版本顺序直接执行
+20261118123000	core plugins platform catalog	stage4-replay		按版本顺序直接执行
+20261118124000	iam tenant plugins rls strict	stage4-replay		按版本顺序直接执行
+20261118125000	seed module umbrella permissions	stage4-replay		按版本顺序直接执行
+20261118140000	core tenants self only	stage4-replay		按版本顺序直接执行
+20261119000002	public file monitor rls strict	stage4-replay		按版本顺序直接执行
+20261119010000	iam resource permissions role grants	stage4-replay		按版本顺序直接执行
+20261119120000	erp sales order items	stage4-replay		按版本顺序直接执行
+20261119140000	iam core tenant plugins rls strict forward	stage4-replay		按版本顺序直接执行
+20261119150000	pdm master data refs rls strict forward	stage4-replay		按版本顺序直接执行
+20261119161000	zero path retained tables policy fix	stage4-replay		按版本顺序直接执行
+20261119170000	seed core plugin categories	stage4-replay		按版本顺序直接执行
+20261119190100	finance u8 import records status relax	stage4-replay		按版本顺序直接执行
+20261119220000	iam resource acl read permission	stage4-replay		按版本顺序直接执行
+20261119230000	rls dedupe finance u8 import records policy	stage4-replay		按版本顺序直接执行
+20261119233000	iam legacy permission convergence	stage4-replay		按版本顺序直接执行
+20261120090000	mes column typmod align	stage4-replay		按版本顺序直接执行
+20261120100000	menu crm permission alias fix	stage4-replay		按版本顺序直接执行
+20261120120000	ai drop duplicate chunk document idx	stage4-replay		按版本顺序直接执行
+20261120235930	hrm drop resurrected dead tables	stage4-replay		按版本顺序直接执行
+20261120235950	unified core drop resurrected dead tables	stage4-replay		按版本顺序直接执行
+20261121111000	mobile drop resurrected dead tables	stage4-replay		按版本顺序直接执行
+20261121131000	pm drop resurrected dead tables	stage4-replay		按版本顺序直接执行
+20261121201000	analytics drop resurrected dead tables	stage4-replay		按版本顺序直接执行
+20261121235900	w5c wms audit inbound drop organization id	stage4-replay		按版本顺序直接执行
+20261122090000	core user company scopes is default	stage4-replay		按版本顺序直接执行
+20261122100000	mes production orders quantity finalize bigint	stage4-replay		按版本顺序直接执行
+20261122150000	public approval workflow tenant isolation	stage4-replay		按版本顺序直接执行
+20261122160000	mes erp sync mes order id nullable	stage4-replay		按版本顺序直接执行
+20261123090000	core tenant modules company scope	stage4-replay		按版本顺序直接执行
+20261123110000	monitor settings company scope	stage4-replay		按版本顺序直接执行
+20261123120000	system settings company scope	stage4-replay		按版本顺序直接执行
+20261123130000	hrm contracts status canonical	stage4-replay		按版本顺序直接执行
+20261123140000	erp sales orders company id	stage4-replay		按版本顺序直接执行
+20261123141000	erp purchase orders company id	stage4-replay		按版本顺序直接执行
+20261124110000	finance expenses status default	stage4-replay		按版本顺序直接执行
+20261124120000	audit logs status narrow	stage4-replay		按版本顺序直接执行
+20261124130000	financial reports single status	stage4-replay		按版本顺序直接执行
+20261124140000	crm customer finance risklevel	stage4-replay		按版本顺序直接执行
+20261124150000	hrm init status tenant step unique	stage4-replay		按版本顺序直接执行
+20261124160000	rd project members status standard	stage4-replay		按版本顺序直接执行
+20261124170000	rd formula status standard	stage4-replay		按版本顺序直接执行
+20261124180000	rd change request status standard	stage4-replay		按版本顺序直接执行
+20261124190000	public mdm reconciliation timestamptz	stage4-replay		按版本顺序直接执行
+20261124193000	rd experiment status standard	stage4-replay		按版本顺序直接执行
+20261124200000	finance u8 import records rls fail closed	stage4-replay		按版本顺序直接执行
+20261124230000	rd experiment phase standard	stage4-replay		按版本顺序直接执行
+20261124233000	crm opportunity stage standard	stage4-replay		按版本顺序直接执行
+20261124234500	rd change order status standard	stage4-replay		按版本顺序直接执行
+20261124235500	pm project risk status standard	stage4-replay		按版本顺序直接执行
+20261125001000	core workflow status standard	stage4-replay		按版本顺序直接执行
+20261125002000	ticket status standard	stage4-replay		按版本顺序直接执行
+20261125003000	mobile oa tenant id uuid	stage4-replay		按版本顺序直接执行
+20261125004000	finance expense status standard	stage4-replay		按版本顺序直接执行
+20261125005000	qms corrective action status standard	stage4-replay		按版本顺序直接执行
+20261125006000	qms eightd status standard	stage4-replay		按版本顺序直接执行
+20261125007000	qms audit task status standard	stage4-replay		按版本顺序直接执行
+20261125008000	qms apqp project status standard	stage4-replay		按版本顺序直接执行
+20261125009000	qms apqp item status standard	stage4-replay		按版本顺序直接执行
+20261125010000	qms apqp approval status standard	stage4-replay		按版本顺序直接执行
+20261125011000	mes material requirement status standard	stage4-replay		按版本顺序直接执行
+20261125012000	finance payment record status standard	stage4-replay		按版本顺序直接执行
+20261119100000	drop dead tables batch1	stage5-gated	app.drop_dead_tables_gate=batch-1	破坏性清理：先 SET app.drop_dead_tables_gate=batch-1 再执行，执行前确认无依赖对象
+20261119110000	drop dead tables batch2	stage5-gated	app.drop_dead_tables_gate=batch-2	破坏性清理：先 SET app.drop_dead_tables_gate=batch-2 再执行，执行前确认无依赖对象
+20261119160000	drop zero path legacy tables	stage5-gated	app.drop_zero_path_tables_gate=zero-path-20261119	破坏性清理：先 SET app.drop_zero_path_tables_gate=zero-path-20261119 再执行，执行前确认无依赖对象
+20261119180000	archive legacy schema copies	stage5-gated	app.archive_legacy_copies_gate=legacy-copies-20261119	破坏性清理：先 SET app.archive_legacy_copies_gate=legacy-copies-20261119 再执行，执行前确认无依赖对象
+20261119200000	unblock and archive legacy tenant tables	stage5-gated	app.tenant_unblock_archive_gate=tenant-unblock-20261119	破坏性清理：先 SET app.tenant_unblock_archive_gate=tenant-unblock-20261119 再执行，执行前确认无依赖对象
