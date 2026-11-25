@@ -647,10 +647,58 @@ pub async fn delete_process(
         }
     };
 
+    let current_status = match sqlx::query_scalar::<_, String>(
+        "SELECT status FROM mes.production_processes WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::not_found("生产工序不存在或已删除"),
+        Err(e) => {
+            tracing::error!("读取生产工序状态失败: {}", e);
+            return ApiResponse::server_error("删除生产工序失败");
+        }
+    };
+    if current_status != "inactive" {
+        return ApiResponse::conflict("仅停用状态的生产工序可删除，请先停用");
+    }
+
+    let refs = sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT
+            (SELECT COUNT(*) FROM mes.process_route_steps WHERE process_id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL)
+          + (SELECT COUNT(*) FROM mes.production_records WHERE process_id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL)
+          + (SELECT COUNT(*) FROM mes.production_schedules WHERE process_id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL)
+          + (SELECT COUNT(*) FROM mes.wips WHERE current_process_id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL)
+          + (SELECT COUNT(*) FROM mes.wip_transfers WHERE (from_process_id = $1 OR to_process_id = $1) AND tenant_id = $2::uuid AND deleted_at IS NULL)
+          + (SELECT COUNT(*) FROM mes.production_processes WHERE id <> $1 AND (predecessor_process_id = $1 OR successor_process_id = $1) AND tenant_id = $2::uuid AND deleted_at IS NULL)
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await;
+
+    match refs {
+        Ok(0) => {}
+        Ok(_) => {
+            return ApiResponse::conflict(
+                "生产工序仍被工艺路线、生产记录、排产、在制品、转移记录或前后工序引用，不可删除",
+            );
+        }
+        Err(e) => {
+            tracing::error!("检查生产工序引用失败: {}", e);
+            return ApiResponse::server_error("删除生产工序失败");
+        }
+    }
+
     let result = sqlx::query(
         r#"
         UPDATE mes.production_processes SET deleted_at = NOW()
-        WHERE id = $1 AND tenant_id = $2::uuid AND status IN ('active', 'inactive') AND deleted_at IS NULL
+        WHERE id = $1 AND tenant_id = $2::uuid AND status = 'inactive' AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -674,7 +722,7 @@ pub async fn delete_process(
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "生产工序删除成功")
     } else {
-        ApiResponse::not_found("生产工序不存在")
+        ApiResponse::conflict("生产工序不存在、已删除或状态已变化，请刷新后重试")
     }
 }
 
