@@ -1254,8 +1254,14 @@ pub async fn setup_admin_user(
     // 权威去重仍由 IAM 建号端点负责；预检失败要真正放行，必须用 SAVEPOINT 包住：
     // PostgreSQL 中一条语句失败会把整个事务置为 aborted，后面的查询/写入会全部报错，
     // 仅 `.ok()` 吞掉返回值并不能让事务继续。
+    //
+    // 回绑分支（携带 user_id）：账号已由 IAM 建号端点创建并返回，此处只做账号存在性与
+    // 成员归属校验（见下方 user_id 分支），不再按用户名/邮箱占用拦截——否则合法回绑
+    // 已有账号会被误判 409「用户名已存在」。占用预检仅用于新建号分支（未传 user_id）。
     let email_norm = req.email.as_ref().map(|e| e.trim().to_string());
-    if let Err(e) = sqlx::query("SAVEPOINT iam_users_precheck")
+    let bound_existing_account = req.user_id.is_some();
+    if !bound_existing_account {
+      if let Err(e) = sqlx::query("SAVEPOINT iam_users_precheck")
         .execute(&mut **txn)
         .await
     {
@@ -1344,6 +1350,7 @@ pub async fn setup_admin_user(
                 e
             );
         }
+    }
     }
 
     // P2-2 / P3-1：管理员引用的部门、岗位、IAM 账号必须存在、未删除且属本租户。
