@@ -27,6 +27,14 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
         .unwrap_or(Uuid::nil())
 }
 
+#[derive(sqlx::FromRow)]
+struct WipTransferSource {
+    quantity: BigDecimal,
+    status: Option<String>,
+    current_process_id: Option<Uuid>,
+    current_work_station_id: Option<Uuid>,
+}
+
 use crate::modules::wip_status::WipStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
@@ -823,7 +831,7 @@ pub async fn update_wip(
     .fetch_optional(&mut scope)
     .await;
 
-    if result.is_ok() {
+    if matches!(&result, Ok(Some(_))) {
         if let Err(e) = scope.commit().await {
             tracing::error!("Failed to commit WIP update: {}", e);
             return ApiResponse::server_error("更新WIP失败");
@@ -909,14 +917,20 @@ pub async fn delete_wip(
         }
     };
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE mes.wips SET deleted_at = NOW()
-        WHERE id = $1 AND status = $2 AND deleted_at IS NULL
+        WHERE id = $1 AND status = ANY($2) AND tenant_id = $3::uuid AND deleted_at IS NULL
         "#,
     )
     .bind(id)
-    .bind(WipStatus::Completed.as_db_str())
+    .bind(WipStatus::deletable_from().to_vec())
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
@@ -940,7 +954,7 @@ pub async fn delete_wip(
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "WIP删除成功")
     } else {
-        ApiResponse::not_found("WIP不存在或状态不允许删除")
+        ApiResponse::conflict("WIP不存在、已删除或状态不允许删除")
     }
 }
 
@@ -992,10 +1006,13 @@ pub async fn transfer_wip(
         }
     };
 
-    let wip = sqlx::query!(
-        r#"SELECT quantity, status FROM mes.wips WHERE deleted_at IS NULL AND id = $1"#,
-        req.wip_id
+    let wip = sqlx::query_as::<_, WipTransferSource>(
+        r#"SELECT quantity, status, current_process_id, current_work_station_id
+           FROM mes.wips
+           WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
     )
+    .bind(req.wip_id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -1020,6 +1037,19 @@ pub async fn transfer_wip(
     if !WipStatus::transferable_from().contains(&current_status.as_db_str()) {
         let _ = scope.rollback().await;
         return ApiResponse::conflict("WIP 已完工/已转移，不允许继续转移");
+    }
+
+    if let Some(expected) = req.from_process_id {
+        if wip.current_process_id != Some(expected) {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("来源工序与WIP当前工序不一致");
+        }
+    }
+    if let Some(expected) = req.from_work_station_id {
+        if wip.current_work_station_id != Some(expected) {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("来源工位与WIP当前工位不一致");
+        }
     }
 
     let current_qty = big_decimal_to_f64(Some(wip.quantity));
