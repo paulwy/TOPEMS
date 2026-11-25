@@ -36,6 +36,9 @@ impl EquipmentStatus {
         }
     }
 
+    /// 仅空闲设备可直接删除；运行/保养/故障需先回到空闲，报废设备保留台账。
+    pub const DELETABLE: &'static [&'static str] = &["idle"];
+
     /// 报废为终态，其余四态之间允许运维调整；同态幂等。
     pub fn can_transition_to(self, target: Self) -> bool {
         if self == target {
@@ -72,5 +75,6 @@ mod tests {
         assert!(EquipmentStatus::Fault.can_transition_to(EquipmentStatus::Maintenance));
         assert!(!EquipmentStatus::Scrapped.can_transition_to(EquipmentStatus::Idle));
         assert!(EquipmentStatus::Scrapped.can_transition_to(EquipmentStatus::Scrapped));
+        assert_eq!(EquipmentStatus::DELETABLE, &["idle"]);
     }
 }

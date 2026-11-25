@@ -742,10 +742,13 @@ pub async fn delete_equipment(
         r#"
         UPDATE mes.equipment SET deleted_at = NOW()
         WHERE id = $1 AND tenant_id = $2::uuid
+          AND status = ANY($3)
+          AND deleted_at IS NULL
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(EquipmentStatus::DELETABLE)
     .execute(&mut scope)
     .await;
 
@@ -764,9 +767,9 @@ pub async fn delete_equipment(
     }
 
     if result.rows_affected() > 0 {
-        ApiResponse::success("".to_string(), "设备删除成功")
+        ApiResponse::success(String::new(), "设备删除成功")
     } else {
-        ApiResponse::not_found("设备不存在")
+        ApiResponse::conflict("设备不存在、已删除或非空闲状态；运行/保养/故障设备需先回到空闲")
     }
 }
 
