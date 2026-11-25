@@ -24,8 +24,8 @@
 # ============================================================
 set -uo pipefail
 
-HOST="${PGHOST:-/tmp}"
-USER_="${PGUSER:-xingzhai}"
+HOST="${PGHOST-}"
+USER_="${PGUSER-}"
 DB="topems_prod"
 DRY=0
 
@@ -38,6 +38,11 @@ while [[ $# -gt 0 ]]; do
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
+
+if [[ -z "$HOST" || -z "$USER_" ]]; then
+  echo "拒绝：必须显式指定 --host/--user（或注入 PGHOST/PGUSER），禁止内置本地/生产默认值" >&2
+  exit 2
+fi
 
 if [[ "$DB" == "topems_prod" && "$DRY" != "1" && "${CONFIRM:-0}" != "1" ]]; then
   echo "拒绝：对 topems_prod 正式写入需 CONFIRM=1（先 --dry-run 看行数）" >&2
