@@ -112,3 +112,8 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 | `topems` 角色 | `NOCREATEROLE`；撤销对 `topems_app` 的 `ADMIN OPTION`，改用 `WITH SET TRUE, INHERIT FALSE, ADMIN FALSE` 保留 `SET ROLE` 能力（窗口脚本依赖） | 已执行并验证 `SET ROLE topems_app` 正常 |
 | `topems` 的 `CREATEDB` | **保留**：`scripts/lib/db.sh` 在无 URL 时默认用 `topems` 建库，`scripts/deploy/setup-db.sh` 也走 `CREATE DATABASE` | 后续若要收，先改默认角色并确认部署 DSN |
 | 运行期 CREATE | 不新增门禁：仓库已有 `scripts/ci/check-runtime-ddl.mjs`（基线 10 文件 / ddl=22，只减不增） | 改造顺序见 `docs/database/runtime-ddl-plan.md` |
+
+## 10. 后续补充：`topems_owner` 的库级权限
+
+- 2026-11-25：补 `GRANT CREATE ON DATABASE topems TO topems_owner`。原因是多条迁移以 `CREATE SCHEMA IF NOT EXISTS <schema>` 开头，而 PG 对 `IF NOT EXISTS` 同样校验 `CREATE` 权限，缺权限会让 `apply-pending.sh` 在该文件上直接失败（实测 `20261121220000_finance_opening_balances_move.sql`）。
+- 影响面：owner 可在 `topems` 库新建 schema，但不能建库（`NOCREATEDB` 保持）。若要收紧，正确做法是让迁移不再自带 `CREATE SCHEMA`（schema 由 bootstrap 负责），届时可撤该权限。
