@@ -1653,6 +1653,8 @@ jobs:
     name: Frontend Tests (${{ matrix.name }})
     needs: [changes, frontend-lint, frontend-typecheck, design-system-check]
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    env:
+      TZ: Asia/Shanghai
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
@@ -1705,6 +1707,8 @@ jobs:
     name: Frontend Coverage
     needs: [changes, frontend-lint, frontend-typecheck]
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci == 'true'
+    env:
+      TZ: Asia/Shanghai
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
