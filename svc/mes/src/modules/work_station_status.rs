@@ -48,6 +48,11 @@ impl WorkStationStatus {
     pub fn deactivate_from() -> &'static [&'static str] {
         &["available", "active"]
     }
+
+    /// 激活允许的起始状态：停用态；已激活态允许幂等重放。
+    pub fn activate_from() -> &'static [&'static str] {
+        &["inactive", "active"]
+    }
 }
 
 impl std::fmt::Display for WorkStationStatus {
@@ -73,5 +78,7 @@ mod tests {
         assert_eq!(WorkStationStatus::DEFAULT.as_db_str(), "active");
         assert!(WorkStationStatus::deactivate_from().contains(&"active"));
         assert!(WorkStationStatus::deactivate_from().contains(&"available"));
+        assert!(WorkStationStatus::activate_from().contains(&"inactive"));
+        assert!(!WorkStationStatus::activate_from().contains(&"available"));
     }
 }
