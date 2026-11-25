@@ -352,6 +352,7 @@ impl FinanceService {
              SET status = 'written_off', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2
                AND COALESCE(status, 'pending') IN ('pending', 'confirmed')
+               AND deleted_at IS NULL
              RETURNING id, collection_no, COALESCE(status, 'pending') AS status"
         ))
         .bind(tenant_id)
@@ -359,7 +360,7 @@ impl FinanceService {
         .fetch_optional(&mut scope)
         .await?
         .ok_or_else(|| {
-            TopemsError::ValidationFailed("收款记录不存在或当前状态不可核销".to_string())
+            TopemsError::ValidationFailed("收款记录不存在、已删除或当前状态不可核销".to_string())
         })?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
