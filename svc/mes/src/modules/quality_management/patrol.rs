@@ -534,6 +534,28 @@ pub async fn update_patrol(
             None => return ApiResponse::bad_request("无效的巡检状态"),
         },
     };
+    let current = match sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM mes.quality_patrols WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
+    )
+    .bind(uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(v)) => v.unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string()),
+        Ok(None) => return ApiResponse::not_found("巡检记录不存在"),
+        Err(e) => {
+            tracing::error!("读取巡检状态失败: {}", e);
+            return ApiResponse::server_error("读取巡检状态失败");
+        }
+    };
+    let Some(current_status) = QualityPatrolStatus::from_db_str(&current) else {
+        return ApiResponse::conflict("巡检状态不在规范集合内");
+    };
+    if let Err(msg) = current_status.can_update_from(status) {
+        return ApiResponse::conflict(msg);
+    }
+
     let result = sqlx::query_as::<_, PatrolUpdateRow>(
         r#"
         UPDATE mes.quality_patrols
@@ -549,6 +571,7 @@ pub async fn update_patrol(
             memo = COALESCE($9, memo),
             updated_at = NOW()
         WHERE id = $10 AND tenant_id = $11::uuid
+          AND status IS NOT DISTINCT FROM $12 AND deleted_at IS NULL
         RETURNING
             id, patrol_no, production_line, workstation_id,
             workstation_name, inspector, patrol_time,
@@ -567,6 +590,7 @@ pub async fn update_patrol(
     .bind(body.memo)
     .bind(uuid)
     .bind(tenant_id)
+    .bind(Some(current))
     .fetch_one(&mut scope)
     .await;
 
@@ -591,7 +615,7 @@ pub async fn update_patrol(
             },
             "更新巡检记录成功",
         ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("巡检记录不存在"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("巡检状态已变化，请重试"),
         Err(e) => {
             tracing::error!("Failed to update quality patrol: {}", e);
             ApiResponse::server_error("更新巡检记录失败")
@@ -632,15 +656,19 @@ pub async fn delete_patrol(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE mes.quality_patrols SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.quality_patrols SET deleted_at = NOW()
+        WHERE id = $1 AND tenant_id = $2::uuid
+          AND status = ANY($3) AND deleted_at IS NULL
         "#,
     )
     .bind(uuid)
     .bind(tenant_id)
+    .bind(QualityPatrolStatus::DELETABLE.as_slice())
     .execute(&mut scope)
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::conflict("巡检记录不存在、已删除或已开始"),
         Ok(_) => ApiResponse::success(id, "删除巡检记录成功"),
         Err(e) => {
             tracing::error!("Failed to delete quality patrol: {}", e);
@@ -812,6 +840,25 @@ pub async fn add_patrol_item(
     };
     let tenant_id = get_tenant_id(&claims);
 
+    let parent_status = match sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM mes.quality_patrols WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
+    )
+    .bind(patrol_uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(v)) => v.unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string()),
+        Ok(None) => return ApiResponse::not_found("巡检记录不存在"),
+        Err(e) => {
+            tracing::error!("读取巡检状态失败: {}", e);
+            return ApiResponse::server_error("读取巡检状态失败");
+        }
+    };
+    if QualityPatrolStatus::from_db_str(&parent_status) == Some(QualityPatrolStatus::Completed) {
+        return ApiResponse::conflict("所属巡检已完成，不可新增巡检项目");
+    }
+
     let result = sqlx::query!(
         r#"
         INSERT INTO mes.quality_patrol_items (
@@ -932,6 +979,38 @@ pub async fn update_patrol_item(
             None => return ApiResponse::bad_request("无效的巡检项目状态"),
         },
     };
+    let (current, parent_status) = match sqlx::query_as::<_, (Option<String>, Option<String>)>(
+        "SELECT i.status, p.status FROM mes.quality_patrol_items i \
+         JOIN mes.quality_patrols p ON p.id = i.patrol_id AND p.tenant_id = i.tenant_id \
+         WHERE i.id = $1 AND i.tenant_id = $2::uuid \
+           AND i.deleted_at IS NULL AND p.deleted_at IS NULL",
+    )
+    .bind(uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::not_found("巡检项目不存在"),
+        Err(e) => {
+            tracing::error!("读取巡检项目状态失败: {}", e);
+            return ApiResponse::server_error("读取巡检项目状态失败");
+        }
+    };
+    let parent =
+        parent_status.unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string());
+    if QualityPatrolStatus::from_db_str(&parent) == Some(QualityPatrolStatus::Completed) {
+        return ApiResponse::conflict("所属巡检已完成，不可再编辑巡检项目");
+    }
+    let current =
+        current.unwrap_or_else(|| QualityPatrolItemStatus::DEFAULT.as_db_str().to_string());
+    let Some(current_status) = QualityPatrolItemStatus::from_db_str(&current) else {
+        return ApiResponse::conflict("巡检项目状态不在规范集合内");
+    };
+    if let Err(msg) = current_status.can_update_from(status) {
+        return ApiResponse::conflict(msg);
+    }
+
     let result = sqlx::query_as::<_, PatrolItemUpdateRow>(
         r#"
         UPDATE mes.quality_patrol_items
@@ -942,6 +1021,7 @@ pub async fn update_patrol_item(
             status = COALESCE($4, status),
             remark = COALESCE($5, remark)
         WHERE id = $6 AND tenant_id = $7::uuid
+          AND status IS NOT DISTINCT FROM $8 AND deleted_at IS NULL
         RETURNING id, patrol_id, item_name, standard, actual_value, status, remark
         "#,
     )
@@ -952,6 +1032,7 @@ pub async fn update_patrol_item(
     .bind(body.remark)
     .bind(uuid)
     .bind(tenant_id)
+    .bind(Some(current))
     .fetch_one(&mut scope)
     .await;
 
@@ -970,7 +1051,7 @@ pub async fn update_patrol_item(
             },
             "更新巡检项目成功",
         ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("巡检项目不存在"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("巡检项目状态已变化，请重试"),
         Err(e) => {
             tracing::error!("Failed to update patrol item: {}", e);
             ApiResponse::server_error("更新巡检项目失败")
@@ -1009,17 +1090,50 @@ pub async fn delete_patrol_item(
     };
 
     let tenant_id = get_tenant_id(&claims);
+    let (current, parent_status) = match sqlx::query_as::<_, (Option<String>, Option<String>)>(
+        "SELECT i.status, p.status FROM mes.quality_patrol_items i \
+         JOIN mes.quality_patrols p ON p.id = i.patrol_id AND p.tenant_id = i.tenant_id \
+         WHERE i.id = $1 AND i.tenant_id = $2::uuid \
+           AND i.deleted_at IS NULL AND p.deleted_at IS NULL",
+    )
+    .bind(uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::conflict("巡检项目不存在或已删除"),
+        Err(e) => {
+            tracing::error!("读取巡检项目状态失败: {}", e);
+            return ApiResponse::server_error("读取巡检项目状态失败");
+        }
+    };
+    let parent =
+        parent_status.unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string());
+    if QualityPatrolStatus::from_db_str(&parent) == Some(QualityPatrolStatus::Completed) {
+        return ApiResponse::conflict("所属巡检已完成，不可删除巡检项目");
+    }
+    let current =
+        current.unwrap_or_else(|| QualityPatrolItemStatus::DEFAULT.as_db_str().to_string());
+    if QualityPatrolItemStatus::from_db_str(&current) != Some(QualityPatrolItemStatus::Pending) {
+        return ApiResponse::conflict("巡检项目已判定或状态异常，不可删除");
+    }
+
     let result = sqlx::query(
         r#"
-        UPDATE mes.quality_patrol_items SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.quality_patrol_items SET deleted_at = NOW()
+        WHERE id = $1 AND tenant_id = $2::uuid
+          AND status = ANY($3) AND deleted_at IS NULL
         "#,
     )
     .bind(uuid)
     .bind(tenant_id)
+    .bind(QualityPatrolItemStatus::DELETABLE.as_slice())
     .execute(&mut scope)
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::conflict("巡检项目不存在、已删除或已判定"),
         Ok(_) => ApiResponse::success(id, "删除巡检项目成功"),
         Err(e) => {
             tracing::error!("Failed to delete patrol item: {}", e);
