@@ -2347,6 +2347,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Install Linux Tauri dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            libssl-dev \
+            patchelf \
+            pkg-config \
+            build-essential
+
       - name: Build shared API client (desktop type resolution prerequisite)
         run: pnpm --filter @topems/api-client build
 
