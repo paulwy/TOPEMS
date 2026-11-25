@@ -5656,21 +5656,212 @@ pub async fn get_account_tree(
     }
 }
 
+fn normalize_account_status(raw: &str) -> Option<&'static str> {
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "active" => Some("active"),
+        "inactive" => Some("inactive"),
+        "archived" => Some("archived"),
+        _ => None,
+    }
+}
+
+/// archived 为终态；active ↔ inactive 可互调，二者均可归档。
+fn account_transition_allowed(from: &str, to: &str) -> bool {
+    from == to
+        || (from == "active" && matches!(to, "inactive" | "archived"))
+        || (from == "inactive" && matches!(to, "active" | "archived"))
+}
+
 pub async fn update_account(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Path(_account_id): Path<Uuid>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    Path(account_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> ApiResponse<serde_json::Value> {
-    ApiResponse::success(req, "更新成功")
+) -> ApiResponse<Account> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    let current = sqlx::query_as::<_, (Option<String>, bool)>(only_own_schema_query!(
+        "finance",
+        "SELECT status, is_enabled FROM finance.core_finance_accounts \
+         WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
+    ))
+    .bind(account_id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current = match current {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::not_found("会计科目不存在"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let current_raw = current.0.unwrap_or_else(|| "active".to_string());
+    let Some(current_status) = normalize_account_status(&current_raw) else {
+        return ApiResponse::conflict("会计科目状态不在规范集合内");
+    };
+
+    let target_status = match req.get("status").and_then(|v| v.as_str()) {
+        None => current_status,
+        Some(raw) => match normalize_account_status(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("status 仅支持 active / inactive / archived"),
+        },
+    };
+
+    if current_status == "archived" {
+        return ApiResponse::conflict("会计科目已归档，不可再编辑");
+    }
+    if !account_transition_allowed(current_status, target_status) {
+        return ApiResponse::conflict("会计科目状态流转不合法");
+    }
+
+    let requested_enabled = req.get("is_enabled").and_then(|v| v.as_bool());
+    if target_status == "active" && requested_enabled == Some(false) {
+        return ApiResponse::bad_request(
+            "启用状态请通过 status=inactive 停用，不能 active + is_enabled=false",
+        );
+    }
+    if target_status != "active" && requested_enabled == Some(true) {
+        return ApiResponse::bad_request("停用/归档科目不能设置 is_enabled=true");
+    }
+    let effective_enabled = if target_status != current_status {
+        Some(target_status == "active")
+    } else {
+        requested_enabled
+    };
+
+    let name = req
+        .get("name")
+        .and_then(|v| v.as_str())
+        .map(str::trim)
+        .filter(|v| !v.is_empty());
+    let name_en = req.get("name_en").and_then(|v| v.as_str());
+    let description = req.get("description").and_then(|v| v.as_str());
+
+    let result = sqlx::query_as::<_, Account>(only_own_schema_query!(
+        "finance",
+        "UPDATE finance.core_finance_accounts \
+         SET name = COALESCE($2, name), \
+             name_en = COALESCE($3, name_en), \
+             description = COALESCE($4, description), \
+             is_enabled = COALESCE($5, is_enabled), \
+             status = COALESCE($6, status), \
+             updated_at = NOW() \
+         WHERE id = $1 AND tenant_id = $7::uuid AND deleted_at IS NULL \
+           AND status IS NOT DISTINCT FROM $8 \
+         RETURNING id, tenant_id, code, name, parent_id, account_type, level, currency, \
+                   is_enabled, description, name_en, full_name, balance_direction, type, \
+                   parent_code, haschildren, is_cash_flow, enable_quantity, unit, \
+                   enable_foreign_currency, default_currency, is_detail, status, \
+                   created_by, updated_by, created_at, updated_at"
+    ))
+    .bind(account_id)
+    .bind(name)
+    .bind(name_en)
+    .bind(description)
+    .bind(effective_enabled)
+    .bind(Some(target_status))
+    .bind(tenant_id)
+    .bind(Some(current_raw))
+    .fetch_optional(&mut scope)
+    .await;
+
+    match result {
+        Ok(Some(account)) => ApiResponse::success(account, "更新成功"),
+        Ok(None) => ApiResponse::conflict("会计科目状态已变化，请刷新后重试"),
+        Err(e) => crate::shared::err_resp(e),
+    }
 }
 
 pub async fn delete_account(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Path(_account_id): Path<Uuid>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    Path(account_id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    ApiResponse::success("".to_string(), "删除成功")
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    let current = sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
+        "finance",
+        "SELECT status FROM finance.core_finance_accounts \
+         WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
+    ))
+    .bind(account_id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current = match current {
+        Ok(Some(v)) => v.unwrap_or_else(|| "active".to_string()),
+        Ok(None) => return ApiResponse::not_found("会计科目不存在"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let Some(current_status) = normalize_account_status(&current) else {
+        return ApiResponse::conflict("会计科目状态不在规范集合内");
+    };
+    if current_status == "active" {
+        return ApiResponse::conflict("启用中的会计科目不可删除，请先停用或归档");
+    }
+
+    let deps = sqlx::query_as::<_, (i64, i64, i64, i64)>(only_own_schema_query!(
+        "finance",
+        "SELECT \
+           (SELECT COUNT(*) FROM finance.core_finance_accounts \
+              WHERE parent_id = $1 AND deleted_at IS NULL), \
+           (SELECT COUNT(*) FROM finance.core_finance_voucher_lines WHERE account_id = $1), \
+           (SELECT COUNT(*) FROM finance.core_finance_ledger WHERE account_id = $1), \
+           (SELECT COUNT(*) FROM finance.core_finance_aux_balances WHERE account_id = $1)"
+    ))
+    .bind(account_id)
+    .fetch_one(&mut scope)
+    .await;
+    let (children, voucher_lines, ledger_rows, aux_rows) = match deps {
+        Ok(v) => v,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    if children + voucher_lines + ledger_rows + aux_rows > 0 {
+        return ApiResponse::conflict(
+            "会计科目仍被下级科目、凭证分录、总账或辅助核算余额引用，不可删除",
+        );
+    }
+
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE finance.core_finance_accounts \
+         SET deleted_at = NOW(), updated_at = NOW() \
+         WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL AND status = $3"
+    ))
+    .bind(account_id)
+    .bind(tenant_id)
+    .bind(current_status)
+    .execute(&mut scope)
+    .await;
+    match result {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("会计科目状态已变化，请刷新后重试")
+        }
+        Ok(_) => ApiResponse::success(String::new(), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
+    }
 }
 
 pub async fn batch_create_account_children(
@@ -7808,4 +7999,28 @@ pub fn create_routes() -> Router<AppState> {
         .merge(approval_routes)
         .merge(ar_ap_routes)
     // V41.0 Phase 9: 应收/应付账款 CRUD 已由 operational 模块提供，此处仅保留额外接口
+}
+
+#[cfg(test)]
+mod account_lifecycle_tests {
+    use super::*;
+
+    #[test]
+    fn account_status_set_is_strict() {
+        assert_eq!(normalize_account_status(" ACTIVE "), Some("active"));
+        assert_eq!(normalize_account_status("inactive"), Some("inactive"));
+        assert_eq!(normalize_account_status("archived"), Some("archived"));
+        assert_eq!(normalize_account_status("pending"), None);
+    }
+
+    #[test]
+    fn account_transitions_keep_archive_terminal() {
+        assert!(account_transition_allowed("active", "inactive"));
+        assert!(account_transition_allowed("inactive", "active"));
+        assert!(account_transition_allowed("active", "archived"));
+        assert!(account_transition_allowed("inactive", "archived"));
+        assert!(account_transition_allowed("archived", "archived"));
+        assert!(!account_transition_allowed("archived", "active"));
+        assert!(!account_transition_allowed("archived", "inactive"));
+    }
 }
