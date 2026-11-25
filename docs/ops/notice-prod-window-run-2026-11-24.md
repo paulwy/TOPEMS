@@ -62,9 +62,25 @@ bash scripts/migration/prod-window-20261124.sh verify
 
 ## 6. 换入与回归（迁移 3 段全部成功后）
 
+0. 换件前先跑只读体检闸，**FAIL 就不许换件**：
+
+```bash
+bash scripts/ops/post-window-probe-20261124.sh --host /tmp --user xingzhai --db topems_prod
+```
+
 1. 换前复核 `shasum -a 256 target/release/topems-server` = `fe23cda1…`，`bin/topems-server.bak-20261124-1325` 仍在。
 2. `bootout` + `bootstrap` 后确认 `pid` 变化、`health=200`。
-3. 五项回归，其中 core 项必须是 `/api/plugin/navigation-config` **body `success:true`**（旧件的 `success:false` 是缺列的旧形态，不能拿它当通过）。
+3. 五项回归跑脚本（内置二进制指纹、两个 health、导航 `success:true`、`runtime/list`、上传目录可写、日志尾部错误签名）：
+
+```bash
+bash scripts/ops/post-swap-regression-20261124.sh \
+  --base http://127.0.0.1:8099 \
+  --bin target/release/topems-server \
+  --uploads-dir /Users/xingzhai/uploads \
+  --log /Users/xingzhai/Library/Logs/topems/server.err.log
+```
+
+   模块读写脚本不能代替：`TOKEN=...` 加 `--authed-path "/api/core/users?page=1&page_size=5"` 验登录态读，写操作人工点一次。
 4. 任一回归失败：立即换回 `bin/topems-server.bak-20261124-1325`（`676287d3…`），把 500 响应体 + ERROR 日志贴回，不要自行改 schema。
 
 ## 7. 回执要带的东西

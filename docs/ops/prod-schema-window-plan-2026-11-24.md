@@ -211,6 +211,14 @@ psql -h /tmp -U xingzhai -d topems_prod -c "select version,success from _sqlx_mi
 
 - 复活死表类：若 `RAISE EXCEPTION` 报「仍有 N 行」，**停手**，把该表进 `archive` 后再决定，不要强行 DROP。
 
+**phase3 之后、换件之前，跑一次体检闸（只读，不通过就不许换件）**：
+
+```bash
+bash scripts/ops/post-window-probe-20261124.sh --host /tmp --user xingzhai --db topems_prod
+```
+
+它逐条断言：账本 `max(version)=20261124160000`、`failed=0`、`is_default` 列与部分唯一索引在位且每用户恰 1 条默认公司、归档清单 338 张表都能在 `archive` 找到、表/策略/菜单码阈值不塌。任一条 FAIL 即 `exit 1`。
+
 ## 7. 回滚
 
 
@@ -221,21 +229,23 @@ psql -h /tmp -U xingzhai -d topems_prod -c "select version,success from _sqlx_mi
 ## 8. 换入与回归（迁移全部成功后）
 
 
-1. `sha256sum target/release/topems-server` 应为 `fe23cda1…`（`642ca90db` 的产物）；旧件另存。
+1. `shasum -a 256 target/release/topems-server` 应为 `fe23cda1…`（`642ca90db` 的产物）；旧件另存。
 
 2. bootout + bootstrap（**必须**，`kickstart -k` 不重读环境变量），确认 pid/state/cwd。
 
-3. 五项回归：
+3. 五项回归，直接跑脚本（只发 GET，只有 `--uploads-dir` 会建一个临时文件并立即删除）：
 
-- `GET /api/plugin/navigation-config` → 200 且 body `success:true`（本次失败的正是这条，此前是 200 + `success:false`）；
+```bash
+bash scripts/ops/post-swap-regression-20261124.sh \
+  --base http://127.0.0.1:8099 \
+  --bin target/release/topems-server \
+  --uploads-dir /Users/xingzhai/uploads \
+  --log /Users/xingzhai/Library/Logs/topems/server.err.log
+```
 
-- 90 秒内不再出现 `RLS context missing`、`column "is_default" does not exist`、`current transaction is aborted`；
+脚本逐条判定：二进制指纹前缀 `fe23cda1`；`/health` 与 `/api/core/health` 200；`/api/plugin/navigation-config` 200 **且 body `success:true`**（`success:false` 明确判 FAIL，不当通过）；`/api/plugin/runtime/list` 200；上传目录可写；日志尾部不再出现 `is_default` / `RLS context missing` / `current transaction is aborted`。任一条 FAIL 即提示换回 `bin/topems-server.bak-20261124-1325`。
 
-- `GET /api/plugin/runtime/plugins` 正常；
-
-- 2–3 个普通模块读写正常；
-
-- 上传落盘 `/Users/xingzhai/uploads/<user>/<file>`。
+4. 「2–3 个普通模块读写正常」脚本不能代替：给它 `TOKEN=...` 和 `--authed-path "/api/core/users?page=1&page_size=5"`（可给多条）验证登录态读；写操作仍需人工按业务点一次。
 
 1. 回归通过后回报：账本 max、对象数、五项结果、pid、产物 sha256。
 

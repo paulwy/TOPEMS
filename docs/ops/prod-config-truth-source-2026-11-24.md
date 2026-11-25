@@ -75,7 +75,7 @@
 
 **并发安全性**：两层可能同时 scope（auth_middleware + tenant_middleware），已验证 tokio task-local 可嵌套、内层覆盖、退出后恢复外层（回归测试 `rls_task_local_tests::scope_request_tenant_nests_and_restores`，通过）。
 
-**回归口径（重建二进制后）**：`GET /api/plugin/navigation-config` 返回 200 且 body `success:true`（此前是 200 + `success:false`，HTTP 状态掩盖了业务失败）；启动期与轮询期不再出现 `Failed to open read scope: ... RLS context missing`；`/api/plugin/runtime/plugins` 同样正常。
+**回归口径（重建二进制后）**：`GET /api/plugin/navigation-config` 返回 200 且 body `success:true`（此前是 200 + `success:false`，HTTP 状态掩盖了业务失败）；启动期与轮询期不再出现 `Failed to open read scope: ... RLS context missing`；`/api/plugin/runtime/list` 同样正常。
 
 **注意**：生产机纠正了一点——navigation-config 的 HTTP 状态是 200（错误在 JSON body），此前 1103 条 200、仅重启窗口 2 条 502。因此不能拿 HTTP 状态做判据，必须看 `success` 字段。
 

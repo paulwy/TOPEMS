@@ -61,7 +61,7 @@ RLS 修复是代码级：`git pull` 到 `fdf280ae2` 之后**必须重建二进�
 
 1. `GET /api/plugin/navigation-config` → 200 且 body `success:true`（不能只看 HTTP 状态）；
 2. 启动期与 10 秒轮询期不再出现 `Failed to open read scope: … RLS context missing`；
-3. `GET /api/plugin/runtime/plugins` 正常；
+3. `GET /api/plugin/runtime/list` 正常；
 4. 2–3 个普通业务模块读写正常（验证 tenant 中间件新链路未改变原有行为）；
 5. 上传落盘在 `/Users/xingzhai/uploads/<user>/<file>`。
 
