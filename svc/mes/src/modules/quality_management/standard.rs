@@ -14,6 +14,7 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
 use super::big_decimal_to_f64;
+use super::standard_status::{normalize_quality_standard_status, QUALITY_STANDARD_STATUSES};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListStandardsQuery {
@@ -451,6 +452,19 @@ pub async fn create_standard(
         return e;
     }
 
+    let status = match body.status.as_deref() {
+        Some(raw) => match normalize_quality_standard_status(raw) {
+            Some(v) => v,
+            None => {
+                return ApiResponse::bad_request(&format!(
+                    "非法质量标准状态：{raw}，允许 {}",
+                    QUALITY_STANDARD_STATUSES.join("/")
+                ))
+            }
+        },
+        None => "active",
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -498,7 +512,7 @@ pub async fn create_standard(
         body.product_code,
         body.product_name,
         body.inspection_type,
-        body.status.unwrap_or_else(|| "active".to_string()),
+        status,
         body.version,
         effective_date,
         body.description,
@@ -633,6 +647,18 @@ pub async fn update_standard(
         }
     };
     let tenant_id = get_tenant_id(&claims);
+    let target_status = match body.status.as_deref() {
+        Some(raw) => match normalize_quality_standard_status(raw) {
+            Some(v) => Some(v),
+            None => {
+                return ApiResponse::bad_request(&format!(
+                    "非法质量标准状态：{raw}，允许 {}",
+                    QUALITY_STANDARD_STATUSES.join("/")
+                ))
+            }
+        },
+        None => None,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -647,6 +673,33 @@ pub async fn update_standard(
             return ApiResponse::server_error("更新质量标准失败");
         }
     };
+
+    let current = match sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM mes.quality_standards WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
+    )
+    .bind(uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut tx)
+    .await
+    {
+        Ok(Some(v)) => v,
+        Ok(None) => {
+            let _ = tx.rollback().await;
+            return ApiResponse::not_found("质量标准不存在");
+        }
+        Err(e) => {
+            tracing::error!("Failed to read quality standard status: {}", e);
+            let _ = tx.rollback().await;
+            return ApiResponse::server_error("更新质量标准失败");
+        }
+    };
+    if current
+        .as_deref()
+        .is_some_and(|value| value.eq_ignore_ascii_case("archived"))
+    {
+        let _ = tx.rollback().await;
+        return ApiResponse::conflict("已归档的质量标准不可编辑");
+    }
 
     let standard_result = sqlx::query_as::<_, StandardUpdateRow>(
         r#"
@@ -663,6 +716,7 @@ pub async fn update_standard(
             description = COALESCE($9, description),
             updated_at = NOW()
         WHERE id = $10 AND tenant_id = $11::uuid
+          AND status IS NOT DISTINCT FROM $12 AND deleted_at IS NULL
         RETURNING
             id, code, name, product_code, product_name,
             inspection_type, status, version,
@@ -675,12 +729,13 @@ pub async fn update_standard(
     .bind(body.product_code)
     .bind(body.product_name)
     .bind(body.inspection_type)
-    .bind(body.status)
+    .bind(target_status)
     .bind(body.version)
     .bind(body.effective_date)
     .bind(body.description)
     .bind(uuid)
     .bind(tenant_id)
+    .bind(current)
     .fetch_one(&mut tx)
     .await;
 
@@ -857,7 +912,8 @@ pub async fn delete_standard(
 
     let result = sqlx::query(
         r#"
-        UPDATE mes.quality_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.quality_standards SET deleted_at = NOW()
+        WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
         "#,
     )
     .bind(uuid)
@@ -866,6 +922,10 @@ pub async fn delete_standard(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("质量标准不存在或已删除")
+        }
         Ok(_) => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交质量标准事务失败: {}", e);

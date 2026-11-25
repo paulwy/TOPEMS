@@ -17,6 +17,7 @@ mod patrol;
 pub mod patrol_item_status;
 pub mod patrol_status;
 mod standard;
+mod standard_status;
 
 pub use inspection::*;
 pub use patrol::*;
