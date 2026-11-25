@@ -4221,7 +4221,11 @@ pub async fn write_off_collection_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let collection_id_str = req
         .get("collection_id")
         .and_then(|v| v.as_str())
@@ -4264,7 +4268,11 @@ pub async fn batch_write_off_collections_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let items = req
         .get("items")
         .and_then(|v| v.as_array())
@@ -4403,7 +4411,11 @@ pub async fn approve_payment_record_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .update_payment_record(
             tenant_id,
@@ -4433,7 +4445,11 @@ pub async fn reject_payment_record_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .update_payment_record(
             tenant_id,
@@ -4465,7 +4481,11 @@ async fn update_payment_record_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .update_payment_record(tenant_id, payment_id, req, txn)
         .await
@@ -4491,7 +4511,11 @@ async fn delete_payment_record_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .delete_payment_record(tenant_id, payment_id, txn)
         .await
@@ -4517,7 +4541,11 @@ pub async fn write_off_payment_record_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let payment_id_str = req.get("payment_id").and_then(|v| v.as_str()).unwrap_or("");
     let payable_id_str = req.get("payable_id").and_then(|v| v.as_str()).unwrap_or("");
     let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
@@ -4567,7 +4595,11 @@ pub async fn batch_write_off_payments_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let items = req
         .get("items")
         .and_then(|v| v.as_array())
