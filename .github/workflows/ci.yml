@@ -2318,9 +2318,11 @@ jobs:
     name: Desktop Build (${{ matrix.os }})
     needs: changes
     if: needs.changes.outputs.desktop == 'true'
-    # 本 job 未安装 sccache，必须清空全局 RUSTC_WRAPPER
+    # 本 job 未安装 sccache，必须清空全局 RUSTC_WRAPPER；
+    # rustix 0.37（经 keyring→secret-service→zbus 3 引入）与最新 nightly 不兼容，固定 1.85。
     env:
       RUSTC_WRAPPER: ''
+      RUSTUP_TOOLCHAIN: '1.85.0'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -2341,6 +2343,7 @@ jobs:
 
       - uses: ./.github/actions/setup-rust
         with:
+          toolchain: '1.85.0'
           enable-sccache: 'false'
           enable-cache: 'false'
 
