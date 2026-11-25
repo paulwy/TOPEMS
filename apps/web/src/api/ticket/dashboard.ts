@@ -116,7 +116,7 @@ export const dashboardApi = {
   },
 
   exportTickets: async (params?: TicketQuery & { format?: 'csv' | 'xlsx' }) => {
-    return apiClient.ticket.post<{ data: { url: string } }>('/tickets/export', { params });
+    return apiClient.ticket.post<{ url: string }>('/tickets/export', { params });
   },
 };
 
