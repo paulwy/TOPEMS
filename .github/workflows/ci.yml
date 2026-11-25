@@ -1803,7 +1803,7 @@ jobs:
           echo "| Directory | Statements | Branches | Functions | Lines |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|------------|----------|-----------|-------|" >> $GITHUB_STEP_SUMMARY
           for DIR in components pages api hooks utils lib store; do
-            DIR_DATA=$(echo "$COVERAGE_JSON" | jq -r "to_entries | map(select(.key | contains(\"/src/$DIR/\"))) | {s: (map(.value.statements.pct) | add / length), b: (map(.value.branches.pct) | add / length), f: (map(.value.functions.pct) | add / length), l: (map(.value.lines.pct) | add / length)}")
+            DIR_DATA=$(echo "$COVERAGE_JSON" | jq -r "to_entries | map(select(.key | contains(\"/src/$DIR/\"))) | if length == 0 then {s:0,b:0,f:0,l:0} else {s: (map(.value.statements.pct) | add / length), b: (map(.value.branches.pct) | add / length), f: (map(.value.functions.pct) | add / length), l: (map(.value.lines.pct) | add / length)} end")
             S=$(echo "$DIR_DATA" | jq -r '.s' | awk '{printf "%.1f", $1}')
             B=$(echo "$DIR_DATA" | jq -r '.b' | awk '{printf "%.1f", $1}')
             F=$(echo "$DIR_DATA" | jq -r '.f' | awk '{printf "%.1f", $1}')
