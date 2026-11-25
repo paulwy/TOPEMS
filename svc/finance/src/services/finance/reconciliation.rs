@@ -104,13 +104,16 @@ impl ReconciliationService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.read_scope(txn).await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(
-            only_own_schema_query!("finance", "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND (tenant_id = $2::uuid)"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND (tenant_id = $2::uuid)"),
         )
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&mut scope)
+        .fetch_optional(&mut scope)
         .await
-        .map_err(|e| TopemsError::Database(e.to_string()))?;
+        .map_err(|e| TopemsError::Database(e.to_string()))?
+        .ok_or_else(|| {
+            TopemsError::DatabaseRecordNotFound(format!("对账会话不存在: {session_id}"))
+        })?;
 
         Ok(session)
     }
@@ -192,10 +195,11 @@ impl ReconciliationService {
     ) -> Result<i32, TopemsError> {
         let session = self.get_session(tenant_id, req.session_id, txn).await?;
 
-        if session.status == ReconciliationStatus::Completed {
-            return Err(TopemsError::Validation(
-                "Cannot import items to a completed session".to_string(),
-            ));
+        if session.status.is_terminal() {
+            return Err(TopemsError::Validation(format!(
+                "对账会话 {} 已处于终态 {}，不能继续导入明细",
+                session.session_no, session.status
+            )));
         }
 
         let mut imported = 0;
@@ -248,10 +252,11 @@ impl ReconciliationService {
     ) -> Result<MatchResult, TopemsError> {
         let session = self.get_session(tenant_id, session_id, txn).await?;
 
-        if session.status == ReconciliationStatus::Completed {
-            return Err(TopemsError::Validation(
-                "Cannot match a completed session".to_string(),
-            ));
+        if session.status.is_terminal() {
+            return Err(TopemsError::Validation(format!(
+                "对账会话 {} 已处于终态 {}，不能继续自动匹配",
+                session.session_no, session.status
+            )));
         }
 
         self.set_session_status(tenant_id, session_id, ReconciliationStatus::Processing, txn)
@@ -623,21 +628,35 @@ impl ReconciliationService {
         session_id: Uuid,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ReconciliationSession, TopemsError> {
+        let current = self.get_session(tenant_id, session_id, txn).await?;
+        if current.status == ReconciliationStatus::Completed {
+            return Ok(current);
+        }
+        if let Err(message) = current
+            .status
+            .can_transition_to(&ReconciliationStatus::Completed)
+        {
+            return Err(TopemsError::Validation(message));
+        }
+
         let mut scope = self.write_scope(txn).await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(only_own_schema_query!(
             "finance",
             r#"
             UPDATE finance.core_finance_reconciliation_sessions
-            SET status = 'completed', completed_at = NOW(), updated_at = NOW()
-            WHERE id = $1 AND tenant_id = $2
+            SET status = 'completed', completed_at = COALESCE(completed_at, NOW()), updated_at = NOW()
+            WHERE id = $1 AND tenant_id = $2 AND status IN ('pending', 'processing')
             RETURNING *
             "#
         ))
         .bind(session_id)
         .bind(tenant_id)
-        .fetch_one(&mut scope)
+        .fetch_optional(&mut scope)
         .await
-        .map_err(|e| TopemsError::Database(e.to_string()))?;
+        .map_err(|e| TopemsError::Database(e.to_string()))?
+        .ok_or_else(|| {
+            TopemsError::Validation("对账会话状态已被并发修改，请刷新后重试".to_string())
+        })?;
 
         scope.commit().await?;
 
@@ -780,16 +799,25 @@ impl ReconciliationService {
         status: ReconciliationStatus,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
+        let allowed_from = ReconciliationStatus::allowed_from(&status);
         let mut scope = self.write_scope(txn).await?;
-        sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3"),
+        let result = sqlx::query(
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3 AND status::text = ANY($4::text[])"),
         )
         .bind(status)
         .bind(session_id)
         .bind(tenant_id)
+        .bind(allowed_from)
         .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
+
+        if result.rows_affected() == 0 {
+            scope.rollback().await?;
+            return Err(TopemsError::Validation(
+                "对账会话状态已被并发修改，请刷新后重试".to_string(),
+            ));
+        }
 
         scope.commit().await?;
 
