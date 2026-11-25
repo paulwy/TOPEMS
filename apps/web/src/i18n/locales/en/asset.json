@@ -92,6 +92,12 @@
   "asset.dashboard_page.k0": "Asset Management Overview",
   "asset.dashboard_page.k1": "Asset Management Data Overview",
   "asset.dashboard_page.k2": "Quick Actions",
+  "asset.dashboard_page.stat_assets": "In-use Assets",
+  "asset.dashboard_page.stat_fixed_assets": "Fixed Assets",
+  "asset.dashboard_page.action_list": "Asset List",
+  "asset.dashboard_page.action_categories": "Categories",
+  "asset.dashboard_page.action_depreciation": "Depreciation",
+  "asset.dashboard_page.action_transfers": "Transfers",
   "depreciation_page": {
     "create_fail": "Create failed",
     "fail": "Update failed"
