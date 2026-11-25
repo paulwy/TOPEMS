@@ -554,7 +554,7 @@ pub async fn update_process(
             standard_time_minutes = COALESCE(CAST($8 AS NUMERIC), standard_time_minutes),
             work_station_id = COALESCE(NULLIF($9, '')::uuid, work_station_id),
             updated_at = $10
-        WHERE id = $1 AND status = 'active' AND tenant_id = $11::uuid
+        WHERE id = $1 AND status = 'active' AND tenant_id = $11::uuid AND deleted_at IS NULL
         RETURNING
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
@@ -650,7 +650,7 @@ pub async fn delete_process(
     let result = sqlx::query(
         r#"
         UPDATE mes.production_processes SET deleted_at = NOW()
-        WHERE id = $1 AND tenant_id = $2::uuid
+        WHERE id = $1 AND tenant_id = $2::uuid AND status IN ('active', 'inactive') AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -738,7 +738,7 @@ pub async fn deactivate_process(
         UPDATE mes.production_processes SET
             status = 'inactive',
             updated_at = $2
-        WHERE id = $1 AND status = 'active' AND tenant_id = $3::uuid
+        WHERE id = $1 AND status = 'active' AND tenant_id = $3::uuid AND deleted_at IS NULL
         RETURNING 
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, NULL::text AS equipment_required, NULL::numeric AS estimated_duration,
