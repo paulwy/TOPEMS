@@ -2137,6 +2137,12 @@ jobs:
             sleep 1
           done
 
+      - name: 迁移归档/判读表门禁
+        run: node scripts/ci/check-migration-archive.mjs
+
+      - name: 租户数据完整性体检
+        run: node scripts/ci/check-tenant-integrity.mjs --db
+
       - name: Run migration up-down-up tests
         run: |
           echo "## Migration Test Report" >> $GITHUB_STEP_SUMMARY

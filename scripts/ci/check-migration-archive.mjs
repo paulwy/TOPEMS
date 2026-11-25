@@ -15,7 +15,9 @@
  *   4) reason_category 仅允许固定枚举；reason 非空；decided_on 为 YYYY-MM-DD；
  *   5) version 不得重复；
  *   6) 冻结线：任何条目 version 必须 < FROZEN_CUTOFF（新增迁移不得进归档表）；
- *   7) 互斥（需 DB）：给出 --db 且能连 MIGRATE_URL/DATABASE_URL 时，归档版本不得出现在
+ *   7) 判读表 database/migrations-triage.tsv（本库不适用、prod 仍需跑）：class 枚举、
+ *      version 有对应文件、与归档表版本互斥；--db 时判读版本不得已记账；
+ *   8) 互斥（需 DB）：给出 --db 且能连 MIGRATE_URL/DATABASE_URL 时，归档版本不得出现在
  *      public._sqlx_migrations 中（归档 = 明确不记账，二者互斥）。
  *
  * 用法：
@@ -100,6 +102,34 @@ if (!existsSync(ARCHIVE)) {
         }
     }
 
+    // ---- 判读表（database/migrations-triage.tsv）：本库不适用、但目标环境仍需执行 ----
+    // 与归档表的分工：归档=永不重放；判读=本库不跑、prod/空库要跑。两者必须互斥，避免被 prod 误跳过。
+    const TRIAGE = process.env.TRIAGE_PATH || join(ROOT, 'database/migrations-triage.tsv');
+    const TRIAGE_CLASSES = new Set(['gated-cleanup', 'bootstrap-only', 'prod-directed']);
+    let triageRows = [];
+    if (existsSync(TRIAGE)) {
+        const parsed = parseTsv(readFileSync(TRIAGE, 'utf-8'));
+        triageRows = parsed.rows;
+        const missing = ['version', 'description', 'class', 'reason', 'evidence', 'decided_on'].filter(
+            (c) => !parsed.header.includes(c),
+        );
+        if (missing.length) fail(`triage 表头缺列：${missing.join(', ')}`);
+        const tSeen = new Set();
+        for (const r of triageRows) {
+            const tag = `triage ${r.version || '<空版本>'}`;
+            if (!/^\d{14}$/.test(r.version)) fail(`${tag}: version 不是 14 位时间戳`);
+            if (tSeen.has(r.version)) fail(`${tag}: version 重复`);
+            tSeen.add(r.version);
+            if (!TRIAGE_CLASSES.has(r.class)) fail(`${tag}: class 非法（${r.class}）`);
+            if (!r.reason) fail(`${tag}: reason 为空`);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(r.decided_on)) fail(`${tag}: decided_on 非 YYYY-MM-DD`);
+            if (!files.some((f) => f.startsWith(`${r.version}_`) && f.endsWith('.sql'))) {
+                fail(`${tag}: database/migrations 下找不到 ${r.version}_*.sql`);
+            }
+            if (seen.has(r.version)) fail(`${tag}: 与归档表版本重复（归档与判读互斥）`);
+        }
+    }
+
     // 互斥：归档 = 不记账；若账本里已有该版本，说明归档判定与事实矛盾
     if (WITH_DB && errors.length === 0) {
         const dsn = process.env.MIGRATE_URL || process.env.DATABASE_URL;
@@ -116,6 +146,11 @@ if (!existsSync(ARCHIVE)) {
                         fail(`${r.version}: 已在 _sqlx_migrations 记账，与归档表互斥（二者只能存其一）`);
                     }
                 }
+                for (const r of triageRows) {
+                    if (installed.has(String(Number(r.version)))) {
+                        fail(`${r.version}: 已记账，却仍标为「本库不适用」——判读表需清理该行`);
+                    }
+                }
             } catch (e) {
                 fail(`连库失败，无法做互斥校验：${String(e.message).split('\n')[0]}`);
             }
@@ -126,7 +161,10 @@ if (!existsSync(ARCHIVE)) {
         console.log(JSON.stringify({ archive: ARCHIVE, rows: rows.length, errors }, null, 2));
     } else if (errors.length === 0) {
         const archived = rows.filter((r) => r.status === 'archived').length;
-        console.log(`✔ migration-archive ok：${rows.length} 行（archived ${archived} / replayable ${rows.length - archived}），冻结线 ${FROZEN_CUTOFF}${WITH_DB ? '，已做账本互斥校验' : ''}`);
+        console.log(
+            `✔ migration-archive ok：归档 ${rows.length} 行（archived ${archived} / replayable ${rows.length - archived}），` +
+                `判读 ${triageRows.length} 行，冻结线 ${FROZEN_CUTOFF}${WITH_DB ? '，已做账本互斥校验' : ''}`,
+        );
     }
 }
 

@@ -197,8 +197,9 @@ scripts/db/schema-health.sh --table finance.budgets
 当前库跑通输出 `✔ tenant-integrity ok`；清理后全库孤儿成员为 0。
 配套：`scripts/db/backfill-admin-company-access.sh --tenant '*' --apply` 只删悬空引用（跨租户），
 按租户/用户补成员与范围仍用不带 `--tenant '*'` 的默认模式。
-CI 接线：`ci.yml` 目前有其他并行改动未提交（前端覆盖率 jq 段等），本次不动该文件，
-等那份改动落定后再加一行 `node scripts/ci/check-tenant-integrity.mjs --db` 到 migration-test 段。
+CI 接线（已完成）：`ci.yml` 的 `migration-test` 作业在起库之后新增两步——
+`node scripts/ci/check-migration-archive.mjs`（含判读表校验）与 `node scripts/ci/check-tenant-integrity.mjs --db`。
+提交时只暂存了本段新增行，同一文件里并行会话的 nextest / 覆盖率 jq 改动仍留在工作区未提交。
 
 ## 13. schema 建库归位 + 待办口径修正（2026-11-25）
 
@@ -248,7 +249,8 @@ CI 接线：`ci.yml` 目前有其他并行改动未提交（前端覆盖率 jq �
 ## 15. 发版应用顺序清单（136 条，机器可读）
 
 `scripts/db/release-plan.sh` 生成 `database/migrations-release-plan.tsv`（列 `version/description/stage/gate/note`），
-输入是「pending − 归档表」，输出按 stage 排序；`--check` 只比对不落盘，可用于 CI 防漂移（`ci.yml` 目前有并行未提交改动，待落定后加一步）。
+输入是「pending − 归档表」，输出按 stage 排序；`--check` 只比对不落盘（清单随本机账本变化，属本地派生物，**不进 CI 比对**）。
+判读表的结构与「与归档互斥」由 `scripts/ci/check-migration-archive.mjs` 在 CI 里守（`triage` 行 class 枚举、版本必有对应文件、与归档表版本不得重叠、`--db` 时判读版本不得已记账）。
 
 | stage | 条数 | 语义与前置 |
 | --- | --- | --- |

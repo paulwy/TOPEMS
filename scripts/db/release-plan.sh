@@ -26,7 +26,7 @@ OUT="$ROOT/database/migrations-release-plan.tsv"
 CHECK=0
 [ "${1:-}" = "--check" ] && CHECK=1
 
-DSN="${MIGRATE_URL:-}"
+DSN="${MIGRATE_URL:-${DATABASE_URL:-}}"
 if [ -z "$DSN" ] && [ -f "$ROOT/.env" ]; then
     DSN=$(grep -m1 '^MIGRATE_URL=' "$ROOT/.env" | cut -d= -f2-)
 fi
