@@ -771,7 +771,11 @@ pub async fn close_period(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let closed_by = claims.username.clone();
     match service
         .close_period(tenant_id, year, month, &closed_by, txn)
@@ -816,7 +820,11 @@ pub async fn open_period(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.open_period(tenant_id, year, month, txn).await {
         Ok(period) => ApiResponse::success(period, "期间已打开"),
         Err(e) => crate::shared::err_resp(e),
@@ -5270,7 +5278,11 @@ pub async fn open_period_v2(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -5398,7 +5410,11 @@ pub async fn close_period_v2(
     Json(req): Json<PeriodActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let period = req.period.unwrap_or_default();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
