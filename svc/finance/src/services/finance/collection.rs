@@ -217,6 +217,31 @@ impl FinanceService {
         };
 
         let mut scope = self.write_scope(txn).await?;
+        let current = sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
+            "finance",
+            "SELECT COALESCE(status, 'pending') FROM finance.erp_collection_records \
+             WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(tenant_id)
+        .bind(collection_id)
+        .fetch_optional(&mut scope)
+        .await?;
+        let current = match current {
+            Some(Some(raw)) => raw,
+            Some(None) => CollectionStatus::Pending.as_str().to_string(),
+            None => return Err(TopemsError::ResourceNotFound("收款记录不存在".to_string())),
+        };
+        let Some(current_status) = normalize_collection_status(Some(&current)) else {
+            return Err(TopemsError::ValidationFailed(
+                "收款记录状态不在规范集合内".to_string(),
+            ));
+        };
+        if !current_status.is_editable() {
+            return Err(TopemsError::ValidationFailed(
+                "收款记录已确认或已核销，不可编辑".to_string(),
+            ));
+        }
+
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE finance.erp_collection_records
@@ -224,7 +249,8 @@ impl FinanceService {
                  amount = COALESCE($2, amount),
                  status = COALESCE($3, status),
                  updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $4 AND id = $5
+             WHERE tenant_id = $4 AND id = $5 AND deleted_at IS NULL
+               AND COALESCE(status, 'pending') = $6
              RETURNING id, collection_no, customer_name, amount, COALESCE(status, 'pending') AS status, updated_at"
         ))
         .bind(customer_name)
@@ -232,8 +258,12 @@ impl FinanceService {
         .bind(status)
         .bind(tenant_id)
         .bind(collection_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .bind(current_status.as_str())
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("收款记录状态已变化，请刷新后重试".to_string())
+        })?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let collection_no: String = sqlx::Row::get(&row, "collection_no");
@@ -259,17 +289,47 @@ impl FinanceService {
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<(), TopemsError> {
         let mut scope = self.write_scope(txn).await?;
-        let result = sqlx::query(only_own_schema_query!(
+        let current = sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
             "finance",
-            "UPDATE finance.erp_collection_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
+            "SELECT COALESCE(status, 'pending') FROM finance.erp_collection_records \
+             WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL"
         ))
         .bind(tenant_id)
         .bind(collection_id)
+        .fetch_optional(&mut scope)
+        .await?;
+        let current = match current {
+            Some(Some(raw)) => raw,
+            Some(None) => CollectionStatus::Pending.as_str().to_string(),
+            None => return Err(TopemsError::ResourceNotFound("收款记录不存在".to_string())),
+        };
+        let Some(current_status) = normalize_collection_status(Some(&current)) else {
+            return Err(TopemsError::ValidationFailed(
+                "收款记录状态不在规范集合内".to_string(),
+            ));
+        };
+        if !current_status.is_deletable() {
+            return Err(TopemsError::ValidationFailed(
+                "收款记录已确认或已核销，不可删除".to_string(),
+            ));
+        }
+
+        let result = sqlx::query(only_own_schema_query!(
+            "finance",
+            "UPDATE finance.erp_collection_records SET deleted_at = NOW() \
+             WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL \
+               AND COALESCE(status, 'pending') = $3"
+        ))
+        .bind(tenant_id)
+        .bind(collection_id)
+        .bind(current_status.as_str())
         .execute(&mut scope)
         .await?;
 
         if result.rows_affected() == 0 {
-            return Err(TopemsError::NotFound("收款记录不存在".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "收款记录状态已变化或已删除，请刷新后重试".to_string(),
+            ));
         }
 
         scope.commit().await?;

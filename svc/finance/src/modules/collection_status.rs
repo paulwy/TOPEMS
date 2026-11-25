@@ -37,9 +37,25 @@ impl CollectionStatus {
         }
     }
 
+    /// 允许通用编辑的状态：confirmed 已形成实际收款，written_off 已核销，均封闭。
+    pub const EDITABLE: [&'static str; 1] = ["pending"];
+
+    /// 软删允许的状态：仅未确认的收款记录可删除。
+    pub const DELETABLE: [&'static str; 1] = ["pending"];
+
     /// 允许确认的起始状态；NULL 由调用方先归一为 Pending。
     pub const fn can_confirm(self) -> bool {
         matches!(self, Self::Pending)
+    }
+
+    #[must_use]
+    pub fn is_editable(self) -> bool {
+        Self::EDITABLE.contains(&self.as_str())
+    }
+
+    #[must_use]
+    pub fn is_deletable(self) -> bool {
+        Self::DELETABLE.contains(&self.as_str())
     }
 
     /// 允许核销的起始状态：待确认或已确认；已核销不可重复核销。
@@ -97,6 +113,16 @@ mod tests {
             normalize_collection_status(Some(" confirmed ")),
             Some(CollectionStatus::Confirmed)
         );
+    }
+
+    #[test]
+    fn terminal_sets_are_strict() {
+        assert!(CollectionStatus::Pending.is_editable());
+        assert!(!CollectionStatus::Confirmed.is_editable());
+        assert!(!CollectionStatus::WrittenOff.is_editable());
+        assert!(CollectionStatus::Pending.is_deletable());
+        assert!(!CollectionStatus::Confirmed.is_deletable());
+        assert!(!CollectionStatus::WrittenOff.is_deletable());
     }
 
     #[test]
