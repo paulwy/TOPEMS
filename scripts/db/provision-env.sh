@@ -744,7 +744,7 @@ fi
 
 # ── 与 prod 的 10 张核心表结构指纹比对（只读） ─────────────────────────────
 CORE_TABLES=(
-  "public.core_users" "public.core_roles" "public.core_permissions" "public.core_tenants" "public.core_menus"
+  "public.core_tenant_users" "public.core_roles" "public.core_permissions" "public.core_tenants" "public.core_menus"
   "iam.users" "erp.customers" "mes.production_orders" "qms.qa_ehs_hazards" "lims.qa_lab_records"
 )
 

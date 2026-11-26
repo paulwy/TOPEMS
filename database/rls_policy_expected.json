@@ -11776,24 +11776,6 @@
     },
     {
       "schema": "public",
-      "table": "core_users",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "rls_tenant_isolation",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
-          "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
-        }
-      ]
-    },
-    {
-      "schema": "public",
       "table": "core_workflow_instances",
       "rls_enabled": true,
       "force_rls": true,
