@@ -268,19 +268,17 @@ fn capture_stream_and_audit(
                 Ok(bytes) => {
                     if captured.len() < max_snapshot {
                         let room = max_snapshot - captured.len();
-                        captured.extend_from_slice(&bytes[..bytes.len().min(room)]);
+                        let take = bytes.len().min(room);
+                        if let Some(slice) = bytes.get(..take) {
+                            captured.extend_from_slice(slice);
+                        }
                     }
                     if tx.send(Ok(bytes)).await.is_err() {
                         break;
                     }
                 }
                 Err(e) => {
-                    let _ = tx
-                        .send(Err(std::io::Error::new(
-                            std::io::ErrorKind::Other,
-                            e.to_string(),
-                        )))
-                        .await;
+                    let _ = tx.send(Err(std::io::Error::other(e.to_string()))).await;
                     break;
                 }
             }
@@ -598,8 +596,8 @@ pub async fn audit_logger_middleware(
         .get(axum::http::header::CONTENT_LENGTH)
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.parse::<usize>().ok());
-    let request_too_large = req_content_length
-        .is_some_and(|len| len > middleware.config.max_request_body_size);
+    let request_too_large =
+        req_content_length.is_some_and(|len| len > middleware.config.max_request_body_size);
 
     let (mut parts, body) = req.into_parts();
     parts.extensions.insert(context_slot.clone());
