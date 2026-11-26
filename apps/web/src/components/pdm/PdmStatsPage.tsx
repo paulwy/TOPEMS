@@ -216,7 +216,7 @@ const PdmStatsPage: React.FC = () => {
       title: t('pdm.pdm_stats_page.k19'),
       value: stats.totalBatches,
       icon: <Activity sx={{ width: 24, height: 24 }} />,
-      gradient: [theme.palette.secondary[400], theme.palette.secondary[600]] as [string, string],
+      gradient: [theme.palette.secondary.light, theme.palette.secondary.dark] as [string, string],
       description: t('pdm.pdm_stats_page.e3', { v1: stats.inProgressBatches }),
       trend: { value: 0, direction: 'neutral' as const },
     },

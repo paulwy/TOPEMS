@@ -280,6 +280,14 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   const renderStatCards = () => {
     if (!showStatCards || statCards.length === 0) return null;
 
+    // 渐变值可能是 undefined / 非法令牌名（历史页面把 'warning.main' 之类当色值写入），
+    // 一旦整条 background 被 CSS 丢弃，卡片就会白底白字。这里统一校验并回退到无渐变。
+    const safeGradient = (s?: [string, string]) => {
+      const ok = (v?: string) =>
+        typeof v === 'string' && /^(#|rgb|hsl|var\(--|color-mix|oklch)/i.test(v.trim());
+      return s && ok(s[0]) && ok(s[1]) ? `linear-gradient(135deg, ${s[0]}, ${s[1]})` : undefined;
+    };
+
     return (
       <Box
         sx={{
@@ -290,159 +298,162 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
           flexWrap: 'wrap',
         }}
       >
-        {statCards.map((stat) => (
-          <Paper
-            key={stat.id}
-            onClick={stat.onClick}
-            sx={{
-              flex: statCardDirection === 'row' ? 1 : undefined,
-              minWidth: statCardDirection === 'row' ? 200 : '100%',
-              p: 2.5,
-              borderRadius: 3,
-              background: stat.gradient
-                ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
-                : undefined,
-              bgcolor: stat.gradient ? undefined : stat.bgColor || 'background.paper',
-              color: stat.gradient ? 'var(--color-primary-foreground)' : 'inherit',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.2s ease',
-              cursor: stat.onClick ? 'pointer' : 'default',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: 4,
-              },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-              {stat.icon && (
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: stat.gradient ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
-                    color: stat.gradient
-                      ? 'var(--color-primary-foreground)'
-                      : `${stat.color || 'primary'}.main`,
-                  }}
-                >
-                  {stat.icon}
-                </Box>
-              )}
-              <Box sx={{ flex: 1 }}>
-                <Typography
-                  variant='caption'
-                  sx={{
-                    opacity: stat.gradient ? 0.8 : 1,
-                    color: stat.gradient ? 'glass.topLight' : 'text.secondary',
-                  }}
-                >
-                  {stat.title}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
-                  {stat.prefix && (
-                    <Typography
-                      variant='h4'
-                      sx={{
-                        fontWeight: 700,
-                        color: stat.gradient ? 'var(--color-primary-foreground)' : 'text.primary',
-                      }}
-                    >
-                      {stat.prefix}
-                    </Typography>
-                  )}
-                  <Typography
-                    variant='h3'
+        {statCards.map((stat) => {
+          const grad = safeGradient(stat.gradient);
+          return (
+            <Paper
+              key={stat.id}
+              onClick={stat.onClick}
+              sx={{
+                flex: statCardDirection === 'row' ? 1 : undefined,
+                minWidth: statCardDirection === 'row' ? 200 : '100%',
+                p: 2.5,
+                borderRadius: 3,
+                background: grad,
+                bgcolor: grad ? undefined : stat.bgColor || 'background.paper',
+                color: grad ? 'var(--color-primary-foreground)' : 'inherit',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.2s ease',
+                cursor: stat.onClick ? 'pointer' : 'default',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: 4,
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                {stat.icon && (
+                  <Box
                     sx={{
-                      fontWeight: 700,
-                      color: stat.gradient ? 'var(--color-primary-foreground)' : 'text.primary',
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: grad ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
+                      color: grad
+                        ? 'var(--color-primary-foreground)'
+                        : `${stat.color || 'primary'}.main`,
                     }}
                   >
-                    {stat.format && typeof stat.value === 'number'
-                      ? Number(stat.value).toLocaleString()
-                      : stat.value}
-                  </Typography>
-                  {stat.suffix && (
-                    <Typography
-                      variant='h5'
-                      sx={{
-                        fontWeight: 500,
-                        color: stat.gradient ? 'glass.topLight' : 'text.secondary',
-                      }}
-                    >
-                      {stat.suffix}
-                    </Typography>
-                  )}
-                </Box>
-                {stat.description && (
+                    {stat.icon}
+                  </Box>
+                )}
+                <Box sx={{ flex: 1 }}>
                   <Typography
                     variant='caption'
                     sx={{
-                      color: stat.gradient ? 'glass.topLight' : 'text.secondary',
+                      opacity: grad ? 0.8 : 1,
+                      color: grad ? 'glass.topLight' : 'text.secondary',
                     }}
                   >
-                    {stat.description}
+                    {stat.title}
                   </Typography>
-                )}
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                    {stat.prefix && (
+                      <Typography
+                        variant='h4'
+                        sx={{
+                          fontWeight: 700,
+                          color: grad ? 'var(--color-primary-foreground)' : 'text.primary',
+                        }}
+                      >
+                        {stat.prefix}
+                      </Typography>
+                    )}
+                    <Typography
+                      variant='h3'
+                      sx={{
+                        fontWeight: 700,
+                        color: grad ? 'var(--color-primary-foreground)' : 'text.primary',
+                      }}
+                    >
+                      {stat.format && typeof stat.value === 'number'
+                        ? Number(stat.value).toLocaleString()
+                        : stat.value}
+                    </Typography>
+                    {stat.suffix && (
+                      <Typography
+                        variant='h5'
+                        sx={{
+                          fontWeight: 500,
+                          color: grad ? 'glass.topLight' : 'text.secondary',
+                        }}
+                      >
+                        {stat.suffix}
+                      </Typography>
+                    )}
+                  </Box>
+                  {stat.description && (
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        color: grad ? 'glass.topLight' : 'text.secondary',
+                      }}
+                    >
+                      {stat.description}
+                    </Typography>
+                  )}
+                </Box>
               </Box>
-            </Box>
 
-            {/* 趋势指示器 */}
-            {stat.trend && (
-              <Chip
-                size='small'
-                icon={
-                  stat.trend.direction === 'up' ? (
-                    <TrendingUpIcon />
-                  ) : stat.trend.direction === 'down' ? (
-                    <TrendingDownIcon />
-                  ) : undefined
-                }
-                label={stat.trend.label || `${stat.trend.value > 0 ? '+' : ''}${stat.trend.value}%`}
-                sx={(t) => {
-                  // 芯片必须「浅底 + 同色系深字」：直接用 main 当文字会和 light 底撞成同色
-                  const dark = t.palette.mode === 'dark';
-                  const up = stat.trend!.direction === 'up';
-                  const down = stat.trend!.direction === 'down';
-                  return {
-                    position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    bgcolor: stat.gradient
-                      ? 'glass.topLight'
-                      : up
-                        ? dark
-                          ? 'success.100'
-                          : 'success.50'
-                        : down
+              {/* 趋势指示器 */}
+              {stat.trend && (
+                <Chip
+                  size='small'
+                  icon={
+                    stat.trend.direction === 'up' ? (
+                      <TrendingUpIcon />
+                    ) : stat.trend.direction === 'down' ? (
+                      <TrendingDownIcon />
+                    ) : undefined
+                  }
+                  label={
+                    stat.trend.label || `${stat.trend.value > 0 ? '+' : ''}${stat.trend.value}%`
+                  }
+                  sx={(t) => {
+                    // 芯片必须「浅底 + 同色系深字」：直接用 main 当文字会和 light 底撞成同色
+                    const dark = t.palette.mode === 'dark';
+                    const up = stat.trend!.direction === 'up';
+                    const down = stat.trend!.direction === 'down';
+                    return {
+                      position: 'absolute',
+                      top: 12,
+                      right: 12,
+                      bgcolor: grad
+                        ? 'glass.topLight'
+                        : up
                           ? dark
-                            ? 'error.100'
-                            : 'error.50'
-                          : dark
-                            ? 'grey.200'
-                            : 'grey.100',
-                    color: stat.gradient
-                      ? 'var(--color-primary-foreground)'
-                      : up
-                        ? dark
-                          ? 'success.300'
-                          : 'success.700'
-                        : down
+                            ? 'success.100'
+                            : 'success.50'
+                          : down
+                            ? dark
+                              ? 'error.100'
+                              : 'error.50'
+                            : dark
+                              ? 'grey.200'
+                              : 'grey.100',
+                      color: grad
+                        ? 'var(--color-primary-foreground)'
+                        : up
                           ? dark
-                            ? 'error.300'
-                            : 'error.700'
-                          : 'text.secondary',
-                    fontWeight: 500,
-                  };
-                }}
-              />
-            )}
-          </Paper>
-        ))}
+                            ? 'success.300'
+                            : 'success.700'
+                          : down
+                            ? dark
+                              ? 'error.300'
+                              : 'error.700'
+                            : 'text.secondary',
+                      fontWeight: 500,
+                    };
+                  }}
+                />
+              )}
+            </Paper>
+          );
+        })}
       </Box>
     );
   };
