@@ -600,8 +600,14 @@ impl StreamEventSubscriber {
         // 表现为 PEL 消息反复投递（delivery-count 飙升）却始终不 ACK、不处理。
         let mut claim_con = self.redis_client.get_multiplexed_async_connection().await?;
 
+        // PEL 回收节奏：每 round 拉一次新消息（BLOCK），回收每 N 轮做一次即可。
+        // 回收本身是「失败消息重投」的兜底，高频执行只会放大 Redis 压力与超时噪点。
+        const RECLAIM_EVERY_N_ROUNDS: u64 = 3;
+        let mut round: u64 = 0;
+
         // 持续监听
         loop {
+            round = round.wrapping_add(1);
             // 构建 XREADGROUP 命令
             let mut cmd = redis::cmd("XREADGROUP");
             cmd.arg("GROUP")
@@ -731,6 +737,9 @@ impl StreamEventSubscriber {
             // → max_retries=3 永远到不了 → DLQ 从不触发。这里每轮用 XAUTOCLAIM
             // 回收空闲 >5s 的 PEL 消息，重新走 process_message/settle_failed，
             // 让 retry_count 累积到阈值后入 DLQ。
+            if round % RECLAIM_EVERY_N_ROUNDS != 0 {
+                continue;
+            }
             for stream_key in &stream_keys {
                 let is_mdm = stream_key.starts_with("topems:stream:master_data:");
                 // XAUTOCLAIM 返回 Bulk([cursor, entries, deleted_ids])，
@@ -865,7 +874,12 @@ impl StreamEventSubscriber {
                     }
                 } else if let Err(e) = claim_result {
                     // 回收失败不能静默：否则 PEL 消息永远不处理也不 ACK。
+                    // 但连接层面的超时（timed out）会持续复现，重建专用连接比反复报错更有效。
                     warn!("XAUTOCLAIM 失败 - Stream: {}: {}", stream_key, e);
+                    match self.redis_client.get_multiplexed_async_connection().await {
+                        Ok(fresh) => claim_con = fresh,
+                        Err(re) => warn!("回收连接重建失败: {}", re),
+                    }
                 }
             }
         }
