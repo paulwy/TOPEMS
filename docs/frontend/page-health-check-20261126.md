@@ -49,8 +49,8 @@ node scripts/check-page-health.mjs --routes /srm/contract,/srm/evaluation
 | `/srm/order` | `items.map is not a function` | 返回 `{purchase_orders,...}`（统计卡与列表两处） | 已修 |
 | `/srm/performance` | 500 `/api/srm/performance/reports` | 后端 `total_amount NUMERIC` 解成 `f64` | 已修（SQL 显式 `::float8`） |
 | `/finance/account-balance` | 409 | 报表接口业务冲突（账期/口径） | 软失败：待产品确认口径 |
-| `/mobile/profile` | 404 | 移动端资料接口未实现 | 软失败：待补 |
-| `/mes/energy-management` | 501 | 能耗接口按设计「无数据源诚实降级」 | 软失败：等采集表 |
+| `/mobile/profile` | 404 | 移动端资料读 `mobile.mobile_users`，控制台账号无该行 | 已修：前端按「无扩展资料」回落 IAM 登录态 |
+| `/mes/energy-management` | 501 | 能耗接口按设计「无数据源诚实降级」 | 软失败：等采集表（见挂账单） |
 
 **共同根因（SRM 四个页面）**：`src/api/srm` 把列表接口标注成 `T[]`，实际后端统一返回
 `{ <key>: T[], total, page, page_size }`。类型断言 `as T[]` 骗过了编译器，运行时才炸。
@@ -63,7 +63,7 @@ node scripts/check-page-health.mjs --routes /srm/contract,/srm/evaluation
 
 修复后全量复扫：**`213 OK / 0 FAIL`，判定 OK**（约 22 分钟）。
 软失败 3 页：`/mobile/profile`(2)、`/finance/account-balance`(1)、`/mes/energy-management`(8)，
-均为后端未实现/未接入，页面本身可正常打开。
+页面本身可正常打开；三项的定性与验收口径见 `docs/ops/frontend-soft-failures-20261126.md`。
 
 ## 取舍与盲区
 

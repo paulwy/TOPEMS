@@ -48,7 +48,16 @@ const MobileSettingsPage: React.FC = () => {
   const { user } = useAuthStore();
   const { data: profile } = useQuery({
     queryKey: ['mobile-profile'],
-    queryFn: () => userApi.getProfile().then((res) => res.data),
+    // 移动端 profile 读的是独立的 mobile.mobile_users 记录，控制台账号（走 iam.users）通常没有该行，
+    // 后端返回 404「用户不存在」。这不是错误，按「无扩展资料」处理，页面回落到 IAM 登录态信息。
+    queryFn: () =>
+      userApi
+        .getProfile()
+        .then((res) => res.data ?? null)
+        .catch((e: { response?: { status?: number } }) => {
+          if (e?.response?.status === 404) return null;
+          throw e;
+        }),
   });
   const displayName = profile?.full_name || user?.fullName || user?.username || '';
   const displayEmail = profile?.email || user?.email || 'user@example.com';
