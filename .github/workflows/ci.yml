@@ -197,6 +197,21 @@ jobs:
             echo "migration=true" >> $GITHUB_OUTPUT
             echo "hrm=true" >> $GITHUB_OUTPUT
             echo "desktop=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # main 直接推送：paths-filter 只比较相邻两次推送，run 被新提交取消时
+            # 被跳过的改动不会在后续 run 补测。核心门禁一律全量，宁可重跑也不漏检；
+            # menu/api_audit/docs/hrm/desktop 仍按路径过滤控制成本。
+            echo "rust=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "i18n=true" >> $GITHUB_OUTPUT
+            echo "permission=true" >> $GITHUB_OUTPUT
+            echo "ci=true" >> $GITHUB_OUTPUT
+            echo "migration=true" >> $GITHUB_OUTPUT
+            echo "menu=${{ steps.filter.outputs.menu }}" >> $GITHUB_OUTPUT
+            echo "api_audit=${{ steps.filter.outputs.api_audit }}" >> $GITHUB_OUTPUT
+            echo "docs=${{ steps.filter.outputs.docs }}" >> $GITHUB_OUTPUT
+            echo "hrm=${{ steps.filter.outputs.hrm }}" >> $GITHUB_OUTPUT
+            echo "desktop=${{ steps.filter.outputs.desktop }}" >> $GITHUB_OUTPUT
           else
             echo "rust=${{ steps.filter.outputs.rust }}" >> $GITHUB_OUTPUT
             echo "frontend=${{ steps.filter.outputs.frontend }}" >> $GITHUB_OUTPUT
@@ -2122,7 +2137,7 @@ jobs:
   migration-test:
     name: Migration Up-Down-Up Test
     needs: changes
-    if: needs.changes.outputs.migration == 'true'
+    if: needs.changes.outputs.migration == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
