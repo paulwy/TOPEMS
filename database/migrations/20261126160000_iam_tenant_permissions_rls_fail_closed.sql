@@ -52,8 +52,9 @@ BEGIN
     SELECT 1 FROM pg_policy p
      WHERE p.polrelid = 'iam.tenant_permissions'::regclass
        AND p.polname = 'tenant_isolation_tenant_permissions'
-       AND (pg_get_expr(p.polqual, p.polrelid) LIKE '%IS NULL%'
-            OR pg_get_expr(p.polqual, p.polrelid) LIKE '%''''%')
+       AND (pg_get_expr(p.polqual, p.polrelid) LIKE '%tenant_id IS NULL%'
+            OR pg_get_expr(p.polqual, p.polrelid) LIKE '%current_setting%IS NULL%'
+            OR pg_get_expr(p.polqual, p.polrelid) LIKE '%00000000-0000-0000-0000-000000000000%')
   ) THEN
     RAISE EXCEPTION 'fail-closed 断言失败：策略仍含空租户/未设置豁免分支';
   END IF;

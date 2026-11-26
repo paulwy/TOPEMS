@@ -199,6 +199,17 @@
       ],
       "evidence": "三账本只读核验（2026-11-26）：topems_prod / topems / topems_test_runner 的 _sqlx_migrations 均无 20261126110000。依赖核查（本机 topems）：残留 public.core_users 1 行、入向外键 0、视图/过程引用 0、触发器 0、规则 0；iam.core_users / iam.core_user_roles 已不存在。备份：backups/db-legacy-core-users/public.core_users-20261126.sql（残留 1 行 INSERT）+ 基线库全量 dump topems_pre_owner_converge_20261126_125033.dump。静态门禁：gen-manifest.sh --check 无漂移（unregistered_pending=0、checksum_mismatch=0）；check-destructive-sql.mjs 全量 PASS（blocking 0，3 条 DROP TABLE 带票据标记进 approvals）；validate.sh Checksum errors 0 / Errors 0。",
       "approved": true
+    },
+    {
+      "id": "B20261126-iam-rls-assert",
+      "date": "2026-11-26",
+      "committer": "paulwy",
+      "reason": "20261126160000 为当日新增、尚未在任何环境应用（账本无记录）的 remediation 迁移；其 fail-closed 断言用 LIKE '%''''%' 检查空串字面量，误命中安全表达式 NULLIF(..., '')，导致 baseline+前向迁移在断言处失败。改为只匹配已知 fail-open 形态（tenant_id IS NULL / current_setting…IS NULL / 全零 UUID），策略本身不变。属未应用迁移的输入修正，非改写已执行历史。",
+      "files": [
+        "20261126160000_iam_tenant_permissions_rls_fail_closed.sql"
+      ],
+      "evidence": "CI run 45790510809 Migration job 在 baseline 恢复+前向迁移执行到该文件第 61 行触发 fail-closed 误报；本地 check-rls-policy-shape.sh PASS；新文件 checksum 已同步；库账本无 20261126160000 记录",
+      "approved": true
     }
   ]
 }
