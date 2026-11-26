@@ -7,7 +7,7 @@ version	description	status	reason_category	reason	evidence	decided_on
 20261104010000	db12 5433 date timestamptz 21cols	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
 20261104020000	db13 5433 numeric double 20cols	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
 20261104030000	db14 test varchar to uuid 7cols with data	archived	data-precondition	历史数据前置不满足（硬编码 uuid 字面量非法）	uuid literal	2026-11-25
-20261104040000	db15 5433 integer bigint 16cols	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
+20261104040000	db15 5433 integer bigint 16cols	replayable-not-applied	legacy-hole	类型对齐 test 基准；本机 erp.vehicles 为空壳（仅 id/deleted_at，缺 mileage 列）dry-run 中止；prod mileage 列为 integer 待对齐 numeric，仍需在 prod 重放	A3 复核 2026-11-26：本机缺列中止 / prod 列存在待对齐	2026-11-26
 20261104050000	db16 5433 tenant id rls decouple 14cols	archived	dep-moved	依赖对象已搬迁：mes.permission_audit_logs	mes.permission_audit_logs	2026-11-25
 20261104060000	db17 5433 misc 12cols	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
 20261104070000	db18 5433 special types 8cols	archived	enum-converged	枚举值已收敛：bi.report_type 无 summary	bi.report_type	2026-11-25
@@ -27,16 +27,16 @@ version	description	status	reason_category	reason	evidence	decided_on
 20261107000024	finance admin seed	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
 20261107000025	seed menus batch29	archived	rls-seed-conflict	种子写入被 RLS 拒绝（脚本内未设 app.rls_system，owner 无 BYPASSRLS）	new row violates row-level security policy for table "core_menu_groups"	2026-11-25
 20261107000026	seed asset categories batch31	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过，未执行	dry-run PASS(自事务剥离)	2026-11-25
-20261107000027	drop dead tables batch31	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过，含 drop_dead_tables，未执行（破坏性需单独评审）	dry-run PASS(自事务剥离)	2026-11-25
+20261107000027	drop dead tables batch31	archived	data-precondition	目标死表两库均已不存在（erp.core_erp_suppliers / crm.core_crm_customers / crm.customers_tenant_null_backup_），DROP IF EXISTS 重放为 no-op，无需重放	A3 复核 2026-11-26：prod/本机 to_regclass 全 NULL	2026-11-26
 20261107000028	cleanup erp customers batch32	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过，含 cleanup 清理，未执行	dry-run PASS(自事务剥离)	2026-11-25
 20261107000029	create mdm supplier master batch32	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过（建表 IF NOT EXISTS），未执行	dry-run PASS(自事务剥离)	2026-11-25
 20261107000030	seed mdm supplier master batch32	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过（种子），未执行	dry-run PASS(自事务剥离)	2026-11-25
 20261107000031	supplier category dict and backfill	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过，未执行	dry-run PASS(自事务剥离)	2026-11-25
 20261107000032	scm supplier null no soft delete	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过，未执行	dry-run PASS(自事务剥离)	2026-11-25
 20261107000033	mdm sync dead letter	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过（建表），未执行	dry-run PASS(自事务剥离)	2026-11-25
-20261107000034	mdm rename asset categories to data asset categories	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
+20261107000034	mdm rename asset categories to data asset categories	archived	data-precondition	改名已在 prod 落地（mdm_data_asset_categories 在、mdm_asset_categories 无）；本机旧表残留为历史线，不再重放改名	A3 复核 2026-11-26：prod 表名核查	2026-11-26
 20261107000035	mark mdm suppliers category deprecated	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
-20261107000036	rd deploy formula link batch38	replayable-not-applied	legacy-hole	历史空档；剥离自事务后 dry-run 通过，未执行	dry-run PASS(自事务剥离)	2026-11-25
+20261107000036	rd deploy formula link batch38	archived	data-precondition	rd.deploys.formula_id 列与 deploys_formula_id_fkey 均已在 prod/本库落地，ADD COLUMN IF NOT EXISTS + FK 守卫重放为 no-op	A3 复核 2026-11-26：列/FK 存在性核查	2026-11-26
 20261107000040	finance budget perm batch40	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
 20261107000041	finance submodule perms batch40	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
 20261107000042	ai comm perm grants batch40	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
