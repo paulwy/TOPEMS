@@ -218,6 +218,37 @@
     },
     {
       "schema": "finance",
+      "table": "erp_payment_records",
+      "constraint": "ck_erp_payment_records_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "inactive",
+        "written_off"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'written_off'::text])))"
+    },
+    {
+      "schema": "finance",
+      "table": "expenses",
+      "constraint": "ck_expenses_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "paid",
+        "rejected",
+        "submitted"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'submitted'::text, 'approved'::text, 'rejected'::text, 'paid'::text])))"
+    },
+    {
+      "schema": "finance",
       "table": "finance_u8_import_records",
       "constraint": "ck_finance_u8_import_records_status_standard",
       "columns": [
@@ -314,7 +345,7 @@
         "pending",
         "terminated"
       ],
-      "definition": "CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'expired'::character varying, 'terminated'::character varying, 'pending'::character varying])::text[])))"
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'expired'::character varying, 'terminated'::character varying, 'pending'::character varying])::text[]))) NOT VALID"
     },
     {
       "schema": "hrm",
@@ -411,6 +442,54 @@
       "definition": "CHECK (((status IS NULL) OR (status = ANY ('{active,inactive,archived,cancelled}'::text[]))))"
     },
     {
+      "schema": "mes",
+      "table": "production_schedules",
+      "constraint": "ck_mes_production_schedules_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "pending",
+        "released",
+        "running",
+        "scheduled"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'scheduled'::character varying, 'released'::character varying, 'running'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "schema": "mes",
+      "table": "wips",
+      "constraint": "ck_mes_wips_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending",
+        "transferred"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'transferred'::character varying])::text[])))"
+    },
+    {
+      "schema": "mes",
+      "table": "work_orders",
+      "constraint": "ck_mes_work_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "paused",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'paused'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
       "schema": "mobile",
       "table": "mobile_tasks",
       "constraint": "ck_mobile_tasks_status_standard",
@@ -441,6 +520,36 @@
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY[('active'::character varying)::text, ('inactive'::character varying)::text, ('archived'::character varying)::text]))))"
     },
     {
+      "schema": "pm",
+      "table": "project_risks",
+      "constraint": "ck_project_risks_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "closed",
+        "identified",
+        "mitigated"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['identified'::character varying, 'mitigated'::character varying, 'closed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "table": "core_workflows",
+      "constraint": "ck_core_workflows_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "deployed",
+        "draft",
+        "inactive",
+        "published"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'active'::character varying, 'inactive'::character varying, 'deployed'::character varying])::text[]))) NOT VALID"
+    },
+    {
       "schema": "qms",
       "table": "qa_alert_messages",
       "constraint": "ck_qa_alert_messages_status_standard",
@@ -458,6 +567,161 @@
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ('{active,inactive,archived,open,pending,acknowledged}'::text[]))))"
     },
     {
+      "schema": "qms",
+      "table": "qa_apqp_approvals",
+      "constraint": "ck_qa_apqp_approvals_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[])))"
+    },
+    {
+      "schema": "qms",
+      "table": "qa_apqp_phases",
+      "constraint": "ck_qa_apqp_phases_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying])::text[])))"
+    },
+    {
+      "schema": "qms",
+      "table": "qa_apqp_projects",
+      "constraint": "ck_qa_apqp_projects_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_design",
+        "in_pilot",
+        "in_production",
+        "planning"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['planning'::character varying, 'in_design'::character varying, 'in_pilot'::character varying, 'in_production'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "schema": "qms",
+      "table": "qa_apqp_tasks",
+      "constraint": "ck_qa_apqp_tasks_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying])::text[])))"
+    },
+    {
+      "schema": "qms",
+      "table": "qa_audit_tasks",
+      "constraint": "ck_qa_audit_tasks_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying])::text[])))"
+    },
+    {
+      "schema": "qms",
+      "table": "qa_corrective_actions",
+      "constraint": "ck_qa_corrective_actions_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending",
+        "verified"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'verified'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "schema": "qms",
+      "table": "qa_eightd_reports",
+      "constraint": "ck_qa_eightd_reports_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "closed",
+        "containment",
+        "in_progress",
+        "initiated",
+        "permanent_action",
+        "root_cause",
+        "verified"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['initiated'::character varying, 'in_progress'::character varying, 'containment'::character varying, 'root_cause'::character varying, 'permanent_action'::character varying, 'verified'::character varying, 'closed'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "schema": "rs",
+      "table": "change_orders",
+      "constraint": "ck_change_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "planned"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['planned'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "rs",
+      "table": "change_requests",
+      "constraint": "ck_change_requests_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "closed",
+        "rejected",
+        "submitted",
+        "under_review"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['submitted'::text, 'under_review'::text, 'approved'::text, 'rejected'::text, 'closed'::text])))"
+    },
+    {
+      "schema": "rs",
+      "table": "experiments",
+      "constraint": "ck_experiments_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "failed",
+        "in_progress",
+        "paused",
+        "planned"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['planned'::text, 'in_progress'::text, 'completed'::text, 'paused'::text, 'failed'::text])))"
+    },
+    {
       "schema": "rs",
       "table": "formulas",
       "constraint": "ck_formulas_approval_status",
@@ -470,6 +734,34 @@
         "rejected"
       ],
       "definition": "CHECK (((approval_status IS NULL) OR (approval_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text]))))"
+    },
+    {
+      "schema": "rs",
+      "table": "formulas",
+      "constraint": "ck_formulas_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "archived",
+        "draft",
+        "testing"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'testing'::text, 'approved'::text, 'archived'::text])))"
+    },
+    {
+      "schema": "rs",
+      "table": "project_members",
+      "constraint": "ck_project_members_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "inactive"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying])::text[])))"
     },
     {
       "schema": "srm",
@@ -490,6 +782,23 @@
         "published"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['draft'::text, 'published'::text, 'in_progress'::text, 'closed'::text, 'awarded'::text, 'cancelled'::text, 'active'::text, 'inactive'::text, 'archived'::text]))))"
+    },
+    {
+      "schema": "ticket",
+      "table": "core_tickets",
+      "constraint": "ck_core_tickets_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "closed",
+        "in_progress",
+        "open",
+        "pending",
+        "resolved"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['open'::text, 'in_progress'::text, 'pending'::text, 'resolved'::text, 'closed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "tms",
@@ -2809,15 +3118,6 @@
     },
     {
       "schema": "finance",
-      "table": "erp_payment_records",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": false,
-      "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "finance",
       "table": "erp_receivables",
       "column": "status",
       "type": "text",
@@ -2833,15 +3133,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "expenses",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": false,
-      "default_expr": "'draft'::text"
     },
     {
       "schema": "finance",
@@ -4190,8 +4481,8 @@
       "column": "status",
       "type": "character varying(32)",
       "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
+      "not_null": true,
+      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "mes",
@@ -4276,15 +4567,6 @@
     },
     {
       "schema": "mes",
-      "table": "production_schedules",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
       "table": "quality_inspections",
       "column": "status",
       "type": "character varying(32)",
@@ -4354,24 +4636,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "wips",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'in_progress'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "work_orders",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "mes",
@@ -4849,15 +5113,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'allocated'::character varying"
-    },
-    {
-      "schema": "pm",
-      "table": "project_risks",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'open'::character varying"
     },
     {
       "schema": "pm",
@@ -5473,15 +5728,6 @@
     },
     {
       "schema": "public",
-      "table": "core_users",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "public",
       "table": "core_workflow_instances",
       "column": "status",
       "type": "text",
@@ -5497,15 +5743,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "public",
-      "table": "core_workflows",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "public",
@@ -5608,48 +5845,12 @@
     },
     {
       "schema": "qms",
-      "table": "qa_apqp_approvals",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "qms",
-      "table": "qa_apqp_phases",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "qms",
-      "table": "qa_apqp_projects",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'planning'::character varying"
-    },
-    {
-      "schema": "qms",
       "table": "qa_apqp_risks",
       "column": "status",
       "type": "character varying(32)",
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'open'::character varying"
-    },
-    {
-      "schema": "qms",
-      "table": "qa_apqp_tasks",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "qms",
@@ -5671,25 +5872,7 @@
     },
     {
       "schema": "qms",
-      "table": "qa_audit_tasks",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "qms",
       "table": "qa_corrective_action_items",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "qms",
-      "table": "qa_corrective_actions",
       "column": "status",
       "type": "character varying(32)",
       "enum_type": "varchar",
@@ -5704,15 +5887,6 @@
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'open'::text"
-    },
-    {
-      "schema": "qms",
-      "table": "qa_eightd_reports",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'new'::character varying"
     },
     {
       "schema": "qms",
@@ -5869,57 +6043,12 @@
     },
     {
       "schema": "rs",
-      "table": "change_orders",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'planned'::text"
-    },
-    {
-      "schema": "rs",
-      "table": "change_requests",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'submitted'::text"
-    },
-    {
-      "schema": "rs",
-      "table": "experiments",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'planning'::text"
-    },
-    {
-      "schema": "rs",
-      "table": "formulas",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": false,
-      "default_expr": "'draft'::text"
-    },
-    {
-      "schema": "rs",
       "table": "patents",
       "column": "status",
       "type": "text",
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'applied'::text"
-    },
-    {
-      "schema": "rs",
-      "table": "project_members",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'ACTIVE'::character varying"
     },
     {
       "schema": "rs",
@@ -6352,15 +6481,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "ticket",
-      "table": "core_tickets",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'open'::text"
     },
     {
       "schema": "tms",

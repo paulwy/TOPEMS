@@ -3239,3 +3239,11 @@ pending_forward_patches:
     effect: "删除 iam.users 反范式冗余列 roles/permissions 与旧单角色外键列 role_id（连带 users_role_id_fkey 约束、idx_users_role_id 索引）；授权权威源为 core_user_roles→core_role_permissions→core_permissions 关联表"
     destructive_scan: "DROP CONSTRAINT IF EXISTS + DROP INDEX IF EXISTS iam.idx_users_role_id（显式 schema 限定）+ DROP COLUMN IF EXISTS（IF EXISTS/to_regclass 守卫、destructive 标记 rows-at-review=0 + backup）；无 DELETE/UPDATE/TRUNCATE"
     note: "超管由 is_superuser 布尔独立兜底、不要求在关联表绑角色；prod reviewer 评审体验账号为例外身份保留全量评审权限；三列数据删除前备份至 backups/db-iam-users-legacy-columns/；运行期 Rust/前端/.sqlx 对三列零裸列引用；checksum 293c44e49c5ecf33bc2e289bcfec686ff3c697a5acbd7a744d159f2c5ecb0f8d"
+
+  # ===== 2026-11-26：core_role_permissions 同对重复授权去重（L2） =====
+  - version: "20261126180000"
+    file: "database/migrations/20261126180000_dedupe_core_role_permissions.sql"
+    status: to_apply
+    effect: "每个 (role_id, permission_id) 分组保留最早 created_at/并列物理首行（ctid）一行，删除其余重复授权行；distinct 授权对一条不丢；prod 无重复，幂等空跑"
+    destructive_scan: "DELETE USING 窗口函数去重（to_regclass 守卫、destructive 标记 max-rows=0 + backup）；无 DDL、不新建角色、不新增或撤销授权；锚点用系统列 ctid，不依赖业务 id 列（prod/链终态为复合主键无 id 列）"
+    note: "dev 种子重放残留去重（本机 superadmin 冗余 3071、admin 冗余 703；prod 0 重复）；根治（种子 INSERT 幂等守卫 / (role_id,permission_id) 唯一约束）另议；checksum 17391cf41adcf4d5b3da7f082b040e329f7142851779d4d5c240ec4817832271"
