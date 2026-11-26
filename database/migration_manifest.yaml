@@ -3213,3 +3213,12 @@ pending_forward_patches:
     effect: "mes.production_schedules.status 默认固定 pending、NULL 回填后 SET NOT NULL、旧约束 production_schedules_status_check 重建为 ck_mes_production_schedules_status_standard 六态并 VALIDATE"
     destructive_scan: "UPDATE 仅限 status IS NULL 且带 max-rows=0/backup 标记；ALTER COLUMN SET DEFAULT/SET NOT NULL；DROP CONSTRAINT IF EXISTS + ADD CHECK NOT VALID + VALIDATE；无 DELETE/TRUNCATE/DROP TABLE/列或类型变更"
     note: "B345 已在 handler 层把空状态解码 500 改 409，本迁移补数据库层：本地 9678 行全 scheduled、NULL 0 行；冒烟实测 NULL 23502、bogus 23514、省略 status 走默认；六态源自 ProductionScheduleStatus::DB_VALUES；checksum 5d722ac3d4971aa871b1b1a88f0b05d49332e5cc3960bc4fc91a85e1891c2a9b"
+
+  # ===== 2026-11-26：MES 工单状态标准态（B348） =====
+  - version: "20261126150000"
+    file: "database/migrations/20261126150000_mes_work_orders_status_standard.sql"
+    status: to_apply
+    ledger_evidence: "无账本行（本地 _sqlx_migrations 无 20261126150000；版本 > anchor 20261118150000）"
+    effect: "mes.work_orders.status 默认固定 pending、NULL 回填后 SET NOT NULL、旧约束 work_orders_status_check 重建为 ck_mes_work_orders_status_standard 五态并 VALIDATE"
+    destructive_scan: "UPDATE 仅限 status IS NULL 且带 max-rows=0/backup 标记；ALTER COLUMN SET DEFAULT/SET NOT NULL；DROP CONSTRAINT IF EXISTS + ADD CHECK NOT VALID + VALIDATE；无 DELETE/TRUNCATE/DROP TABLE/列或类型变更"
+    note: "本地 56 行全 completed 且全软删（deleted_at 非空）、NULL 0 行，本迁移不改存量值只改列约束；五态源自 WorkOrderStatus::DB_VALUES；新建入口绑定 DEFAULT 枚举；checksum e0cae51674c76554f9bd623621adf16dd26e37789627b9a4f30812f393a83849"
