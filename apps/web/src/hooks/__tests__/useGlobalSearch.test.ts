@@ -48,6 +48,7 @@ vi.mock('@/components/GlobalSearchBar/utils', () => ({
   getAvailableModules: vi.fn().mockReturnValue([]),
   getAvailableTypes: vi.fn().mockReturnValue([]),
   getAvailableServices: vi.fn(() => []),
+  resolveResultPath: vi.fn((r: { path?: string; url?: string }) => r.path || r.url || '/'),
 }));
 
 describe('useGlobalSearch', () => {
