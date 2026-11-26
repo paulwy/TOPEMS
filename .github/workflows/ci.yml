@@ -41,9 +41,9 @@ on:
 
 # Cancel superseded runs on the same ref to save CI minutes.
 concurrency:
-  # 按分支单组：main 上以最新提交为准，新提交立即取消上一轮 run，
-  # 避免长作业把后续提交长期堵在排队（旧 run 结果对新 HEAD 无意义）。
-  group: ci-${{ github.ref }}
+  # push 与手动 dispatch 分组隔离：push 仍以最新提交为准互相取消，
+  # 但人工触发的全量验证不会被后续 push 取消，保证有一次可跑完的完整结果。
+  group: ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 env:
