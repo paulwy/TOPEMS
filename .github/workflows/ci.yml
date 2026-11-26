@@ -2222,10 +2222,6 @@ jobs:
             || psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "CREATE ROLE topems_owner NOLOGIN;"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f database/scripts/bootstrap_schemas.sql
 
-
-      - name: 租户数据完整性体检
-        run: node scripts/ci/check-tenant-integrity.mjs --db
-
       - name: Run migration up-down-up tests
         run: |
           echo "## Migration Test Report" >> $GITHUB_STEP_SUMMARY
@@ -2298,6 +2294,11 @@ jobs:
             || psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "CREATE ROLE topems_owner NOLOGIN;"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f database/scripts/bootstrap_schemas.sql
           bash scripts/migration/apply-forward.sh --dsn "$DATABASE_URL" --drill-gate-guc-auto
+
+      # 体检依赖 baseline + 前向迁移后的真实表（core_tenant_users / hrm.companies）；
+      # 放在空库 bootstrap 之后会必然报 relation does not exist。
+      - name: 租户数据完整性体检
+        run: node scripts/ci/check-tenant-integrity.mjs --db
 
       - name: Run migration validation (validate.sh 三方核对 + schema drift)
         # B14 接线（2026-10-12）：baseline 恢复 + 前向迁移之后补 validate.sh 静态核对——
