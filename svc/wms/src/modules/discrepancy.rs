@@ -171,7 +171,7 @@ pub async fn list_discrepancies(
                     COALESCE(SUM(CASE WHEN adjustment_status = $4 THEN 1 ELSE 0 END), 0) as pending_count,
                     COALESCE(SUM(CASE WHEN adjustment_status = $5 THEN 1 ELSE 0 END), 0) as approved_count,
                     COALESCE(SUM(CASE WHEN adjustment_status = $6 THEN 1 ELSE 0 END), 0) as completed_count,
-                    COALESCE(SUM(discrepancy_quantity), 0) as total_discrepancy
+                    COALESCE(SUM(discrepancy_quantity), 0)::float8 as total_discrepancy
                 FROM wms.discrepancy_records
                 WHERE ($1::uuid IS NULL OR stock_take_id = $1)
                   AND ($2::text IS NULL OR adjustment_status = $2)

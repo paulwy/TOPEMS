@@ -10,6 +10,7 @@
  *   SOFT  — 400 / 403 / 409 / 422 / 501（业务校验、权限、显式未实现）
  *   OK    — 2xx
  *   SKIP  — 401（鉴权失败，多半是缺租户头）
+ *   DEGRADED — 5xx 且文案是连接池打满（pool timed out / 事务开启失败），容量信号，不判负
  *
  * 用法：
  *   node scripts/ci/api-smoke.mjs                          # 全量 GET（916 条）
@@ -118,7 +119,9 @@ async function probeOnce(token, item) {
     }
     const msg = String(body?.message || '');
     let verdict = 'OK';
-    if (r.status >= 500 && r.status !== 501) verdict = 'FAIL';
+    // 连接池打满属容量信号，不是接口逻辑坏了：单独标 DEGRADED，进汇总不进退出码
+    const poolStarved = /pool timed out|开启租户作用域失败|事务开启失败/.test(msg);
+    if (r.status >= 500 && r.status !== 501) verdict = poolStarved ? 'DEGRADED' : 'FAIL';
     else if (r.status === 401) verdict = 'SKIP';
     else if (r.status === 404 && (/接口不存在/.test(msg) || /路径/.test(msg))) verdict = 'FAIL';
     else if (r.status >= 400) verdict = 'SOFT';
@@ -153,15 +156,16 @@ async function probeOnce(token, item) {
   const byVerdict = results.reduce((m, r) => ((m[r.verdict] = (m[r.verdict] || 0) + 1), m), {});
   const byModule = {};
   for (const r of results) {
-    byModule[r.module] = byModule[r.module] || { OK: 0, SOFT: 0, FAIL: 0, SKIP: 0 };
+    byModule[r.module] = byModule[r.module] || { OK: 0, SOFT: 0, FAIL: 0, SKIP: 0, DEGRADED: 0 };
     byModule[r.module][r.verdict] += 1;
   }
 
   console.log('\n按模块：');
   for (const [mod, c] of Object.entries(byModule).sort((a, b) => b[1].FAIL - a[1].FAIL)) {
-    console.log(`  ${mod.padEnd(16)} OK=${c.OK} SOFT=${c.SOFT} FAIL=${c.FAIL} SKIP=${c.SKIP}`);
+    const dg = c.DEGRADED ? ` DEGRADED=${c.DEGRADED}` : '';
+    console.log(`  ${mod.padEnd(16)} OK=${c.OK} SOFT=${c.SOFT} FAIL=${c.FAIL} SKIP=${c.SKIP}${dg}`);
   }
-  console.log(`\n汇总：${results.length} 条  ` + ['OK', 'SOFT', 'FAIL', 'SKIP'].map((k) => `${k}=${byVerdict[k] || 0}`).join('  '));
+  console.log(`\n汇总：${results.length} 条  ` + ['OK', 'SOFT', 'FAIL', 'SKIP', 'DEGRADED'].map((k) => `${k}=${byVerdict[k] || 0}`).join('  '));
   const fails = results.filter((r) => r.verdict === 'FAIL');
   if (fails.length) {
     console.log('FAIL 明细：');
