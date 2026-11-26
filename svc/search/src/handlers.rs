@@ -4,6 +4,7 @@ use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::TopemsError;
 use topems_shared_db::scope::{Db, ScopedTxn};
+use topems_shared_db::PLATFORM_TENANT_ID;
 use uuid::Uuid;
 
 use topems_shared_boundary::only_own_schema_query;
@@ -55,21 +56,40 @@ struct ProjectionRow {
     remark: Option<String>,
 }
 
+/// 公共数据归属：投影表 `tenant_id NOT NULL DEFAULT 零租户`，超管创建的公共行（erp 侧 NULL 归属）
+/// 与历史数据在投影里都落成 PLATFORM_TENANT_ID，语义等价于"平台公共/无归属"，对任意租户可见。
+/// 显式引用共享常量而非裸零 UUID 字面量，避免绕过租户门禁的隐式全局读。
+
+/// 关键词 → LIKE 模式；`match_all` 为类别检索（如直接搜「物料」），命中该模块全部行。
+fn like_pattern(keyword: &str, match_all: bool) -> String {
+    if match_all {
+        "%".to_string()
+    } else {
+        format!("%{}%", keyword)
+    }
+}
+
 /// 按实体类型检索本地投影（tenant 隔离 + ILIKE）。失败降级为空结果。
+///
+/// 可见性口径：请求租户自己的行 + 公共行（零租户）。erp 侧超管创建的公共主数据（如物料）
+/// 落 `tenant_id IS NULL`，投影里归一为 PLATFORM_TENANT_ID，若不给公共行开口子，这类行对所有
+/// 业务租户都检索不到（与 erp RLS 允许 `tenant_id IS NULL` 可见的口径不一致）。
 async fn query_projection(
     conn: &mut ScopedTxn<'_>,
     entity_type: &str,
     keyword: &str,
     limit: i64,
+    match_all: bool,
 ) -> Vec<ProjectionRow> {
-    let kw = format!("%{}%", keyword);
+    let kw = like_pattern(keyword, match_all);
     match sqlx::query_as::<_, ProjectionRow>(
         r#"SELECT entity_id, name, contact_person, contact_phone, email, address, status, remark
            FROM public.search_entity_projections
            WHERE entity_type = $1
-             AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+             AND (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID OR tenant_id = $4::UUID)
              AND (
-                name ILIKE $2 OR contact_person ILIKE $2 OR contact_phone ILIKE $2
+                $5::BOOL
+                OR name ILIKE $2 OR contact_person ILIKE $2 OR contact_phone ILIKE $2
                 OR email ILIKE $2 OR address ILIKE $2 OR status ILIKE $2 OR remark ILIKE $2
              )
            ORDER BY source_updated_at DESC NULLS LAST
@@ -78,6 +98,8 @@ async fn query_projection(
     .bind(entity_type)
     .bind(kw)
     .bind(limit)
+    .bind(PLATFORM_TENANT_ID)
+    .bind(match_all)
     .fetch_all(&mut *conn)
     .await
     {
@@ -89,8 +111,13 @@ async fn query_projection(
     }
 }
 
-async fn search_users(conn: &mut ScopedTxn<'_>, keyword: &str, limit: i64) -> Vec<SearchResult> {
-    let keyword_like = format!("%{}%", keyword);
+async fn search_users(
+    conn: &mut ScopedTxn<'_>,
+    keyword: &str,
+    limit: i64,
+    match_all: bool,
+) -> Vec<SearchResult> {
+    let keyword_like = like_pattern(keyword, match_all);
 
     // 表归属（DB 分片侦察）：unqualified `iam.users` 命中 iam.users（认证身份权威表，
     // 2026-10-28 双身份表收敛后 core_users 已废弃）。全局身份目录按设计全局检索，
@@ -134,9 +161,10 @@ async fn search_customers(
     conn: &mut ScopedTxn<'_>,
     keyword: &str,
     limit: i64,
+    match_all: bool,
 ) -> Vec<SearchResult> {
     // B1/F-37 终态：只读本地实体投影（erp 事件维护），不再 query-time 调 erp HTTP API
-    let rows = query_projection(&mut *conn, "customer", keyword, limit).await;
+    let rows = query_projection(&mut *conn, "customer", keyword, limit, match_all).await;
 
     rows.into_iter()
         .map(|r| {
@@ -168,29 +196,36 @@ async fn search_customers(
         .collect()
 }
 
-async fn search_orders(conn: &mut ScopedTxn<'_>, keyword: &str, limit: i64) -> Vec<SearchResult> {
+async fn search_orders(
+    conn: &mut ScopedTxn<'_>,
+    keyword: &str,
+    limit: i64,
+    match_all: bool,
+) -> Vec<SearchResult> {
     // B1/F-37 终态：销售/采购订单均读本地投影
     let mut results: Vec<SearchResult> = Vec::new();
 
-    let sales_hits = query_projection(&mut *conn, "sales_order", keyword, limit / 2).await;
+    let half = (limit / 2).max(1);
+    let sales_hits = query_projection(&mut *conn, "sales_order", keyword, half, match_all).await;
     results.extend(sales_hits.into_iter().map(|r| SearchResult {
         id: r.entity_id.to_string(),
         title: r.name.unwrap_or_default(),
         description: r.remark.or(r.status),
         module: "order".to_string(),
-        path: format!("/sales/orders/{}", r.entity_id),
+        path: "/erp/sales-orders".to_string(),
         type_name: "订单".to_string(),
         relevance: None,
         snippet: None,
     }));
 
-    let purchase_hits = query_projection(&mut *conn, "purchase_order", keyword, limit / 2).await;
+    let purchase_hits =
+        query_projection(&mut *conn, "purchase_order", keyword, half, match_all).await;
     results.extend(purchase_hits.into_iter().map(|r| SearchResult {
         id: r.entity_id.to_string(),
         title: r.name.unwrap_or_default(),
         description: r.remark.or(r.status),
         module: "order".to_string(),
-        path: format!("/purchase/orders/{}", r.entity_id),
+        path: "/erp/purchase-order".to_string(),
         type_name: "订单".to_string(),
         relevance: None,
         snippet: None,
@@ -199,12 +234,72 @@ async fn search_orders(conn: &mut ScopedTxn<'_>, keyword: &str, limit: i64) -> V
     results
 }
 
+/// 物料（erp.materials 投影，entity_type = "material"）。
+/// 前端物料列表页 `/rd/material` 直接读 erp /materials，与投影同源，故结果落到该页。
+async fn search_materials(
+    conn: &mut ScopedTxn<'_>,
+    keyword: &str,
+    limit: i64,
+    match_all: bool,
+) -> Vec<SearchResult> {
+    let rows = query_projection(&mut *conn, "material", keyword, limit, match_all).await;
+
+    rows.into_iter()
+        .map(|r| {
+            let mut desc_parts: Vec<String> = Vec::new();
+            if let Some(cp) = r.contact_person.as_ref().filter(|v| !v.trim().is_empty()) {
+                // 投影里 contact_person 复用为物料编码
+                desc_parts.push(format!("编码 {}", cp));
+            }
+            if let Some(addr) = r.address.as_ref().filter(|v| !v.trim().is_empty()) {
+                // 投影里 address 复用为规格型号
+                desc_parts.push(addr.clone());
+            }
+            if let Some(status) = r.status.as_ref().filter(|v| !v.trim().is_empty()) {
+                desc_parts.push(status.clone());
+            }
+            SearchResult {
+                id: r.entity_id.to_string(),
+                title: r.name.unwrap_or_default(),
+                description: if desc_parts.is_empty() {
+                    r.remark
+                } else {
+                    Some(desc_parts.join(" | "))
+                },
+                module: "product".to_string(),
+                path: "/rd/material".to_string(),
+                type_name: "物料".to_string(),
+                relevance: None,
+                snippet: None,
+            }
+        })
+        .collect()
+}
+
+/// 类别检索：关键词本身就是模块名/模块别称时，直接列出该模块的（租户内）最近数据，
+/// 而不是拿"物料"两个字去做 ILIKE 文本匹配（那儿命中率几乎为零）。
+fn category_of(keyword: &str) -> Option<&'static str> {
+    let k = keyword.trim();
+    let module = match k {
+        "客户" | "客户管理" | "客户列表" | "customer" | "customers" | "crm" => "customer",
+        "订单" | "销售订单" | "采购订单" | "订单列表" | "order" | "orders" => "order",
+        "物料" | "物料主数据" | "物料管理" | "商品" | "material" | "materials" | "product" => {
+            "product"
+        }
+        "文档" | "文件" | "附件" | "document" | "documents" | "file" | "files" => "document",
+        "用户" | "用户管理" | "员工" | "人员" | "user" | "users" => "user",
+        _ => return None,
+    };
+    Some(module)
+}
+
 pub(crate) async fn search_documents(
     conn: &mut ScopedTxn<'_>,
     keyword: &str,
     limit: i64,
+    match_all: bool,
 ) -> Vec<SearchResult> {
-    let keyword_like = format!("%{}%", keyword);
+    let keyword_like = like_pattern(keyword, match_all);
 
     // 表归属：unqualified `core_files` 命中 public.core_files（tenant_id uuid NOT NULL，
     // 业务租户隔离表）。显式按 app.tenant_id 过滤，与 query_projection 同款 COALESCE 语义；
@@ -212,13 +307,15 @@ pub(crate) async fn search_documents(
     let rows: Vec<DocumentSearchRow> = match sqlx::query_as(
         r#"SELECT id, name, path, mime_type
            FROM public.core_files
-           WHERE (name ILIKE $1 OR path ILIKE $1)
-             AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+           WHERE ($3::BOOL OR name ILIKE $1 OR path ILIKE $1)
+             AND (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID OR tenant_id = $4::UUID)
            ORDER BY created_at DESC
            LIMIT $2"#,
     )
     .bind(keyword_like)
     .bind(limit)
+    .bind(match_all)
+    .bind(PLATFORM_TENANT_ID)
     .fetch_all(&mut *conn)
     .await
     {
@@ -255,7 +352,12 @@ pub(crate) async fn search_all(
     limit: i64,
 ) -> Vec<SearchResult> {
     let mut results: Vec<SearchResult> = Vec::new();
-    let per_module_limit = limit / 5;
+    // 单模块配额下限 3：limit 小时（如 page_size=10 → 10/6=1）仍能给出可用列表；
+    // 类别检索时命中模块独占整份 limit，避免"搜『订单』只回 1 条"。
+    let per_module_limit = (limit / 6).max(3);
+
+    // 类别检索：关键词等于模块名（"物料"/"订单"/"客户"…）时，直接列出该模块数据。
+    let category = category_of(keyword);
 
     let should_search = |module: &str| {
         modules
@@ -263,20 +365,46 @@ pub(crate) async fn search_all(
             .is_none_or(|mods| mods.iter().any(|m| matches_filter(module, m)))
     };
 
+    let category_hits = |module: &str| category.is_some_and(|c| c == module);
+    let module_limit = |module: &str| {
+        if category_hits(module) {
+            limit
+        } else {
+            per_module_limit
+        }
+    };
+
     if should_search("user") {
-        results.extend(search_users(&mut *conn, keyword, per_module_limit).await);
+        results.extend(
+            search_users(&mut *conn, keyword, module_limit("user"), category_hits("user")).await,
+        );
     }
 
     if should_search("customer") {
-        results.extend(search_customers(&mut *conn, keyword, per_module_limit).await);
+        results.extend(
+            search_customers(&mut *conn, keyword, module_limit("customer"), category_hits("customer"))
+                .await,
+        );
     }
 
     if should_search("order") {
-        results.extend(search_orders(&mut *conn, keyword, per_module_limit).await);
+        results.extend(
+            search_orders(&mut *conn, keyword, module_limit("order"), category_hits("order")).await,
+        );
+    }
+
+    if should_search("product") {
+        results.extend(
+            search_materials(&mut *conn, keyword, module_limit("product"), category_hits("product"))
+                .await,
+        );
     }
 
     if should_search("document") {
-        results.extend(search_documents(&mut *conn, keyword, per_module_limit).await);
+        results.extend(
+            search_documents(&mut *conn, keyword, module_limit("document"), category_hits("document"))
+                .await,
+        );
     }
 
     results.sort_by(|a, b| b.title.cmp(&a.title));

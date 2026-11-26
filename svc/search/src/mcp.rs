@@ -347,7 +347,7 @@ async fn handle_tools_call(db: &Db, id: Value, params: Option<Value>) -> JsonRpc
                     );
                 }
             };
-            let results = search_documents(&mut scope, query, limit).await;
+            let results = search_documents(&mut scope, query, limit, false).await;
             let items: Vec<Value> = results
                 .into_iter()
                 .map(|r| {

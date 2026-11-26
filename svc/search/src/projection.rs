@@ -14,6 +14,7 @@
 //! 重试 3 次进 DLQ）、CREATE INDEX 报 must be owner。现仅探测表存在性：缺失即告警
 //! （migration 未应用），不阻塞订阅（待事件追平或 backfill 时由 migration 补齐后恢复）。
 
+use std::collections::HashSet;
 use std::time::Duration;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
@@ -157,13 +158,17 @@ async fn apply_v1(db: &Db, payload: &SearchableEntityChangedPayload) -> Result<(
         .map_err(|e| TopemsError::Internal(format!("search 投影 scope begin 失败: {}", e)))?;
 
     if payload.op == "delete" {
+        // 删除事件取自「记录已消失」快照，租户可能已不可知而落到零租户；
+        // 此时按 entity_type+entity_id 兜底清理全部租户行，避免脏数据残留可搜。
         sqlx::query(
             "DELETE FROM public.search_entity_projections
-             WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3",
+             WHERE entity_type = $2 AND entity_id = $3
+               AND (tenant_id = $1 OR $4::boolean)",
         )
         .bind(tenant)
         .bind(&payload.entity_type)
         .bind(payload.entity_id)
+        .bind(tenant == Uuid::parse_str(ZERO_TENANT).unwrap_or_default())
         .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::Internal(format!("search 投影 delete 失败: {}", e)))?;
@@ -230,13 +235,16 @@ async fn apply_v2(db: &Db, payload: &SearchableEntityChangedPayload) -> Result<(
         .map_err(|e| TopemsError::Internal(format!("search v2 投影 scope begin 失败: {}", e)))?;
 
     if payload.op == "delete" {
+        // 同 v1：租户不可知（零租户占位）时按 entity id 兜底清理，避免删除后仍可搜到。
         sqlx::query(
             "DELETE FROM public.search_entity_projections_v2
-             WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3",
+             WHERE entity_type = $2 AND entity_id = $3
+               AND (tenant_id = $1 OR $4::boolean)",
         )
         .bind(tenant)
         .bind(&payload.entity_type)
         .bind(payload.entity_id)
+        .bind(tenant == Uuid::parse_str(ZERO_TENANT).unwrap_or_default())
         .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::Internal(format!("search v2 投影 delete 失败: {}", e)))?;
@@ -294,42 +302,61 @@ pub async fn start_projection_subscriber(db: Db) -> Result<(), TopemsError> {
     // v2 双写失败重试 worker（幂等；未初始化时 apply_event 仅告警跳过）。
     init_v2_retry_worker(db.clone());
 
-    let subscriber = EventSubscriber::new("search")
+    // 订阅者按需在重建循环内创建（见下方 spawn），此处仅做一次环境自检。
+    EventSubscriber::new("search")
         .map_err(|e| TopemsError::internal("构建事件订阅者失败", e))?;
 
-    let sub =
-        subscriber.subscribe_handler(vec![EventType::SearchableEntityChanged], move |event| {
-            let db = db.clone();
-            Box::pin(async move {
-                match event.parse_payload::<SearchableEntityChangedPayload>() {
-                    Ok(payload) => apply_event(&db, payload).await,
-                    Err(e) => {
-                        tracing::error!("[search] 解析 SearchableEntityChanged 失败: {}", e);
-                        // 载荷不可恢复错误不应无限重试进 DLQ 风暴；返回 Ok 让其 ACK。
-                        Ok(())
-                    }
-                }
-            })
-        });
-
     tokio::spawn(async move {
-        // 订阅者长驻；断线重连由 start_listening 内部策略处理，这里仅记录异常退出。
-        let h = tokio::spawn(async move {
-            if let Err(e) = sub.start_listening().await {
-                tracing::error!("[search] 投影事件订阅者异常退出: {}", e);
-            }
-            tracing::warn!("[search] 投影事件订阅者返回（不应发生）");
-        });
-        // 心跳监视：每 30s 报告订阅者 task 存活（低频诊断，避免日志噪音）。
-        let mut tick = tokio::time::interval(Duration::from_secs(30));
+        // 订阅者长驻：`start_listening` 在首连失败时直接返回错误（本地实测启动瞬间
+        // Redis 连接 "timed out" 后订阅者永久退出，投影从此只能靠 backfill 追平）。
+        // 这里做带指数退避的重建循环，保证事件增量最终仍能进入投影。
+        let mut backoff_secs: u64 = 5;
         loop {
-            tick.tick().await;
-            if h.is_finished() {
-                break;
+            let handler_db = db.clone();
+            let subscriber = match EventSubscriber::new("search") {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::error!(
+                        "[search] 重建事件订阅者失败: {}，{}s 后重试",
+                        e,
+                        backoff_secs
+                    );
+                    tokio::time::sleep(Duration::from_secs(backoff_secs)).await;
+                    backoff_secs = (backoff_secs * 2).min(60);
+                    continue;
+                }
+            };
+
+            let sub = subscriber.subscribe_handler(
+                vec![EventType::SearchableEntityChanged],
+                move |event| {
+                    let db = handler_db.clone();
+                    Box::pin(async move {
+                        match event.parse_payload::<SearchableEntityChangedPayload>() {
+                            Ok(payload) => apply_event(&db, payload).await,
+                            Err(e) => {
+                                tracing::error!("[search] 解析 SearchableEntityChanged 失败: {}", e);
+                                // 载荷不可恢复错误不应无限重试进 DLQ 风暴；返回 Ok 让其 ACK。
+                                Ok(())
+                            }
+                        }
+                    })
+                },
+            );
+
+            tracing::info!("[search] 投影事件订阅者（重）start_listening ...");
+            if let Err(e) = sub.start_listening().await {
+                tracing::error!(
+                    "[search] 投影事件订阅者异常退出: {}，{}s 后重建",
+                    e,
+                    backoff_secs
+                );
+            } else {
+                tracing::warn!("[search] 投影事件订阅者正常返回（不应发生），{}s 后重建", backoff_secs);
             }
-            tracing::info!("[search] 订阅者心跳 alive");
+            tokio::time::sleep(Duration::from_secs(backoff_secs)).await;
+            backoff_secs = (backoff_secs * 2).min(60);
         }
-        let _ = h.await;
     });
 
     // 给 Redis/Stream 一点就绪时间（非严格要求，仅避免启动日志噪音）
@@ -423,7 +450,15 @@ pub async fn backfill_projections_with(db: &Db, erp_base: &str, token: &str) -> 
         }
     };
 
-    let resp = match client.get(&url).bearer_auth(token).send().await {
+    // 快照端点是全局全量读（无请求租户），但 erp 请求上下文中间件要求显式租户头：
+    // 以零租户发起，配合其 RLS 全量可见语义（否则 400「缺少租户上下文」，回填永远失败）。
+    let resp = match client
+        .get(&url)
+        .bearer_auth(token)
+        .header("x-tenant-id", ZERO_TENANT)
+        .send()
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!(
@@ -462,6 +497,8 @@ pub async fn backfill_projections_with(db: &Db, erp_base: &str, token: &str) -> 
     let source_count = items.len();
     let mut upserted = 0;
     let mut failed = 0;
+    // 快照 = 当前可搜索全集；记下 (类型, id) 作为「保留集」，供下方对账清理使用。
+    let mut keep: HashSet<(String, Uuid)> = HashSet::with_capacity(source_count);
     for item in items {
         let payload = match serde_json::from_value::<SearchableEntityChangedPayload>(item) {
             Ok(p) => p,
@@ -471,11 +508,66 @@ pub async fn backfill_projections_with(db: &Db, erp_base: &str, token: &str) -> 
                 continue;
             }
         };
+        keep.insert((payload.entity_type.clone(), payload.entity_id));
         match apply_event(db, payload).await {
             Ok(()) => upserted += 1,
             Err(e) => {
                 failed += 1;
                 tracing::error!("[search] backfill 投影写入失败: {}", e);
+            }
+        }
+    }
+
+    // 对账清理：快照覆盖的实体类型里，投影有但快照没有的行（软删/物理删/丢事件残留）
+    // 必须删掉，否则「删了还能搜到」。只在整轮 upsert 全成功时执行，避免半成功误删。
+    // erp 拥有的类型固定列在这里（即使该类型在快照里 0 条也要清理）；document 等
+    // 非 erp 类型不在此列，不会被误伤。v2 表当前空置，暂不参与清理。
+    let mut cleaned = 0;
+    let mut clean_failed = 0;
+    if failed == 0 {
+        const ERP_OWNED_TYPES: [&str; 4] =
+            ["customer", "sales_order", "purchase_order", "material"];
+        let mut types: HashSet<String> =
+            ERP_OWNED_TYPES.iter().map(|t| t.to_string()).collect();
+        for (t, _) in &keep {
+            types.insert(t.clone());
+        }
+        let type_list: Vec<String> = types.into_iter().collect();
+        let existing: Vec<(String, Uuid)> = match db.scope_read_system().await {
+            Ok(mut scope) => sqlx::query_as(
+                "SELECT entity_type, entity_id FROM public.search_entity_projections WHERE entity_type = ANY($1)",
+            )
+            .bind(&type_list)
+            .fetch_all(&mut scope)
+            .await
+            .unwrap_or_default(),
+            Err(_) => Vec::new(),
+        };
+        for (entity_type, entity_id) in existing {
+            if keep.contains(&(entity_type.clone(), entity_id)) {
+                continue;
+            }
+            let delete_payload = SearchableEntityChangedPayload {
+                entity_type,
+                entity_id,
+                tenant_id: None,
+                company_id: None,
+                op: "delete".to_string(),
+                name: None,
+                contact_person: None,
+                contact_phone: None,
+                email: None,
+                address: None,
+                status: None,
+                remark: None,
+                source_updated_at: None,
+            };
+            match apply_event(db, delete_payload).await {
+                Ok(()) => cleaned += 1,
+                Err(e) => {
+                    clean_failed += 1;
+                    tracing::error!("[search] backfill 清理过期投影失败: {}", e);
+                }
             }
         }
     }
@@ -491,12 +583,14 @@ pub async fn backfill_projections_with(db: &Db, erp_base: &str, token: &str) -> 
         Err(_) => 0,
     };
     tracing::info!(
-        "[search] backfill 对账完成: 源快照 {} 条, 投影补写 {} 行, 失败 {} 行, 投影行数 {} -> {}",
+        "[search] backfill 对账完成: 源快照 {} 条, 投影补写 {} 行, 失败 {} 行, 清理过期 {} 行（清理失败 {} 行）, 投影行数 {} -> {}",
         source_count,
         upserted,
         failed,
+        cleaned,
+        clean_failed,
         before,
         after
     );
-    failed == 0
+    failed == 0 && clean_failed == 0
 }
