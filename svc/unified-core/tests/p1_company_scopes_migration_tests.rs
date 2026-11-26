@@ -6,6 +6,12 @@
 //!   - 单公司租户一次性回填（read/write/consolidate）且在职用户零遗漏；
 //!   - 多公司租户不自动授予；0 公司租户不建 scope、不报错；
 //!   - 重复 code、非法 access_level、跨租户公司引用均被数据库拒绝。
+//!
+//! 夹具说明（IAM-3 / 20261126170000 之后）：被测历史迁移 20261108130000 对
+//!   `iam.users.roles/permissions` 做双读兜底（冗余列 OR 关联表），本隔离夹具自建的
+//!   临时表需保留这两列以回放历史账本 SQL；现行真实库的 `iam.users` 已由迁移
+//!   20261126170000 删除 `roles/permissions/role_id` 三列。夹具中的 `role_id` 属于
+//!   `core_roles` / `core_user_roles` 关联表，并非 users 旧单角色外键列。
 #![cfg(feature = "db-tests")]
 
 use std::borrow::Cow;

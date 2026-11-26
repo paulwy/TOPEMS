@@ -3230,3 +3230,12 @@ pending_forward_patches:
     effect: "iam.tenant_permissions 策略收紧为 app.rls_system='on' 或 tenant_id 精确匹配，补 FORCE RLS；未设置 tenant 时 fail-closed"
     destructive_scan: "ALTER TABLE ENABLE/FORCE RLS + ALTER/CREATE POLICY；无 DELETE/UPDATE/TRUNCATE/DROP TABLE"
     note: "remediation：20261125160000 建表策略含 NULLIF(...) IS NULL / 空串 / 零租户豁免，且缺 FORCE；本迁移按 20261124200000 同形加固，旧文件加入 RLS_SHAPE_REMEDIATED 静态豁免；checksum 307a7aa2a331d6c241617b1b3c0c90f5b77849c68514685aa5e7670246d5fdf8"
+
+  # ===== 2026-11-26：iam.users 反范式冗余列与旧单角色列删除（IAM-3） =====
+  - version: "20261126170000"
+    file: "database/migrations/20261126170000_drop_iam_users_legacy_columns.sql"
+    status: to_apply
+    ledger_evidence: "无账本行（本地 _sqlx_migrations 无 20261126170000；版本 > anchor 20261118150000）"
+    effect: "删除 iam.users 反范式冗余列 roles/permissions 与旧单角色外键列 role_id（连带 users_role_id_fkey 约束、idx_users_role_id 索引）；授权权威源为 core_user_roles→core_role_permissions→core_permissions 关联表"
+    destructive_scan: "DROP CONSTRAINT IF EXISTS + DROP INDEX IF EXISTS + DROP COLUMN IF EXISTS（显式 schema、IF EXISTS/to_regclass 守卫、destructive 标记 rows-at-review=0 + backup）；无 DELETE/UPDATE/TRUNCATE"
+    note: "超管由 is_superuser 布尔独立兜底、不要求在关联表绑角色；prod reviewer 评审体验账号为例外身份保留全量评审权限；三列数据删除前备份至 backups/db-iam-users-legacy-columns/；运行期 Rust/前端/.sqlx 对三列零裸列引用；checksum 1400c106c4a141686b88234fd9d9aa4073b6b5ef649256b7ab59263968d34abb"
