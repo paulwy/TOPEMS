@@ -26,6 +26,14 @@ pre-commit:
       tags: shellcheck
       run: python3 scripts/ci/check-bash-var-cjk-punct.py --changed-only
 
+    # [Gate UT] 身份表错位回归防线（2026-11-26 事故）：
+    # 身份权威表是 iam.users；public.core_users 自 2026-10-28 收敛后废弃。
+    # 脚本里出现「SQL 动词 + 裸 core_users」即阻断——裸引用按 search_path 解析，
+    # 本机落到 47 行旧镜像、生产 0 行，改完看似成功但服务读的不是这张表。
+    bare-user-table:
+      tags: database
+      run: python3 scripts/ci/check-bare-user-table.py --changed-only
+
     # [Gate A] Frontend lint (eslint + prettier)
     frontend-lint:
       tags: frontend lint
