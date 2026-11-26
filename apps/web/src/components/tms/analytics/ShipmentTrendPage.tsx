@@ -141,7 +141,9 @@ export default function ShipmentTrendPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='total'
                 name={t('tms.shipment_trend_page.k7')}
@@ -190,7 +192,9 @@ export default function ShipmentTrendPage() {
                 domain={[0, 100]}
               />
               <Tooltip formatter={(value: unknown) => `${value}%`} />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Line
                 type='monotone'
                 dataKey='deliveryRate'

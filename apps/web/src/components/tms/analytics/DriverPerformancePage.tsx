@@ -145,7 +145,9 @@ export default function DriverPerformancePage() {
                 fontSize={11}
               />
               <Tooltip formatter={(value: unknown) => `${value}%`} />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <ReferenceLine
                 y={90}
                 stroke={theme.palette.success.dark}
@@ -185,7 +187,9 @@ export default function DriverPerformancePage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='totalDeliveries'
                 name={t('tms.driver_performance_page.k20')}

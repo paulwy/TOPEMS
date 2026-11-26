@@ -91,7 +91,15 @@ export default function PdmBatchPage() {
             mb: 3,
           }}
         >
-          <Box sx={{ p: 2, bgcolor: 'cyan.light', borderRadius: 3 }}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'cyan.main',
+              borderRadius: 3,
+            }}
+          >
             <Typography
               variant='body2'
               sx={{ color: 'slate.600' }}
@@ -133,7 +141,15 @@ export default function PdmBatchPage() {
               {stats.inProgress}
             </Typography>
           </Box>
-          <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'success.main',
+              borderRadius: 3,
+            }}
+          >
             <Typography
               variant='body2'
               sx={{ color: 'slate.600' }}

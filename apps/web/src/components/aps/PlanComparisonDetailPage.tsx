@@ -103,7 +103,9 @@ export default function PlanComparisonDetailPage() {
                   <XAxis dataKey='period' />
                   <YAxis />
                   <Tooltip />
-                  <Legend />
+                  <Legend
+                    formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                  />
                   <Bar
                     dataKey='planned'
                     name={t('aps.plan_comparison_detail_page.k11')}

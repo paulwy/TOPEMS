@@ -123,7 +123,9 @@ export default function WmsLocationUtilizationPage() {
                 return [`${v}%`, labels[String(n)] ?? String(n)];
               }}
             />
-            <Legend />
+            <Legend
+              formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+            />
             <Bar
               dataKey='utilization'
               name={i18n.t('pages.wms_location_utilization_page.k8')}

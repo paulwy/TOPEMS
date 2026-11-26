@@ -535,7 +535,7 @@ export const ProductionDashboardPage: React.FC = () => {
           </Stack>
           <Typography
             variant='caption'
-            sx={{ color: 'text.disabled' }}
+            sx={{ color: 'text.secondary' }}
           >
             {i18n.t('pages.index.k0')} {REFRESH_INTERVAL_MS / 1000}s
           </Typography>
@@ -739,7 +739,7 @@ export const ProductionDashboardPage: React.FC = () => {
             />
             <Typography
               variant='caption'
-              sx={{ color: 'text.disabled' }}
+              sx={{ color: 'text.secondary' }}
             >
               {i18n.t('pages.index.k3')} {REFRESH_INTERVAL_MS / 1000} {i18n.t('pages.index.k4')}
               {wsConnected ? i18n.t('pages.index.websocket_18') : i18n.t('pages.index.k17')}

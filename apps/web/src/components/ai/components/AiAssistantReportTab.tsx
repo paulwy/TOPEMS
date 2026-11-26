@@ -83,7 +83,9 @@ const ReportResultView: React.FC<{ result: ReportAssistantResponse }> = ({ resul
               <XAxis dataKey={xKey} />
               <YAxis />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               {yKeys.map((key, index) => (
                 <Line
                   key={key}
@@ -109,7 +111,9 @@ const ReportResultView: React.FC<{ result: ReportAssistantResponse }> = ({ resul
               <XAxis dataKey={xKey} />
               <YAxis />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               {yKeys.map((key, index) => (
                 <Bar
                   key={key}
@@ -152,7 +156,9 @@ const ReportResultView: React.FC<{ result: ReportAssistantResponse }> = ({ resul
                 ))}
               </Pie>
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
             </PieChart>
           </ResponsiveContainer>
         );

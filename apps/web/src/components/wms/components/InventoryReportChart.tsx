@@ -53,7 +53,16 @@ export const InventoryReportABCOverview: React.FC<InventoryReportABCOverviewProp
           spacing={2}
         >
           <Grid size={{ xs: 6, md: 3 }}>
-            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+            <Box
+              sx={{
+                textAlign: 'center',
+                p: 2,
+                bgcolor: 'var(--surface-2)',
+                borderLeft: '3px solid',
+                borderColor: 'error.main',
+                borderRadius: 1,
+              }}
+            >
               <Typography
                 variant='h4'
                 sx={{ fontWeight: 700, color: 'error.dark' }}
@@ -69,7 +78,16 @@ export const InventoryReportABCOverview: React.FC<InventoryReportABCOverviewProp
             </Box>
           </Grid>
           <Grid size={{ xs: 6, md: 3 }}>
-            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+            <Box
+              sx={{
+                textAlign: 'center',
+                p: 2,
+                bgcolor: 'var(--surface-2)',
+                borderLeft: '3px solid',
+                borderColor: 'warning.main',
+                borderRadius: 1,
+              }}
+            >
               <Typography
                 variant='h4'
                 sx={{ fontWeight: 700, color: 'warning.dark' }}
@@ -85,7 +103,16 @@ export const InventoryReportABCOverview: React.FC<InventoryReportABCOverviewProp
             </Box>
           </Grid>
           <Grid size={{ xs: 6, md: 3 }}>
-            <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+            <Box
+              sx={{
+                textAlign: 'center',
+                p: 2,
+                bgcolor: 'var(--surface-2)',
+                borderLeft: '3px solid',
+                borderColor: 'success.main',
+                borderRadius: 1,
+              }}
+            >
               <Typography
                 variant='h4'
                 sx={{ fontWeight: 700, color: 'success.dark' }}

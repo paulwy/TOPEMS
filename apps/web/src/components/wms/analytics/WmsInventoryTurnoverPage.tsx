@@ -196,7 +196,9 @@ export default function WmsInventoryTurnoverPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Line
                 type='monotone'
                 dataKey='turnoverRate'
@@ -223,7 +225,9 @@ export default function WmsInventoryTurnoverPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='days'
                 name={i18n.t('pages.wms_inventory_turnover_page.k8')}

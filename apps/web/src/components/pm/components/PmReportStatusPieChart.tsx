@@ -52,7 +52,9 @@ const PmReportStatusPieChart: React.FC<PmReportStatusPieChartProps> = ({
                   i18n.t('pm.pm_report_page.tooltip_unit'),
                 ]}
               />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
             </PieChart>
           </ResponsiveContainer>
         </Box>

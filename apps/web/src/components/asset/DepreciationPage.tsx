@@ -187,7 +187,15 @@ const DepreciationPage: React.FC = () => {
           mb: 3,
         }}
       >
-        <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'primary.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <BarChart3
               size={16}
@@ -207,7 +215,15 @@ const DepreciationPage: React.FC = () => {
             {currentTotal}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'success.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <TrendingUp
               size={16}
@@ -227,7 +243,15 @@ const DepreciationPage: React.FC = () => {
             ¥{currentValue.toLocaleString()}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'warning.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'warning.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <Calculator
               size={16}
@@ -247,7 +271,15 @@ const DepreciationPage: React.FC = () => {
             ¥{currentDepreciation.toLocaleString()}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'info.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'info.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <RefreshCw
               size={16}

@@ -35,7 +35,7 @@ const DocumentUploadProgress: React.FC<DocumentUploadProgressProps> = ({ uploadP
             </Typography>
             <Typography
               variant='body2'
-              sx={{ color: 'primary.700' }}
+              sx={{ color: 'var(--accent-primary-text)' }}
             >
               {uploadProgress}%
             </Typography>

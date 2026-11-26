@@ -199,7 +199,9 @@ export default function CapacityUtilizationPage() {
                 }}
               />
               <Tooltip formatter={(value: unknown) => `${value}%`} />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <ReferenceLine
                 y={85}
                 stroke={theme.palette.success.dark}

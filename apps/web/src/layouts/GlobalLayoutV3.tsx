@@ -83,56 +83,6 @@ const MODULE_ORDER: readonly string[] = [
 
 const MODULE_ORDER_INDEX = new Map(MODULE_ORDER.map((code, index) => [code, index]));
 
-/**
- * 模块名前缀 → 兜底文案（A-05/A-07）。
- * 各模块文案按需异步加载（i18n 命名空间是独立 chunk），导航首屏在 chunk 到位前
- * 会把 `srm.nav.module_name`、`master.moduleName` 这类原始 key 直接渲染出来（实测闪现约 5s）。
- * 这里给一级模块名一个静态兜底，key 未就绪时显示可读名称，不再露出原始 key。
- */
-const MODULE_NAME_FALLBACK: Record<string, { zh: string; en: string }> = {
-  aps: { zh: '高级排程', en: 'Advanced Planning' },
-  scm: { zh: '供应链管理', en: 'Supply Chain' },
-  srm: { zh: '供应商关系', en: 'Supplier Relations' },
-  tms: { zh: '运输管理', en: 'Transportation' },
-  crm: { zh: '客户管理', en: 'Customers' },
-  qms: { zh: '质量管理', en: 'Quality' },
-  erp: { zh: '企业资源', en: 'ERP' },
-  mes: { zh: '制造执行', en: 'MES' },
-  wms: { zh: '仓储管理', en: 'WMS' },
-  ehs: { zh: '安全环保', en: 'EHS' },
-  lims: { zh: '实验室管理', en: 'LIMS' },
-  rd: { zh: '研发管理', en: 'R&D' },
-  pm: { zh: '项目管理', en: 'Projects' },
-  oa: { zh: 'OA 办公', en: 'Office' },
-  master: { zh: '主数据治理', en: 'Master Data' },
-  automation: { zh: '自动化', en: 'Automation' },
-  finance: { zh: '财务', en: 'Finance' },
-  hrm: { zh: '人力资源', en: 'HR' },
-  bi: { zh: '数据分析', en: 'Analytics' },
-  pdm: { zh: '产品数据', en: 'Product Data' },
-  iam: { zh: '组织权限', en: 'IAM' },
-  workflow: { zh: '流程', en: 'Workflow' },
-  ticket: { zh: '工单', en: 'Tickets' },
-  report: { zh: '报表', en: 'Reports' },
-  integration: { zh: '集成', en: 'Integrations' },
-  monitor: { zh: '监控', en: 'Monitoring' },
-  doc: { zh: '文档', en: 'Documents' },
-  notification: { zh: '消息', en: 'Notifications' },
-};
-
-/** 翻译 key 已就绪则用译文；否则先用调用方给的静态名称；再退到模块前缀兜底；最后回退原始 key */
-function resolveNavLabel(labelKey?: string, fallback?: string): string {
-  if (labelKey && i18n.exists(labelKey)) return i18n.t(labelKey);
-  // 调用方给的静态名称优先：子项 label 是“供应商管理”这类具体名称，
-  // 若先走模块前缀兜底，三级子项会被错写成一级模块名（如 SAP 下所有子项都变“供应链管理”）
-  if (fallback && fallback !== labelKey) return fallback;
-  if (labelKey) {
-    const entry = MODULE_NAME_FALLBACK[labelKey.split('.')[0]];
-    if (entry) return (i18n.language || 'zh').startsWith('zh') ? entry.zh : entry.en;
-  }
-  return labelKey ?? '';
-}
-
 /** 图标名 → Lucide 组件；未知图标统一回退为 LayoutGrid，避免渲染崩溃 */
 function resolveIcon(iconName?: string): LucideIcon {
   const icon = iconName ? lucideIcons[iconName] : null;
@@ -214,7 +164,7 @@ function buildSidebarItems(
           dbItem?.titleKey && i18n.exists(dbItem.titleKey) ? dbItem.titleKey : child.labelKey;
         return {
           id: `${moduleItem.code}:${child.code}`,
-          label: resolveNavLabel(labelKey, child.label),
+          label: labelKey ? i18n.t(labelKey) : child.label,
           icon: resolveIcon(dbItem?.icon || child.icon),
           path: dbItem?.path || child.path,
           // P2-2：把 navItems 的 group 语义带到渲染层，由 SideRail 按
@@ -232,7 +182,7 @@ function buildSidebarItems(
 
     moduleItems.push({
       id: moduleItem.code,
-      label: resolveNavLabel(moduleItem.labelKey, moduleItem.label),
+      label: moduleItem.labelKey ? i18n.t(moduleItem.labelKey) : moduleItem.label,
       icon: resolveIcon(moduleItem.icon),
       path: moduleItem.path,
       badge: moduleItem.code === 'notification' && unreadCount > 0 ? unreadCount : undefined,

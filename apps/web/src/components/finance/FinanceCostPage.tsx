@@ -310,7 +310,15 @@ const FinanceCostPage: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 1,
+                }}
+              >
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -334,7 +342,15 @@ const FinanceCostPage: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: 'var(--surface-2)',
+                    borderLeft: '3px solid',
+                    borderColor: 'success.main',
+                    borderRadius: 1,
+                  }}
+                >
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -351,7 +367,15 @@ const FinanceCostPage: React.FC = () => {
                     ).toLocaleString()}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: 'var(--surface-2)',
+                    borderLeft: '3px solid',
+                    borderColor: 'error.main',
+                    borderRadius: 1,
+                  }}
+                >
                   <Typography
                     variant='body2'
                     color='text.secondary'

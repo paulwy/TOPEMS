@@ -1,22 +1,8 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
-import { formatDate } from '@/utils/format';
 import { masterDataSupplierCategoriesApi } from '@/api/master-data/supplierCategories';
 import { getNameZhSync } from '@/hooks/useDictionary';
-
-/**
- * 时间列统一格式化：后端返回 RFC3339（6 位微秒）+Z，
- * 先裁剪到毫秒再格式化，避免部分浏览器 Date 解析失败导致原样输出 ISO 字符串。
- * 列表只到分钟（W4 验收口径 yyyy-MM-dd HH:mm），解析失败按空值显示。
- */
-const formatDateTimeCell = (value: unknown): string => {
-  if (!value) return '—';
-  const raw = String(value).replace(/(\.\d{3})\d+(Z|[+-]\d{2}:?\d{2})$/, '$1$2');
-  const formatted = formatDate(raw, 'YYYY-MM-DD HH:mm');
-  // formatDate 解析失败时原样返回入参，这里按空值处理，避免把 ISO 串再露出来
-  return formatted === raw ? '—' : formatted;
-};
 
 export const supplierSchema: EntitySchema = {
   entity: 'supplier',
@@ -196,7 +182,6 @@ export const supplierSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => formatDateTimeCell(row.created_at),
     },
     {
       name: 'updated_at',
@@ -206,7 +191,6 @@ export const supplierSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => formatDateTimeCell(row.updated_at),
     },
   ],
 

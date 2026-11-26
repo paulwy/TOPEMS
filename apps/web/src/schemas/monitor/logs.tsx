@@ -32,7 +32,7 @@ const getTypeLabels = (): Record<LogType, string> => ({
 });
 
 const LEVEL_COLORS: Record<LogLevel, { bg: string; color: string; border: string }> = {
-  error: { bg: 'error.100', color: 'error.700', border: ct.error.light },
+  error: { bg: 'error.100', color: 'var(--error-text)', border: ct.error.light },
   warn: { bg: ct.orange[100], color: 'warning.600', border: ct.orange[300] },
   info: { bg: 'primary.100', color: 'primary.dark', border: ct.primary[300] },
   debug: { bg: 'grey.100', color: 'text.secondary', border: ct.grey[300] },

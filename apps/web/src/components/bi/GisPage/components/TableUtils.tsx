@@ -17,9 +17,9 @@ export const getStatusStyle = (status: string) => {
   if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
   const s = status.toLowerCase();
   if (s.includes('active') || s.includes(i18n.t('bi.gis_page_components__table_utils.active')))
-    return { bgcolor: 'success.lighter', color: 'success.700' };
+    return { bgcolor: 'success.lighter', color: 'var(--success-text)' };
   if (s.includes('pending') || s.includes(i18n.t('bi.gis_page_components__table_utils.pending')))
-    return { bgcolor: 'warning.light', color: 'warning.700' };
+    return { bgcolor: 'warning.light', color: 'var(--warning-text)' };
   if (
     s.includes('inactive') ||
     s.includes(i18n.t('bi.gis_page_components__table_utils.disabled_filter'))

@@ -162,7 +162,7 @@ const MaterialBOMPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Package
               size={18}
-              sx={{ color: 'secondary.700' }}
+              sx={{ color: 'var(--accent-secondary-text)' }}
             />
             <Typography
               variant='body2'
@@ -173,12 +173,20 @@ const MaterialBOMPage: React.FC = () => {
           </Box>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'secondary.700' }}
+            sx={{ fontWeight: 700, color: 'var(--accent-secondary-text)' }}
           >
             {boms.length}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'success.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 1 }}
@@ -187,12 +195,20 @@ const MaterialBOMPage: React.FC = () => {
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'success.700' }}
+            sx={{ fontWeight: 700, color: 'var(--success-text)' }}
           >
             {boms.filter((b) => b.status === 'active').length}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'warning.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary', mb: 1 }}
@@ -201,7 +217,7 @@ const MaterialBOMPage: React.FC = () => {
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'warning.700' }}
+            sx={{ fontWeight: 700, color: 'var(--warning-text)' }}
           >
             {boms.filter((b) => b.status === 'inactive').length}
           </Typography>

@@ -250,7 +250,9 @@ export default function OeeDashboardPage() {
                   background
                   dataKey='value'
                 />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
                 <Tooltip />
               </RadialBarChart>
             </ResponsiveContainer>
@@ -282,7 +284,9 @@ export default function OeeDashboardPage() {
                 fontSize={11}
               />
               <Tooltip formatter={(value: unknown) => `${value}%`} />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='availability'
                 name={t('aps.oee_dashboard_page.k0')}

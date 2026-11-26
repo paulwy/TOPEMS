@@ -85,7 +85,16 @@ const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ h
         </Box>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'error.main',
+              borderRadius: 1,
+            }}
+          >
             <Typography sx={{ color: 'error.dark', fontSize: 12 }}>
               {t('ehs.ehshazarddetailpage.critical_level')}
             </Typography>
@@ -97,7 +106,16 @@ const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ h
                   : t('ehs.ehs_hazard_detail_page.low')}
             </Typography>
           </Box>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'warning.main',
+              borderRadius: 1,
+            }}
+          >
             <Typography sx={{ color: theme.palette.yellow[600], fontSize: 12 }}>
               {t('ehs.ehshazarddetailpage.exposure_level')}
             </Typography>
@@ -109,7 +127,16 @@ const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ h
                   : t('ehs.ehs_hazard_detail_page.low')}
             </Typography>
           </Box>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'primary.main',
+              borderRadius: 1,
+            }}
+          >
             <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>
               {t('ehs.ehshazarddetailpage.likelihood')}
             </Typography>

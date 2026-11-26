@@ -540,7 +540,15 @@ const FinanceTaxPage: React.FC = () => {
                     ¥{selectedTax.paid_amount.toLocaleString()}
                   </Typography>
                 </MuiBox>
-                <MuiBox sx={{ p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+                <MuiBox
+                  sx={{
+                    p: 2,
+                    bgcolor: 'var(--surface-2)',
+                    borderLeft: '3px solid',
+                    borderColor: 'error.main',
+                    borderRadius: 1,
+                  }}
+                >
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -648,7 +656,15 @@ const FinanceTaxPage: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <MuiBox sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
+                <MuiBox
+                  sx={{
+                    p: 2,
+                    bgcolor: 'var(--surface-2)',
+                    borderLeft: '3px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: 1,
+                  }}
+                >
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -662,7 +678,15 @@ const FinanceTaxPage: React.FC = () => {
                     ¥{selectedTax.taxable_income.toLocaleString()}
                   </Typography>
                 </MuiBox>
-                <MuiBox sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 1 }}>
+                <MuiBox
+                  sx={{
+                    p: 2,
+                    bgcolor: 'var(--surface-2)',
+                    borderLeft: '3px solid',
+                    borderColor: 'secondary.main',
+                    borderRadius: 1,
+                  }}
+                >
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -676,7 +700,15 @@ const FinanceTaxPage: React.FC = () => {
                     {selectedTax.tax_rate}%
                   </Typography>
                 </MuiBox>
-                <MuiBox sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+                <MuiBox
+                  sx={{
+                    p: 2,
+                    bgcolor: 'var(--surface-2)',
+                    borderLeft: '3px solid',
+                    borderColor: 'success.main',
+                    borderRadius: 1,
+                  }}
+                >
                   <Typography
                     variant='body2'
                     color='text.secondary'

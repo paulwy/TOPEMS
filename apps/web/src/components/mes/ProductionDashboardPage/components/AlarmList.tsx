@@ -135,7 +135,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
                       <Box sx={{ flex: 1 }} />
                       <Typography
                         variant='caption'
-                        sx={{ color: 'text.disabled' }}
+                        sx={{ color: 'text.secondary' }}
                       >
                         {formatRelativeTime(alarm.timestamp)}
                       </Typography>

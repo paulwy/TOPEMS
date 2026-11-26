@@ -882,7 +882,15 @@ const PmProjectDetailPage: React.FC = () => {
                 gap: 2,
               }}
             >
-              <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'primary.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -896,7 +904,15 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'success.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -910,7 +926,15 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'warning.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -924,7 +948,15 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'secondary.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 0.5 }}

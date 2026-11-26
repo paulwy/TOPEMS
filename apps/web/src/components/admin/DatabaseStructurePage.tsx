@@ -291,11 +291,11 @@ const DatabaseStructurePage: React.FC = () => {
   const getChangeTypeColor = (type: string) => {
     switch (type) {
       case 'add_column':
-        return { bgcolor: 'success.lighter', color: 'success.700' };
+        return { bgcolor: 'success.lighter', color: 'var(--success-text)' };
       case 'drop_column':
         return { bgcolor: 'error.lighter', color: 'error.darker' };
       default:
-        return { bgcolor: 'warning.light', color: 'warning.700' };
+        return { bgcolor: 'warning.light', color: 'var(--warning-text)' };
     }
   };
   return (

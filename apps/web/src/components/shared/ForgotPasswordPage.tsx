@@ -417,7 +417,7 @@ const ForgotPasswordPage: React.FC = () => {
                   disabled={loading}
                 >
                   {loading
-                    ? i18n.t('pages.forgot_password_page.submitting')
+                    ? i18n.t('pages.forgot_password_page.k4')
                     : i18n.t('pages.forgot_password_page.k25')}
                 </Button>
               </Box>
@@ -529,7 +529,7 @@ const ForgotPasswordPage: React.FC = () => {
                   disabled={loading}
                 >
                   {loading
-                    ? i18n.t('pages.forgot_password_page.resetting')
+                    ? i18n.t('pages.forgot_password_page.k5')
                     : i18n.t('pages.forgot_password_page.k31')}
                 </Button>
               </Box>
@@ -549,7 +549,7 @@ const ForgotPasswordPage: React.FC = () => {
                 fontWeight: 500,
               }}
             >
-              {i18n.t('pages.forgot_password_page.backToLogin')}
+              {i18n.t('pages.forgot_password_page.k4')}
             </Button>
           </Box>
         </CardContent>

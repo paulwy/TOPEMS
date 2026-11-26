@@ -189,7 +189,9 @@ export default function QmsSpcControlChartPage() {
                 domain={[lcl - 1, ucl + 1]}
               />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <ReferenceLine
                 y={ucl}
                 stroke={theme.palette.error.main}
@@ -265,7 +267,9 @@ export default function QmsSpcControlChartPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Line
                 type='monotone'
                 dataKey='range'

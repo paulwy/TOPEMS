@@ -284,7 +284,9 @@ export default function QmsAuditCompliancePage() {
                   fontSize={11}
                 />
                 <Tooltip />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
                 <Bar
                   dataKey='completionRate'
                   name={t('qms.qms_audit_compliance_page.k8')}
@@ -329,7 +331,9 @@ export default function QmsAuditCompliancePage() {
                   fontSize={11}
                 />
                 <Tooltip />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
                 <Bar
                   dataKey='complianceRate'
                   name={t('qms.qms_audit_compliance_page.k11')}

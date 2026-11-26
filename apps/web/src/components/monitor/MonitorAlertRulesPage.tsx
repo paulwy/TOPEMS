@@ -430,11 +430,19 @@ const MonitorAlertRulesPage: React.FC = () => {
             {total}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'success.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Power
               size={18}
-              sx={{ color: 'success.700' }}
+              sx={{ color: 'var(--success-text)' }}
             />
             <Typography
               variant='body2'
@@ -445,7 +453,7 @@ const MonitorAlertRulesPage: React.FC = () => {
           </Box>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'success.700' }}
+            sx={{ fontWeight: 700, color: 'var(--success-text)' }}
           >
             {enabledCount}
           </Typography>
@@ -470,11 +478,19 @@ const MonitorAlertRulesPage: React.FC = () => {
             {disabledCount}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'warning.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <AlertTriangle
               size={18}
-              sx={{ color: 'warning.700' }}
+              sx={{ color: 'var(--warning-text)' }}
             />
             <Typography
               variant='body2'
@@ -485,7 +501,7 @@ const MonitorAlertRulesPage: React.FC = () => {
           </Box>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'warning.700' }}
+            sx={{ fontWeight: 700, color: 'var(--warning-text)' }}
           >
             {totalTriggersToday}
           </Typography>
