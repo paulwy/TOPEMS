@@ -215,25 +215,59 @@ run_sql() {
     fi
 }
 
+# 列存在性判断（不同环境表结构有差异：生产 iam.users 没有 role_id 之外的若干列）
+has_column() {
+    local schema="$1" table="$2" column="$3"
+    local cnt
+    cnt=$(run_sql "SELECT count(*) FROM information_schema.columns
+WHERE table_schema = :'schema' AND table_name = :'table' AND column_name = :'column';" \
+        -tA -v schema="$schema" -v table="$table" -v column="$column" 2>/dev/null) || return 1
+    [ "$(tr -d '[:space:]' <<< "$cnt")" = "1" ]
+}
+
 echo "------------------------------------------------------------"
 echo "步骤 1: 查看当前用户信息"
 echo "------------------------------------------------------------"
-# 先判存：用户名不存在时直接终止，避免「UPDATE 0 行但打印成功」的假成功
-USER_COUNT=$(run_sql "SELECT count(*) FROM core_users WHERE username = :'username';" \
-    -tA -v username="$USERNAME" 2>/dev/null) || {
-    echo "❌ 查询失败（请确认账号口令/端口与 DATABASE_URL 一致；生产 socket 形态请确认角色 peer 可登录）"
-    unset PGPASSWORD
-    exit 1
-}
-USER_COUNT=$(tr -d '[:space:]' <<< "$USER_COUNT")
-if [ "$USER_COUNT" = "0" ]; then
-    echo "❌ 用户 ${USERNAME} 不存在（core_users 无匹配行），已终止，未做任何修改"
+# 用户表定位：认证代码（iam/auth.rs）读 iam.users；而历史脚本写的是裸 core_users，
+# 在本机会落到 public.core_users（重复表），在生产则一行没有 → 都是「改了但没生效」。
+# 因此按候选表逐个判存，命中用户名即选定，优先认证表 iam.users。
+USER_TABLE=""
+TABLE_TRY=""
+for t in iam.users iam.core_users core_users public.core_users; do
+    cnt=$(run_sql "SELECT count(*) FROM ${t} WHERE username = :'username';" \
+        -tA -v username="$USERNAME" 2>/dev/null) || { TABLE_TRY="${TABLE_TRY}${t}=<不可用> "; continue; }
+    cnt=$(tr -d '[:space:]' <<< "$cnt")
+    TABLE_TRY="${TABLE_TRY}${t}=${cnt} "
+    if [ "${cnt:-0}" -gt 0 ] 2>/dev/null; then
+        USER_TABLE="$t"
+        break
+    fi
+done
+if [ -z "$USER_TABLE" ]; then
+    echo "❌ 用户 ${USERNAME} 在所有候选用户表都不存在（${TABLE_TRY}），已终止，未做任何修改"
+    echo "   若计数全为 0 但确实有账号，检查 RLS 会话（app.tenant_id）或 DATABASE_URL 是否指向正确库"
     unset PGPASSWORD
     exit 1
 fi
+echo "  命中用户表: ${USER_TABLE}"
 
-run_sql "SELECT id, username, email, is_superuser, status
-FROM core_users
+TABLE_SCHEMA="${USER_TABLE%%.*}"
+TABLE_NAME="${USER_TABLE##*.}"
+SELECT_COLS="id, username"
+PREVIEW_EXTRA_COLS=""
+for c in email is_superuser status must_change_password updated_at; do
+    if has_column "$TABLE_SCHEMA" "$TABLE_NAME" "$c"; then
+        SELECT_COLS="${SELECT_COLS}, ${c}"
+    fi
+done
+for c in email must_change_password updated_at; do
+    if has_column "$TABLE_SCHEMA" "$TABLE_NAME" "$c"; then
+        PREVIEW_EXTRA_COLS="${PREVIEW_EXTRA_COLS}, ${c}"
+    fi
+done
+
+run_sql "SELECT ${SELECT_COLS}
+FROM ${USER_TABLE}
 WHERE username = :'username';" -v username="$USERNAME" 2>&1 || {
     echo "❌ 查询失败（请确认账号口令/端口与 DATABASE_URL 一致）"
     unset PGPASSWORD
@@ -276,16 +310,30 @@ echo "  哈希来源: ${HASH_METHOD}"
 echo
 
 echo "------------------------------------------------------------"
-echo "步骤 2: 更新密码"
+echo "步骤 2: 更新密码（${USER_TABLE}）"
 echo "------------------------------------------------------------"
-UPDATE_OUT=$(run_sql "UPDATE core_users
-SET password_hash = :'pwdhash',
-    updated_at = NOW()
+SET_CLAUSES="password_hash = :'pwdhash'"
+if has_column "$TABLE_SCHEMA" "$TABLE_NAME" "updated_at"; then
+    SET_CLAUSES="${SET_CLAUSES},
+    updated_at = NOW()"
+fi
+MUST_CHANGE_CLEARED=0
+if has_column "$TABLE_SCHEMA" "$TABLE_NAME" "must_change_password"; then
+    SET_CLAUSES="${SET_CLAUSES},
+    must_change_password = FALSE"
+    MUST_CHANGE_CLEARED=1
+fi
+UPDATE_OUT=$(run_sql "UPDATE ${USER_TABLE}
+SET ${SET_CLAUSES}
 WHERE username = :'username';" -v username="$USERNAME" -v pwdhash="$PASSWORD_HASH" 2>&1) || {
     echo "❌ 更新失败（若被 RLS 拦截，请确认会话 app.tenant_id 已设置）"
     unset PGPASSWORD
     exit 1
 }
+echo "$UPDATE_OUT"
+if [ "$MUST_CHANGE_CLEARED" = 1 ]; then
+    echo "  已清除首次登录强制改密标记（must_change_password=false）"
+fi
 echo "$UPDATE_OUT"
 UPDATED_ROWS=$(sed -n 's/^UPDATE \([0-9][0-9]*\)$/\1/p' <<< "$UPDATE_OUT" | tail -1)
 if [ -z "$UPDATED_ROWS" ] || [ "$UPDATED_ROWS" -eq 0 ]; then
@@ -301,10 +349,10 @@ echo
 echo "------------------------------------------------------------"
 echo "步骤 3: 验证结果"
 echo "------------------------------------------------------------"
-run_sql "SELECT username, email,
-       substring(password_hash, 1, 30) || '...' AS password_hash_preview,
-       updated_at
-FROM core_users
+run_sql "SELECT username,
+       substring(password_hash, 1, 30) || '...' AS password_hash_preview
+       ${PREVIEW_EXTRA_COLS}
+FROM ${USER_TABLE}
 WHERE username = :'username';" -v username="$USERNAME"
 echo
 
