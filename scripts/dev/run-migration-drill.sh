@@ -303,6 +303,23 @@ restore_forced_rls() {
     fi
 }
 
+# 基线 pg_dump 剥离了 CREATE SCHEMA（schema 唯一入口是 bootstrap_schemas.sql），
+# 前向迁移按治理规则不得自建 schema。隔离库恢复快照后，需补齐快照未含的预置 schema
+# （如 archive/file/im），否则归档类迁移建表会报 "schema does not exist"。
+# 演练角色是隔离库属主，可自建 schema；这里不带 AUTHORIZATION（属主留库属主），
+# schema 属主角色名不属 drill 门禁校验范围（终态只比对策略/表/权限码）。
+ensure_preset_schemas() {
+    local BOOTSTRAP_SQL="$ROOT/database/scripts/bootstrap_schemas.sql"
+    [[ -f "$BOOTSTRAP_SQL" ]] || { echo "FAIL: 缺 ${BOOTSTRAP_SQL}" >&2; return 1; }
+    local n=0 sch
+    while IFS= read -r sch; do
+        [[ -n "$sch" ]] || continue
+        psql "$DSN" -v ON_ERROR_STOP=1 -q -c "CREATE SCHEMA IF NOT EXISTS \"$sch\"" || return 1
+        n=$((n+1))
+    done < <(grep -E '^[[:space:]]*CREATE SCHEMA IF NOT EXISTS [a-z_]+' "$BOOTSTRAP_SQL" | grep -oE 'CREATE SCHEMA IF NOT EXISTS [a-z_]+' | awk '{print $6}' | sort -u)
+    echo "  ↳ 预置 schema 清单 ${n} 个（IF NOT EXISTS，已存在的跳过）"
+}
+
 TOTAL_START=$(date +%s)
 echo "== 迁移演练 / ${MODE}（隔离库 ${DB}）=="
 
@@ -385,6 +402,7 @@ capture_and_disable_forced_rls || { echo "FAIL: 临时关闭 FORCE RLS 失败" >
 psql "$DSN" -v ON_ERROR_STOP=1 -q -f "$LEDGER_SQL" >/dev/null || { echo "FAIL: 账本恢复失败" >&2; exit 1; }
 gzip -dc "$DATA_GZ" | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null || { echo "FAIL: 参考数据恢复失败" >&2; exit 1; }
 restore_forced_rls || { echo "FAIL: 恢复 FORCE RLS 失败" >&2; exit 1; }
+ensure_preset_schemas || { echo "FAIL: 预置 schema 失败" >&2; exit 1; }
 LEDGER_MAX="$(psql "$DSN" -tAc "SELECT max(version) FROM _sqlx_migrations WHERE success")"
 [[ "$LEDGER_MAX" == "$ANCHOR" ]] || { echo "FAIL: 账本 max(version)=${LEDGER_MAX}，与锚点 ${ANCHOR} 不一致" >&2; exit 1; }
 phase_end "恢复基线"
@@ -414,6 +432,7 @@ capture_and_disable_forced_rls || { echo "FAIL: 重放前临时关闭 FORCE RLS 
 psql "$DSN" -v ON_ERROR_STOP=1 -q -f "$LEDGER_SQL" >/dev/null
 gzip -dc "$DATA_GZ" | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null
 restore_forced_rls || { echo "FAIL: 重放前恢复 FORCE RLS 失败" >&2; exit 1; }
+ensure_preset_schemas || { echo "FAIL: 重放前预置 schema 失败" >&2; exit 1; }
 bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto >/dev/null || { echo "FAIL: 重放前向迁移失败" >&2; exit 1; }
 phase_end "up-down-up"
 
