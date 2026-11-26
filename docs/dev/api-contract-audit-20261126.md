@@ -60,6 +60,33 @@ notification 的细节见 `docs/frontend/notification-contract-gap-20261126.md`�
 
 这类缺陷正是"页面还能用、接口其实 500、前端拿空态兜住"的典型。
 
+## 方法不符（405）：17 条前端 GET 打到了只支持写操作的路由
+
+这些是"前端用 GET 调一个后端只接受 POST/PUT 的动作型接口"，页面点下去必失败；
+当前冒烟只测 GET，所以它们表现为 405，被判 SOFT（不污染判负，但也没被当成缺陷）。
+
+- `GET /api/ai/documents/vectorize-from-file`（frontend）
+- `GET /api/ai/profile/get`（frontend）
+- `GET /api/ai/recommend/documents`（frontend）
+- `GET /api/ai/recommend/opportunities`（frontend）
+- `GET /api/ai/multimodal/video/summary`（frontend）
+- `GET /api/bi/permission/validate`（frontend）
+- `GET /api/bi/permission/filter`（frontend）
+- `GET /api/erp/master-data/graphql`（frontend）
+- `GET /api/finance/voucher-templates/apply`（frontend）
+- `GET /api/finance/reports/consolidated/generate`（frontend）
+- `GET /api/portal/gateway-security/audit/export`（frontend）
+- `GET /api/portal/notifications/mark-all-read`（frontend）
+- `GET /api/scm/sync/sync-logs`（frontend）
+- `GET /api/scm/sync/statistics`（frontend）
+- `GET /api/core/iam/permissions/verify`（frontend）
+- `GET /api/core/iam/permissions/verify-multiple`（frontend）
+- `GET /api/wms/sync/sync-logs`（frontend）
+
+其中 `apiClient.portal.get('/notifications/mark-all-read')`（`apps/web/src/api/portal/readOps3.ts:7`）
+就把"全部已读"写成了 GET，后端是 POST —— 这条一定不会通。
+处理方式需要后端为准逐条确认：要么前端改方法，要么后端补 GET（不推荐给写操作补 GET）。
+
 ## 用法
 
 ```bash
