@@ -7,10 +7,13 @@
 --
 -- ⚠️ 已废弃 / 未接入（P2-9，2026-10-21）：
 -- 本脚本不在 sqlx 迁移链（database/migrations/）与任何部署/CI 流程中，不会自动执行；
--- 面向旧 core_users 表，与现行 iam.users 权威源不一致。请勿对生产库手动执行。
+-- 原面向已删除的 public.core_users（2026-11-26 物理删除），与现行 iam.users 权威源不一致。请勿对生产库手动执行。
 -- 默认超管由服务启动自举（modules/iam/mod.rs init_database）创建，初始口令由
 -- ADMIN_INITIAL_PASSWORD 提供，首登强制改密。脚本内原 admin/admin123 弱口令播种
 -- 已停用（见第七部分注释块），避免误跑在生产造出弱口令账号。
+-- 2026-11-26：public.core_users / iam.core_users / iam.core_user_roles 三张身份副本表
+-- 已由 database/migrations/20261126110000_drop_legacy_core_users.sql 物理删除，
+-- 本脚本对应建表/索引/外键/统计段落已一并移除。
 -- ============================================================
 
 -- ============================================================
@@ -47,28 +50,9 @@ VALUES (
 -- 第二部分：IAM 表结构
 -- ============================================================
 
--- 用户表
-CREATE TABLE IF NOT EXISTS public.core_users (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    username character varying(64) NOT NULL,
-    email text NOT NULL,
-    password_hash character varying(255) NOT NULL,
-    full_name character varying(128),
-    phone text,
-    avatar_url character varying(512),
-    status character varying(32) DEFAULT 'active'::character varying,
-    is_superuser boolean DEFAULT false,
-    tenant_id uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    last_login_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    full_name_en character varying(128),
-    CONSTRAINT ck_core_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
-    CONSTRAINT core_users_email_key UNIQUE (email),
-    CONSTRAINT core_users_pkey PRIMARY KEY (id),
-    CONSTRAINT core_users_username_key UNIQUE (username)
-);
+-- 用户表：public.core_users 已于 2026-11-26 随迁移 20261126110000 物理删除。
+-- 身份权威表是 iam.users（认证代码只读该表），此处不再创建副本表。
+
 
 -- 角色表
 CREATE TABLE IF NOT EXISTS public.core_roles (
@@ -105,8 +89,7 @@ CREATE TABLE IF NOT EXISTS public.core_user_roles (
     role_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    CONSTRAINT core_user_roles_pkey PRIMARY KEY (user_id, role_id),
-    CONSTRAINT core_user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.core_users(id)
+    CONSTRAINT core_user_roles_pkey PRIMARY KEY (user_id, role_id)
 );
 
 -- 角色权限关联表
@@ -123,9 +106,6 @@ CREATE TABLE IF NOT EXISTS public.core_role_permissions (
 -- 第三部分：创建索引
 -- ============================================================
 
-CREATE INDEX IF NOT EXISTS idx_core_users_username ON core_users(username);
-CREATE INDEX IF NOT EXISTS idx_core_users_email ON core_users(email);
-CREATE INDEX IF NOT EXISTS idx_core_users_tenant_id ON core_users(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_core_roles_name ON core_roles(name);
 CREATE INDEX IF NOT EXISTS idx_core_roles_tenant_id ON core_roles(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_core_permissions_code ON core_permissions(code);
@@ -183,7 +163,7 @@ INSERT INTO core_permissions (code, name, description, resource, action, level) 
 ('finance:budget:write', '预算管理-写入', '创建和修改预算', 'finance', 'budget_write', 2),
 ('finance:tax:read', '税务管理-只读', '查看税务数据', 'finance', 'tax_read', 1),
 ('finance:cost:read', '成本管理-只读', '查看成本数据', 'finance', 'cost_read', 1),
-('finance:report:read', '财务报表-只读', '查看财务报表', 'finance', 'report_read', 1),
+('finance:report:read', '财务报表-只读', '查看财务报表', 'finance', 'report_read', 1)
 ON CONFLICT (code) DO NOTHING;
 
 -- PM 模块权限
@@ -426,26 +406,9 @@ ON CONFLICT DO NOTHING;
 -- 第七部分：创建默认管理员用户
 -- ============================================================
 
--- P2-9：停用 admin/admin123 弱口令播种。本脚本未接入部署链，且权威超管由服务启动
--- 自举创建（ADMIN_INITIAL_PASSWORD + 首登强制改密）。以下弱口令账号与其角色绑定不再执行，
--- 仅保留历史注释，切勿取消注释对生产库执行。
--- INSERT INTO core_users (username, email, password_hash, full_name, is_superuser, tenant_id)
--- VALUES (
---     'admin',
---     'admin@topems.local',
---     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.TH2wTw7P6OqE1.',
---     '系统管理员',
---     TRUE,
---     '00000000-0000-0000-0000-000000000001'
--- )
--- ON CONFLICT (username) DO NOTHING;
---
--- -- 关联管理员到超级管理员角色
--- INSERT INTO core_user_roles (user_id, role_id)
--- SELECT u.id, r.id
--- FROM core_users u, core_roles r
--- WHERE u.username = 'admin' AND r.name = 'superadmin'
--- ON CONFLICT DO NOTHING;
+-- P2-9 / 2026-11-26：admin/admin123 弱口令播种已彻底移除（原 SQL 针对已删除的
+-- public.core_users 与 iam.core_user_roles，保留可复制片段易被误执行，故不再保留）。
+-- 权威超管由服务启动自举创建（ADMIN_INITIAL_PASSWORD + 首登强制改密），本脚本不播种任何账号。
 
 -- ============================================================
 -- 第八部分：显示初始化结果
@@ -454,7 +417,6 @@ ON CONFLICT DO NOTHING;
 SELECT '=== 权限系统初始化完成 ===' AS status;
 
 SELECT '租户数量:' AS info, COUNT(*)::TEXT AS count FROM tenants;
-SELECT '用户数量:' AS info, COUNT(*)::TEXT AS count FROM core_users;
 SELECT '角色数量:' AS info, COUNT(*)::TEXT AS count FROM core_roles;
 SELECT '权限数量:' AS info, COUNT(*)::TEXT AS count FROM core_permissions;
 

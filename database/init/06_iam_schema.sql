@@ -1000,45 +1000,6 @@ ALTER TABLE ONLY iam.core_usage_records FORCE ROW LEVEL SECURITY;
 
 
 --
--- Name: core_user_roles; Type: TABLE; Schema: iam; Owner: -
---
-
-CREATE TABLE IF NOT EXISTS iam.core_user_roles (
-    user_id uuid NOT NULL,
-    role_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT core_user_roles_pkey PRIMARY KEY (user_id, role_id)
-);
-
-
---
--- Name: core_users; Type: TABLE; Schema: iam; Owner: -
---
-
-CREATE TABLE IF NOT EXISTS iam.core_users (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    username character varying(64) NOT NULL,
-    email character varying(255) NOT NULL,
-    password_hash character varying(255) NOT NULL,
-    full_name character varying(128),
-    phone character varying(32),
-    avatar_url character varying(512),
-    status character varying(32) DEFAULT 'active'::character varying,
-    is_superuser boolean DEFAULT false,
-    tenant_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    last_login_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT core_users_email_key UNIQUE (email),
-    CONSTRAINT core_users_pkey PRIMARY KEY (id),
-    CONSTRAINT core_users_username_key UNIQUE (username)
-);
-
-ALTER TABLE ONLY iam.core_users FORCE ROW LEVEL SECURITY;
-
-
---
 -- Name: core_workflow_instances; Type: TABLE; Schema: iam; Owner: -
 --
 
@@ -2116,38 +2077,6 @@ ALTER TABLE ONLY iam.core_usage_records
 
 
 --
--- Name: core_user_roles core_user_roles_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_user_roles
-    ADD CONSTRAINT core_user_roles_pkey PRIMARY KEY (user_id, role_id);
-
-
---
--- Name: core_users core_users_email_key; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_users
-    ADD CONSTRAINT core_users_email_key UNIQUE (email);
-
-
---
--- Name: core_users core_users_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_users
-    ADD CONSTRAINT core_users_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_users core_users_username_key; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_users
-    ADD CONSTRAINT core_users_username_key UNIQUE (username);
-
-
---
 -- Name: core_workflow_instances core_workflow_instances_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
 --
 
@@ -2522,13 +2451,6 @@ CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_plugin_id ON iam.core_tenant_
 
 
 --
--- Name: idx_core_user_roles_role_id; Type: INDEX; Schema: iam; Owner: -
---
-
-CREATE INDEX IF NOT EXISTS idx_core_user_roles_role_id ON iam.core_user_roles USING btree (role_id);
-
-
---
 -- Name: idx_data_permissions_user_id; Type: INDEX; Schema: iam; Owner: -
 --
 
@@ -2822,22 +2744,6 @@ ALTER TABLE ONLY iam.core_usage_records
 
 
 --
--- Name: core_user_roles core_user_roles_role_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_user_roles
-    ADD CONSTRAINT core_user_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES iam.core_roles(id);
-
-
---
--- Name: core_user_roles core_user_roles_user_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_user_roles
-    ADD CONSTRAINT core_user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES iam.core_users(id);
-
-
---
 -- Name: core_workflow_instances core_workflow_instances_workflow_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
 --
 
@@ -2902,27 +2808,11 @@ ALTER TABLE ONLY iam.position_roles
 
 
 --
--- Name: refresh_tokens refresh_tokens_user_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.refresh_tokens
-    ADD CONSTRAINT refresh_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.core_users(id) ON DELETE CASCADE;
-
-
---
 -- Name: resource_permissions resource_permissions_user_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
 --
 
 ALTER TABLE ONLY iam.resource_permissions
     ADD CONSTRAINT resource_permissions_user_id_fkey FOREIGN KEY (user_id) REFERENCES iam.users(id) ON DELETE CASCADE;
-
-
---
--- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.sessions
-    ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.core_users(id) ON DELETE CASCADE;
 
 
 --
@@ -3170,12 +3060,6 @@ ALTER TABLE iam.core_tenant_users ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE iam.core_usage_records ENABLE ROW LEVEL SECURITY;
-
---
--- Name: core_users; Type: ROW SECURITY; Schema: iam; Owner: -
---
-
-ALTER TABLE iam.core_users ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: core_workflow_instances; Type: ROW SECURITY; Schema: iam; Owner: -
@@ -3627,13 +3511,6 @@ CREATE POLICY tenant_isolation_core_tenant_usage ON iam.core_tenant_usage USING 
 --
 
 CREATE POLICY tenant_isolation_core_tenant_users ON iam.core_tenant_users USING (((tenant_id = (NULLIF(current_setting('app.tenant_id'::text), ''::text))::uuid) OR (tenant_id IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
-
-
---
--- Name: core_users tenant_isolation_core_users; Type: POLICY; Schema: iam; Owner: -
---
-
-CREATE POLICY tenant_isolation_core_users ON iam.core_users USING (((tenant_id = (NULLIF(current_setting('app.tenant_id'::text), ''::text))::uuid) OR (tenant_id IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
 
 
 --
