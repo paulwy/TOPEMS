@@ -92,7 +92,7 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
                 style={{
                   backgroundColor: 'var(--mui-palette-action-hover)',
                   padding: '0.2rem 0.4rem',
-                  borderRadius: 'xs',
+                  borderRadius: 'var(--radius-sm)',
                   fontFamily: 'monospace',
                 }}
                 {...props}

@@ -182,7 +182,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'action.active',
+        backgroundColor: 'var(--text-secondary)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -192,8 +192,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     >
       <div
         style={{
-          backgroundColor: 'background.paper',
-          borderRadius: 'lg',
+          backgroundColor: 'var(--bg-elevated)',
+          borderRadius: 'var(--radius-lg)',
           boxShadow: designTokens.shadows['2xl'],
           width: '100%',
           maxWidth: '1024px',
@@ -231,7 +231,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             onClick={onClose}
             style={{
               padding: 2,
-              borderRadius: 'md',
+              borderRadius: 'var(--radius-md)',
               border: 'none',
               background: 'transparent',
               cursor: 'pointer',
@@ -261,7 +261,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'background.paper',
+                backgroundColor: 'var(--bg-elevated)',
                 zIndex: designTokens.zIndex.contentLayer,
               }}
             >
@@ -289,7 +289,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'background.paper',
+                backgroundColor: 'var(--bg-elevated)',
                 zIndex: designTokens.zIndex.contentLayer,
               }}
             >
@@ -308,7 +308,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
                   backgroundColor: theme.palette.grey[200],
                   color: theme.palette.grey[700],
-                  borderRadius: 'md',
+                  borderRadius: 'var(--radius-md)',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
@@ -341,7 +341,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               padding: `${designTokens.spacing.sm}px ${designTokens.spacing.md}px`,
               backgroundColor: theme.palette.grey[200],
               color: theme.palette.grey[700],
-              borderRadius: 'md',
+              borderRadius: 'var(--radius-md)',
               border: 'none',
               cursor: 'pointer',
               transition: 'background-color 0.2s',

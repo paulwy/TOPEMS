@@ -209,7 +209,7 @@ export const documentSchema: EntitySchema = {
         >
           <FolderOpen
             size={14}
-            style={{ color: 'text.secondary' }}
+            style={{ color: 'var(--text-secondary)' }}
           />
           <Typography
             variant='body2'

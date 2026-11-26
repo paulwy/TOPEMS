@@ -143,7 +143,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         top: '100%',
         marginTop: 8,
         width: 384,
-        backgroundColor: 'background.paper',
+        backgroundColor: 'var(--bg-elevated)',
         borderRadius: 8,
         boxShadow: designTokens.shadows['2xl'],
         border: '1px solid grey.200',
@@ -285,7 +285,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               style={{
                 marginLeft: 6,
                 backgroundColor: theme.palette.error.main,
-                color: 'common.white',
+                color: `${designTokens.colors.common.white}`,
                 fontSize: 12,
                 borderRadius: 9999,
                 padding: `${designTokens.spacing.xs} 6px`,
@@ -332,7 +332,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: 'full',
+                borderRadius: 'var(--radius-full)',
                 border: '2px solid grey.200',
                 borderTopColor: theme.palette.primary.dark,
                 animation: 'spin 1s linear infinite',

@@ -46,17 +46,25 @@ const Toast = ({ id, title, message, type, duration, removeNotification }: Toast
     switch (type) {
       case 'success':
         return (
-          <CheckCircle2 style={{ height: 20, width: 20, color: 'success.600', flexShrink: 0 }} />
+          <CheckCircle2
+            style={{ height: 20, width: 20, color: 'var(--success-600)', flexShrink: 0 }}
+          />
         );
       case 'error':
-        return <AlertCircle style={{ height: 20, width: 20, color: 'error.600', flexShrink: 0 }} />;
+        return (
+          <AlertCircle
+            style={{ height: 20, width: 20, color: 'var(--error-600)', flexShrink: 0 }}
+          />
+        );
       case 'warning':
         return (
           <AlertTriangle style={{ height: 20, width: 20, color: 'yellow.600', flexShrink: 0 }} />
         );
       case 'info':
       default:
-        return <Info style={{ height: 20, width: 20, color: 'primary.600', flexShrink: 0 }} />;
+        return (
+          <Info style={{ height: 20, width: 20, color: 'var(--accent-primary)', flexShrink: 0 }} />
+        );
     }
   };
 

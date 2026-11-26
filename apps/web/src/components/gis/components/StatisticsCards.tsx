@@ -39,7 +39,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
       icon: (
         <MapPin
           size={20}
-          style={{ color: 'success.dark' } as React.CSSProperties}
+          style={{ color: 'var(--success-text)' } as React.CSSProperties}
         />
       ),
       bg: 'success.lighter' as const,
@@ -50,7 +50,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
       icon: (
         <ArrowRight
           size={20}
-          style={{ color: 'primary.light' } as React.CSSProperties}
+          style={{ color: 'var(--accent-primary-hover)' } as React.CSSProperties}
         />
       ),
       bg: 'indigo.light' as const,
@@ -61,7 +61,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
       icon: (
         <Warehouse
           size={20}
-          style={{ color: 'warning.dark' } as React.CSSProperties}
+          style={{ color: 'var(--warning-text)' } as React.CSSProperties}
         />
       ),
       bg: 'warning.light' as const,

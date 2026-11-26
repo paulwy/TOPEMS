@@ -185,7 +185,7 @@ const SecurityScoreGauge: React.FC<{ score: number }> = ({ score }) => {
           x='100'
           y='120'
           textAnchor='middle'
-          style={{ fontSize: 14, fill: 'grey.500' }}
+          style={{ fontSize: 14, fill: 'var(--text-tertiary)' }}
         >
           {i18n.t('microfrontend.security_center.k0')}
         </text>
@@ -754,7 +754,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = () => {
               <Paper sx={{ p: 4, textAlign: 'center' }}>
                 <CheckCircleIcon
                   size={48}
-                  style={{ color: 'teal.500', marginBottom: 16 }}
+                  style={{ color: 'var(--teal-500)', marginBottom: 16 }}
                 />
                 <Typography
                   variant='h6'

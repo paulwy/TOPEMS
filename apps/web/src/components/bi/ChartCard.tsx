@@ -163,7 +163,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  backgroundColor: 'grey.100',
+                  backgroundColor: 'var(--surface-2)',
                   borderRadius: 8,
                   padding: 2,
                 }}
@@ -180,7 +180,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                         activeChartType === type
                           ? 'var(--color-primary-foreground)'
                           : 'transparent',
-                      color: activeChartType === type ? 'primary.700' : 'text.secondary',
+                      color:
+                        activeChartType === type
+                          ? 'var(--accent-primary-active)'
+                          : 'var(--text-secondary)',
                       cursor: 'pointer',
                       boxShadow:
                         activeChartType === type
@@ -278,7 +281,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               style={{
                 width: 48,
                 height: 48,
-                backgroundColor: 'error.50',
+                backgroundColor: 'var(--surface-2)',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',

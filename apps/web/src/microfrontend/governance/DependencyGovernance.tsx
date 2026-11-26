@@ -362,7 +362,7 @@ const CyclePathDisplay: React.FC<{ cycles: string[][] }> = ({ cycles }) => {
       <Paper sx={{ p: 4, textAlign: 'center' }}>
         <CheckCircleIcon
           size={48}
-          style={{ color: 'teal.500', marginBottom: 16 }}
+          style={{ color: 'var(--teal-500)', marginBottom: 16 }}
         />
         <Typography
           variant='h6'
@@ -390,7 +390,7 @@ const CyclePathDisplay: React.FC<{ cycles: string[][] }> = ({ cycles }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <AlertCircleIcon
               size={18}
-              style={{ color: 'warning.500' }}
+              style={{ color: 'var(--warning-500)' }}
             />
             <Typography
               variant='subtitle2'
@@ -415,7 +415,7 @@ const CyclePathDisplay: React.FC<{ cycles: string[][] }> = ({ cycles }) => {
                 {modIdx < cycle.length - 1 && (
                   <ArrowUpIcon
                     size={16}
-                    style={{ color: 'warning.500', transform: 'rotate(90deg)' }}
+                    style={{ color: 'var(--warning-500)', transform: 'rotate(90deg)' }}
                   />
                 )}
               </React.Fragment>
@@ -730,7 +730,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = () => {
               <Paper sx={{ p: 4, textAlign: 'center' }}>
                 <CheckCircleIcon
                   size={48}
-                  style={{ color: 'teal.500', marginBottom: 16 }}
+                  style={{ color: 'var(--teal-500)', marginBottom: 16 }}
                 />
                 <Typography
                   variant='h6'
@@ -764,7 +764,7 @@ const DependencyGovernance: React.FC<DependencyGovernanceProps> = () => {
               <Paper sx={{ p: 4, textAlign: 'center' }}>
                 <CheckCircleIcon
                   size={48}
-                  style={{ color: 'teal.500', marginBottom: 16 }}
+                  style={{ color: 'var(--teal-500)', marginBottom: 16 }}
                 />
                 <Typography
                   variant='h6'
@@ -907,12 +907,12 @@ const LicenseCompliancePanel: React.FC = () => {
               {hasIssue ? (
                 <AlertTriangleIcon
                   size={20}
-                  style={{ color: 'warning.500' }}
+                  style={{ color: 'var(--warning-500)' }}
                 />
               ) : (
                 <CheckCircleIcon
                   size={20}
-                  style={{ color: 'teal.500' }}
+                  style={{ color: 'var(--teal-500)' }}
                 />
               )}
             </ListItem>

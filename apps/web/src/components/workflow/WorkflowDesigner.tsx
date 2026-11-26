@@ -333,7 +333,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     />
                     <polygon
                       points='0,-4 8,0 0,4'
-                      fill='grey.600'
+                      fill={designTokens.colors.grey[600]}
                       transform={`translate(${t.x - 8}, ${t.y}) rotate(0)`}
                     />
                   </g>
@@ -392,7 +392,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     textAnchor='middle'
                     fontSize='12'
                     fontWeight='bold'
-                    fill='grey.700'
+                    fill={designTokens.colors.grey[700]}
                   >
                     {NODE_ICONS[node.type]} {node.label}
                   </text>
@@ -401,7 +401,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     y='42'
                     textAnchor='middle'
                     fontSize='10'
-                    fill='text.secondary'
+                    fill={designTokens.colors.text.secondary}
                   >
                     {node.type}
                   </text>

@@ -15,7 +15,7 @@ const NotificationSettings: React.FC = () => {
     <div
       style={{
         padding: 16,
-        backgroundColor: 'background.paper',
+        backgroundColor: 'var(--bg-elevated)',
         borderBottom: '1px solid grey.200',
       }}
     >
@@ -37,7 +37,9 @@ const NotificationSettings: React.FC = () => {
               alignItems: 'center',
               borderRadius: 9999,
               transition: 'background-color 0.15s',
-              backgroundColor: settings.enableDesktop ? 'primary.dark' : 'grey.200',
+              backgroundColor: settings.enableDesktop
+                ? 'var(--accent-primary-active)'
+                : 'var(--surface-3)',
               border: 'none',
               cursor: 'pointer',
             }}
@@ -47,8 +49,8 @@ const NotificationSettings: React.FC = () => {
                 display: 'inline-block',
                 height: 16,
                 width: 16,
-                borderRadius: 'full',
-                backgroundColor: 'background.paper',
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: 'var(--bg-elevated)',
                 transition: 'transform 0.15s',
                 transform: settings.enableDesktop ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -75,7 +77,9 @@ const NotificationSettings: React.FC = () => {
               alignItems: 'center',
               borderRadius: 9999,
               transition: 'background-color 0.15s',
-              backgroundColor: settings.enableSound ? 'primary.dark' : 'grey.200',
+              backgroundColor: settings.enableSound
+                ? 'var(--accent-primary-active)'
+                : 'var(--surface-3)',
               border: 'none',
               cursor: 'pointer',
             }}
@@ -85,8 +89,8 @@ const NotificationSettings: React.FC = () => {
                 display: 'inline-block',
                 height: 16,
                 width: 16,
-                borderRadius: 'full',
-                backgroundColor: 'background.paper',
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: 'var(--bg-elevated)',
                 transition: 'transform 0.15s',
                 transform: settings.enableSound ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -109,7 +113,9 @@ const NotificationSettings: React.FC = () => {
               alignItems: 'center',
               borderRadius: 9999,
               transition: 'background-color 0.15s',
-              backgroundColor: settings.enableMobilePush ? 'primary.dark' : 'grey.200',
+              backgroundColor: settings.enableMobilePush
+                ? 'var(--accent-primary-active)'
+                : 'var(--surface-3)',
               border: 'none',
               cursor: 'pointer',
             }}
@@ -119,8 +125,8 @@ const NotificationSettings: React.FC = () => {
                 display: 'inline-block',
                 height: 16,
                 width: 16,
-                borderRadius: 'full',
-                backgroundColor: 'background.paper',
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: 'var(--bg-elevated)',
                 transition: 'transform 0.15s',
                 transform: settings.enableMobilePush ? 'translateX(20px)' : 'translateX(4px)',
               }}
@@ -133,7 +139,7 @@ const NotificationSettings: React.FC = () => {
             style={{
               fontSize: 12,
               fontWeight: 500,
-              color: 'grey.700',
+              color: 'var(--text-secondary)',
               marginBottom: 12,
             }}
           >
@@ -164,7 +170,7 @@ const NotificationSettings: React.FC = () => {
                     alignItems: 'center',
                     borderRadius: 9999,
                     transition: 'background-color 0.15s',
-                    backgroundColor: enabled ? 'primary.dark' : 'grey.200',
+                    backgroundColor: enabled ? 'var(--accent-primary-active)' : 'var(--surface-3)',
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -174,8 +180,8 @@ const NotificationSettings: React.FC = () => {
                       display: 'inline-block',
                       height: 12,
                       width: 12,
-                      borderRadius: 'full',
-                      backgroundColor: 'background.paper',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: 'var(--bg-elevated)',
                       transition: 'transform 0.15s',
                       transform: enabled ? 'translateX(16px)' : 'translateX(4px)',
                     }}
@@ -199,7 +205,9 @@ const NotificationSettings: React.FC = () => {
                 alignItems: 'center',
                 borderRadius: 9999,
                 transition: 'background-color 0.15s',
-                backgroundColor: settings.quietHours.enabled ? 'primary.dark' : 'grey.200',
+                backgroundColor: settings.quietHours.enabled
+                  ? 'var(--accent-primary-active)'
+                  : 'var(--surface-3)',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -209,8 +217,8 @@ const NotificationSettings: React.FC = () => {
                   display: 'inline-block',
                   height: 12,
                   width: 12,
-                  borderRadius: 'full',
-                  backgroundColor: 'background.paper',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: 'var(--bg-elevated)',
                   transition: 'transform 0.15s',
                   transform: settings.quietHours.enabled ? 'translateX(16px)' : 'translateX(4px)',
                 }}

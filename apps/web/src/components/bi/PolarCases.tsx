@@ -35,9 +35,9 @@ const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, payload }) =
     return (
       <div
         style={{
-          backgroundColor: 'background.paper',
+          backgroundColor: 'var(--bg-elevated)',
           padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
-          borderRadius: 'md',
+          borderRadius: 'var(--radius-md)',
           boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',
           minWidth: '120px',
@@ -53,7 +53,7 @@ const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, payload }) =
               margin: `${designTokens.spacing.xs} 0`,
             }}
           >
-            <span style={{ color: item.color || 'primary.light' }}>●</span>
+            <span style={{ color: item.color || 'var(--accent-primary-hover)' }}>●</span>
             {item.dataKey}: {String(item.value)}
           </p>
         ))}

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import styles from './QmsDashboardPage.module.css';
 import { Box, Typography, Skeleton, useTheme } from '@mui/material';
@@ -285,7 +286,7 @@ const QmsDashboardPage: React.FC = () => {
                   x={392}
                   y={14}
                   fontSize={10}
-                  fill='error.main'
+                  fill={designTokens.colors.error.main}
                 >
                   UCL
                 </text>
@@ -302,7 +303,7 @@ const QmsDashboardPage: React.FC = () => {
                   x={392}
                   y={104}
                   fontSize={10}
-                  fill='success.main'
+                  fill={designTokens.colors.success.main}
                 >
                   CL
                 </text>
@@ -319,7 +320,7 @@ const QmsDashboardPage: React.FC = () => {
                   x={392}
                   y={194}
                   fontSize={10}
-                  fill='error.main'
+                  fill={designTokens.colors.error.main}
                 >
                   LCL
                 </text>

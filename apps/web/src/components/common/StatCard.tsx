@@ -201,7 +201,7 @@ export interface ChartCardProps {
 const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; main: string }> = {
   green: {
     bg: 'success.main',
-    gradient: 'linear-gradient(135deg, success.main, success.dark)',
+    gradient: `linear-gradient(135deg, ${designTokens.colors.success.main}, ${designTokens.colors.success.dark})`,
     light: 'success.lightest',
     main: 'success.main',
   },
@@ -225,7 +225,7 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   red: {
     bg: 'error.main',
-    gradient: `linear-gradient(135deg, error.main, ${designTokens.colors.error.dark})`,
+    gradient: `linear-gradient(135deg, ${designTokens.colors.error.main}, ${designTokens.colors.error.dark})`,
     light: 'error.lightest',
     main: 'error.main',
   },
@@ -243,7 +243,7 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   },
   success: {
     bg: 'success.main',
-    gradient: `linear-gradient(135deg, ${designTokens.colors.success[600]}, success.dark)`,
+    gradient: `linear-gradient(135deg, ${designTokens.colors.success[600]}, ${designTokens.colors.success.dark})`,
     light: 'success.lightest',
     main: 'success.main',
   },

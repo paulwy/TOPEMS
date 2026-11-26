@@ -37,9 +37,9 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
     return (
       <div
         style={{
-          backgroundColor: 'background.paper',
+          backgroundColor: 'var(--bg-elevated)',
           padding: 3,
-          borderRadius: 'md',
+          borderRadius: 'var(--radius-md)',
           boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',
         }}
@@ -66,8 +66,8 @@ export const StatsChartPieImpl: React.FC<StatsChartPieProps> = ({
   return (
     <div
       style={{
-        backgroundColor: 'background.paper',
-        borderRadius: 'lg',
+        backgroundColor: 'var(--bg-elevated)',
+        borderRadius: 'var(--radius-lg)',
         boxShadow: designTokens.shadows.sm,
         padding: 6,
       }}
@@ -76,7 +76,7 @@ export const StatsChartPieImpl: React.FC<StatsChartPieProps> = ({
         style={{
           fontSize: '18px',
           fontWeight: 600,
-          color: 'grey.900',
+          color: 'var(--text-primary)',
           marginBottom: 4,
         }}
       >

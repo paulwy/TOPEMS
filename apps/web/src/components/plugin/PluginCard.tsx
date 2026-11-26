@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
 import {
   Package,
@@ -79,7 +80,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                 height: 56,
                 borderRadius: 3,
                 flexShrink: 0,
-                background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+                background: `linear-gradient(135deg, ${designTokens.colors.primary.light} 0%, ${designTokens.colors.primary.main} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -230,7 +231,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
                 width: 48,
                 height: 48,
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+                background: `linear-gradient(135deg, ${designTokens.colors.primary.light} 0%, ${designTokens.colors.primary.main} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

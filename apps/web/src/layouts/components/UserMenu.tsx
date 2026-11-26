@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useMemo } from 'react';
 import styles from './UserMenu.module.css';
 import {
@@ -128,7 +129,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               width: 36,
               height: 36,
               fontSize: 14,
-              background: 'linear-gradient(135deg, primary.main, secondary.main)',
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.secondary.main})`,
               color: 'common.white',
               fontWeight: 600,
             }}
@@ -172,7 +173,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               sx={{
                 width: 44,
                 height: 44,
-                background: 'linear-gradient(135deg, primary.main, secondary.main)',
+                background: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.secondary.main})`,
                 color: 'common.white',
                 fontWeight: 600,
                 fontSize: 16,

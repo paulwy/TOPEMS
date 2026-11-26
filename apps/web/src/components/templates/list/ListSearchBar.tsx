@@ -240,7 +240,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
             }
             style={{
               padding: '6px 12px',
-              borderRadius: 'xs',
+              borderRadius: 'var(--radius-sm)',
               border: isActive
                 ? `1px solid ${designTokens.colors.primary.dark}`
                 : `1px solid ${designTokens.colors.grey['300']}`,

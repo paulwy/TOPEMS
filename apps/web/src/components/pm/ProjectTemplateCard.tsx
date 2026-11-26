@@ -60,7 +60,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
             <p
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color: 'text.secondary',
+                color: 'var(--text-secondary)',
               }}
             >
               {template.project_type}
@@ -72,7 +72,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
         <p
           style={{
             fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-            color: 'grey.700',
+            color: 'var(--text-secondary)',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -88,7 +88,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
             alignItems: 'center',
             gap: 16,
             fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-            color: 'text.secondary',
+            color: 'var(--text-secondary)',
             marginTop: 8,
           }}
         >

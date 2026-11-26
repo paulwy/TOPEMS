@@ -125,7 +125,7 @@ const GisContent: React.FC = () => {
           style={{ width: '100%', fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
         >
           <thead>
-            <tr style={{ backgroundColor: 'grey.50' }}>
+            <tr style={{ backgroundColor: 'var(--surface-2)' }}>
               {type === 'devicePoints' && (
                 <>
                   <th
@@ -133,7 +133,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e1')}
@@ -143,7 +143,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e2')}
@@ -153,7 +153,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e3')}
@@ -163,7 +163,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e4')}
@@ -177,7 +177,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e1')}
@@ -187,7 +187,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e2')}
@@ -197,7 +197,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e7')}
@@ -207,7 +207,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e8')}
@@ -217,7 +217,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e4')}
@@ -231,7 +231,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e1')}
@@ -241,7 +241,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e2')}
@@ -251,7 +251,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e12')}
@@ -261,7 +261,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e3')}
@@ -275,7 +275,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e14')}
@@ -285,7 +285,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e2')}
@@ -295,7 +295,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e16')}
@@ -305,7 +305,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e17')}
@@ -319,7 +319,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e1')}
@@ -329,7 +329,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e19')}
@@ -339,7 +339,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e2')}
@@ -349,7 +349,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e21')}
@@ -363,7 +363,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e1')}
@@ -373,7 +373,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e2')}
@@ -383,7 +383,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e24')}
@@ -393,7 +393,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e25')}
@@ -403,7 +403,7 @@ const GisContent: React.FC = () => {
                       padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
                       textAlign: 'left',
                       fontWeight: 500,
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('gis.index.e4')}

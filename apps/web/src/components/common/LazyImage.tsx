@@ -24,11 +24,11 @@ const LazyImage: React.FC<LazyImageProps> = ({
       style={{
         width: '100%',
         height: '100%',
-        backgroundColor: 'grey.100',
+        backgroundColor: 'var(--surface-2)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 'xs',
+        borderRadius: 'var(--radius-sm)',
       }}
     >
       <svg

@@ -237,7 +237,9 @@ const NotificationStatsPage: React.FC = () => {
                     borderRadius: '50%',
                     marginRight: 12,
                     backgroundColor:
-                      serviceStatus.status === 'healthy' ? theme.palette.success[600] : 'error.700',
+                      serviceStatus.status === 'healthy'
+                        ? theme.palette.success[600]
+                        : 'var(--error-600)',
                   }}
                 />
                 <span
@@ -259,7 +261,7 @@ const NotificationStatsPage: React.FC = () => {
                   alignItems: 'center',
                   gap: 24,
                   fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                  color: 'text.secondary',
+                  color: 'var(--text-secondary)',
                 }}
               >
                 <span>{i18n.t('pages.notification_stats_page.k0')}</span>

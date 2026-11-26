@@ -46,7 +46,7 @@ const FileCard: React.FC<FileCardProps> = ({
             sx={{
               width: 20,
               height: 20,
-              borderRadius: 'xs',
+              borderRadius: 'var(--radius-sm)',
               border: 2,
               display: 'flex',
               alignItems: 'center',
