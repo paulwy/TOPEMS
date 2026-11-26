@@ -60,10 +60,17 @@ use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 )]
 pub async fn list_expenses(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Query(params): Query<PaginationParams>,
 ) -> ApiResponse<PaginatedResponse<Value>> {
+    // B351：显式租户谓词。此前只靠 RLS，缺上下文时静默查空或跨租户可见。
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) if !t.is_nil() => t,
+        Ok(_) => return ApiResponse::bad_request("缺少租户上下文"),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -109,7 +116,7 @@ pub async fn list_expenses(
                   reimbursed_at, currency, sub_category, project_id, employee_id, payment_method, voucher_id,
                   created_at, updated_at
            FROM finance.expenses
-           WHERE deleted_at IS NULL
+           WHERE deleted_at IS NULL AND tenant_id = $6::uuid
              AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2 OR status = ANY($5::text[]))
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
@@ -119,20 +126,24 @@ pub async fn list_expenses(
     .bind(page_size)
     .bind(offset)
     .bind(status_aliases.to_vec())
+    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
 
     match rows {
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(row_to_expense_json).collect();
-            let total: i64 = sqlx::query_scalar(
-                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM finance.expenses
-                   WHERE deleted_at IS NULL AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2 OR status = ANY($3::text[]))"#),
-            )
+            let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+                "finance",
+                r#"SELECT COUNT(*) FROM finance.expenses
+                   WHERE deleted_at IS NULL AND tenant_id = $4::uuid
+                     AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
+                     AND ($2::text IS NULL OR status = $2 OR status = ANY($3::text[]))"#
+            ))
             .bind(&search_pattern)
             .bind(status_value)
             .bind(status_aliases.to_vec())
+            .bind(tenant_id)
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
@@ -276,10 +287,17 @@ pub async fn create_expense(
 )]
 pub async fn get_expense(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
+    // B351：单条读同样必须带租户，跨租户 ID 一律 404。
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) if !t.is_nil() => t,
+        Ok(_) => return ApiResponse::bad_request("缺少租户上下文"),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
@@ -300,9 +318,10 @@ pub async fn get_expense(
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
                   description, expense_date, receipt_count, status, approver_id, approved_at,
                   reimbursed_at, created_at, updated_at
-           FROM finance.expenses WHERE id = $1 AND deleted_at IS NULL"#
+           FROM finance.expenses WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"#
     ))
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -386,16 +405,34 @@ pub async fn update_expense(
     else {
         return ApiResponse::conflict("费用报销状态不在规范集合内");
     };
+    // B351：终态记录只允许纯状态流转。旧逻辑只在「同态/无目标态」时拦字段，
+    // approved + status=paid 可以顺手改金额、供应商、日期。
+    let editing_fields = [
+        "applicant_name",
+        "department_id",
+        "expense_type",
+        "amount",
+        "description",
+        "expense_date",
+        "receipt_count",
+        "approver_id",
+        "approved_at",
+        "reimbursed_at",
+    ]
+    .iter()
+    .any(|k| req.get(*k).is_some_and(|v| !v.is_null()));
     if let Some(target) = status {
         if let Err(msg) = current_status.can_transition_to(target) {
             return ApiResponse::bad_request(&msg);
         }
-        // 同态回传仍视为“编辑字段”，终态必须拒绝；跨态流转（approved→paid）放行。
         if target == current_status && !current_status.is_editable() {
             return ApiResponse::conflict("费用报销已审批或已支付，不可再编辑");
         }
     } else if !current_status.is_editable() {
         return ApiResponse::conflict("费用报销已审批或已支付，不可再编辑");
+    }
+    if !current_status.is_editable() && editing_fields {
+        return ApiResponse::conflict("费用报销已进入终态，只允许状态流转，不可修改字段");
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -486,6 +523,76 @@ pub async fn update_expense(
         Err(e) => {
             tracing::error!("更新费用报销失败: {}", e);
             ApiResponse::server_error("更新费用报销失败")
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:expense:update"])),
+    path = "/expenses/{id}/pay",
+    tag = "Expense",
+    params(("id" = Uuid, Path, description = "费用ID")),
+    responses(
+        (status = 200, description = "支付成功", body = ApiResponse<Value>),
+        (status = 409, description = "当前状态不允许支付"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+/// B351：`approved → paid` 专用动作。此前只能通过通用 PUT 携带 `status=paid` 完成，
+/// 而该入口同时接受金额、申请人等字段，已审批记录可借道改写。专用动作只改状态与支付时间。
+pub async fn pay_expense(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<Value> {
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) if !t.is_nil() => t,
+        Ok(_) => return ApiResponse::bad_request("缺少租户上下文"),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+    let now = Utc::now();
+    let db = state.db.clone();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务不可用");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务不可用");
+        }
+    };
+
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE finance.expenses SET
+              status = $2,
+              reimbursed_at = COALESCE(reimbursed_at, $3),
+              updated_at = $3
+           WHERE id = $1 AND tenant_id = $4::uuid AND deleted_at IS NULL AND status = $5
+           RETURNING id, expense_number, applicant_name, department_id, expense_type, amount,
+                     description, expense_date, receipt_count, status, approver_id, approved_at,
+                     reimbursed_at, created_at, updated_at"#
+    ))
+    .bind(id)
+    .bind(ExpenseStatus::Paid.as_str())
+    .bind(now)
+    .bind(tenant_id)
+    .bind(ExpenseStatus::Approved.as_str())
+    .fetch_optional(&mut scope)
+    .await;
+
+    match result {
+        Ok(Some(row)) => ApiResponse::success(row_to_expense_json(&row), "费用报销支付成功"),
+        Ok(None) => ApiResponse::conflict("费用报销不存在、已删除或当前状态不允许支付"),
+        Err(e) => {
+            tracing::error!("支付费用报销失败: {}", e);
+            ApiResponse::server_error("支付费用报销失败")
         }
     }
 }
@@ -2094,6 +2201,7 @@ pub fn create_routes() -> Router<AppState> {
         )));
     let expenses_update = Router::new()
         .route("/expenses/{id}", put(update_expense))
+        .route("/expenses/{id}/pay", post(pay_expense))
         .layer(axum::middleware::from_fn(require_permission(
             "finance:expense:update",
         )));

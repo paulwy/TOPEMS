@@ -227,6 +227,28 @@ mod tests {
     }
 
     #[test]
+    fn paid_only_reachable_from_approved() {
+        // approved→paid 是唯一入口：draft/submitted/rejected 都不能直接支付。
+        assert!(ExpenseStatus::Approved
+            .can_transition_to(ExpenseStatus::Paid)
+            .is_ok());
+        for from in [
+            ExpenseStatus::Draft,
+            ExpenseStatus::Submitted,
+            ExpenseStatus::Rejected,
+        ] {
+            assert!(from.can_transition_to(ExpenseStatus::Paid).is_err());
+        }
+        // paid 是终态：不可回退、不可编辑、不可删除。
+        assert!(ExpenseStatus::Paid
+            .can_transition_to(ExpenseStatus::Approved)
+            .is_err());
+        assert!(!ExpenseStatus::Paid.is_editable());
+        assert!(!ExpenseStatus::Paid.is_deletable());
+        assert!(!ExpenseStatus::Approved.is_editable());
+    }
+
+    #[test]
     fn normalize_canonical_values() {
         for (raw, expected) in [
             ("draft", ExpenseApprovalStatus::Draft),
