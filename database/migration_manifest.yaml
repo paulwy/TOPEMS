@@ -3223,6 +3223,15 @@ pending_forward_patches:
     destructive_scan: "UPDATE 仅限 status IS NULL 且带 max-rows=0/backup 标记；ALTER COLUMN SET DEFAULT/SET NOT NULL；DROP CONSTRAINT IF EXISTS + ADD CHECK NOT VALID + VALIDATE；无 DELETE/TRUNCATE/DROP TABLE/列或类型变更"
     note: "本地 56 行全 completed 且全软删（deleted_at 非空）、NULL 0 行，本迁移不改存量值只改列约束；五态源自 WorkOrderStatus::DB_VALUES；新建入口绑定 DEFAULT 枚举；checksum e0cae51674c76554f9bd623621adf16dd26e37789627b9a4f30812f393a83849"
 
+  # ===== 2026-11-26：mes 基础资料 tenant_id 收敛（B352）=====
+  - version: "20261126190000"
+    file: "database/migrations/20261126190000_mes_basics_tenant_not_null.sql"
+    status: to_apply
+    ledger_evidence: "无账本行（新版本 > anchor 20261118150000）"
+    effect: "mes.workshops / production_lines / shifts / work_calendars 四列 tenant_id 由可空收紧为 NOT NULL；preflight 断言零 NULL 行，后置断言四列为 NO"
+    destructive_scan: "仅 ALTER COLUMN SET NOT NULL 与 DO 断言；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/列型变更；preflight 失败即整笔回滚"
+    note: "本机四表均为 0 行（无数据改写风险）；不提供猜测式回填，NULL 行需人工定归属；checksum c0143e98be9760dee138adefed767c60bd0e18a2f8e4fd39e53cef8dbe7ef7a0"
+
   # ===== 2026-11-26：iam.tenant_permissions RLS fail-closed 加固 =====
   - version: "20261126160000"
     file: "database/migrations/20261126160000_iam_tenant_permissions_rls_fail_closed.sql"

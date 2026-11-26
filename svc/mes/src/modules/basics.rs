@@ -223,6 +223,11 @@ async fn list_workshops(
             return ApiResponse::server_error("查询车间失败");
         }
     };
+    // B352：列表也带显式租户谓词（此前只靠 RLS）。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let search = q.search.clone().unwrap_or_default();
@@ -238,6 +243,8 @@ async fn list_workshops(
             " AND (name ILIKE $2 OR code ILIKE $2)"
         });
     }
+    let tenant_param = 1 + usize::from(!status.is_empty()) + usize::from(!search.is_empty());
+    where_sql.push_str(&format!(" AND tenant_id = ${tenant_param}::uuid"));
     let count_sql = format!("SELECT COUNT(*) FROM mes.workshops {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
@@ -246,6 +253,7 @@ async fn list_workshops(
     if !search.is_empty() {
         count_query = count_query.bind(format!("%{search}%"));
     }
+    count_query = count_query.bind(tenant_id);
     let total = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
@@ -266,6 +274,7 @@ async fn list_workshops(
     if !search.is_empty() {
         fetch_query = fetch_query.bind(format!("%{search}%"));
     }
+    fetch_query = fetch_query.bind(tenant_id);
     let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -315,11 +324,17 @@ async fn get_workshop(
             return ApiResponse::server_error("查询车间失败");
         }
     };
+    // B352：单条读也带租户，跨租户 ID 一律 404。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let row = sqlx::query(
         "SELECT id, code, name, location, manager, status, description, created_at, updated_at \
-         FROM mes.workshops WHERE id = $1 AND deleted_at IS NULL",
+         FROM mes.workshops WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     match row {
@@ -431,12 +446,17 @@ async fn update_workshop(
             return ApiResponse::server_error("车间更新失败");
         }
     };
+    // B352：显式租户谓词，避免只靠 RLS 时跨租户读写。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let result = sqlx::query(
         "UPDATE mes.workshops SET \
          name = COALESCE($2, name), location = COALESCE($3, location), \
          manager = COALESCE($4, manager), status = COALESCE($5, status), \
          description = COALESCE($6, description), updated_at = NOW() \
-         WHERE id = $1 AND deleted_at IS NULL RETURNING id",
+         WHERE id = $1 AND tenant_id = $7::uuid AND deleted_at IS NULL RETURNING id",
     )
     .bind(id)
     .bind(&req.name)
@@ -444,6 +464,7 @@ async fn update_workshop(
     .bind(&req.manager)
     .bind(&req.status)
     .bind(&req.description)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     if result.is_ok() {
@@ -486,10 +507,18 @@ async fn delete_workshop(
             return ApiResponse::server_error("车间删除失败");
         }
     };
-    let result = sqlx::query("UPDATE mes.workshops SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&mut scope)
-        .await;
+    // B352：显式租户谓词，避免只靠 RLS 时跨租户读写。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let result = sqlx::query(
+        "UPDATE mes.workshops SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
     if result.is_ok() {
         if let Err(e) = scope.commit().await {
             tracing::error!("[mes] 车间删除提交失败: {}", e);
@@ -534,6 +563,11 @@ async fn list_production_lines(
             return ApiResponse::server_error("查询产线失败");
         }
     };
+    // B352：列表也带显式租户谓词（此前只靠 RLS）。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let search = q.search.clone().unwrap_or_default();
@@ -549,6 +583,8 @@ async fn list_production_lines(
             " AND (name ILIKE $2 OR code ILIKE $2)"
         });
     }
+    let tenant_param = 1 + usize::from(!status.is_empty()) + usize::from(!search.is_empty());
+    where_sql.push_str(&format!(" AND tenant_id = ${tenant_param}::uuid"));
     let count_sql = format!("SELECT COUNT(*) FROM mes.production_lines {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
@@ -557,6 +593,7 @@ async fn list_production_lines(
     if !search.is_empty() {
         count_query = count_query.bind(format!("%{search}%"));
     }
+    count_query = count_query.bind(tenant_id);
     let total = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
@@ -576,6 +613,7 @@ async fn list_production_lines(
     if !search.is_empty() {
         fetch_query = fetch_query.bind(format!("%{search}%"));
     }
+    fetch_query = fetch_query.bind(tenant_id);
     let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -626,11 +664,17 @@ async fn get_production_line(
             return ApiResponse::server_error("查询产线失败");
         }
     };
+    // B352：单条读也带租户，跨租户 ID 一律 404。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let row = sqlx::query(
         "SELECT id, code, name, workshop_id, description, status, created_at, updated_at \
-         FROM mes.production_lines WHERE id = $1 AND deleted_at IS NULL",
+         FROM mes.production_lines WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     match row {
@@ -744,18 +788,24 @@ async fn update_production_line(
             return ApiResponse::server_error("产线更新失败");
         }
     };
+    // B352：显式租户谓词，避免只靠 RLS 时跨租户读写。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let result = sqlx::query(
         "UPDATE mes.production_lines SET \
          name = COALESCE($2, name), workshop_id = COALESCE($3, workshop_id), \
          description = COALESCE($4, description), status = COALESCE($5, status), \
          updated_at = NOW() \
-         WHERE id = $1 AND deleted_at IS NULL RETURNING id",
+         WHERE id = $1 AND tenant_id = $6::uuid AND deleted_at IS NULL RETURNING id",
     )
     .bind(id)
     .bind(&req.name)
     .bind(req.workshop_id)
     .bind(&req.description)
     .bind(&req.status)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     if result.is_ok() {
@@ -800,10 +850,18 @@ async fn delete_production_line(
             return ApiResponse::server_error("产线删除失败");
         }
     };
-    let result = sqlx::query("UPDATE mes.production_lines SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&mut scope)
-        .await;
+    // B352：显式租户谓词，避免只靠 RLS 时跨租户读写。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let result = sqlx::query(
+        "UPDATE mes.production_lines SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
     if result.is_ok() {
         if let Err(e) = scope.commit().await {
             tracing::error!("[mes] 产线删除提交失败: {}", e);
@@ -846,6 +904,11 @@ async fn list_shifts(
             return ApiResponse::server_error("查询班次失败");
         }
     };
+    // B352：列表也带显式租户谓词（此前只靠 RLS）。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let search = q.search.clone().unwrap_or_default();
@@ -861,6 +924,8 @@ async fn list_shifts(
             " AND (name ILIKE $2 OR code ILIKE $2)"
         });
     }
+    let tenant_param = 1 + usize::from(!status.is_empty()) + usize::from(!search.is_empty());
+    where_sql.push_str(&format!(" AND tenant_id = ${tenant_param}::uuid"));
     let count_sql = format!("SELECT COUNT(*) FROM mes.shifts {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
@@ -869,6 +934,7 @@ async fn list_shifts(
     if !search.is_empty() {
         count_query = count_query.bind(format!("%{search}%"));
     }
+    count_query = count_query.bind(tenant_id);
     let total = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
@@ -888,6 +954,7 @@ async fn list_shifts(
     if !search.is_empty() {
         fetch_query = fetch_query.bind(format!("%{search}%"));
     }
+    fetch_query = fetch_query.bind(tenant_id);
     let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -938,11 +1005,17 @@ async fn get_shift(
             return ApiResponse::server_error("查询班次失败");
         }
     };
+    // B352：单条读也带租户，跨租户 ID 一律 404。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let row = sqlx::query(
         "SELECT id, code, name, start_time, end_time, is_overnight, status, description, created_at, updated_at \
-         FROM mes.shifts WHERE id = $1 AND deleted_at IS NULL",
+         FROM mes.shifts WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     match row {
@@ -1056,13 +1129,18 @@ async fn update_shift(
             return ApiResponse::server_error("班次更新失败");
         }
     };
+    // B352：显式租户谓词，避免只靠 RLS 时跨租户读写。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let result = sqlx::query(
         "UPDATE mes.shifts SET \
          name = COALESCE($2, name), start_time = COALESCE($3, start_time), \
          end_time = COALESCE($4, end_time), is_overnight = COALESCE($5, is_overnight), \
          status = COALESCE($6, status), description = COALESCE($7, description), \
          updated_at = NOW() \
-         WHERE id = $1 AND deleted_at IS NULL RETURNING id",
+         WHERE id = $1 AND tenant_id = $8::uuid AND deleted_at IS NULL RETURNING id",
     )
     .bind(id)
     .bind(&req.name)
@@ -1071,6 +1149,7 @@ async fn update_shift(
     .bind(req.is_overnight)
     .bind(&req.status)
     .bind(&req.description)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     if result.is_ok() {
@@ -1113,10 +1192,18 @@ async fn delete_shift(
             return ApiResponse::server_error("班次删除失败");
         }
     };
-    let result = sqlx::query("UPDATE mes.shifts SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&mut scope)
-        .await;
+    // B352：显式租户谓词，避免只靠 RLS 时跨租户读写。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let result = sqlx::query(
+        "UPDATE mes.shifts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
     if result.is_ok() {
         if let Err(e) = scope.commit().await {
             tracing::error!("[mes] 班次删除提交失败: {}", e);
@@ -1161,6 +1248,11 @@ async fn list_work_calendars(
             return ApiResponse::server_error("查询日历失败");
         }
     };
+    // B352：列表也带显式租户谓词（此前只靠 RLS）。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let search = q.search.clone().unwrap_or_default();
@@ -1176,6 +1268,8 @@ async fn list_work_calendars(
             " AND (name ILIKE $2 OR code ILIKE $2)"
         });
     }
+    let tenant_param = 1 + usize::from(!status.is_empty()) + usize::from(!search.is_empty());
+    where_sql.push_str(&format!(" AND tenant_id = ${tenant_param}::uuid"));
     let count_sql = format!("SELECT COUNT(*) FROM mes.work_calendars {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
@@ -1184,6 +1278,7 @@ async fn list_work_calendars(
     if !search.is_empty() {
         count_query = count_query.bind(format!("%{search}%"));
     }
+    count_query = count_query.bind(tenant_id);
     let total = match count_query.fetch_one(&mut scope).await {
         Ok(t) => t,
         Err(e) => {
@@ -1203,6 +1298,7 @@ async fn list_work_calendars(
     if !search.is_empty() {
         fetch_query = fetch_query.bind(format!("%{search}%"));
     }
+    fetch_query = fetch_query.bind(tenant_id);
     let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -1255,11 +1351,17 @@ async fn get_work_calendar(
             return ApiResponse::server_error("查询日历失败");
         }
     };
+    // B352：单条读也带租户，跨租户 ID 一律 404。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let row = sqlx::query(
         "SELECT id, code, name, calendar_type, work_date, shift_id, is_working, remark, created_at, updated_at \
-         FROM mes.work_calendars WHERE id = $1 AND deleted_at IS NULL",
+         FROM mes.work_calendars WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     match row {
@@ -1377,13 +1479,18 @@ async fn update_work_calendar(
             return ApiResponse::server_error("日历更新失败");
         }
     };
+    // B352：显式租户谓词，避免只靠 RLS 时跨租户读写。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let result = sqlx::query(
         "UPDATE mes.work_calendars SET \
          name = COALESCE($2, name), calendar_type = COALESCE($3, calendar_type), \
          work_date = COALESCE($4, work_date), shift_id = COALESCE($5, shift_id), \
          is_working = COALESCE($6, is_working), remark = COALESCE($7, remark), \
          updated_at = NOW() \
-         WHERE id = $1 AND deleted_at IS NULL RETURNING id",
+         WHERE id = $1 AND tenant_id = $8::uuid AND deleted_at IS NULL RETURNING id",
     )
     .bind(id)
     .bind(&req.name)
@@ -1392,6 +1499,7 @@ async fn update_work_calendar(
     .bind(req.shift_id)
     .bind(req.is_working)
     .bind(&req.remark)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     if result.is_ok() {
@@ -1436,10 +1544,18 @@ async fn delete_work_calendar(
             return ApiResponse::server_error("日历删除失败");
         }
     };
-    let result = sqlx::query("UPDATE mes.work_calendars SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&mut scope)
-        .await;
+    // B352：显式租户谓词，避免只靠 RLS 时跨租户读写。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let result = sqlx::query(
+        "UPDATE mes.work_calendars SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
     if result.is_ok() {
         if let Err(e) = scope.commit().await {
             tracing::error!("[mes] 日历删除提交失败: {}", e);
