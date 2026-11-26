@@ -100,7 +100,7 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 1. `checksum 归一` 等于承认「迁移文件是唯一权威」，可能掩盖历史文件被改过的语义差异——该口径需团队确认后再进 CI。
 2. 108 条手工记账版本的 `execution_time` 为空/0，`sqlx` 统计会失真，但不影响执行。
 3. `topems_owner` 目前保留 LOGIN；若改为 `NOLOGIN` + 由 `topems` `SET ROLE`，需同步改 `.env` 与 `scripts/migrate.sh`。
-4. `GET /api/finance/vouchers` 仍 500，错误为 `unnamed prepared statement does not exist`（`topems_shared_core::error::enhanced`），与本次权限变更无关，疑为连接池/预编译语句缓存问题，另案排查。
+4. ~~`GET /api/finance/vouchers` 仍 500~~ **复测未复现（2026-11-26）**：前端带会话两次请求 `/api/finance/vouchers?page=1&page_size=10` 与 `?page_size=999` 均 200，凭证页正常渲染 1 条过账凭证；本机 `logs/server.err` 无 ERROR/panic。历史 `unnamed prepared statement does not exist`（疑连接池复用失效连接 / 预编译语句缓存）在 11-26 服务多次重启后未再触发。连接池/缓存配置未做根治性调整，列为观察项：若再现需抓服务端 ERROR 堆栈与连接池空闲超时/复用日志定位。
 5. 43 条「历史中间缺口」迁移尚未分级（版本 ≤ 20261115141100 但未记账），其中至少 1 条依赖已搬迁的表。
 
 ## 9. 决策与执行记录（2026-11-25 追加）
