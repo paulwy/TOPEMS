@@ -197,7 +197,15 @@ for bin in psql createdb dropdb; do
     command -v "$bin" >/dev/null 2>&1 || { echo "FAIL: 缺少 ${bin}" >&2; exit 1; }
 done
 SQLX="$(command -v sqlx || true)"
+# 非交互 ssh / launchd 的 PATH 常缺 ~/.cargo/bin，补一次兜底查找
+if [[ -z "$SQLX" ]]; then
+    for cand in "${HOME}/.cargo/bin/sqlx" /usr/local/bin/sqlx /opt/homebrew/bin/sqlx; do
+        [[ -x "$cand" ]] && { SQLX="$cand"; break; }
+    done
+fi
 [[ -n "$SQLX" && -x "$SQLX" ]] || { echo "FAIL: 未找到 sqlx-cli（cargo install sqlx-cli --no-default-features --features postgres,rustls）" >&2; exit 1; }
+# sqlx 需要 cargo 环境用于离线校验时能定位 rust 工具链
+[[ -d "${HOME}/.cargo/bin" ]] && PATH="${HOME}/.cargo/bin:${PATH}"; export PATH
 
 CONN_ERR="$(mktemp "${TMPDIR:-/tmp}/topems-drill-conn.XXXXXX")"
 if ! IDENT="$(psql "$ADMIN_DSN" -v ON_ERROR_STOP=1 -tAc \
