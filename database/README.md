@@ -178,6 +178,10 @@ psql "$MIGRATE_URL" -f scripts/db/grant-topems-app.sql
   ```
 - **保留期限**：与源表同寿——源表还在就保留；源表被删除并完成备份归档后，可与备份一并退役。
 
+## CI 门禁触发范围
+
+`database/**`、`scripts/db/**`、`scripts/migration/**` 的变更都会触发 `Migration Up-Down-Up Test`。除 `migrations/` 外，归档清单 `migrations-archive.tsv`、基线、`init/` 与 `postgres/` 脚本也在触发范围内——这些文件会改变 `baseline-integrity`、归档冻结或迁移重放结论，不能因路径过滤而跳过静态与 Up-Down-Up 校验。
+
 ## 相关文档
 
 - [init/README.md](init/README.md) — 数据库重建详细步骤
