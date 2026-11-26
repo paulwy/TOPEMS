@@ -1,4 +1,6 @@
 use axum::extract::State;
+use axum::http::header;
+use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
 
@@ -50,7 +52,18 @@ struct SystemParams {
     params: serde_json::Value,
 }
 
-async fn get_system_config(State(_state): State<AppState>) -> Json<ApiResponse<SystemConfig>> {
+
+/// 桩响应统一出口：这些 system 配置/缓存/日志/参数接口目前返回硬编码值，
+/// 用 `X-Stub: true` 显形，冒烟会判为 SOFT（契约未实现），避免把假实现当成真接口。
+fn stubbed<T: serde::Serialize>(data: T, message: &str) -> Response {
+    let mut response = Json(ApiResponse::success(data, message)).into_response();
+    response
+        .headers_mut()
+        .insert("X-Stub", header::HeaderValue::from_static("true"));
+    response
+}
+
+async fn get_system_config(State(_state): State<AppState>) -> Response {
     let config = SystemConfig {
         site_name: "TOPEMS Unified Core".to_string(),
         site_url: "http://localhost:8000".to_string(),
@@ -68,48 +81,48 @@ async fn get_system_config(State(_state): State<AppState>) -> Json<ApiResponse<S
         session_timeout_minutes: 120,
         max_login_attempts: 5,
     };
-    Json(ApiResponse::success(config, "获取系统配置成功"))
+    stubbed(config, "获取系统配置成功")
 }
 
 async fn update_system_config(
     State(_state): State<AppState>,
     Json(data): Json<SystemConfig>,
-) -> Json<ApiResponse<SystemConfig>> {
-    Json(ApiResponse::success(data, "更新系统配置成功"))
+) -> Response {
+    stubbed(data, "更新系统配置成功")
 }
 
-async fn get_cache_config(State(_state): State<AppState>) -> Json<ApiResponse<CacheConfig>> {
+async fn get_cache_config(State(_state): State<AppState>) -> Response {
     let config = CacheConfig {
         enabled: false,
         provider: "redis".to_string(),
         ttl_seconds: 3600,
         max_size_mb: 256,
     };
-    Json(ApiResponse::success(config, "获取缓存配置成功"))
+    stubbed(config, "获取缓存配置成功")
 }
 
 async fn update_cache_config(
     State(_state): State<AppState>,
     Json(data): Json<CacheConfig>,
-) -> Json<ApiResponse<CacheConfig>> {
-    Json(ApiResponse::success(data, "更新缓存配置成功"))
+) -> Response {
+    stubbed(data, "更新缓存配置成功")
 }
 
-async fn clear_cache(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+async fn clear_cache(State(_state): State<AppState>) -> Response {
+    stubbed(
         serde_json::json!({ "cleared": true, "message": "缓存已清除" }),
         "清除缓存成功",
-    ))
+    )
 }
 
-async fn get_cache_stats(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+async fn get_cache_stats(State(_state): State<AppState>) -> Response {
+    stubbed(
         serde_json::json!({ "keys_count": 0, "memory_used_mb": 0, "hit_rate": 0 }),
         "获取缓存统计成功",
-    ))
+    )
 }
 
-async fn get_log_config(State(_state): State<AppState>) -> Json<ApiResponse<LogConfig>> {
+async fn get_log_config(State(_state): State<AppState>) -> Response {
     let config = LogConfig {
         level: "info".to_string(),
         format: "json".to_string(),
@@ -120,28 +133,28 @@ async fn get_log_config(State(_state): State<AppState>) -> Json<ApiResponse<LogC
         enable_file: true,
         enable_syslog: false,
     };
-    Json(ApiResponse::success(config, "获取日志配置成功"))
+    stubbed(config, "获取日志配置成功")
 }
 
 async fn update_log_config(
     State(_state): State<AppState>,
     Json(data): Json<LogConfig>,
-) -> Json<ApiResponse<LogConfig>> {
-    Json(ApiResponse::success(data, "更新日志配置成功"))
+) -> Response {
+    stubbed(data, "更新日志配置成功")
 }
 
-async fn get_system_params(State(_state): State<AppState>) -> Json<ApiResponse<SystemParams>> {
+async fn get_system_params(State(_state): State<AppState>) -> Response {
     let params = SystemParams {
         params: serde_json::json!({}),
     };
-    Json(ApiResponse::success(params, "获取系统参数成功"))
+    stubbed(params, "获取系统参数成功")
 }
 
 async fn update_system_params(
     State(_state): State<AppState>,
     Json(data): Json<SystemParams>,
-) -> Json<ApiResponse<SystemParams>> {
-    Json(ApiResponse::success(data, "更新系统参数成功"))
+) -> Response {
+    stubbed(data, "更新系统参数成功")
 }
 
 pub fn system_routes(state: &AppState) -> Router<AppState> {

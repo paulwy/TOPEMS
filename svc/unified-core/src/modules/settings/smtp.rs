@@ -66,6 +66,15 @@ pub struct TestEmailRequest {
 }
 
 /// `GET /system/settings/smtp`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/system/settings/smtp",
+    tag = "Core-System",
+    params(
+    ),
+    responses((status = 200, description = "SMTP 配置"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_smtp_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -130,6 +139,15 @@ pub async fn get_smtp_config(
 }
 
 /// `PUT /system/settings/smtp`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/system/settings/smtp",
+    tag = "Core-System",
+    params(
+    ),
+    responses((status = 200, description = "更新 SMTP 配置"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_smtp_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -217,6 +235,15 @@ pub async fn update_smtp_config(
 }
 
 /// `POST /system/settings/smtp/test`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/system/settings/smtp/test",
+    tag = "Core-System",
+    params(
+    ),
+    responses((status = 200, description = "发送测试邮件"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn test_smtp_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

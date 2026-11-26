@@ -68,6 +68,15 @@ fn is_allowed_type(t: &str) -> bool {
 }
 
 /// `GET /system/api-keys`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/system/api-keys",
+    tag = "Core-System",
+    params(
+    ),
+    responses((status = 200, description = "API Key 列表"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_api_keys(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -134,6 +143,15 @@ pub async fn list_api_keys(
 }
 
 /// `POST /system/api-keys`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/system/api-keys",
+    tag = "Core-System",
+    params(
+    ),
+    responses((status = 200, description = "创建 API Key"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_api_key(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -221,6 +239,16 @@ pub async fn create_api_key(
 }
 
 /// `DELETE /system/api-keys/{id}`
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/system/api-keys/{id}",
+    tag = "Core-System",
+    params(
+        ("id" = String, Path, description = "API Key ID"),
+    ),
+    responses((status = 200, description = "删除 API Key"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_api_key(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -268,6 +296,16 @@ pub async fn delete_api_key(
 }
 
 /// `GET /system/api-keys/{id}`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/system/api-keys/{id}",
+    tag = "Core-System",
+    params(
+        ("id" = String, Path, description = "API Key ID"),
+    ),
+    responses((status = 200, description = "API Key 详情"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_api_key(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -339,6 +377,16 @@ pub struct UpdateApiKeyRequest {
 }
 
 /// `PUT /system/api-keys/{id}`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/system/api-keys/{id}",
+    tag = "Core-System",
+    params(
+        ("id" = String, Path, description = "API Key ID"),
+    ),
+    responses((status = 200, description = "更新 API Key"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_api_key(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

@@ -194,3 +194,40 @@ spec **2477 → 2492**，契约匹配 **2603 → 2626**（core 30 → 39）。
    本脚本的 `--probe` 也优先按该头分类，不再依赖中文文案匹配。
 3. **等注解补齐后**，把 `api-contract --probe --fail-on-missing` 挂进 `verify:frontend`，
    才真正具备"路径不存在就红"的能力。
+
+## 第十四轮：桩显形 + audit/settings 真实现补注解（2026-11-26 19:20）
+
+### 1. system 配置类硬编码桩显形（`routes/system.rs`）
+
+`config / cache/config / cache/stats / cache/clear / log/config / params` 这 6 个逻辑端点（v1 + 无 v1 双份共 10 个 handler）此前返回写死值（`site_name: "TOPEMS Unified Core"`、`cache stats` 全 0），却以 200 正常应答混在 OK 里。改为统一 `stubbed()` 出口，响应带 `X-Stub: true`：
+
+```rust
+fn stubbed<T: serde::Serialize>(data: T, message: &str) -> Response {
+    let mut response = Json(ApiResponse::success(data, message)).into_response();
+    response.headers_mut().insert("X-Stub", header::HeaderValue::from_static("true"));
+    response
+}
+```
+
+口径与 `comm_stub` 一致：冒烟把 `2xx + X-Stub` 判 SOFT（"stub：契约未实现"），不再冒充已验证接口。这批判定**不进 spec**，等接配置存储后再入契约。
+
+### 2. audit / settings 真实现补注解
+
+复核 `modules/audit/handlers.rs`：`list_permission_changes` 是把 `OperationLogQuery` 映射成 `source: "permission_audit_logs"` 后透传 `audit_query::query_audit_logs`；`get_permission_change` 真查 `public.permission_audit_logs`（id 为 bigint，须 `parse::<i64>()`）；`list_access_logs` 同理透传 `source: "audit_logs"`。`audit/mod.rs` 里 "权限变更审计 (stub)" 只是注释措辞过时，**不是桩**。
+
+本轮补注解 19 个 handler：
+- audit 11 条：`/api/core/audit/operations`、`/operations/stats`、`/operations/{id}`、`/permission-changes`、`/permission-changes/stats`、`/permission-changes/{id}`、`/permission-changes/export`、`/access-logs`、`/access-logs/stats`、`/access-logs/{id}`、`/access-logs/export`（tag `Core-Audit`）
+- api-keys 5 条：`/api/core/system/api-keys`（GET/POST）、`/api/core/system/api-keys/{id}`（GET/PUT/DELETE）
+- smtp 3 条：`/api/core/system/settings/smtp`（GET/PUT）、`/api/core/system/settings/smtp/test`（POST）
+
+干跑增量里混入并行会话的 notification/ehs 变更（notification `channels`→`push-config/channels`、ehs `exam-*`→`check-*` 改名），**只并入本轮 19 个 handler 对应的 15 条路径**，其余留给对应会话。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2492 | **2507** |
+| 契约匹配 | 2626 | **2643** |
+| core 缺口 | 197 | **180** |
+
+剩余 core 180 条里最大簇已不是 stub 而是前端契约与后端真实缺口（tenant 77、根级 29、menu 10 等），system 34 条里有 12 条是这批桩（现在显形为 SOFT），不再进 spec。

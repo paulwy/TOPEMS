@@ -34,6 +34,27 @@ pub(crate) fn claims_tenant_filter(claims: &Claims) -> Option<Uuid> {
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/operations",
+    tag = "Core-Audit",
+    params(
+        ("user_id" = Option<String>, Query, description = "操作人 ID"),
+        ("user_name" = Option<String>, Query, description = "操作人名称"),
+        ("module" = Option<String>, Query, description = "模块"),
+        ("operation" = Option<String>, Query, description = "动作"),
+        ("resource_type" = Option<String>, Query, description = "资源类型"),
+        ("resource_id" = Option<String>, Query, description = "资源 ID"),
+        ("trace_id" = Option<String>, Query, description = "链路 ID"),
+        ("start_time" = Option<String>, Query, description = "起始时间"),
+        ("end_time" = Option<String>, Query, description = "结束时间"),
+        ("success" = Option<bool>, Query, description = "是否成功"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20，上限 100"),
+    ),
+    responses((status = 200, description = "操作日志分页列表"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_operation_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -182,6 +203,16 @@ pub async fn list_operation_logs(
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/operations/{id}",
+    tag = "Core-Audit",
+    params(
+        ("id" = String, Path, description = "记录 ID"),
+    ),
+    responses((status = 200, description = "操作日志详情"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_operation_log(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -246,6 +277,18 @@ pub async fn get_operation_log(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/operations/stats",
+    tag = "Core-Audit",
+    params(
+        ("start_time" = Option<String>, Query, description = "起始时间"),
+        ("end_time" = Option<String>, Query, description = "结束时间"),
+        ("group_by" = Option<String>, Query, description = "分组维度"),
+    ),
+    responses((status = 200, description = "操作日志统计"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_operation_log_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -338,6 +381,27 @@ pub async fn get_operation_log_stats(
 
 // ===== 权限变更审计 handlers（调用 audit_query 真实实现） =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/permission-changes",
+    tag = "Core-Audit",
+    params(
+        ("user_id" = Option<String>, Query, description = "操作人 ID"),
+        ("user_name" = Option<String>, Query, description = "操作人名称"),
+        ("module" = Option<String>, Query, description = "模块"),
+        ("operation" = Option<String>, Query, description = "动作"),
+        ("resource_type" = Option<String>, Query, description = "资源类型"),
+        ("resource_id" = Option<String>, Query, description = "资源 ID"),
+        ("trace_id" = Option<String>, Query, description = "链路 ID"),
+        ("start_time" = Option<String>, Query, description = "起始时间"),
+        ("end_time" = Option<String>, Query, description = "结束时间"),
+        ("success" = Option<bool>, Query, description = "是否成功"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20，上限 100"),
+    ),
+    responses((status = 200, description = "权限变更审计列表"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_permission_changes(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -384,6 +448,16 @@ pub async fn list_permission_changes(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/permission-changes/{id}",
+    tag = "Core-Audit",
+    params(
+        ("id" = String, Path, description = "记录 ID"),
+    ),
+    responses((status = 200, description = "权限变更详情"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_permission_change(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -473,6 +547,17 @@ pub async fn get_permission_change(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/permission-changes/stats",
+    tag = "Core-Audit",
+    params(
+        ("start_time" = Option<String>, Query, description = "起始时间"),
+        ("end_time" = Option<String>, Query, description = "结束时间"),
+    ),
+    responses((status = 200, description = "权限变更统计"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_permission_change_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -538,6 +623,27 @@ pub async fn get_permission_change_stats(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/permission-changes/export",
+    tag = "Core-Audit",
+    params(
+        ("user_id" = Option<String>, Query, description = "操作人 ID"),
+        ("user_name" = Option<String>, Query, description = "操作人名称"),
+        ("module" = Option<String>, Query, description = "模块"),
+        ("operation" = Option<String>, Query, description = "动作"),
+        ("resource_type" = Option<String>, Query, description = "资源类型"),
+        ("resource_id" = Option<String>, Query, description = "资源 ID"),
+        ("trace_id" = Option<String>, Query, description = "链路 ID"),
+        ("start_time" = Option<String>, Query, description = "起始时间"),
+        ("end_time" = Option<String>, Query, description = "结束时间"),
+        ("success" = Option<bool>, Query, description = "是否成功"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20，上限 100"),
+    ),
+    responses((status = 200, description = "导出权限变更（JSON）"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_permission_changes(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -567,6 +673,27 @@ pub async fn export_permission_changes(
 
 // ===== 访问控制审计 handlers（调用 audit_query 真实实现） =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/access-logs",
+    tag = "Core-Audit",
+    params(
+        ("user_id" = Option<String>, Query, description = "操作人 ID"),
+        ("user_name" = Option<String>, Query, description = "操作人名称"),
+        ("module" = Option<String>, Query, description = "模块"),
+        ("operation" = Option<String>, Query, description = "动作"),
+        ("resource_type" = Option<String>, Query, description = "资源类型"),
+        ("resource_id" = Option<String>, Query, description = "资源 ID"),
+        ("trace_id" = Option<String>, Query, description = "链路 ID"),
+        ("start_time" = Option<String>, Query, description = "起始时间"),
+        ("end_time" = Option<String>, Query, description = "结束时间"),
+        ("success" = Option<bool>, Query, description = "是否成功"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20，上限 100"),
+    ),
+    responses((status = 200, description = "访问审计列表"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_access_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -613,6 +740,16 @@ pub async fn list_access_logs(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/access-logs/{id}",
+    tag = "Core-Audit",
+    params(
+        ("id" = String, Path, description = "记录 ID"),
+    ),
+    responses((status = 200, description = "访问审计详情"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_access_log(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -682,6 +819,17 @@ pub async fn get_access_log(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/access-logs/stats",
+    tag = "Core-Audit",
+    params(
+        ("start_time" = Option<String>, Query, description = "起始时间"),
+        ("end_time" = Option<String>, Query, description = "结束时间"),
+    ),
+    responses((status = 200, description = "访问审计统计"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_access_log_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -734,6 +882,27 @@ pub async fn get_access_log_stats(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/audit/access-logs/export",
+    tag = "Core-Audit",
+    params(
+        ("user_id" = Option<String>, Query, description = "操作人 ID"),
+        ("user_name" = Option<String>, Query, description = "操作人名称"),
+        ("module" = Option<String>, Query, description = "模块"),
+        ("operation" = Option<String>, Query, description = "动作"),
+        ("resource_type" = Option<String>, Query, description = "资源类型"),
+        ("resource_id" = Option<String>, Query, description = "资源 ID"),
+        ("trace_id" = Option<String>, Query, description = "链路 ID"),
+        ("start_time" = Option<String>, Query, description = "起始时间"),
+        ("end_time" = Option<String>, Query, description = "结束时间"),
+        ("success" = Option<bool>, Query, description = "是否成功"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20，上限 100"),
+    ),
+    responses((status = 200, description = "导出访问审计（JSON）"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_access_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
