@@ -8152,46 +8152,13 @@ pub fn create_routes() -> Router<AppState> {
         )));
 
     // ===== 凭证/模板/生成/U8导入 域 =====
-    let voucher_routes = Router::new()
-        .route(
-            "/vouchers",
-            axum::routing::post(create_voucher).get(list_vouchers),
-        )
-        .route(
-            "/vouchers/{voucher_id}",
-            axum::routing::get(get_voucher)
-                .put(update_voucher)
-                .delete(delete_voucher),
-        )
-        .route(
-            "/vouchers/{voucher_id}/submit",
-            axum::routing::post(submit_voucher),
-        )
-        .route(
-            "/vouchers/{voucher_id}/approve",
-            axum::routing::post(approve_voucher),
-        )
-        .route(
-            "/vouchers/{voucher_id}/post",
-            axum::routing::post(post_voucher),
-        )
-        .route(
-            "/vouchers/{voucher_id}/unpost",
-            axum::routing::post(unpost_voucher),
-        )
-        .route(
-            "/vouchers/batch/submit",
-            axum::routing::post(batch_submit_vouchers),
-        )
-        .route(
-            "/vouchers/batch/approve",
-            axum::routing::post(batch_approve_vouchers),
-        )
-        .route(
-            "/vouchers/batch/post",
-            axum::routing::post(batch_post_vouchers),
-        )
-        .route("/vouchers/export", axum::routing::post(export_vouchers))
+    // B343: 凭证域按读/创建/更新/删除拆成四个子 Router，各自挂对应权限码。
+    // 旧实现整个域（含删除、记账、审批、导入、模板变更）只挂 finance:voucher:read，
+    // 只读角色可以凭证删除/记账。读接口继续要求 read，写接口叠加 create/update/delete。
+    // 写接口仍保留路由级 read（能读才能改），避免把只读角色直接抬成写入角色。
+    let voucher_read_routes = Router::new()
+        .route("/vouchers", axum::routing::get(list_vouchers))
+        .route("/vouchers/{voucher_id}", axum::routing::get(get_voucher))
         .route(
             "/vouchers/{voucher_id}/entries",
             axum::routing::get(get_voucher_entries),
@@ -8200,23 +8167,74 @@ pub fn create_routes() -> Router<AppState> {
             "/vouchers/{voucher_id}/items",
             axum::routing::get(get_voucher_items),
         )
+        .route("/vouchers/next-no", axum::routing::get(get_next_voucher_no))
+        .route("/vouchers/export", axum::routing::post(export_vouchers))
+        .route(
+            "/voucher-templates",
+            axum::routing::get(list_voucher_templates_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}",
+            axum::routing::get(get_voucher_template_handler),
+        )
+        .route(
+            "/voucher-templates/match",
+            axum::routing::post(match_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/usage-stats",
+            axum::routing::get(get_template_usage_stats_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/export",
+            axum::routing::get(export_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries",
+            axum::routing::get(voucher_template_entries::list_entries),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries/{entry_id}",
+            axum::routing::get(voucher_template_entries::get_entry),
+        )
+        .route(
+            "/voucher-generation-rules",
+            axum::routing::get(list_generation_rules_handler),
+        )
+        .route(
+            "/voucher-generation-rules/{rule_id}",
+            axum::routing::get(get_generation_rule_handler),
+        )
+        .route(
+            "/voucher-generation-rules/test",
+            axum::routing::post(test_rule_handler),
+        )
+        .route(
+            "/voucher/generate/preview",
+            axum::routing::post(voucher_template::preview_generation),
+        )
+        .route(
+            "/u8-import/{import_id}/status",
+            axum::routing::get(get_import_status_handler),
+        )
+        .route(
+            "/u8-import/records",
+            axum::routing::get(list_import_records_handler),
+        )
+        .route(
+            "/u8-import/records/{import_id}",
+            axum::routing::get(get_import_record_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:voucher:read",
+        )));
+
+    let voucher_create_routes = Router::new()
+        .route("/vouchers", axum::routing::post(create_voucher))
         .route(
             "/vouchers/batch",
             axum::routing::post(batch_create_vouchers),
         )
-        .route(
-            "/vouchers/batch-delete",
-            axum::routing::post(batch_delete_vouchers),
-        )
-        .route(
-            "/vouchers/{voucher_id}/unapprove",
-            axum::routing::post(unapprove_voucher),
-        )
-        .route(
-            "/vouchers/{voucher_id}/reverse",
-            axum::routing::post(reverse_voucher),
-        )
-        .route("/vouchers/next-no", axum::routing::get(get_next_voucher_no))
         .route(
             "/vouchers/generate",
             axum::routing::post(generate_voucher_by_template),
@@ -8231,26 +8249,11 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/voucher-templates",
-            axum::routing::get(list_voucher_templates_handler)
-                .post(create_voucher_template_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}",
-            axum::routing::get(get_voucher_template_handler)
-                .put(update_voucher_template_handler)
-                .delete(delete_voucher_template_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}/set-default",
-            axum::routing::post(set_default_template_handler),
+            axum::routing::post(create_voucher_template_handler),
         )
         .route(
             "/voucher-templates/apply",
             axum::routing::post(apply_template_handler),
-        )
-        .route(
-            "/voucher-templates/match",
-            axum::routing::post(match_template_handler),
         )
         .route(
             "/voucher-templates/import",
@@ -8261,57 +8264,16 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(copy_template_handler),
         )
         .route(
-            "/voucher-templates/{template_id}/toggle",
-            axum::routing::put(toggle_template_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}/usage-stats",
-            axum::routing::get(get_template_usage_stats_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}/export",
-            axum::routing::get(export_template_handler),
-        )
-        .route(
             "/voucher-templates/{template_id}/entries",
-            axum::routing::get(voucher_template_entries::list_entries)
-                .post(add_template_entry_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}/entries/reorder",
-            axum::routing::put(reorder_template_entries_handler),
-        )
-        .route(
-            "/voucher-templates/{template_id}/entries/{entry_id}",
-            axum::routing::get(voucher_template_entries::get_entry)
-                .put(update_template_entry_handler)
-                .delete(delete_template_entry_handler),
+            axum::routing::post(add_template_entry_handler),
         )
         .route(
             "/voucher-generation-rules",
-            axum::routing::get(list_generation_rules_handler).post(create_generation_rule_handler),
-        )
-        .route(
-            "/voucher-generation-rules/{rule_id}",
-            axum::routing::get(get_generation_rule_handler)
-                .put(update_generation_rule_handler)
-                .delete(delete_generation_rule_handler),
-        )
-        .route(
-            "/voucher-generation-rules/test",
-            axum::routing::post(test_rule_handler),
+            axum::routing::post(create_generation_rule_handler),
         )
         .route(
             "/voucher-generation-rules/generate",
             axum::routing::post(generate_vouchers_handler),
-        )
-        .route(
-            "/voucher-generation-rules/{rule_id}/toggle",
-            axum::routing::put(toggle_generation_rule_handler),
-        )
-        .route(
-            "/voucher/generate/preview",
-            axum::routing::post(voucher_template::preview_generation),
         )
         .route(
             "/voucher/generate/from-source",
@@ -8333,25 +8295,118 @@ pub fn create_routes() -> Router<AppState> {
             "/u8-import/import",
             axum::routing::post(import_vouchers_handler),
         )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:voucher:create",
+        )));
+
+    let voucher_update_routes = Router::new()
+        .route("/vouchers/{voucher_id}", axum::routing::put(update_voucher))
         .route(
-            "/u8-import/{import_id}/status",
-            axum::routing::get(get_import_status_handler),
+            "/vouchers/{voucher_id}/submit",
+            axum::routing::post(submit_voucher),
         )
         .route(
-            "/u8-import/records",
-            axum::routing::get(list_import_records_handler),
+            "/vouchers/{voucher_id}/approve",
+            axum::routing::post(approve_voucher),
         )
         .route(
-            "/u8-import/records/{import_id}",
-            axum::routing::get(get_import_record_handler),
+            "/vouchers/{voucher_id}/post",
+            axum::routing::post(post_voucher),
+        )
+        .route(
+            "/vouchers/{voucher_id}/unpost",
+            axum::routing::post(unpost_voucher),
+        )
+        .route(
+            "/vouchers/{voucher_id}/unapprove",
+            axum::routing::post(unapprove_voucher),
+        )
+        .route(
+            "/vouchers/{voucher_id}/reverse",
+            axum::routing::post(reverse_voucher),
+        )
+        .route(
+            "/vouchers/batch/submit",
+            axum::routing::post(batch_submit_vouchers),
+        )
+        .route(
+            "/vouchers/batch/approve",
+            axum::routing::post(batch_approve_vouchers),
+        )
+        .route(
+            "/vouchers/batch/post",
+            axum::routing::post(batch_post_vouchers),
+        )
+        .route(
+            "/voucher-templates/{template_id}",
+            axum::routing::put(update_voucher_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/set-default",
+            axum::routing::post(set_default_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/toggle",
+            axum::routing::put(toggle_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries/reorder",
+            axum::routing::put(reorder_template_entries_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries/{entry_id}",
+            axum::routing::put(update_template_entry_handler),
+        )
+        .route(
+            "/voucher-generation-rules/{rule_id}",
+            axum::routing::put(update_generation_rule_handler),
+        )
+        .route(
+            "/voucher-generation-rules/{rule_id}/toggle",
+            axum::routing::put(toggle_generation_rule_handler),
         )
         .route(
             "/u8-import/{import_id}/rollback",
             axum::routing::post(rollback_import_handler),
         )
         .layer(axum::middleware::from_fn(require_permission(
+            "finance:voucher:update",
+        )));
+
+    let voucher_delete_routes = Router::new()
+        .route(
+            "/vouchers/{voucher_id}",
+            axum::routing::delete(delete_voucher),
+        )
+        .route(
+            "/vouchers/batch-delete",
+            axum::routing::post(batch_delete_vouchers),
+        )
+        .route(
+            "/voucher-templates/{template_id}",
+            axum::routing::delete(delete_voucher_template_handler),
+        )
+        .route(
+            "/voucher-templates/{template_id}/entries/{entry_id}",
+            axum::routing::delete(delete_template_entry_handler),
+        )
+        .route(
+            "/voucher-generation-rules/{rule_id}",
+            axum::routing::delete(delete_generation_rule_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:voucher:delete",
+        )));
+
+    // 写入口同时要求 read：能读才允许改，避免只读角色被直接抬成写入角色。
+    let voucher_write_routes = voucher_create_routes
+        .merge(voucher_update_routes)
+        .merge(voucher_delete_routes)
+        .layer(axum::middleware::from_fn(require_permission(
             "finance:voucher:read",
         )));
+
+    let voucher_routes = voucher_read_routes.merge(voucher_write_routes);
 
     // ===== 报表/总账/期间 域 =====
     let report_routes = Router::new()
@@ -8627,5 +8682,17 @@ mod account_lifecycle_tests {
         assert!(account_transition_allowed("archived", "archived"));
         assert!(!account_transition_allowed("archived", "active"));
         assert!(!account_transition_allowed("archived", "inactive"));
+    }
+}
+
+#[cfg(test)]
+mod voucher_route_perm_tests {
+    use super::*;
+
+    /// B343: 凭证域拆成读/创建/更新/删除四个子 Router 后必须能正常合并，
+    /// 否则服务启动即 panic。此用例只构建路由表，不连接数据库。
+    #[test]
+    fn voucher_routes_merge_without_panic() {
+        let _router = create_routes();
     }
 }
