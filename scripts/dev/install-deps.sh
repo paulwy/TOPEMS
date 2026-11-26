@@ -296,7 +296,7 @@ verify_install() {
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   
   # PostgreSQL
-  if psql -U topems -d topems -c "SELECT 1" >/dev/null 2>&1; then
+  if psql -d topems -c "SELECT 1" >/dev/null 2>&1 || psql -c "SELECT 1" >/dev/null 2>&1; then
     echo "✅ PostgreSQL"
   else
     echo "❌ PostgreSQL"

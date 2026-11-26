@@ -2,15 +2,24 @@
 # hrm 主数据最小种子：iam.users → core_tenant_users（幂等，可重复跑）
 # 绑定首租户 82acc468-75dd-4ce7-be27-b6efa65da2c4，role=owner/active
 set -euo pipefail
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [ -z "${DATABASE_URL:-}" ] && [ -f "$ROOT_DIR/.env" ]; then
+  set -a; . "$ROOT_DIR/.env"; set +a
+fi
+DB_DSN="${DB_DSN:-${DATABASE_URL:-}}"
+if [ -z "$DB_DSN" ]; then
+  echo "❌ 未解析到 DATABASE_URL（可用 DB_DSN=... 显式指定）" >&2
+  exit 2
+fi
 TENANT_ID="${TENANT_ID:-82acc468-75dd-4ce7-be27-b6efa65da2c4}"
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 INSERT INTO public.core_tenant_users (id, tenant_id, user_id, email, role, status, created_at)
 SELECT gen_random_uuid(), '${TENANT_ID}', u.id, u.email, 'owner', 'active', NOW()
 FROM iam.users u WHERE u.username IN ('admin','test_admin') AND u.deleted_at IS NULL
 ON CONFLICT DO NOTHING;"
 echo "core_tenant_users 种子就绪（tenant ${TENANT_ID}）"
 # core_tenant_modules 种子：首租户启用 5 模块（overview active_modules 真实化）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 INSERT INTO public.core_tenant_modules (id, tenant_id, module_code, module_name, tier, is_active, activated_at)
 SELECT gen_random_uuid(), '${TENANT_ID}', m.code, m.name, 'enterprise', true, NOW()
 FROM (VALUES ('iam','身份与权限'),('crm','客户管理'),('mes','生产执行'),('erp','企业资源'),('bi','商业智能')) AS m(code,name)
@@ -19,7 +28,7 @@ echo "core_tenant_modules 种子就绪（tenant ${TENANT_ID}）"
 # core_audit_logs 表自愈（请求审计中间件写库依赖；幂等）——v1.86 统一审计表为 public.audit_logs
 # （历史分裂：unified-core middleware 写 public.audit_logs、shared-auth audit_logger 写 core_audit_logs，
 #  test 库缺 core_audit_logs 致 usage collect/审计查询失败；现统一单表，两写入路径与 tenant 查询同表）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS public.audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID,
@@ -43,7 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);"
 echo "audit_logs 表就绪（请求审计写库，统一表名）"
 # erp_master_data_audit_trail 补表（消 erp 审计查询 warn；幂等）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS erp.erp_master_data_audit_trail (
     id UUID PRIMARY KEY,
     master_data_id UUID,
@@ -58,7 +67,7 @@ CREATE TABLE IF NOT EXISTS erp.erp_master_data_audit_trail (
 );"
 echo "erp_master_data_audit_trail 表就绪"
 # core_files 补 tenant_id 列（download.rs 引用致 500）+ 存储种子（35MB 演示级；幂等）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 ALTER TABLE public.core_files ADD COLUMN IF NOT EXISTS tenant_id UUID;
 CREATE INDEX IF NOT EXISTS idx_core_files_tenant ON public.core_files(tenant_id);
 INSERT INTO core_files (id, name, original_name, path, size, mime_type, extension, folder_id, uploader_id, status, tenant_id, created_at)
@@ -69,7 +78,7 @@ FROM (VALUES ('c0000000-0000-0000-0000-000000000001'::uuid, '季度经营报告.
 ON CONFLICT (id) DO NOTHING;"
 echo "core_files tenant_id 列 + 存储种子就绪（storage 采集真实源）"
 # core_tenant_usage 历史期回填（近 5 月，users=2，api_calls 递减近似；幂等 upsert）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 INSERT INTO core_tenant_usage (id, tenant_id, users_count, storage_used_mb, api_calls_count, period_start, period_end, base_cost)
 SELECT gen_random_uuid(), t.id, 2, 0, 8 * (6 - i),
        (date_trunc('month', now()) - (i || ' months')::interval)::date,
@@ -78,13 +87,13 @@ FROM core_tenants t CROSS JOIN generate_series(1,5) AS i
 WHERE t.id = '${TENANT_ID}'
 ON CONFLICT (tenant_id, period_start) DO UPDATE SET users_count = EXCLUDED.users_count, api_calls_count = EXCLUDED.api_calls_count;"
 # 历史期 storage 近似回填（35/28/21/14/7 递减，与 api_calls 趋势一致；幂等 upsert）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 UPDATE core_tenant_usage SET storage_used_mb = v.mb
 FROM (VALUES ('2026-09-01'::date,28),('2026-08-01',21),('2026-07-01',14),('2026-06-01',7),('2026-05-01',0)) AS v(d,mb)
 WHERE core_tenant_usage.period_start = v.d AND tenant_id = '${TENANT_ID}';"
 echo "core_tenant_usage 历史期回填就绪（trends 6 期，含 storage 近似）"
 # core_files RLS 租户隔离（有 tenant_id 的租户表，同域宽松策略格式；幂等）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 ALTER TABLE public.core_files ENABLE ROW LEVEL SECURITY;
 DO \$\$
 BEGIN
@@ -99,8 +108,9 @@ BEGIN
   END IF;
 END \$\$;"
 echo "core_files RLS 租户隔离就绪"
-# v1.87 RLS 关键表补齐（幂等）：public.core_roles/core_users + ehs.qa_ehs_hazards（补列+策略），对齐 core_files 宽松格式
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+# v1.87 RLS 关键表补齐（幂等）：public.core_roles + ehs.qa_ehs_hazards（补列+策略），对齐 core_files 宽松格式
+# 2026-11-26 注：public.core_users 已废弃（权威表 iam.users），此处保留其策略补齐仅兼容存量旧库；新库不会走到该分支。
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 DO \$\$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='core_roles' AND policyname='tenant_isolation_core_roles') THEN
@@ -139,7 +149,7 @@ BEGIN
 END \$\$;"
 echo "v1.87 RLS 关键表补齐就绪（core_roles/core_users/ehs.qa_ehs_hazards）"
 # mobile 域补表自愈（契约冒烟 114 端点修复：oa 日程/公告 + push 列 + mes 生产表；幂等）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS mobile.oa_calendar_events (
   id UUID PRIMARY KEY, tenant_id UUID NOT NULL, title TEXT, description TEXT,
   type TEXT DEFAULT 'reminder', start_time TIMESTAMPTZ NOT NULL, end_time TIMESTAMPTZ,
@@ -160,7 +170,7 @@ ALTER TABLE mobile.push_devices ALTER COLUMN os_version DROP NOT NULL;
 ALTER TABLE mobile.push_devices ALTER COLUMN device_model DROP NOT NULL;
 CREATE SCHEMA IF NOT EXISTS mes;"
 echo "mobile 域核心补表就绪"
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS mes.production_orders (
   id uuid NOT NULL,
   deleted_at timestamp with time zone,
@@ -285,7 +295,7 @@ CREATE TABLE IF NOT EXISTS mes.equipment (
 );"
 echo "mes 生产表就绪（equipment/production_orders）"
 # 残余缺表批量自愈（erp/finance/public 11 表，契约日志 relation 500 清零；幂等）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS erp.erp_master_data_versions (
   id uuid NOT NULL,
   master_data_id text NOT NULL,
@@ -441,7 +451,7 @@ CREATE TABLE IF NOT EXISTS erp.documents (
 );"
 echo "残余缺表批量就绪（erp/finance/public）"
 # qms/ticket schema + 核心表 + wms 类型对齐（hidden-500 修复；幂等）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 CREATE SCHEMA IF NOT EXISTS qms; CREATE SCHEMA IF NOT EXISTS ticket;
 CREATE TABLE IF NOT EXISTS qms.qa_quality_costs (
   id uuid NOT NULL,
@@ -486,7 +496,7 @@ ALTER TABLE wms.batches ALTER COLUMN warehouse_id TYPE uuid USING NULLIF(warehou
 ALTER TABLE wms.batches ALTER COLUMN supplier_id TYPE uuid USING NULLIF(supplier_id::text,'')::uuid;"
 echo "qms/ticket/batches 修复就绪"
 # mes.work_stations 补建（aps_scheduling/team 引用；幂等）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS mes.work_stations (
   id uuid NOT NULL,
   deleted_at timestamp with time zone,
@@ -527,7 +537,7 @@ CREATE TABLE IF NOT EXISTS mes.work_stations (
 );"
 echo "mes.work_stations 就绪"
 # hrm 组织主数据种子（公司/部门/职位/员工，绑定 iam 用户；幂等）
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 INSERT INTO hrm.companies (id, tenant_id, organization_id, name, short_name, status, created_at, updated_at)
 SELECT 'a1000000-0000-4000-8000-000000000001','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','TOPEMS 智能制造有限公司','TOPEMS','active',NOW(),NOW()
 WHERE NOT EXISTS (SELECT 1 FROM hrm.companies WHERE id='a1000000-0000-4000-8000-000000000001');
@@ -555,7 +565,7 @@ echo "hrm 组织主数据就绪（1公司/4部门/5职位/3员工）"
 # v1.89 业务缺口批1：PM projects 表结构补全 + 隔离补齐（幂等，与迁移 20261023000001 一致）
 # 背景：pm.projects 全仓无正式建表（仅 ALTER 引用），主库缺表/test 库空壳，
 # 且 INSERT/SELECT 引用 name_en/tags/progress 与旧结构错位，PM 列表/创建 500。
-psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+psql "$DB_DSN" -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS pm.projects (
   id uuid PRIMARY KEY,
   name varchar(255) NOT NULL,
