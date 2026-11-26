@@ -83,7 +83,7 @@ const WorkStationUtilizationCard: React.FC<{
                     ? 'warning.main'
                     : value >= 0.3
                       ? 'primary.main'
-                      : 'grey.400';
+                      : 'text.secondary';
               return (
                 <Box key={item.workStation.id}>
                   <Stack

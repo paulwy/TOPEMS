@@ -369,10 +369,17 @@ export const NotificationListPage: React.FC = () => {
   };
   const tabs: CrudTab[] = [
     {
-      // 第一个 Tab 约定为列表本身，由外层 CrudPage 的主列表渲染（apiAdapter 已按 activeTab 切换）。
-      // 之前这里又塞了一个完整 <CrudPage>，导致默认进入时统计块 + 表格整块渲染两遍（A-02/A-03）。
       id: 'all',
       label: i18n.t('notification.notification_list_page.k28'),
+      content: (
+        <CrudPage
+          schema={schemaWithActions}
+          apiAdapter={createApiAdapter('all')}
+          customRowActions={customRowActions}
+          headerContent={headerContent}
+          key='all'
+        />
+      ),
     },
     {
       id: 'unread',

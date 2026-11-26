@@ -367,7 +367,9 @@ const BIComparisonPage = () => {
                 />
                 <YAxis tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} />
                 <Tooltip />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
                 <Bar
                   dataKey={i18n.t('bi.bi_comparison_page.scheme_a_label')}
                   fill={BIChartColors.series[0]}

@@ -142,7 +142,15 @@ const HrmDepartmentPage: React.FC = () => {
           mb: 3,
         }}
       >
-        <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'primary.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}
@@ -156,7 +164,15 @@ const HrmDepartmentPage: React.FC = () => {
             {total}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'success.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}
@@ -170,7 +186,15 @@ const HrmDepartmentPage: React.FC = () => {
             {active}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'warning.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'warning.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}
@@ -184,7 +208,15 @@ const HrmDepartmentPage: React.FC = () => {
             {inactive}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'info.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'info.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}

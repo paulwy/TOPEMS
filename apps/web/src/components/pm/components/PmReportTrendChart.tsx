@@ -35,7 +35,9 @@ const PmReportTrendChart: React.FC<PmReportTrendChartProps> = ({ data }) => {
               <XAxis dataKey='month' />
               <YAxis domain={[0.5, 1.5]} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Line
                 type='monotone'
                 dataKey='cpi'

@@ -445,7 +445,9 @@ export default function QmsFmeaDetailPage() {
                     />
                     <YAxis fontSize={11} />
                     <Tooltip />
-                    <Legend />
+                    <Legend
+                      formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                    />
                     <Bar
                       dataKey='count'
                       name={i18n.t('pages.qms_fmea_detail_page.k22')}
@@ -487,7 +489,9 @@ export default function QmsFmeaDetailPage() {
                       width={80}
                     />
                     <Tooltip />
-                    <Legend />
+                    <Legend
+                      formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                    />
                     <Bar
                       dataKey='rpn'
                       name='RPN'

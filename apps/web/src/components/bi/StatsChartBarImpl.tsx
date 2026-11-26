@@ -149,7 +149,9 @@ export const StatsChartBarImpl: React.FC<StatsChartBarProps> = ({
                 ))}
               </Bar>
             )}
-            <Legend />
+            <Legend
+              formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+            />
           </BarChart>
         )}
       </div>

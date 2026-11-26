@@ -173,7 +173,15 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
               mb: 2,
             }}
           >
-            <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'var(--surface-2)',
+                borderLeft: '3px solid',
+                borderColor: 'primary.main',
+                borderRadius: 3,
+              }}
+            >
               <Typography
                 variant='body2'
                 color='var(--color-primary-foreground)'
@@ -327,7 +335,15 @@ function ProcessFlowPage() {
                 {total}
               </Typography>
             </Box>
-            <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'var(--surface-2)',
+                borderLeft: '3px solid',
+                borderColor: 'success.main',
+                borderRadius: 3,
+              }}
+            >
               <Typography
                 variant='body2'
                 sx={{ color: 'text.secondary' }}
@@ -341,7 +357,15 @@ function ProcessFlowPage() {
                 {rows.filter((r) => r.status === 'active').length}
               </Typography>
             </Box>
-            <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'var(--surface-2)',
+                borderLeft: '3px solid',
+                borderColor: 'warning.main',
+                borderRadius: 3,
+              }}
+            >
               <Typography
                 variant='body2'
                 sx={{ color: 'text.secondary' }}

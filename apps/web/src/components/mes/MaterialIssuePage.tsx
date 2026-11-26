@@ -171,7 +171,7 @@ const MaterialIssuePage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <FileText
                     size={18}
-                    sx={{ color: 'warning.700' }}
+                    sx={{ color: 'var(--warning-text)' }}
                   />
                   <Typography
                     variant='body2'
@@ -182,7 +182,7 @@ const MaterialIssuePage: React.FC = () => {
                 </Box>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'warning.700' }}
+                  sx={{ fontWeight: 700, color: 'var(--warning-text)' }}
                 >
                   {pending}
                 </Typography>
@@ -196,12 +196,20 @@ const MaterialIssuePage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'secondary.700' }}
+                  sx={{ fontWeight: 700, color: 'var(--accent-secondary-text)' }}
                 >
                   {approved}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'success.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 1 }}
@@ -210,7 +218,7 @@ const MaterialIssuePage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'success.700' }}
+                  sx={{ fontWeight: 700, color: 'var(--success-text)' }}
                 >
                   {issued}
                 </Typography>

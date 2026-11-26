@@ -204,7 +204,9 @@ export default function WmsFlowTrendPage() {
               }}
             />
             <Tooltip />
-            <Legend />
+            <Legend
+              formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+            />
             <Area
               type='monotone'
               dataKey='inbound_qty'

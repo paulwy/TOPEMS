@@ -288,7 +288,7 @@ const ProductionSchedulePage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'secondary.700' }}
+                  sx={{ fontWeight: 700, color: 'var(--accent-secondary-text)' }}
                 >
                   {scheduled}
                 </Typography>
@@ -307,7 +307,15 @@ const ProductionSchedulePage: React.FC = () => {
                   {inProgress}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'success.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
@@ -321,7 +329,15 @@ const ProductionSchedulePage: React.FC = () => {
                   {completed}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'error.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}

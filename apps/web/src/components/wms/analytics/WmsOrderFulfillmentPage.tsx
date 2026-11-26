@@ -209,7 +209,9 @@ export default function WmsOrderFulfillmentPage() {
                 fontSize={11}
               />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Area
                 yAxisId='left'
                 type='monotone'
@@ -254,7 +256,9 @@ export default function WmsOrderFulfillmentPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='avgDays'
                 name={t('wms.order_fulfillment.stat_avg_days')}
@@ -282,7 +286,9 @@ export default function WmsOrderFulfillmentPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='totalOrders'
                 name={t('wms.order_fulfillment.series_total_orders')}

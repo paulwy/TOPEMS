@@ -108,7 +108,7 @@ export const StatsChartPieImpl: React.FC<StatsChartPieProps> = ({
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
-          <Legend />
+          <Legend formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>} />
         </PieChart>
       </div>
     </div>

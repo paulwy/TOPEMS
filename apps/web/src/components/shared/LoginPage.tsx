@@ -259,7 +259,6 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField
                 data-testid='login-username'
-                autoComplete='username'
                 label={i18n.t('pages.login_page.k18')}
                 placeholder={i18n.t('pages.login_page.k19')}
                 value={form.watch('username')}

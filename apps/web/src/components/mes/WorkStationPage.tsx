@@ -44,7 +44,15 @@ export default function WorkStationPage() {
             {total}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'success.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}
@@ -58,7 +66,15 @@ export default function WorkStationPage() {
             {active}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'warning.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}

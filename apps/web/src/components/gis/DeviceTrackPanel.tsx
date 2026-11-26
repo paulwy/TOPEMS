@@ -355,7 +355,15 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 spacing={3}
               >
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'primary.light', borderRadius: 3, p: 3 }}>
+                  <Paper
+                    sx={{
+                      bgcolor: 'var(--surface-2)',
+                      borderLeft: '3px solid',
+                      borderColor: 'primary.main',
+                      borderRadius: 3,
+                      p: 3,
+                    }}
+                  >
                     <Box
                       sx={{
                         display: 'flex',
@@ -379,7 +387,15 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   </Paper>
                 </Grid>
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'success.light', borderRadius: 3, p: 3 }}>
+                  <Paper
+                    sx={{
+                      bgcolor: 'var(--surface-2)',
+                      borderLeft: '3px solid',
+                      borderColor: 'success.main',
+                      borderRadius: 3,
+                      p: 3,
+                    }}
+                  >
                     <Box
                       sx={{
                         display: 'flex',
@@ -427,7 +443,15 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   </Paper>
                 </Grid>
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'secondary.light', borderRadius: 3, p: 3 }}>
+                  <Paper
+                    sx={{
+                      bgcolor: 'var(--surface-2)',
+                      borderLeft: '3px solid',
+                      borderColor: 'secondary.main',
+                      borderRadius: 3,
+                      p: 3,
+                    }}
+                  >
                     <Box
                       sx={{
                         display: 'flex',

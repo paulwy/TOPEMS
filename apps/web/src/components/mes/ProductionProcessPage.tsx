@@ -29,7 +29,15 @@ export default function ProductionProcessPage() {
           mb: 3,
         }}
       >
-        <Box sx={{ p: 2, bgcolor: 'cyan.light', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'cyan.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}
@@ -43,7 +51,15 @@ export default function ProductionProcessPage() {
             {total}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'success.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}
@@ -57,7 +73,15 @@ export default function ProductionProcessPage() {
             {active}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'error.main',
+            borderRadius: 3,
+          }}
+        >
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}

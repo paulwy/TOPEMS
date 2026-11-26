@@ -326,8 +326,7 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
               fontSize: 14,
             }}
           >
-            {/* k0 是搜索框占位词（“搜索…”），空态单独用 empty 键，避免两处共用同一文案 */}
-            {emptyText || i18n.t('components.dashboard_template.empty')}
+            {emptyText || i18n.t('components.dashboard_template.k0')}
           </Box>
         </CardContent>
       </Card>

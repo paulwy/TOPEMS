@@ -312,7 +312,7 @@ const TemplateManagementPage: React.FC = () => {
           <Chip
             label={getCategoryName(row)}
             size='small'
-            sx={{ bgcolor: 'primary.50', color: 'primary.700' }}
+            sx={{ bgcolor: 'primary.50', color: 'var(--accent-primary-text)' }}
           />
         ),
       },

@@ -128,7 +128,9 @@ export default function WmsAbcAnalysisPage() {
                     i18n.t('pages.wms_abc_analysis_page.k1'),
                   ]}
                 />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

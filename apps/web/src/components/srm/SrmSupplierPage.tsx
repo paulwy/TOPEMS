@@ -4,6 +4,7 @@ import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { supplierSchema } from '@/schemas/srm';
 import { masterDataApi } from '@/api/master-data';
 import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
@@ -21,9 +22,7 @@ const apiAdapter = createCrudPageAdapter({
 const SupplierStats: React.FC = () => {
   const theme = useTheme();
   const { data: suppliers = [] } = useQuery({
-    // 挂在 [schema.entity] 前缀下，增/改/删成功后 CrudPage 的失效会连带刷新统计；
-    // 加独有的 'stats' 段，避免与其他页面同名的 ['supplier'] 查询串键
-    queryKey: [supplierSchema.entity, 'stats'],
+    queryKey: QUERY_KEYS.SRM.SUPPLIERS,
     queryFn: async () => {
       const response = await masterDataApi.suppliers.list({ page: 1, page_size: 100 });
       if (response.success && response.data) {
@@ -80,12 +79,7 @@ const SupplierStats: React.FC = () => {
     <Box
       sx={{
         display: 'grid',
-        // 窄视口（≈860px）下 4 列会把“供应商总数”等标签挤成竖排，改为 2 列起步、md 以上 4 列
-        gridTemplateColumns: {
-          xs: 'repeat(2, minmax(0, 1fr))',
-          sm: 'repeat(2, minmax(0, 1fr))',
-          md: 'repeat(4, minmax(0, 1fr))',
-        },
+        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
         gap: 2,
         mb: 4,
       }}

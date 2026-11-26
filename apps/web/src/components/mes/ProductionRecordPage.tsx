@@ -54,7 +54,15 @@ const ProductionRecordPage: React.FC = () => {
                   {total}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'success.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}

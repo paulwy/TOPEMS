@@ -209,7 +209,9 @@ export default function PlanAdherencePage() {
                 }}
               />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <ReferenceLine
                 yAxisId='right'
                 y={100}

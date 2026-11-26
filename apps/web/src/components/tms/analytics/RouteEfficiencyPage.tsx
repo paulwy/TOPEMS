@@ -158,7 +158,9 @@ export default function RouteEfficiencyPage() {
                 unit='/km'
               />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 yAxisId='left'
                 dataKey='avgHours'
@@ -211,7 +213,9 @@ export default function RouteEfficiencyPage() {
                 range={[60, 400]}
               />
               <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Scatter
                 name={t('pages.route_efficiency_page.k20')}
                 data={data}

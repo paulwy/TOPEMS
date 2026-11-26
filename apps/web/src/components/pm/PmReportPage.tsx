@@ -280,7 +280,9 @@ const PmReportPage: React.FC = () => {
                         i18n.t('pm.pm_report_page.k25'),
                       ]}
                     />
-                    <Legend />
+                    <Legend
+                      formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </Box>
@@ -321,7 +323,9 @@ const PmReportPage: React.FC = () => {
                         i18n.t('pm.pm_report_page.k27'),
                       ]}
                     />
-                    <Legend />
+                    <Legend
+                      formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </Box>
@@ -349,7 +353,9 @@ const PmReportPage: React.FC = () => {
                   <XAxis dataKey='month' />
                   <YAxis domain={[0.5, 1.5]} />
                   <Tooltip />
-                  <Legend />
+                  <Legend
+                    formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                  />
                   <Line
                     type='monotone'
                     dataKey='cpi'

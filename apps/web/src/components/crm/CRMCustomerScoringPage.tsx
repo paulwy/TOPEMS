@@ -69,8 +69,27 @@ interface StatCardProps {
   bgColor: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ label, value, color, bgColor }) => (
-  <Box sx={{ bgcolor: bgColor, borderRadius: 3, p: 3 }}>
+const TEXT_OF: Record<string, string> = {
+  'success.main': 'var(--success-text)',
+  'primary.main': 'var(--accent-primary-text)',
+  'secondary.main': 'var(--accent-secondary-text)',
+  'warning.main': 'var(--warning-text)',
+  'error.main': 'var(--error-text)',
+  'info.main': 'var(--info-text)',
+};
+const textOf = (c: string) => TEXT_OF[c] ?? 'text.secondary';
+
+const StatCard: React.FC<StatCardProps> = ({ label, value, color, bgColor: _bgColor }) => (
+  <Box
+    sx={{
+      // 浅色实心底 + 同色系文字在暗色里只有 1.1:1，统一中性底 + 语义左边框
+      bgcolor: 'var(--surface-2)',
+      borderLeft: '3px solid',
+      borderColor: color,
+      borderRadius: 3,
+      p: 3,
+    }}
+  >
     <Box
       sx={{
         display: 'flex',
@@ -82,7 +101,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, color, bgColor }) => 
         <Typography
           variant='body2'
           sx={{
-            color,
+            color: textOf(color),
             fontWeight: 500,
             fontSize: designTokens.typography.fontSize.scale['0.875rem'],
           }}
@@ -91,7 +110,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, color, bgColor }) => 
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 'bold', color, mt: 0.5 }}
+          sx={{ fontWeight: 'bold', color: textOf(color), mt: 0.5 }}
         >
           {value}
         </Typography>
@@ -100,14 +119,14 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, color, bgColor }) => 
         sx={{
           width: 48,
           height: 48,
-          bgcolor: color,
+          bgcolor: 'var(--surface-3)',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Star sx={{ width: 24, height: 24, color: 'common.white' }} />
+        <Star sx={{ width: 24, height: 24, color: textOf(color) }} />
       </Box>
     </Box>
   </Box>

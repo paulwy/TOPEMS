@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { formulaSchema } from '@/schemas/pdm';
@@ -8,7 +8,6 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 
 export default function PdmFormulaPage() {
-  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
 
@@ -93,10 +92,18 @@ export default function PdmFormulaPage() {
             mb: 3,
           }}
         >
-          <Box sx={{ p: 2, bgcolor: theme.palette.pink[50], borderRadius: 3 }}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'pink.main',
+              borderRadius: 3,
+            }}
+          >
             <Typography
               variant='body2'
-              sx={{ color: 'slate.600' }}
+              sx={{ color: 'text.secondary' }}
             >
               {t('pdm.pdm_formula_page.e1')}
             </Typography>
@@ -107,10 +114,18 @@ export default function PdmFormulaPage() {
               {stats.total}
             </Typography>
           </Box>
-          <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'success.main',
+              borderRadius: 3,
+            }}
+          >
             <Typography
               variant='body2'
-              sx={{ color: 'slate.600' }}
+              sx={{ color: 'text.secondary' }}
             >
               {t('pdm.pdm_formula_page.e2')}
             </Typography>
@@ -121,10 +136,18 @@ export default function PdmFormulaPage() {
               {stats.active}
             </Typography>
           </Box>
-          <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'warning.main',
+              borderRadius: 3,
+            }}
+          >
             <Typography
               variant='body2'
-              sx={{ color: 'slate.600' }}
+              sx={{ color: 'text.secondary' }}
             >
               {t('pdm.pdm_formula_page.e3')}
             </Typography>
@@ -135,10 +158,18 @@ export default function PdmFormulaPage() {
               {stats.draft}
             </Typography>
           </Box>
-          <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'primary.main',
+              borderRadius: 3,
+            }}
+          >
             <Typography
               variant='body2'
-              sx={{ color: 'slate.600' }}
+              sx={{ color: 'text.secondary' }}
             >
               {t('pdm.change_page.e3')}
             </Typography>

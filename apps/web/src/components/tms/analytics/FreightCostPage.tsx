@@ -139,7 +139,9 @@ export default function FreightCostPage() {
             />
             <YAxis fontSize={11} />
             <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
-            <Legend />
+            <Legend
+              formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+            />
             <Bar
               dataKey='totalFreight'
               name={t('tms.freight_cost_page.k14')}
@@ -172,7 +174,9 @@ export default function FreightCostPage() {
             />
             <YAxis fontSize={11} />
             <Tooltip />
-            <Legend />
+            <Legend
+              formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+            />
             <Bar
               dataKey='shipmentCount'
               name={t('tms.freight_cost_page.k16')}

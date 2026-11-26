@@ -91,7 +91,16 @@ const StatCard: React.FC<{
   bgColor?: string;
   iconColor?: string;
 }> = ({ label, value, icon, bgColor, iconColor }) => (
-  <Box sx={{ p: 2, bgcolor: bgColor || 'secondary.100', borderRadius: 3 }}>
+  <Box
+    sx={{
+      // 浅色实心底 + 灰字在暗色里只有 1.0:1，改中性底 + 语义左边框
+      p: 2,
+      bgcolor: 'var(--surface-2)',
+      borderLeft: '3px solid',
+      borderColor: bgColor || 'secondary.main',
+      borderRadius: 3,
+    }}
+  >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
       <Box sx={{ display: 'flex', color: iconColor || 'secondary.700' }}>{icon}</Box>
       <Box
@@ -101,7 +110,7 @@ const StatCard: React.FC<{
         {label}
       </Box>
     </Box>
-    <Box sx={{ fontWeight: 700, fontSize: 24, color: iconColor || 'secondary.700' }}>{value}</Box>
+    <Box sx={{ fontWeight: 700, fontSize: 24, color: 'var(--text-primary)' }}>{value}</Box>
   </Box>
 );
 const BudgetManagementPage: React.FC = () => {

@@ -207,7 +207,9 @@ export default function QmsCostAnalysisPage() {
                   ))}
                 </Pie>
                 <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
               </PieChart>
             </ResponsiveContainer>
           </Paper>
@@ -236,7 +238,9 @@ export default function QmsCostAnalysisPage() {
                 />
                 <YAxis fontSize={11} />
                 <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
                 <Bar
                   dataKey='amount'
                   name={t('qms.qms_cost_analysis_page.k11')}
@@ -271,7 +275,9 @@ export default function QmsCostAnalysisPage() {
                 />
                 <YAxis fontSize={11} />
                 <Tooltip formatter={(value: unknown) => `¥${Number(value).toLocaleString()}`} />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
                 <Line
                   type='monotone'
                   dataKey='prevention'

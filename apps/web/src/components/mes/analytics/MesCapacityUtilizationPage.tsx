@@ -246,7 +246,9 @@ export default function MesCapacityUtilizationPage() {
                     />
                     <YAxis unit='%' />
                     <Tooltip />
-                    <Legend />
+                    <Legend
+                      formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                    />
                     <Bar
                       dataKey='value'
                       name={i18n.t('mes.mes_capacity_utilization_page.k28')}
@@ -291,7 +293,9 @@ export default function MesCapacityUtilizationPage() {
                       ))}
                     </Pie>
                     <Tooltip />
-                    <Legend />
+                    <Legend
+                      formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>

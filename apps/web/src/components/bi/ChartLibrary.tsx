@@ -360,7 +360,11 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             />
             <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
-            {showLegend && <Legend />}
+            {showLegend && (
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
+            )}
             {yKeys && yKeys.length > 0 ? (
               yKeys.map((key, index) => (
                 <Line
@@ -447,7 +451,11 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             />
             <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
-            {showLegend && <Legend />}
+            {showLegend && (
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
+            )}
             {yKeys && yKeys.length > 0 ? (
               yKeys.map((key, index) => (
                 <Area
@@ -511,7 +519,11 @@ export const ChartComponent: React.FC<ChartConfig> = ({
               tick={{ fill: 'grey.600', fontSize: 12 }}
             />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
-            {showLegend && <Legend />}
+            {showLegend && (
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
+            )}
             <Scatter
               name={nameKey || 'data'}
               dataKey={yKey}
@@ -537,7 +549,11 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             />
             <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
-            {showLegend && <Legend />}
+            {showLegend && (
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
+            )}
             <Bar
               dataKey={yKeys?.[0] || yKey}
               fill={colors[0]}
@@ -573,7 +589,11 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             />
             <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
-            {showLegend && <Legend />}
+            {showLegend && (
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
+            )}
             <Bar
               dataKey={yKey}
               fill={colors[0]}
@@ -621,7 +641,11 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             />
             <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
             {showTooltip && <Tooltip content={<CustomTooltip />} />}
-            {showLegend && <Legend />}
+            {showLegend && (
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
+            )}
             {yKeys && yKeys.length > 0 ? (
               yKeys.map((key, index) => (
                 <Bar

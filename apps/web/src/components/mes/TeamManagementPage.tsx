@@ -52,7 +52,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
     active: {
       label: i18n.t('mes.team_management_page.k0'),
       bg: 'success.lighter',
-      color: 'success.700',
+      color: 'var(--success-text)',
     },
     inactive: {
       label: i18n.t('mes.team_management_page.k1'),
@@ -270,7 +270,15 @@ function TeamManagementPage() {
                   {total}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'success.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
@@ -307,7 +315,7 @@ function TeamManagementPage() {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'secondary.700' }}
+                  sx={{ fontWeight: 700, color: 'var(--accent-secondary-text)' }}
                 >
                   {totalMembers}
                 </Typography>

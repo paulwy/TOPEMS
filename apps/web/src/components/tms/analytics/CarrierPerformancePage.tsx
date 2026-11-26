@@ -139,7 +139,9 @@ export default function CarrierPerformancePage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='totalShipments'
                 name={t('tms.carrier_performance_page.k14')}
@@ -188,7 +190,9 @@ export default function CarrierPerformancePage() {
                 fontSize={11}
               />
               <Tooltip formatter={(value: unknown) => `${value}%`} />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='completionRate'
                 name={t('tms.carrier_performance_page.k18')}

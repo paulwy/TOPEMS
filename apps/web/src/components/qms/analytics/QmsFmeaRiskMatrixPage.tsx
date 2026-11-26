@@ -238,7 +238,9 @@ export default function QmsFmeaRiskMatrixPage() {
                 formatter={(value: unknown, name: unknown) => [String(value), String(name)]}
                 labelFormatter={() => ''}
               />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               {/* 风险区域背景：高严重度+高发生度=高风险区 */}
               <ReferenceArea
                 x1={7}

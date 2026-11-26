@@ -121,7 +121,7 @@ const EquipmentOEEPage: React.FC = () => {
             </Typography>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color: 'success.700' }}
+              sx={{ fontWeight: 700, color: 'var(--success-text)' }}
             >
               {formatPercent(record.availability)}
             </Typography>
@@ -135,7 +135,7 @@ const EquipmentOEEPage: React.FC = () => {
             </Typography>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color: 'warning.700' }}
+              sx={{ fontWeight: 700, color: 'var(--warning-text)' }}
             >
               {formatPercent(record.performance)}
             </Typography>
@@ -156,7 +156,7 @@ const EquipmentOEEPage: React.FC = () => {
             </Typography>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color: 'secondary.700' }}
+              sx={{ fontWeight: 700, color: 'var(--accent-secondary-text)' }}
             >
               {formatPercent(record.quality)}
             </Typography>
@@ -287,7 +287,7 @@ const EquipmentOEEPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Gauge
             size={18}
-            sx={{ color: 'success.700' }}
+            sx={{ color: 'var(--success-text)' }}
           />
           <Typography
             variant='body2'
@@ -298,7 +298,7 @@ const EquipmentOEEPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: 'success.700' }}
+          sx={{ fontWeight: 700, color: 'var(--success-text)' }}
         >
           {statistics ? formatPercent(statistics.avg_availability) : '-'}
         </Typography>
@@ -313,7 +313,7 @@ const EquipmentOEEPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <TrendingUp
             size={18}
-            sx={{ color: 'warning.700' }}
+            sx={{ color: 'var(--warning-text)' }}
           />
           <Typography
             variant='body2'
@@ -324,7 +324,7 @@ const EquipmentOEEPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: 'warning.700' }}
+          sx={{ fontWeight: 700, color: 'var(--warning-text)' }}
         >
           {statistics ? formatPercent(statistics.avg_performance) : '-'}
         </Typography>
@@ -339,7 +339,7 @@ const EquipmentOEEPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <CheckCircle2
             size={18}
-            sx={{ color: 'secondary.700' }}
+            sx={{ color: 'var(--accent-secondary-text)' }}
           />
           <Typography
             variant='body2'
@@ -350,7 +350,7 @@ const EquipmentOEEPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: 'secondary.700' }}
+          sx={{ fontWeight: 700, color: 'var(--accent-secondary-text)' }}
         >
           {statistics ? formatPercent(statistics.avg_quality) : '-'}
         </Typography>

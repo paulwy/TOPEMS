@@ -144,7 +144,9 @@ export default function VehicleUtilizationPage() {
                 fontSize={11}
               />
               <Tooltip formatter={(value: unknown) => `${value}%`} />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <ReferenceLine
                 y={80}
                 stroke={theme.palette.success.dark}
@@ -183,7 +185,9 @@ export default function VehicleUtilizationPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='trips'
                 name={t('tms.vehicle_utilization_page.k10')}

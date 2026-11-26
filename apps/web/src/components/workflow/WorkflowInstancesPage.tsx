@@ -252,7 +252,9 @@ export const WorkflowInstancesPage: React.FC = () => {
             key={item.id}
             sx={{
               p: 2,
-              bgcolor: `${item.color}.light`,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: `${item.color}.main`,
               borderRadius: 2,
             }}
           >

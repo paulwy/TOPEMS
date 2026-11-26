@@ -189,7 +189,9 @@ export default function ScheduleGanttPage() {
                   return [value, name];
                 }}
               />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Bar
                 dataKey='duration'
                 name={t('aps.schedule_gantt_page.k8')}

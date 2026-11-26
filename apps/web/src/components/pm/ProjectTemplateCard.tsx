@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { alpha } from '@mui/material/styles';
 import styles from './ProjectTemplateCard.module.css';
 import { Card, CardContent, CardHeader, Typography, Chip, Button } from '@mui/material';
 import React from 'react';
@@ -117,12 +118,14 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
                   {tag}
                 </span>
               }
-              sx={{
-                backgroundColor: 'primary.light',
-                color: 'primary.dark',
+              sx={(t) => ({
+                // 主色浅底 + 主色深字在亮色只有 2.2:1；改成模式感知的浅底/深字对
+                backgroundColor:
+                  t.palette.mode === 'dark' ? alpha(t.palette.primary.main, 0.18) : 'primary.100',
+                color: t.palette.mode === 'dark' ? 'primary.300' : 'primary.700',
                 fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                 height: 24,
-              }}
+              })}
             />
           ))}
         </div>
@@ -134,8 +137,8 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
             marginTop: 8,
             color: 'grey.700',
             '&:hover': {
-              backgroundColor: 'primary.light',
-              color: 'primary.dark',
+              backgroundColor: 'action.hover',
+              color: 'text.primary',
             },
             transition: 'background-color 0.2s, color 0.2s',
             gap: 1,

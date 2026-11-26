@@ -166,7 +166,9 @@ export default function QmsQualityTrendPage() {
                   }}
                 />
                 <Tooltip />
-                <Legend />
+                <Legend
+                  formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+                />
                 <ReferenceLine
                   yAxisId='left'
                   y={95}
@@ -227,7 +229,9 @@ export default function QmsQualityTrendPage() {
               />
               <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend
+                formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>}
+              />
               <Line
                 type='monotone'
                 dataKey='inspectionCount'

@@ -300,8 +300,9 @@ const ProductionGantt: React.FC<{
                           left: `${left}%`,
                           width: `${width}%`,
                           borderRadius: 1,
-                          backgroundColor: meta.color,
-                          color: 'common.white',
+                          // 待开始条用中性底：grey.400 上压白字只有 1.88:1
+                          backgroundColor: s.status === 'pending' ? 'grey.200' : meta.color,
+                          color: s.status === 'pending' ? 'text.secondary' : 'common.white',
                           display: 'flex',
                           alignItems: 'center',
                           px: 1,

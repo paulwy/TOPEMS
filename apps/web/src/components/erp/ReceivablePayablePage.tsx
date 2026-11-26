@@ -102,12 +102,12 @@ const ReceivablePayablePage: React.FC = () => {
             {activeTab === 0 ? (
               <ArrowUpRight
                 size={18}
-                sx={{ color: 'secondary.700' }}
+                sx={{ color: 'var(--accent-secondary-text)' }}
               />
             ) : (
               <ArrowDownRight
                 size={18}
-                sx={{ color: 'secondary.700' }}
+                sx={{ color: 'var(--accent-secondary-text)' }}
               />
             )}
             <Box
@@ -117,25 +117,51 @@ const ReceivablePayablePage: React.FC = () => {
               {i18n.t('pages.receivable_payable_page.k0')}
             </Box>
           </Box>
-          <Box sx={{ fontWeight: 700, fontSize: 24, color: 'secondary.700' }}>{total}</Box>
+          <Box sx={{ fontWeight: 700, fontSize: 24, color: 'var(--accent-secondary-text)' }}>
+            {total}
+          </Box>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'success.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>
             {i18n.t('erp.receivable_payable_page.k4')}
           </Box>
-          <Box sx={{ fontWeight: 700, fontSize: 24, color: 'success.700' }}>
+          <Box sx={{ fontWeight: 700, fontSize: 24, color: 'var(--success-text)' }}>
             {totalAmount.toFixed(2)}
           </Box>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'warning.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>
             {i18n.t('erp.receivable_payable_page.k5')}
           </Box>
-          <Box sx={{ fontWeight: 700, fontSize: 24, color: 'warning.700' }}>
+          <Box sx={{ fontWeight: 700, fontSize: 24, color: 'var(--warning-text)' }}>
             {pendingAmount.toFixed(2)}
           </Box>
         </Box>
-        <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: 'error.main',
+            borderRadius: 3,
+          }}
+        >
           <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>
             {i18n.t('erp.receivable_payable_page.k6')}
           </Box>

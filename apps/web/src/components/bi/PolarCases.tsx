@@ -103,7 +103,9 @@ export const PolarCases: React.FC<PolarCaseProps> = (p) => {
           ))}
         </Pie>
         {p.showTooltip && <Tooltip content={<CustomTooltipPolar />} />}
-        {p.showLegend && <Legend />}
+        {p.showLegend && (
+          <Legend formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>} />
+        )}
       </PieChart>
     );
   }
@@ -124,7 +126,9 @@ export const PolarCases: React.FC<PolarCaseProps> = (p) => {
         domain={[0, 'dataMax']}
       />
       {p.showTooltip && <Tooltip content={<CustomTooltipPolar />} />}
-      {p.showLegend && <Legend />}
+      {p.showLegend && (
+        <Legend formatter={(v) => <span style={{ color: 'var(--text-secondary)' }}>{v}</span>} />
+      )}
       <Radar
         dataKey={p.yKey}
         stroke={p.colors[0]}

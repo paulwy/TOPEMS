@@ -212,7 +212,15 @@ const QualityInspectionPage: React.FC = () => {
                   {stats.total}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'warning.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
@@ -226,7 +234,15 @@ const QualityInspectionPage: React.FC = () => {
                   {stats.pending}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'success.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
@@ -240,7 +256,15 @@ const QualityInspectionPage: React.FC = () => {
                   {stats.passed}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'var(--surface-2)',
+                  borderLeft: '3px solid',
+                  borderColor: 'error.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
@@ -272,7 +296,7 @@ const QualityInspectionPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'secondary.700' }}
+                  sx={{ fontWeight: 700, color: 'var(--accent-secondary-text)' }}
                 >
                   {stats.avgRate.toFixed(2)}%
                 </Typography>

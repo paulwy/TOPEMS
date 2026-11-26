@@ -252,7 +252,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               sx={{
                 cursor: 'pointer',
                 backgroundColor: 'primary.50',
-                color: 'primary.700',
+                color: 'var(--accent-primary-text)',
                 '&:hover': { backgroundColor: 'primary.100' },
               }}
             />

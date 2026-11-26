@@ -79,9 +79,7 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
         [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
         [i18n.t('pages.ehs_hazard_detail_page.k1')]: {
           bg: 'warning.100',
-          // 设计既定 severity 色（warning 主色），非新增硬编码
-          // eslint-disable-next-line topems-design/no-hardcoded-hex
-          color: '#f9a825',
+          color: 'var(--warning-600)',
         },
         [i18n.t('pages.ehs_hazard_detail_page.k2')]: {
           bg: 'success.lighter',
@@ -491,7 +489,16 @@ const EhsHazardDetailPage: React.FC = () => {
         </Box>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'error.main',
+              borderRadius: 1,
+            }}
+          >
             <Typography sx={{ color: 'error.dark', fontSize: 12 }}>
               {t('ehs.ehs_hazard_detail_page.k3')}
             </Typography>
@@ -503,7 +510,16 @@ const EhsHazardDetailPage: React.FC = () => {
                   : t('ehs.ehs_hazard_detail_page.low')}
             </Typography>
           </Box>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'warning.main',
+              borderRadius: 1,
+            }}
+          >
             <Typography sx={{ color: theme.palette.yellow[600], fontSize: 12 }}>
               {t('ehs.ehs_hazard_detail_page.k4')}
             </Typography>
@@ -515,7 +531,16 @@ const EhsHazardDetailPage: React.FC = () => {
                   : t('ehs.ehs_hazard_detail_page.low')}
             </Typography>
           </Box>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              p: 2,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: '3px solid',
+              borderColor: 'primary.main',
+              borderRadius: 1,
+            }}
+          >
             <Typography sx={{ color: 'primary.dark', fontSize: 12 }}>
               {t('ehs.ehs_hazard_detail_page.k5')}
             </Typography>
