@@ -70,8 +70,9 @@
    优先 templates → preferences → channels/providers → delivery/webhook → digest/group/subscription。
 2. **前端路径归一**：`api/notification` 里 100+ 处重复 `/notification` 前缀，建议在 client 层做一次
    normalize（或直接改路径），否则后端一旦把 stub 摘掉，这些调用立刻全 404。
-3. **stub 收口**：stub 现在返回 200，前端无法感知。建议给 stub 响应加 `X-Stub: true` 头或固定错误码，
-   让前端和巡检能识别「契约未实现」，而不是当成空数据。
+3. **stub 显形（已做）**：`svc/server/src/modules/communication_real_module.rs` 的 `comm_stub`
+   已改成返回 `X-Stub: true` 头 + `"stubbed": true` 字段，前端、巡检、契约对账都能识别
+   「契约未实现」而不是「真的没数据」。后续可以据此在页面上给"未接通"提示，或直接隐藏入口。
 
 工具：`node scripts/ci/api-contract.mjs --only notification --probe`
 （`--probe` 会按 2xx / stub / 404 分类，明细写 `--json /tmp/x.json`）

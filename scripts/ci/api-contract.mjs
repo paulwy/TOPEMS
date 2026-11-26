@@ -182,6 +182,16 @@ async function main() {
     }
   }
 
+  // --emit-get：把前端在调、但 spec 没有的 GET 输出成清单，喂给 api-smoke --extra
+  const EMIT = arg('emit-get', '');
+  if (EMIT) {
+    const list = [...new Set(
+      missing.filter((c) => c.method === 'GET' && !c.full.includes('*') && !c.full.includes('{')).map((c) => c.full)
+    )];
+    fs.writeFileSync(EMIT, JSON.stringify({ paths: list }, null, 2));
+    console.log(`\n已输出 ${list.length} 条 GET 路径 → ${EMIT}`);
+  }
+
   // --probe：把「spec 里没有」的路径真的打一遍，区分
   //   1) 接口存在但没写进 spec（2xx）
   //   2) 接口不存在（404 文案）
@@ -213,7 +223,8 @@ async function main() {
           const text = await r.text();
           c.status = r.status;
           if (r.status === 200 || r.status === 201) {
-            if (STUB_RE.test(text)) buckets.STUB.push(c);
+            // 后端兜底 stub 会带 X-Stub: true（2026-11-26 起），文案匹配作为旧版本兼容
+            if (r.headers.get('x-stub') === 'true' || STUB_RE.test(text)) buckets.STUB.push(c);
             else buckets.SPEC_GAP.push(c);
           } else if (r.status === 404 && /接口不存在|路径/.test(text)) buckets.REAL_MISSING.push(c);
           else if ([400, 405, 422].includes(r.status)) buckets.NEEDS_PARAM.push(c);

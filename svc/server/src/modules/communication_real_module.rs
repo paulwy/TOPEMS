@@ -41,12 +41,21 @@ where
 
 /// 轻量兜底：crate 尚未实现的通信子域端点（待上游支持）。
 /// 返回 200 + 空数据，避免前端契约裸 404；非业务实现。
-async fn comm_stub() -> Json<serde_json::Value> {
-    Json(serde_json::json!({
-        "success": true,
-        "message": "communication endpoint pending upstream support",
-        "data": null
-    }))
+async fn comm_stub() -> impl axum::response::IntoResponse {
+    // 200 + 空数据用于避免前端裸 404，但必须让调用方/巡检能识别"契约未实现"，
+    // 否则页面只表现为"没数据"，问题会被长期掩盖。X-Stub 头 + stubbed 字段双标记。
+    (
+        [(
+            axum::http::header::HeaderName::from_static("x-stub"),
+            axum::http::HeaderValue::from_static("true"),
+        )],
+        Json(serde_json::json!({
+            "success": true,
+            "stubbed": true,
+            "message": "communication endpoint pending upstream support",
+            "data": null
+        })),
+    )
 }
 
 // ===== 通知子域兜底路径（crate 暂未实现，禁止裸 404） =====

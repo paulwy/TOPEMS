@@ -44,6 +44,8 @@ const MODULES = (arg('module', '') || '').split(',').filter(Boolean);
 const JSON_OUT = arg('json', '');
 const TIMEOUT_MS = Number(arg('timeout', '20')) * 1000;
 const RETRY = Number(arg('retry', '2'));
+// --extra：把「前端在调、spec 里没有」的 GET 一起打（由 api-contract.mjs --emit-get 生成）
+const EXTRA_FILE = arg('extra', '');
 
 // spec 写法过期 → 真实路由的别名表（见 scripts/ci/openapi-path-aliases.json）
 const ALIAS_FILE = arg('aliases', resolve(dirname(fileURLToPath(import.meta.url)), 'openapi-path-aliases.json'));
@@ -81,7 +83,27 @@ function collect(spec) {
     const seg = path.split('/')[2] || '';
     if (MODULES.length && !MODULES.includes(seg)) continue;
     const target = ALIASES[path] || path;
-    ops.push({ path, target, aliased: target !== path, module: seg, opId: op.operationId || '' });
+    ops.push({ path, target, aliased: target !== path, module: seg, opId: op.operationId || '', source: 'spec' });
+  }
+
+  // 合并前端调用清单：spec 未收录但前端真在调的 GET，让它们进冒烟网
+  if (EXTRA_FILE) {
+    let extra = [];
+    try {
+      const raw = JSON.parse(readFileSync(EXTRA_FILE, 'utf8'));
+      extra = Array.isArray(raw) ? raw : raw.paths || raw.get || [];
+    } catch (e) {
+      throw new Error(`读取 --extra 失败：${e.message}`);
+    }
+    const known = new Set(ops.map((o) => o.target || o.path));
+    for (const item of extra) {
+      const p = typeof item === 'string' ? item : item.path;
+      if (!p || p.includes('{') || p.includes('*') || known.has(p)) continue;
+      const seg = p.split('/')[2] || '';
+      if (MODULES.length && !MODULES.includes(seg)) continue;
+      known.add(p);
+      ops.push({ path: p, target: p, aliased: false, module: seg, opId: '', source: 'frontend' });
+    }
   }
   return ops;
 }
@@ -118,7 +140,12 @@ async function probeOnce(token, item) {
       body = { raw: text.slice(0, 80) };
     }
     const msg = String(body?.message || '');
+    const stubbed = r.headers.get('x-stub') === 'true' || body?.stubbed === true;
     let verdict = 'OK';
+    // stub 是「契约未实现但被 200 兜住」，不是接口坏了：单独标 SOFT 并在消息里写明
+    if (stubbed && r.status < 400) {
+      return { ...item, status: r.status, verdict: 'SOFT', message: 'stub：契约未实现（pending upstream support）' };
+    }
     // 连接池打满属容量信号，不是接口逻辑坏了：单独标 DEGRADED，进汇总不进退出码
     const poolStarved = r.status === 503 && /数据库繁忙/.test(msg);
     if (r.status >= 500 && r.status !== 501) verdict = poolStarved ? 'DEGRADED' : 'FAIL';
@@ -139,7 +166,10 @@ async function probeOnce(token, item) {
   const spec = await fetchSpec();
   let ops = collect(spec);
   if (LIMIT > 0) ops = ops.slice(0, LIMIT);
-  console.log(`接口冒烟  ${ops.length} 条 GET（不含路径参数）  并发 ${CONCURRENCY}`);
+  const fromFrontend = ops.filter((o) => o.source === 'frontend').length;
+  console.log(
+    `接口冒烟  ${ops.length} 条 GET（不含路径参数${fromFrontend ? `，其中 ${fromFrontend} 条来自前端调用清单` : ''}）  并发 ${CONCURRENCY}`
+  );
 
   const results = [];
   let cursor = 0;

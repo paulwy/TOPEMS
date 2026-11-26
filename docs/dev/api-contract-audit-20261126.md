@@ -66,7 +66,7 @@ node scripts/ci/api-contract.mjs --spec http://127.0.0.1:8099/api/openapi.json
 1. **补注解**：优先 core / erp / finance —— 这三块占了 600+ 条未覆盖，且都是高频页面在调。
    做法是给 handler 加 `#[utoipa::path]`，重跑 `cargo run -p topems-server --bin openapi-gen`。
    注意 `docs/api/openapi.json` 会被并行会话重新生成，改完尽快提交。
-2. **stub 显形**：stub 现在 200 无痕。给响应加 `X-Stub: true` 头，或在 body 里带 `stubbed: true`，
-   前端和巡检就能把「契约未实现」和「真的没数据」分开。
+2. **stub 显形（已完成）**：`comm_stub` 现在返回 `X-Stub: true` + `"stubbed": true`，
+   本脚本的 `--probe` 也优先按该头分类，不再依赖中文文案匹配。
 3. **等注解补齐后**，把 `api-contract --probe --fail-on-missing` 挂进 `verify:frontend`，
    才真正具备"路径不存在就红"的能力。
