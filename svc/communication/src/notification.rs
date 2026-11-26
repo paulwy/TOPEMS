@@ -485,7 +485,7 @@ pub async fn create_notification(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["communication:notification:read"])),
-    path = "/notify/list",
+    path = "/notification/notify/list",
     tag = "notification",
     params(
         ("page" = Option<u32>, Query, description = "Page number"),
@@ -2967,7 +2967,7 @@ async fn send_notification_email(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["communication:notification:read"])),
-    path = "/notification/channels",
+    path = "/notification/push-config/channels",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -3066,7 +3066,7 @@ pub async fn list_channels(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["communication:notification:read"])),
-    path = "/notification/channels/{id}",
+    path = "/notification/push-config/channels/{id}",
     params(
         ("id" = String, Path, description = "Channel ID")
     ),
@@ -3135,7 +3135,7 @@ pub async fn get_channel(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notification/channels",
+    path = "/notification/push-config/channels",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -3236,7 +3236,7 @@ pub async fn create_channel(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notification/channels/{id}",
+    path = "/notification/push-config/channels/{id}",
     params(
         ("id" = String, Path, description = "Channel ID")
     ),
@@ -3347,7 +3347,7 @@ pub async fn update_channel(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notification/channels/{id}",
+    path = "/notification/push-config/channels/{id}",
     params(
         ("id" = String, Path, description = "Channel ID")
     ),

@@ -133,14 +133,25 @@ pub async fn mark_all_notifications_read(
     }
 }
 
+/// 用户 token 代理必须新建 client：base 上挂着 `with_service_token` 注入的
+/// `x-system-channel: service_token`，只换 Authorization 会让下游以
+/// "用户身份声明系统通道" 为由 403；新 client 还要把 `x-tenant-id` 透传，
+/// 否则下游按租户头恢复 RLS 上下文时会 400「缺少租户上下文」。
 fn build_client(
     base: &TypedServiceClient<NotificationApi>,
     headers: &HeaderMap,
 ) -> TypedServiceClient<NotificationApi> {
-    let client = base.clone();
-    if let Some(token) = extract_bearer_token(headers) {
-        client.with_auth_token(token)
-    } else {
-        client
+    match extract_bearer_token(headers) {
+        Some(token) => match TypedServiceClient::new(NotificationApi, base.base_url().to_string()) {
+            Ok(mut c) => {
+                c.set_auth_token(token);
+                if let Some(t) = headers.get("x-tenant-id").and_then(|v| v.to_str().ok()) {
+                    c.add_header("x-tenant-id", t);
+                }
+                c
+            }
+            Err(_) => base.clone(),
+        },
+        None => base.clone(),
     }
 }

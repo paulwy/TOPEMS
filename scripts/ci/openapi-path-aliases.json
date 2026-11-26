@@ -1,0 +1,10 @@
+{
+  "_comment": "OpenAPI 与真实路由的路径别名表。仅收录「同一接口、spec 写法过期」的情况：冒烟按别名打到真实路径，发现新的漂移就往这里加一条，并在 docs/dev/api-smoke-20261126.md 记原因。别名只影响冒烟寻址，不改变 spec 生成。",
+  "aliases": {
+    "/api/communication/notification/channels": "/api/communication/notification/push-config/channels",
+    "/api/communication/notify/list": "/api/communication/notification/notify/list",
+    "/api/core/users": "/api/core/iam/users",
+    "/api/ehs/occupational-health/exam-plans": "/api/ehs/occupational-health/check-plans",
+    "/api/ehs/occupational-health/exam-records": "/api/ehs/occupational-health/check-records"
+  }
+}

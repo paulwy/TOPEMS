@@ -59,14 +59,22 @@ impl FinanceService {
     ) -> Result<Value, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let table = match direction {
-            "receivable" => "erp_receivables",
-            "payable" => "erp_payables",
-            _ => "erp_receivables",
+            "receivable" => "finance.erp_receivables",
+            "payable" => "finance.erp_payables",
+            _ => "finance.erp_receivables",
         };
 
+        // 两张表列名不一致（receivable 侧是 receivable_no/customer_name，payable 侧是
+        // payable_no/supplier_name），只取两边共有的业务列；否则默认 direction 落到
+        // receivable 表时会报 `column "payable_no" does not exist`。
+        let party_col = if table == "finance.erp_receivables" {
+            "customer_name"
+        } else {
+            "supplier_name"
+        };
         let mut sql = format!(
-            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM {} WHERE (tenant_id = $1::uuid) AND status = 'unpaid'",
-            table
+            "SELECT id, tenant_id, amount, due_date, {} AS party_name, status, deleted_at FROM {} WHERE (tenant_id = $1::uuid) AND status = 'unpaid' AND deleted_at IS NULL",
+            party_col, table
         );
 
         if let Some(ref b) = bucket {
@@ -101,11 +109,7 @@ impl FinanceService {
                 let amount: Option<f64> = sqlx::Row::try_get(row, "amount").ok();
                 let due_date: Option<chrono::DateTime<chrono::Utc>> =
                     sqlx::Row::try_get(row, "due_date").ok();
-                let name: Option<String> = if table == "erp_receivables" {
-                    sqlx::Row::try_get(row, "customer_name").ok()
-                } else {
-                    sqlx::Row::try_get(row, "supplier_name").ok()
-                };
+                let name: Option<String> = sqlx::Row::try_get(row, "party_name").ok();
                 json!({
                     "id": id.to_string(),
                     "name": name,
@@ -132,9 +136,9 @@ impl FinanceService {
     ) -> Result<Value, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let table = match direction {
-            "receivable" => "erp_receivables",
-            "payable" => "erp_payables",
-            _ => "erp_receivables",
+            "receivable" => "finance.erp_receivables",
+            "payable" => "finance.erp_payables",
+            _ => "finance.erp_receivables",
         };
 
         let mut trend_data = Vec::new();

@@ -125,7 +125,7 @@ pub async fn list_formulas(
         SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.formulas
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -251,11 +251,11 @@ pub async fn create_formula(
             approval_status, effective_date, expiration_date,
             ingredients, process_steps, process_params, properties, created_by,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::uuid, $18, $19)
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
-                  created_by, created_at, updated_at
+                  created_by::text AS created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -359,7 +359,7 @@ pub async fn get_formula(
         SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.formulas WHERE id = $1
         "#,
     )
@@ -395,7 +395,7 @@ pub async fn update_formula(
         SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.formulas WHERE id = $1
         "#,
     )
@@ -469,7 +469,7 @@ pub async fn update_formula(
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
-                  created_by, created_at, updated_at
+                  created_by::text AS created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -639,7 +639,7 @@ pub async fn get_formula_versions(
                properties, changes #>> '{}' AS changes,
                NULL::text AS approval_status, NULL::text AS approved_by,
                NULL::timestamptz AS approved_at,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.formula_versions
         WHERE formula_id = $1
         ORDER BY version DESC, created_at DESC
@@ -688,7 +688,7 @@ pub async fn create_formula_version(
         SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.formulas WHERE id = $1
         "#,
     )
@@ -717,7 +717,7 @@ pub async fn create_formula_version(
                   properties, changes #>> '{}' AS changes,
                   NULL::text AS approval_status, NULL::text AS approved_by,
                   NULL::timestamptz AS approved_at,
-                  created_by, created_at, updated_at
+                  created_by::text AS created_by, created_at, updated_at
         "#,
     )
     .bind(version_id)
@@ -844,7 +844,7 @@ pub async fn review_formula(
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
-                  created_by, created_at, updated_at
+                  created_by::text AS created_by, created_at, updated_at
         "#,
     )
     .bind(id)

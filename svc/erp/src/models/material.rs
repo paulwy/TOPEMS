@@ -71,7 +71,7 @@ pub struct Customer {
     pub province: Option<String>,
     pub city: Option<String>,
     pub district: Option<String>,
-    pub customer_type: String,
+    pub customer_type: Option<String>,
     pub industry: Option<String>,
     pub scale: Option<String>,
     pub credit_limit: Decimal,

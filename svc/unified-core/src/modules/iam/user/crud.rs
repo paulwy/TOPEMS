@@ -19,7 +19,7 @@ use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserRespo
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["unified-core:iam:user:read"])),
-    path = "/users",
+    path = "/iam/users",
     tag = "IAM-User",
     responses(
         (status = 200, description = "用户列表查询成功"),
@@ -209,7 +209,7 @@ struct CreateUserRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["unified-core:iam:user:write"])),
-    path = "/users",
+    path = "/iam/users",
     tag = "IAM-User",
     request_body = serde_json::Value,
     responses(

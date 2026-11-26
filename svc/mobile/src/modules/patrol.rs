@@ -37,8 +37,8 @@ pub struct PatrolRecord {
     pub address: Option<String>,
     pub patrol_type: String,
     pub status: String,
-    /// DB 列是 uuid，wire 字段保持字符串（serde 将 Uuid 序列化为字符串）
-    pub checked_by: Option<Uuid>,
+    /// DB 列为 character varying（历史迁移遗留），按文本读写，避免 varchar = uuid 类型冲突
+    pub checked_by: Option<String>,
     pub checked_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
 }
@@ -152,7 +152,7 @@ pub async fn get_all_patrol_records(
          WHERE deleted_at IS NULL AND checked_by = $1 
          ORDER BY created_at DESC")
     )
-    .bind(Uuid::parse_str(&user_id).ok())
+    .bind(Some(user_id.clone()))
     .fetch_all(&mut scope)
 
     .await
@@ -233,7 +233,7 @@ pub async fn get_patrol_record(
          WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL")
     )
     .bind(id)
-    .bind(Uuid::parse_str(&user_id).ok())
+    .bind(Some(user_id.clone()))
     .fetch_optional(&mut scope)
 
     .await
@@ -333,7 +333,7 @@ pub async fn create_patrol_record(
     .bind(&payload.address)
     .bind(&payload.patrol_type)
     .bind(status.as_db_str())
-    .bind(Uuid::parse_str(&user_id).ok())
+    .bind(Some(user_id.clone()))
     .bind(Utc::now())
     .bind(tenant_filter(&claims))
     .execute(&mut scope)
@@ -353,7 +353,7 @@ pub async fn create_patrol_record(
             address: payload.address,
             patrol_type: payload.patrol_type,
             status: status.as_db_str().to_string(),
-            checked_by: Uuid::parse_str(&user_id).ok(),
+            checked_by: Some(user_id.clone()),
             checked_at: None,
             created_at: Utc::now(),
         };
@@ -411,7 +411,7 @@ pub async fn update_patrol_record(
          FROM mobile.patrol_records WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL")
     )
     .bind(id)
-    .bind(Uuid::parse_str(&user_id).ok())
+    .bind(Some(user_id.clone()))
     .fetch_optional(&mut scope)
     .await
     {
@@ -463,7 +463,7 @@ pub async fn update_patrol_record(
     .bind(&address)
     .bind(status.as_db_str())
     .bind(id)
-    .bind(Uuid::parse_str(&user_id).ok())
+    .bind(Some(user_id.clone()))
     .execute(&mut scope)
     .await
     {
@@ -518,7 +518,7 @@ pub async fn delete_patrol_record(
         only_own_schema_query!("mobile", "UPDATE mobile.patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL"),
     )
     .bind(id)
-    .bind(Uuid::parse_str(&user_id).ok())
+    .bind(Some(user_id.clone()))
     .execute(&mut scope)
     .await;
 

@@ -307,7 +307,7 @@ pub async fn get_performance_metrics(
         r#"
         SELECT 
             COUNT(*) as total,
-            SUM(CASE WHEN actual_end_date <= end_date THEN 1 ELSE 0 END) as on_time
+            COALESCE(SUM(CASE WHEN actual_end_date <= end_date THEN 1 ELSE 0 END), 0) as on_time
         FROM rs.projects
         WHERE status = 'completed' AND end_date IS NOT NULL
         "#,
@@ -319,7 +319,7 @@ pub async fn get_performance_metrics(
         r#"
         SELECT 
             COUNT(*) as total,
-            SUM(CASE WHEN actual_cost <= budget THEN 1 ELSE 0 END) as on_budget
+            COALESCE(SUM(CASE WHEN actual_cost <= budget THEN 1 ELSE 0 END), 0) as on_budget
         FROM rs.projects
         WHERE status = 'completed' AND budget IS NOT NULL AND actual_cost IS NOT NULL
         "#,

@@ -274,7 +274,7 @@ async fn load_dashboard_aggregate(
     .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 转化率查询失败: {}", e)))?;
 
     let average_cycle: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(close_date, updated_at) - created_at)) / 86400.0), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
+        "SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(close_date, updated_at) - created_at)) / 86400.0), 0)::float8 FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
     )
     .fetch_one(&mut scope)
     .await
