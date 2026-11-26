@@ -71,7 +71,12 @@ for (let i = 0; i < args.length; i++) {
  *     /api/hrm/employees/{emp_id}/dept → /api/hrm/employees/{p}/dept
  */
 function normalizePath(p) {
-  return p
+  // 历史挂载别名：unified-core 的 flow/iam 路由实际挂在 /api/core 下，
+  // 但 utoipa 注解仍带 /api/core/flow、/api/core/iam 前缀。比较前折叠该前缀，
+  // 否则每新增一个已注解 handler 都会产生一批“文档有、live 无”的假漂移。
+  // TODO(api): 逐模块把注解前缀迁到真实 /api/core，再移除此别名。
+  const canonical = p.replace(/^\/api\/core\/(flow|iam)\//, '/api/core/');
+  return canonical
     .split('/')
     .map((seg) => {
       // 匹配 {param_name} 模式
