@@ -18,8 +18,8 @@
  *   7) 判读表 database/migrations-triage.tsv（本库不适用、prod/空库仍需跑）：class 枚举、
  *      version 有对应文件、与归档表版本互斥；判读行只记录本库拒绝原因、不承诺未执行，
  *      不做账本互斥校验。
- *   8) 互斥（需 DB）：给出 --db 且能连 MIGRATE_URL/DATABASE_URL 时，归档版本不得出现在
- *      public._sqlx_migrations 中（归档 = 明确不记账，二者互斥）；判读行不在此列。
+ *   8) 互斥（需 DB）：给出 --db 且能连 MIGRATE_URL/DATABASE_URL 时，仅 archived 版本不得出现在
+ *      public._sqlx_migrations 中（archived = 明确不记账、永不重放，二者互斥）；replayable 与判读行不在此列。
  *
  * 用法：
  *   node scripts/ci/check-migration-archive.mjs
@@ -132,7 +132,9 @@ if (!existsSync(ARCHIVE)) {
         }
     }
 
-    // 互斥：归档 = 不记账；若账本里已有该版本，说明归档判定与事实矛盾
+    // 互斥（需 DB）：archived = 永不重放，若账本里已有该版本说明归档判定与事实矛盾。
+    // replayable-not-applied 的账本虚记（历史快照导入、execution_time=0）属重放评审范畴，
+    // 不在归档互斥门禁内判定；判读行同样不做账本互斥。
     if (WITH_DB && errors.length === 0) {
         const dsn = process.env.MIGRATE_URL || process.env.DATABASE_URL;
         if (!dsn) {
@@ -144,6 +146,7 @@ if (!existsSync(ARCHIVE)) {
                 });
                 const installed = new Set(out.split('\n').map((s) => s.trim()).filter(Boolean));
                 for (const r of rows) {
+                    if (r.status !== 'archived') continue;
                     if (installed.has(String(Number(r.version)))) {
                         fail(`${r.version}: 已在 _sqlx_migrations 记账，与归档表互斥（二者只能存其一）`);
                     }

@@ -250,7 +250,7 @@ CI 接线（已完成）：`ci.yml` 的 `migration-test` 作业在起库之后�
 
 `scripts/db/release-plan.sh` 生成 `database/migrations-release-plan.tsv`（列 `version/description/stage/gate/note`），
 输入是「pending − 归档表」，输出按 stage 排序；`--check` 只比对不落盘（清单随本机账本变化，属本地派生物，**不进 CI 比对**）。
-判读表的结构由 `scripts/ci/check-migration-archive.mjs` 在 CI 里守（`triage` 行 class 枚举、版本必有对应文件、与归档表版本不得重叠）；判读行只记录本库拒绝原因、不承诺未执行，**不做账本互斥校验**——允许在目标环境记账。账本互斥仅约束归档行（归档 = 永不重放，`--db` 时归档版本不得出现在 `_sqlx_migrations`）。
+判读表的结构由 `scripts/ci/check-migration-archive.mjs` 在 CI 里守（`triage` 行 class 枚举、版本必有对应文件、与归档表版本不得重叠）；判读行只记录本库拒绝原因、不承诺未执行，**不做账本互斥校验**——允许在目标环境记账。账本互斥仅约束 `archived` 行（archived = 永不重放，`--db` 时 archived 版本不得出现在 `_sqlx_migrations`）；`replayable-not-applied` 的账本虚记（历史快照导入、`execution_time=0`）属重放评审范畴，不进归档互斥门禁。
 
 | stage | 条数 | 语义与前置 |
 | --- | --- | --- |
