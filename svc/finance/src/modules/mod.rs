@@ -6322,13 +6322,131 @@ pub async fn delete_account(
     }
 }
 
+/// B342: 批量创建下级科目。
+/// 旧实现只把请求体原样回显并返回“批量创建成功”，不写库，属于假成功入口。
+/// 现改为：父科目必须存在且未软删；每个子科目强制 parent_id=路径参数、
+/// level=父级 +1、account_type 缺省继承父级、currency 缺省 CNY；
+/// 单次上限 500 条；编码重复按 23505 转 409 并指明具体编码。
 pub async fn batch_create_account_children(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Path(_account_id): Path<Uuid>,
-    Json(req): Json<serde_json::Value>,
-) -> ApiResponse<serde_json::Value> {
-    ApiResponse::success(req, "批量创建成功")
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    Path(account_id): Path<Uuid>,
+    Json(req): Json<BatchCreateAccountChildrenRequest>,
+) -> ApiResponse<Vec<Account>> {
+    if req.accounts.is_empty() {
+        return ApiResponse::bad_request("accounts 不能为空");
+    }
+    if req.accounts.len() > 500 {
+        return ApiResponse::bad_request("单次最多创建 500 个下级科目");
+    }
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    let parent: Option<(i32, AccountType, bool)> = match sqlx::query_as(only_own_schema_query!(
+        "finance",
+        "SELECT level, account_type, is_enabled FROM finance.core_finance_accounts \
+             WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
+    ))
+    .bind(account_id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let Some((parent_level, parent_type, parent_enabled)) = parent else {
+        return ApiResponse::not_found("父科目不存在或已删除");
+    };
+    if !parent_enabled {
+        return ApiResponse::bad_request("父科目已停用，不能创建下级科目");
+    }
+
+    let mut created: Vec<Account> = Vec::with_capacity(req.accounts.len());
+    for item in req.accounts {
+        let code = item.code.trim().to_string();
+        let name = item.name.trim().to_string();
+        if code.is_empty() || name.is_empty() {
+            return ApiResponse::bad_request("子科目编码和名称不能为空");
+        }
+        let account_type = item.account_type.unwrap_or(parent_type.clone());
+        let currency = item
+            .currency
+            .filter(|c| !c.trim().is_empty())
+            .unwrap_or_else(|| "CNY".to_string());
+        let row: Result<Account, sqlx::Error> = sqlx::query_as(
+            only_own_schema_query!(
+                "finance",
+                "INSERT INTO finance.core_finance_accounts \
+                 (tenant_id, code, name, parent_id, account_type, level, currency, description, name_en) \
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) \
+                 RETURNING *"
+            ),
+        )
+        .bind(tenant_id)
+        .bind(&code)
+        .bind(&name)
+        .bind(account_id)
+        .bind(account_type)
+        .bind(parent_level + 1)
+        .bind(&currency)
+        .bind(item.description)
+        .bind(item.name_en)
+        .fetch_one(&mut scope)
+        .await;
+        match row {
+            Ok(account) => created.push(account),
+            Err(e) => {
+                if e.as_database_error().and_then(|db| db.code()).as_deref() == Some("23505") {
+                    return ApiResponse::conflict(&format!(
+                        "科目编码 {} 已存在，请调整后重试（本批未写入）",
+                        code
+                    ));
+                }
+                return crate::shared::err_resp(e);
+            }
+        }
+    }
+
+    let touched = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE finance.core_finance_accounts \
+         SET haschildren = TRUE, is_leaf = FALSE, updated_at = NOW() \
+         WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
+    ))
+    .bind(account_id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
+    match touched {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => return ApiResponse::conflict("父科目状态已变化，本批未写入"),
+        Err(e) => return crate::shared::err_resp(e),
+    }
+
+    if let Err(e) = scope.commit().await {
+        return crate::shared::err_resp(e);
+    }
+
+    let count = created.len();
+    ApiResponse::success(created, &format!("批量创建成功（{} 个）", count))
 }
 
 pub async fn get_opening_balances(
