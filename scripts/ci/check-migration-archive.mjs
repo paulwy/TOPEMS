@@ -15,10 +15,11 @@
  *   4) reason_category 仅允许固定枚举；reason 非空；decided_on 为 YYYY-MM-DD；
  *   5) version 不得重复；
  *   6) 冻结线：任何条目 version 必须 < FROZEN_CUTOFF（新增迁移不得进归档表）；
- *   7) 判读表 database/migrations-triage.tsv（本库不适用、prod 仍需跑）：class 枚举、
- *      version 有对应文件、与归档表版本互斥；--db 时判读版本不得已记账；
+ *   7) 判读表 database/migrations-triage.tsv（本库不适用、prod/空库仍需跑）：class 枚举、
+ *      version 有对应文件、与归档表版本互斥；判读行只记录本库拒绝原因、不承诺未执行，
+ *      不做账本互斥校验。
  *   8) 互斥（需 DB）：给出 --db 且能连 MIGRATE_URL/DATABASE_URL 时，归档版本不得出现在
- *      public._sqlx_migrations 中（归档 = 明确不记账，二者互斥）。
+ *      public._sqlx_migrations 中（归档 = 明确不记账，二者互斥）；判读行不在此列。
  *
  * 用法：
  *   node scripts/ci/check-migration-archive.mjs
@@ -103,7 +104,8 @@ if (!existsSync(ARCHIVE)) {
     }
 
     // ---- 判读表（database/migrations-triage.tsv）：本库不适用、但目标环境仍需执行 ----
-    // 与归档表的分工：归档=永不重放；判读=本库不跑、prod/空库要跑。两者必须互斥，避免被 prod 误跳过。
+    // 与归档表分工：归档=永不重放（与账本互斥）；判读=记录本库拒绝原因，允许在目标环境记账，
+    // 故判读行不做账本互斥校验，只守结构（class 枚举 / 版本有文件 / 与归档表不重叠）。
     const TRIAGE = process.env.TRIAGE_PATH || join(ROOT, 'database/migrations-triage.tsv');
     const TRIAGE_CLASSES = new Set(['gated-cleanup', 'bootstrap-only', 'prod-directed']);
     let triageRows = [];
@@ -146,11 +148,7 @@ if (!existsSync(ARCHIVE)) {
                         fail(`${r.version}: 已在 _sqlx_migrations 记账，与归档表互斥（二者只能存其一）`);
                     }
                 }
-                for (const r of triageRows) {
-                    if (installed.has(String(Number(r.version)))) {
-                        fail(`${r.version}: 已记账，却仍标为「本库不适用」——判读表需清理该行`);
-                    }
-                }
+                // 判读行不做账本互斥：其语义是「本库不适用」的拒绝记录，允许在目标环境记账。
             } catch (e) {
                 fail(`连库失败，无法做互斥校验：${String(e.message).split('\n')[0]}`);
             }
@@ -163,7 +161,7 @@ if (!existsSync(ARCHIVE)) {
         const archived = rows.filter((r) => r.status === 'archived').length;
         console.log(
             `✔ migration-archive ok：归档 ${rows.length} 行（archived ${archived} / replayable ${rows.length - archived}），` +
-                `判读 ${triageRows.length} 行，冻结线 ${FROZEN_CUTOFF}${WITH_DB ? '，已做账本互斥校验' : ''}`,
+                `判读 ${triageRows.length} 行，冻结线 ${FROZEN_CUTOFF}${WITH_DB ? '，归档行已做账本互斥校验' : ''}`,
         );
     }
 }
