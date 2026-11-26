@@ -50,7 +50,7 @@ function collectSites() {
     const src = readFileSync(file, 'utf8');
     if (!src.includes('itemsField')) continue;
     // 形态 1：createCrudPageAdapter(apiObj, { itemsField: 'x' })
-    const re1 = /createCrudPageAdapter\s*(?:<[^>]*>)?\s*\(\s*([A-Za-z0-9_.]+)\s*,[\s\S]{0,400}?itemsField:\s*'([A-Za-z0-9_]+)'/g;
+    const re1 = /createCrudPageAdapter\s*(?:<[^>]*>)?\s*\(\s*([A-Za-z0-9_.]+)\s*(?:as[^,]*)?,[\s\S]{0,400}?itemsField:\s*'([A-Za-z0-9_]+)'/g;
     let m;
     while ((m = re1.exec(src))) sites.push({ page: relative(ROOT, file), apiExpr: m[1], field: m[2] });
 

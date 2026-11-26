@@ -67,7 +67,7 @@ node scripts/check-page-health.mjs --routes /srm/contract,/srm/evaluation
 
 ## 发版前总闸
 
-两层检查 + 类型检查合成一条命令，避免「只跑了其中一层」的错觉：
+三层检查 + 类型检查合成一条命令，避免「只跑了其中一层」的错觉：
 
 ```bash
 cd apps/web
@@ -76,7 +76,8 @@ pnpm verify:frontend:full     # 全量：--all，约 7 分钟（并发 3）
 ```
 
 顺序有讲究：`tsc --noEmit` 先跑，类型错就直接停（否则巡检结果全是类型错的噪声）；
-然后列表一致性与页面健康。任一步失败即整体 FAIL，退出码 1。
+然后是字段契约（15 个 GET，0.6s）、列表一致性、页面健康。任一步失败即整体 FAIL，退出码 1。
+quick 模式实测：契约 0.6s + 一致性 7.8s + 健康 10.9s（tsc 另约 35s）。
 
 全量实测（2026-11-26）：列表一致性 134 页 / 不一致 0（215s），页面健康 213 页 / 失败 0（220s），
 总览 `PASS / PASS / 判定 OK`。
@@ -117,17 +118,18 @@ pnpm verify:frontend:full     # 全量：--all，约 7 分钟（并发 3）
 `pnpm check:items-field` 做的事：grep 出每处 `itemsField` 声明 → 解析到 API 对象 → 找到 `list` 里的
 `apiClient.<svc>.get('<path>')` → 用 admin token 直接打接口 → 看承诺的字段在不在。
 
-首轮结果（13 处声明）：
+首轮结果（15 处声明，含 `as unknown as CrudApi<T>` 这类强转写法）：
 
 ```
 OK  EquipmentManagementPage  equipments   → /api/mes/equipment           keys=equipments,total,page,page_size
 OK  EquipmentOEEPage         records      → /api/mes/equipment-oee       keys=records,total,page,page_size
 OK  TeamManagementPage       teams        → /api/mes/teams               keys=teams,total,page,page_size
 OK  InboundOrderPage         orders       → /api/wms/inbound-orders      keys=orders,items,total,page,page_size
-…（13/13 匹配，缺失 0）
+…（15/15 匹配，缺失 0）
 ```
 
-**边界**：解析靠正则，手写适配器只覆盖 `list: api.x.list` 形态；解析不出来的记 `SKIP` 不判负
+**边界**：解析靠正则，手写适配器只覆盖 `list: api.x.list` 形态（`list: (p) => api.query(p)` 这种抓不到）；
+解析不出来的记 `SKIP` 不判负
 （宁可漏报，也不要假红）。它验证的是「字段名对得上」，不验证「数据内容对不对」。
 
 ## 取舍与盲区

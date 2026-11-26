@@ -4,8 +4,9 @@
  *
  * 顺序与理由：
  *   1) tsc --noEmit            —— 类型错就先别扫页面，否则扫出来的错都是噪声
- *   2) 列表页一致性（总数 vs 行）
- *   3) 全站页面健康（5xx / 前端异常 / 错误边界）
+ *   2) itemsField 契约（15 个 GET，2 秒）
+ *   3) 列表页一致性（总数 vs 行）
+ *   4) 全站页面健康（5xx / 前端异常 / 错误边界）
  *
  * 用法：
  *   node scripts/verify-frontend.mjs            # quick：8 条列表 + 12 条健康，约 40 秒
@@ -20,6 +21,7 @@ const argv = process.argv.slice(2);
 const FULL = argv.includes('--full');
 const SKIP_TSC = argv.includes('--skip-tsc');
 const SKIP_HEALTH = argv.includes('--skip-health');
+const SKIP_CONTRACT = argv.includes('--skip-contract');
 
 function run(label, cmd, args) {
   console.log(`\n=== ${label}：${cmd} ${args.join(' ')}`);
@@ -40,6 +42,8 @@ if (!SKIP_TSC) {
     process.exit(1);
   }
 }
+
+if (!SKIP_CONTRACT) results.push(run('字段契约(itemsField)', 'node', ['scripts/check-items-field.mjs']));
 
 const consistencyArgs = ['scripts/check-list-page-consistency.mjs'];
 if (FULL) consistencyArgs.push('--all', '--max', '170', '--timeout', '20');
