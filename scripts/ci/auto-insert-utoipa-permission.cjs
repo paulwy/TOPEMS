@@ -98,6 +98,13 @@ function resolvePermCode(svcName, handlerName, action, module, opts) {
   }
   if (!resolved) resolved = `${module}:${action}`; // fallback coarse-grained
 
+  // {action} 占位：把 HTTP 动作映射到细粒度权限动词（POST 在业务上约定为 create 而非 write）。
+  // 用于 finance:voucher 这类"读/创建/更新/删除"四码的域，避免生成未 seed 的 :write。
+  if (resolved.includes('{action}')) {
+    const verb = action === 'write' ? 'create' : action;
+    resolved = resolved.split('{action}').join(verb);
+  }
+
   // HTTP-method consistency guard:
   //   Avoid "GET fn_contains_voucher → finance:voucher:write" (read→write upgrade unsafe).
   //   If HTTP action == 'read' but resolved perm ends with ':write'/':admin',

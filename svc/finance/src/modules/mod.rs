@@ -1215,7 +1215,7 @@ pub async fn batch_post_vouchers(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:voucher:write"])),
+    security(("BearerAuth" = ["finance:voucher:read"])),
     path = "/vouchers/export",
     tag = "Voucher",
     request_body = ExportVoucherRequest,
@@ -3670,7 +3670,7 @@ pub struct U8ImportQueryParams {
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:voucher:write"])),
+    security(("BearerAuth" = ["finance:voucher:create"])),
     path = "/u8-import/import",
     responses(
         (status = 200, description = "成功"),
@@ -5260,7 +5260,7 @@ pub async fn get_voucher_items(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:voucher:write"])),
+    security(("BearerAuth" = ["finance:voucher:create"])),
     path = "/vouchers/batch",
     tag = "Voucher",
     request_body = BatchCreateVouchersRequest,
@@ -5523,7 +5523,7 @@ pub async fn generate_voucher_by_template(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:voucher:write"])),
+    security(("BearerAuth" = ["finance:voucher:create"])),
     path = "/vouchers/import",
     tag = "Voucher",
     responses(
