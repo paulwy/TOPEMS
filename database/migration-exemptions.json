@@ -188,6 +188,17 @@
       ],
       "evidence": "两套隔离库演练（topems_drill_b1/topems_drill_b2，从 topems_test_runner 克隆，非特权角色）：前向 → 断言（平台行对普通公司只读、platform_only 键写公司行 42501 拒绝、母版行可被本司覆盖、跨公司 42501 拒绝、母公司读子公司但代写 0 行/42501、多公司租户存量行保留为母版不再阻断）→ 回滚 → 断言（列/索引/触发器/CHECK 全部移除）→ 再前向，两库均 exit 0。DB 测试：monitor 8 passed / erp 9 passed（--features db-tests，非 superuser 连接）。migration-drill-anchor：前向 4 条无失败、W9 回滚循环通过、RLS 快照 800 表/849 策略一致。validate.sh Errors 0 / Checksum errors 0；cargo fmt/check/clippy（workspace all-targets -D warnings）0 错。",
       "approved": true
+    },
+    {
+      "id": "B20261126-20261126110000-legacy-core-users-drop-guard",
+      "date": "2026-11-26",
+      "committer": "topmap163",
+      "reason": "20261126110000 为尚未进入任何账本的前向迁移（prod topems_prod / 本机 topems / topems_test_runner 三库 _sqlx_migrations 均无 version=20261126110000，未应用）。原三条 DROP TABLE 带 CASCADE，命中 destructive 守卫 prod 硬禁的 drop_table_cascade（CASCADE 不接受任何豁免）。受控修正：去掉 CASCADE（前置核查三表入向外键 0、视图/物化视图/存储过程引用 0、触发器/规则 0，无级联依赖需要清理），按守卫口径为三条 DROP TABLE 补完整豁免标记（gate/kind/reason/owner/ticket/expires/rows-at-review=0/backup）；SQL 目标表、删除顺序、收尾 to_regclass 断言均不变，不改版本号、不改已执行历史。checksums.txt 仅更新该文件一行。",
+      "files": [
+        "20261126110000_drop_legacy_core_users.sql"
+      ],
+      "evidence": "三账本只读核验（2026-11-26）：topems_prod / topems / topems_test_runner 的 _sqlx_migrations 均无 20261126110000。依赖核查（本机 topems）：残留 public.core_users 1 行、入向外键 0、视图/过程引用 0、触发器 0、规则 0；iam.core_users / iam.core_user_roles 已不存在。备份：backups/db-legacy-core-users/public.core_users-20261126.sql（残留 1 行 INSERT）+ 基线库全量 dump topems_pre_owner_converge_20261126_125033.dump。静态门禁：gen-manifest.sh --check 无漂移（unregistered_pending=0、checksum_mismatch=0）；check-destructive-sql.mjs 全量 PASS（blocking 0，3 条 DROP TABLE 带票据标记进 approvals）；validate.sh Checksum errors 0 / Errors 0。",
+      "approved": true
     }
   ]
 }

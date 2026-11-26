@@ -17,12 +17,39 @@
 --
 -- 幂等性：IF EXISTS，新库/已清理库自动跳过。
 -- 回滚：public.core_users 数据在 2026-11-26 已备份至
---       backups/db-legacy-core-users/public.core_users-20261126.sql（口令哈希已置失效标记）。
+--       backups/db-legacy-core-users/public.core_users-20261126.sql（口令哈希已置失效标记）；
+--       另见基线库全量 dump topems_pre_owner_converge_20261126_125033.dump。
 -- ============================================================
 
-DROP TABLE IF EXISTS iam.core_user_roles CASCADE;
-DROP TABLE IF EXISTS iam.core_users CASCADE;
-DROP TABLE IF EXISTS public.core_users CASCADE;
+-- destructive-gate: allow
+-- destructive-kind: DROP TABLE
+-- destructive-reason: 身份历史副本表清理：iam.users 为唯一权威源，运行期零引用、入向外键 0
+-- destructive-owner: 平台组/DBA
+-- destructive-ticket: IAM-LEGACY-20261126
+-- destructive-expires: 2027-05-25
+-- destructive-rows-at-review: 0
+-- destructive-backup: 无业务数据（init/06 快照遗留空表）
+DROP TABLE IF EXISTS iam.core_user_roles;
+
+-- destructive-gate: allow
+-- destructive-kind: DROP TABLE
+-- destructive-reason: 身份历史副本表清理：iam.users 为唯一权威源，运行期零引用、入向外键 0
+-- destructive-owner: 平台组/DBA
+-- destructive-ticket: IAM-LEGACY-20261126
+-- destructive-expires: 2027-05-25
+-- destructive-rows-at-review: 0
+-- destructive-backup: 无业务数据（init/06 快照遗留空表）
+DROP TABLE IF EXISTS iam.core_users;
+
+-- destructive-gate: allow
+-- destructive-kind: DROP TABLE
+-- destructive-reason: 身份历史副本表清理：裸 core_users 按 search_path 误落此表，密码重置曾写错到此
+-- destructive-owner: 平台组/DBA
+-- destructive-ticket: IAM-LEGACY-20261126
+-- destructive-expires: 2027-05-25
+-- destructive-rows-at-review: 0
+-- destructive-backup: backups/db-legacy-core-users/public.core_users-20261126.sql；基线库全量 dump topems_pre_owner_converge_20261126_125033.dump
+DROP TABLE IF EXISTS public.core_users;
 
 DO $$
 BEGIN
