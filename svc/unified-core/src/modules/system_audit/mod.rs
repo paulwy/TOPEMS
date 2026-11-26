@@ -226,7 +226,7 @@ pub async fn export_audit_logs(
         }
     };
 
-    let items: Vec<AuditExportRow> = sqlx::query_as(
+    let items: Result<Vec<AuditExportRow>, sqlx::Error> = sqlx::query_as(
         r#"SELECT id, created_at, user_name, action, entity_type, entity_id, status, ip_address
            FROM public.audit_logs
            WHERE ($1::uuid IS NULL OR user_id = $1)
@@ -248,8 +248,25 @@ pub async fn export_audit_logs(
     .bind(&params.end_date)
     .bind(&search)
     .fetch_all(&mut scope)
-    .await
-    .unwrap_or_default();
+    .await;
+
+    let items = match items {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("导出审计日志查询失败: {}", e);
+            let _ = scope.commit().await;
+            return ApiResponse::server_error("导出查询失败");
+        }
+    };
+
+    tracing::info!(
+        "审计日志导出：{} 条（status={:?} entity_type={:?} search={}）",
+        items.len(),
+        params.status,
+        params.entity_type,
+        search
+    );
+
 
     let _ = scope.commit().await;
 

@@ -247,8 +247,69 @@ impl AuditLoggerMiddleware {
     }
 }
 
+/// 边转发边快照：响应体原样流给客户端，只旁路截取前 `max_snapshot` 字节用于审计。
+///
+/// 与「先 to_bytes 读全量再重建」不同，这里的转发不会因为体积超限而丢包；
+/// 流读完后异步落审计，不阻塞响应。
+fn capture_stream_and_audit(
+    body: Body,
+    max_snapshot: usize,
+    mut audit_request: AuditLogData,
+    db_pool: Arc<Pool<Postgres>>,
+) -> Body {
+    use futures_util::StreamExt;
+
+    let (tx, rx) = tokio::sync::mpsc::channel::<Result<axum::body::Bytes, std::io::Error>>(4);
+    tokio::spawn(async move {
+        let mut stream = body.into_data_stream();
+        let mut captured: Vec<u8> = Vec::new();
+        while let Some(item) = stream.next().await {
+            match item {
+                Ok(bytes) => {
+                    if captured.len() < max_snapshot {
+                        let room = max_snapshot - captured.len();
+                        captured.extend_from_slice(&bytes[..bytes.len().min(room)]);
+                    }
+                    if tx.send(Ok(bytes)).await.is_err() {
+                        break;
+                    }
+                }
+                Err(e) => {
+                    let _ = tx
+                        .send(Err(std::io::Error::new(
+                            std::io::ErrorKind::Other,
+                            e.to_string(),
+                        )))
+                        .await;
+                    break;
+                }
+            }
+        }
+        drop(tx);
+
+        let details = parse_and_redact_details(&captured, max_snapshot);
+        audit_request.response_details = Some(details.unwrap_or(json!({})));
+        if let Err(e) = save_audit_log(&db_pool, audit_request).await {
+            tracing::error!("请求审计写入失败（不静默丢弃）: {}", e);
+        }
+    });
+
+    let stream = futures_util::stream::unfold(rx, |mut rx| async move {
+        rx.recv().await.map(|item| (item, rx))
+    });
+    Body::from_stream(stream)
+}
+
 async fn read_body_bytes(body: Body, max_size: usize) -> (Body, Vec<u8>) {
-    let bytes = to_bytes(body, max_size + 1).await.unwrap_or_default();
+    // 上游已用 content-length 过滤掉超大响应；这里读不到（如 chunked 且超限）时
+    // 只能记录告警，绝不静默把 body 换成空。
+    let bytes = match to_bytes(body, max_size + 1).await {
+        Ok(b) => b,
+        Err(e) => {
+            tracing::warn!(error = %e, "审计快照读取响应体失败（body 已不可恢复）");
+            return (Body::empty(), Vec::new());
+        }
+    };
     let limited = if bytes.len() > max_size {
         bytes.slice(..max_size).to_vec()
     } else {
@@ -530,10 +591,23 @@ pub async fn audit_logger_middleware(
     };
     let context_slot: AuditContextSlot = Arc::new(std::sync::Mutex::new(audit_context.clone()));
 
+    // 请求体同理：超过快照上限就不要读，否则 to_bytes 会把 body 消费掉，
+    // 下游 handler 拿到的是空 JSON（表现为 400/422 或空数据）。
+    let req_content_length = req
+        .headers()
+        .get(axum::http::header::CONTENT_LENGTH)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<usize>().ok());
+    let request_too_large = req_content_length
+        .is_some_and(|len| len > middleware.config.max_request_body_size);
+
     let (mut parts, body) = req.into_parts();
     parts.extensions.insert(context_slot.clone());
-    let (new_body, request_body) =
-        read_body_bytes(body, middleware.config.max_request_body_size).await;
+    let (new_body, request_body) = if request_too_large {
+        (body, Vec::new())
+    } else {
+        read_body_bytes(body, middleware.config.max_request_body_size).await
+    };
     let req = Request::from_parts(parts, new_body);
 
     // 登录 / 改密 / 注册等入口同样经过此中间件，必须先脱敏再落库。
@@ -571,34 +645,18 @@ pub async fn audit_logger_middleware(
         None
     };
 
-    let (response_parts, response_body) = {
-        let (parts, body) = response.into_parts();
-        // SSE 流式响应（text/event-stream）不能缓冲读取——无限流会被
-        // read_body_bytes 阻塞到连接关闭，导致客户端 0 字节。
-        // 通用保护：event-stream 一律透传（不做响应体审计）。
-        let is_sse_stream = parts
-            .headers
-            .get(axum::http::header::CONTENT_TYPE)
-            .and_then(|v| v.to_str().ok())
-            .is_some_and(|ct| ct.to_lowercase().contains("text/event-stream"));
-        if is_sse_stream {
-            (parts, (body, Vec::new()))
-        } else {
-            let (body, bytes) =
-                read_body_bytes(body, middleware.config.max_response_body_size).await;
-            (parts, (body, bytes))
-        }
-    };
-
-    let (response_body, response_bytes) = response_body;
-    // 响应体同样可能回显凭据，统一脱敏。
-    let response_details =
-        parse_and_redact_details(&response_bytes, middleware.config.max_response_body_size);
+    let (response_parts, body) = response.into_parts();
+    // SSE 流式响应（text/event-stream）不能缓冲读取——无限流会被阻塞到连接关闭。
+    let is_sse_stream = response_parts
+        .headers
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|ct| ct.to_lowercase().contains("text/event-stream"));
 
     let mut audit_request = AuditLogData::new(action, entity_type, status_str)
         .with_entity_id(entity_id.unwrap_or_else(Uuid::new_v4))
         .with_request_details(request_details.unwrap_or(json!({})))
-        .with_response_details(response_details.unwrap_or(json!({})))
+        .with_response_details(json!({}))
         .with_request_info(ip_address, user_agent)
         .with_tenant_id(tenant_id);
     // 仅在有真实操作者时写入，避免把空字符串当成用户。
@@ -608,17 +666,31 @@ pub async fn audit_logger_middleware(
     if let Some(name) = user_name {
         audit_request.user_name = Some(name);
     }
-
-    let result = if let Some(msg) = error_message {
-        save_audit_log(&middleware.db_pool, audit_request.with_error(msg)).await
-    } else {
-        save_audit_log(&middleware.db_pool, audit_request).await
-    };
-    if let Err(e) = result {
-        tracing::error!("请求审计写入失败（不静默丢弃）: {}", e);
+    if let Some(msg) = error_message {
+        audit_request = audit_request.with_error(msg);
     }
 
-    Response::from_parts(response_parts, response_body)
+    if is_sse_stream {
+        // 流式响应不做 body 快照，直接透传后落审计。
+        if let Err(e) = save_audit_log(&middleware.db_pool, audit_request).await {
+            tracing::error!("请求审计写入失败（不静默丢弃）: {}", e);
+        }
+        return Response::from_parts(response_parts, body);
+    }
+
+    // 关键：响应体一律通过「边转发边快照」的流式包装交还给客户端。
+    // 历史实现用 to_bytes(body, 1MB).unwrap_or_default() 兜底：一旦 body 超过 1MB，
+    // to_bytes 返回 Err 且原 body 已被消费，unwrap_or_default() 把它换成空 Vec，
+    // 客户端只会看到 200 + content-length: 0（审计列表/导出等大响应全部中招）。
+    // 现在不再把 body 读进内存再重建，而是原样转发、只旁路截取前 N 字节做快照。
+    let streaming_body = capture_stream_and_audit(
+        body,
+        middleware.config.max_response_body_size,
+        audit_request,
+        middleware.db_pool.clone(),
+    );
+
+    Response::from_parts(response_parts, streaming_body)
 }
 
 #[cfg(test)]

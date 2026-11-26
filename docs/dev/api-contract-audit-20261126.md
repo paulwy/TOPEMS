@@ -140,10 +140,27 @@ base 从 2469 → 2473，其余路径一条没动。
 | 改前 | 40.6s | 200，0 字节 |
 | 改后 | 0.13s | 200，大数据集仍是 0 字节 |
 
-**遗留**：`status=success`、`entity_type=menus` 这类结果集较大的组合仍返回空体
-（小结果集如 `entity_type=user` 返回 414KB 正常）。压缩中间件里
-`to_bytes(body, 10MB).await.unwrap_or_default()` 是唯一的静默丢包点，但 587 行的实际载荷只有 74KB，
-对不上，需要单独排查。已记录，未在本次强修。
+**空体根因已定位并修复**：不是压缩中间件，而是**响应审计中间件**
+（`lib/shared-auth/src/security/audit_logger.rs` 的 `read_body_bytes`）。
+
+```rust
+let bytes = to_bytes(body, max_size + 1).await.unwrap_or_default(); // max_size = 1MB
+```
+
+它为了给审计日志存一份响应快照，会把整个响应体读进内存；上限是
+`max_response_body_size = 1MB`。一旦响应体超过 1MB，`to_bytes` 返回 `Err` **且原 body 已被消费**，
+`unwrap_or_default()` 把它替换成空 `Vec`，客户端于是收到 `200 + content-length: 0`。
+所有超过 1MB 的响应都会中招，不只是审计导出——用 `page_size` 二分可以稳定复现：
+
+| page_size | 响应体 |
+| --- | --- |
+| 10 | 435KB（正常） |
+| 12 | 925KB（正常） |
+| 15 | 0 字节 |
+
+修法：先看 `content-length`，超过快照上限就**跳过快照、原样透传**（审计日志只是少存这一段响应体，
+不再破坏响应）；`to_bytes` 失败时也不再静默返回空体，改为保留空快照 + 打 `warn`。
+这条路修完，`export?status=success`（10000 行 / ~10MB）与 `audit-logs?page_size=50..200` 都能拿到完整数据。
 
 ## 下一步建议
 

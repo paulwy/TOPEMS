@@ -10,6 +10,9 @@ use std::io::Write;
 use std::sync::Arc;
 use tracing::info;
 
+/// 压缩上限：超过 10MB 的响应体直接透传，不做压缩。
+const MAX_COMPRESS_BYTES: usize = 10 * 1024 * 1024;
+
 #[derive(Debug, Clone)]
 pub struct CompressionConfig {
     pub enabled: bool,
@@ -210,7 +213,12 @@ impl CompressionMiddleware {
 
         match response.headers().get(header::CONTENT_LENGTH) {
             Some(len) => match len.to_str().ok().and_then(|s| s.parse::<usize>().ok()) {
-                Some(length) => length >= self.config.min_content_length,
+                Some(length) => {
+                    // 超过 10MB 的响应体不压缩：压缩中间件要把整个 body 读进内存再压，
+                    // 大 body 既会打爆 CPU（brotli q11），也会让 to_bytes 失败后丢包。
+                    // 直接透传原始 body，让调用方拿到完整数据。
+                    length >= self.config.min_content_length && length <= MAX_COMPRESS_BYTES
+                }
                 None => true,
             },
             None => true,
@@ -224,7 +232,23 @@ impl CompressionMiddleware {
         algorithm: CompressionAlgorithm,
     ) -> Response<Body> {
         let body = std::mem::take(response.body_mut());
-        let bytes = to_bytes(body, 10 * 1024 * 1024).await.unwrap_or_default();
+        // 超过 10MB 时 to_bytes 会失败；历史写法 unwrap_or_default() 会把整段响应变成空体，
+        // 调用方只看到 200 + content-length:0，完全无迹可查。这里必须留下日志。
+        let bytes = match to_bytes(body, 10 * 1024 * 1024).await {
+            Ok(b) => b,
+            Err(e) => {
+                // 走到这里说明 should_compress 的判断失效（无 content-length 且超大）。
+                // 绝不能静默返回空体，必须让调用方看到明确的 500。
+                tracing::error!("响应体读取失败（超过 10MB 上限）: {}", e);
+                let mut resp = Response::new(Body::from("响应体过大，压缩失败"));
+                *resp.status_mut() = axum::http::StatusCode::INTERNAL_SERVER_ERROR;
+                resp.headers_mut().insert(
+                    header::CONTENT_TYPE,
+                    HeaderValue::from_static("text/plain; charset=utf-8"),
+                );
+                return resp;
+            }
+        };
 
         if bytes.len() < self.config.min_content_length {
             *response.body_mut() = Body::from(bytes);
