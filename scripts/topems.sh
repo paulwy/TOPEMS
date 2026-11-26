@@ -190,6 +190,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
 
   deploy                  生产部署（systemd 范式，需 .env.production；docker 部署见 scripts/deploy/docker/topems-docker.sh）
   reset-password [用户] [密码]  重置用户密码（密码必填，无默认弱口令；update-password 为别名）
+  env-sync [--write]      同步本地 env 凭据（.env 为唯一信源 → .env.local / config/standalone.env；默认仅预览）
 
 自动预检（主流程入口自动执行，磁盘 <5GiB 会阻断）:
   预检内容: 杀后台 cargo 进程 + 清 llvm-cov-target 残留 + 磁盘空间检查
@@ -495,6 +496,12 @@ case "${1:-help}" in
         ;;
     doctor)
         doctor_env
+        ;;
+    env-sync)
+        # 2026-11-26: 三份本地 env 凭据漂移的修复入口（.env 唯一信源，其余为覆盖层）
+        # 默认预览；--write 落盘（自动备份到 backups/config-<时间戳>/）；--check 有漂移退出 1
+        shift
+        python3 "$SCRIPT_DIR/dev/sync-env-credentials.py" "$@"
         ;;
     push)
         push_guard "${@:2}"

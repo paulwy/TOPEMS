@@ -367,6 +367,8 @@ def main():
         print(f"❌ 配置一致性校验失败：{len(errors)} 项差异")
         for e in errors:
             print("   -", e)
+        if env_errors:
+            print("   ↳ 凭据漂移可用 ./scripts/topems.sh env-sync 预览，--write 落盘修复")
         sys.exit(1)
     env_note = f" ↔ env 凭据口径 {env_files} 份文件" if env_files else " ↔ env 凭据口径（无本地 env，跳过）"
     print(f"✅ 配置一致性校验通过：services.yaml {len(services)} 服务 ↔ ports.env {len(ports)} 项 ↔ nginx upstream 8099 {len(NGINX_FILES)} 份 conf ↔ 监听地址默认回环（nginx 直代 {len(NGINX_DIRECT_FILES)} 份 conf）{env_note}")
