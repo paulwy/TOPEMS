@@ -315,7 +315,6 @@ pub async fn export_audit_logs(
         search
     );
 
-
     let _ = scope.commit().await;
 
     ApiResponse::success(

@@ -560,6 +560,7 @@
   "components.crud_page.k40": "取消",
   "components.crud_page.k41": "确认",
   "components.dashboard_template.k0": "搜索...",
+  "components.dashboard_template.empty": "暂无数据",
   "components.form_page_template.k0": "已加载草稿（保存于",
   "components.form_page_template.k1": "不能为空",
   "components.form_page_template.k2": "有",
