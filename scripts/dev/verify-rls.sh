@@ -5,7 +5,8 @@
 # 连接口径：$DB_DSN 显式覆盖 > $DATABASE_URL > 仓库根 .env（不再硬编码 -U topems，该角色已不存在）
 # 生产示例：DB_DSN="postgresql:///topems_prod?user=xingzhai" bash scripts/dev/verify-rls.sh
 set -uo pipefail
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../.." 2>/dev/null || pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../.." 2>/dev/null && pwd)"
+ROOT_DIR="${ROOT_DIR:-$(pwd)}"
 if [ -z "${DATABASE_URL:-}" ] && [ -f "$ROOT_DIR/.env" ]; then
   set -a; . "$ROOT_DIR/.env"; set +a
 fi
