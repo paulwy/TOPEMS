@@ -47,7 +47,7 @@ END $$;
 -- destructive-expires: 2027-05-25
 ALTER TABLE iam.users DROP CONSTRAINT IF EXISTS users_role_id_fkey;
 
-DROP INDEX IF EXISTS idx_users_role_id;
+DROP INDEX IF EXISTS iam.idx_users_role_id;
 
 -- destructive-gate: allow
 -- destructive-kind: DROP COLUMN

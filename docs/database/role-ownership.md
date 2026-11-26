@@ -145,17 +145,17 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 ⑮ **L1 两迁移 replay 窗口准备复核（2026-11-26，本机事务内 dry-run ROLLBACK，未投放、未记账）**。承接 L1，投放前复核迁移文件/守卫/checksum/前置对象与回归清单。
 
 **交付物核对**：
-- `20261126160000_iam_tenant_permissions_rls_fail_closed.sql`：manifest `to_apply`；checksum `13b9f7f0…c297f8` 与磁盘 SHA-256 一致；`to_regclass` 守卫表不存在跳过；ENABLE+FORCE RLS；策略存在 ALTER / 不存在 CREATE，表达式 `app.rls_system='on' OR tenant_id 精确匹配`；后置断言必须同时 ENABLE+FORCE、且新策略不含空租户/未设置/零租户豁免分支。
-- `20261126170000_drop_iam_users_legacy_columns.sql`：manifest `to_apply`；checksum `1400c106…68d34abb` 与磁盘一致；`to_regclass` 守卫；DROP CONSTRAINT `users_role_id_fkey` + DROP INDEX `idx_users_role_id` + DROP COLUMN `roles/permissions/role_id`；destructive 标记齐全（kind DROP CONSTRAINT/COLUMN、ticket `IAM-LEGACY-20261126`、expires `2027-05-25`、rows-at-review=0、backup 路径）；收尾断言三列不存在。
+- `20261126160000_iam_tenant_permissions_rls_fail_closed.sql`：manifest `to_apply`；checksum `cb377945…3b563211` 与磁盘 SHA-256 一致；`to_regclass` 守卫表不存在跳过；ENABLE+FORCE RLS；幂等 `DROP POLICY IF EXISTS rls_tenant_isolation` 清理旧 fail-open 策略；策略存在 ALTER / 不存在 CREATE，表达式 `app.rls_system='on' OR tenant_id 精确匹配`；后置断言同时校验 ENABLE+FORCE、新策略不含空租户/未设置/零租户豁免分支、旧策略 `rls_tenant_isolation` 无残留。
+- `20261126170000_drop_iam_users_legacy_columns.sql`：manifest `to_apply`；checksum `293c44e4…5ecb0f8d` 与磁盘一致；`to_regclass` 守卫；DROP CONSTRAINT `users_role_id_fkey` + `DROP INDEX IF EXISTS iam.idx_users_role_id`（显式 schema 限定）+ DROP COLUMN `roles/permissions/role_id`；destructive 标记齐全（kind DROP CONSTRAINT/COLUMN、ticket `IAM-LEGACY-20261126`、expires `2027-05-25`、rows-at-review=0、backup 路径）；收尾断言三列不存在。
 - **backup 快照在位**：`backups/db-iam-users-legacy-columns/iam.users-topems-20261126.csv`（本机 2 行）、`…topems_prod-20261126.csv`（prod 9 行），列 `id/username/email/is_superuser/role_id/roles/permissions`。
 
-**本机事务 dry-run（BEGIN→`\i`→校验→ROLLBACK，EXIT=0）**：① 160000 后 RLS=true/FORCE=true，新策略 `tenant_isolation_tenant_permissions` 表达式为系统通道 OR 精确匹配，无豁免分支；② 170000 后三列残留=0、`idx_users_role_id` 残留=0、`users_role_id_fkey` 残留=0（FK 与索引均随 DROP COLUMN 级联清理）。
+**本机事务 dry-run（BEGIN→`\i`→校验→ROLLBACK，EXIT=0；补丁后复测）**：① 160000 后 RLS=true/FORCE=true，策略集合仅剩新策略 `tenant_isolation_tenant_permissions`（旧 `rls_tenant_isolation` 已 DROP），表达式为系统通道 OR 精确匹配、无豁免分支；② 170000 后三列残留=0、`idx_users_role_id` 残留=0、`users_role_id_fkey` 残留=0（D1 补丁后 DROP INDEX 显式命中 `iam.` 限定，不再 NOTICE 跳过；FK 与索引亦随 DROP COLUMN 级联兜底）。ROLLBACK 后本机三列/策略恢复原状，未落地。`validate.sh` 门禁 Errors=0、Checksum errors=0。
 
 **两库前置对象实测**：本机 `topems` 三列在、FK 在、索引在；`iam.tenant_permissions` RLS=t/FORCE=f、1 条旧策略。prod `topems_prod` 三列在、FK `users_role_id_fkey` 在、索引 `idx_users_role_id` 在；`iam.tenant_permissions` **RLS=f/FORCE=f、无任何策略**。两账本均未记账（本机 max `20261124150000`、prod max `20261126110000`）。
 
-**复核发现（非阻断，建议补丁，待拍板是否在投放前修迁移）**：
-- **D1（170000 DROP INDEX 缺 schema 限定）**：第 50 行 `DROP INDEX IF EXISTS idx_users_role_id;` 为裸名，而文件 `search_path = pg_catalog, public, pg_temp` 不含 `iam`，dry-run 报 NOTICE `index does not exist, skipping`（该语句 no-op）。最终状态仍正确——`DROP COLUMN role_id` 自动级联删除单列索引与 FK（已实测残留 0）。建议补丁：改为 `DROP INDEX IF EXISTS iam.idx_users_role_id;` 使显式清理生效；改文件需重算 checksum 并同步 `checksums.txt`/manifest。
-- **D2（160000 未清理并存旧策略 `rls_tenant_isolation`）**：本机 `iam.tenant_permissions` 另有旧策略 `rls_tenant_isolation`，表达式含 `tenant_id IS NULL`/空串/零租户 fail-open 豁免；PostgreSQL 多条策略 OR 合并，旧策略会旁路新 fail-closed 策略。**prod 该表无旧策略（投放不受影响）**；旧策略为本机 dev 历史线残留。160000 后置断言只校验新策略名 `tenant_isolation_tenant_permissions`，未排除其他 fail-open 策略。建议补丁：补 `DROP POLICY IF EXISTS rls_tenant_isolation ON iam.tenant_permissions;`（幂等），或后置断言表内策略集合仅含新策略；干净库/CI 演练库由迁移链重建，不会产生该旧策略。
+**复核发现与处置（已在投放前补补丁，2026-11-26 拍板；checksum 已重算并同步 `checksums.txt`/manifest）**：
+- **D1（170000 DROP INDEX 缺 schema 限定）— 已修**：原 `DROP INDEX IF EXISTS idx_users_role_id;` 为裸名，文件 `search_path = pg_catalog, public, pg_temp` 不含 `iam`，dry-run 报 NOTICE `index does not exist, skipping`（语句 no-op）。补丁改为 `DROP INDEX IF EXISTS iam.idx_users_role_id;` 显式限定；复测该语句命中、索引随 DROP COLUMN 级联兜底。新 checksum `293c44e4…5ecb0f8d`。
+- **D2（160000 未清理并存旧 fail-open 策略 `rls_tenant_isolation`）— 已修**：本机 `iam.tenant_permissions` 另有旧策略 `rls_tenant_isolation`，表达式含 `tenant_id IS NULL`/空串/零租户豁免；PostgreSQL 多条策略 OR 合并，旧策略会旁路新 fail-closed 策略（**prod 该表无旧策略**，旧策略为本机 dev 历史线残留）。补丁在 FORCE RLS 后补幂等 `DROP POLICY IF EXISTS rls_tenant_isolation ON iam.tenant_permissions;`，并加后置断言排除该旧策略残留。新 checksum `cb377945…3b563211`。干净库/CI 演练库由迁移链重建，不会产生该旧策略。
 
 **Replay 回归清单（投放窗口执行，唯一入口 `scripts/migration/apply-forward.sh`，禁 `sqlx migrate run`）**：
 - **A 投放前预检（只读）**：① 复核两账本无 160000/170000 记账、checksum 与 `checksums.txt` 一致、backup CSV 在位；② prod 前置三列/FK/索引在、`tenant_permissions` 无旧 fail-open 策略；③ 基线测试绿：unified-core lib **571**、shared-auth lib **226**、shared 集成 `auth_test` **17**。

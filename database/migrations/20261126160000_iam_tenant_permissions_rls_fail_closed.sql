@@ -24,6 +24,9 @@ BEGIN
   EXECUTE 'ALTER TABLE iam.tenant_permissions ENABLE ROW LEVEL SECURITY';
   EXECUTE 'ALTER TABLE iam.tenant_permissions FORCE ROW LEVEL SECURITY';
 
+  -- 清理历史线残留的旧 fail-open 策略（含 tenant_id IS NULL/空串/零租户豁免；prod 无此策略，幂等）。
+  EXECUTE 'DROP POLICY IF EXISTS rls_tenant_isolation ON iam.tenant_permissions';
+
   IF EXISTS (
     SELECT 1 FROM pg_policy p
      WHERE p.polrelid = 'iam.tenant_permissions'::regclass
@@ -57,6 +60,14 @@ BEGIN
             OR pg_get_expr(p.polqual, p.polrelid) LIKE '%00000000-0000-0000-0000-000000000000%')
   ) THEN
     RAISE EXCEPTION 'fail-closed 断言失败：策略仍含空租户/未设置豁免分支';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM pg_policy p
+     WHERE p.polrelid = 'iam.tenant_permissions'::regclass
+       AND p.polname = 'rls_tenant_isolation'
+  ) THEN
+    RAISE EXCEPTION 'fail-closed 断言失败：旧 fail-open 策略 rls_tenant_isolation 仍存在';
   END IF;
 END
 $mig$;
