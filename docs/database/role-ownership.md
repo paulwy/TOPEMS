@@ -108,6 +108,16 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 
 ⑧ **IAM-3 拍板口径与 DROP 迁移落地（2026-11-26，代码/迁移已就绪，待 replay 窗口投放）**。决策（一步到位定稿）：**(1) 超管不绑角色**——`is_superuser` 布尔独立兜底全量放行，`core_user_roles` 绑定仅服务普通用户；漂移 A（本机 `test_admin`、prod `reviewer`）**不补关联表绑定**。**(2) `reviewer` 为例外身份**——prod 评审体验账号（reviewer@topems.local，full_name「评审体验账号」），保留 `is_superuser=t` 全量评审权限，不降级、不清理、不补角色，身份不依赖被删三列。**(3) `role_id` 旧单列外键列一并 DROP**——连带 `users_role_id_fkey` 外键约束与 `idx_users_role_id` 单列索引；`iam.roles` 旧表本身及 `iam.position_roles → iam.roles` 遗留引用不在本轮范围，另议。**(4) 空权普通用户**（`chi`/`wangy` 及软删账号）本轮不补权，授权归属业务另议。**迁移 `20261126170000_drop_iam_users_legacy_columns.sql`**：DROP `iam.users.roles/permissions/role_id` 三列；`to_regclass` 守卫 + `IF EXISTS` 幂等（新库/已清理库跳过）；destructive 标记 `kind=DROP COLUMN`、ticket `IAM-LEGACY-20261126`、`rows-at-review=0`、backup 指向 `backups/db-iam-users-legacy-columns/`。**依赖复核**：运行期 Rust/前端/`.sqlx` 对三列零裸列引用；DB 函数/触发器/视图零依赖；依附 `role_id` 的仅该 FK 与索引。**验证**：本机 `topems` 事务内 dry-run 通过（校验三列已删后 ROLLBACK，无持久化副作用）；destructive 门禁 `APPROVE`（票据匹配）；manifest `pending_forward_patches` 登记 `to_apply`；`cargo check`/clippy/fmt 绿，shared-auth lib 230、unified-core lib 571 测试全绿。**环境覆盖**：开发/部署/本机/prod 同一份 replayable 迁移；db-tests 全量认证/授权回归留待迁移 replay 窗口（本机账本滞后、5433 验证实例不可达，不在本轮强行跑）。**备份**：删除前两库三列快照 `backups/db-iam-users-legacy-columns/iam.users-{topems,topems_prod}-20261126.csv`（id/username/email/is_superuser/role_id/roles/permissions）。
 
+⑨ **IAM 另批债只读普查（2026-11-26，未改库、未动 prod 账本）**。承接 ⑧ 遗留，对三项另批数据/目录债做现状量化定性，处置各立批次。
+
+**(C) 本机 `core_role_permissions` 重复绑定（本机 dev 独有，prod 干净）**：本机 `superadmin` 3414 行 / 去重 343（冗余 3071，同对最大重复 **38** 次）、`admin` 1048 行 / 去重 345（冗余 703，38 次）；其余 11 个 `*_manager` 角色无重复。prod `topems_prod` 15 个角色 `dup_excess` 全 0，无此债。定性：本机种子重放残留（同一 `(role_id,permission_id)` 未 `ON CONFLICT` 重复插入 38 倍）；清理属本机数据债，可写幂等去重迁移（每组保留一条），供新库/夹具重放防复发；prod 无需处置。
+
+**(D) 目录码两侧漂移（本机种子滞后 + 33 码待补基线）**：本机 `core_permissions` 355 码，prod 1162 码；本机 355 全为 prod 子集（仅本机有=0），prod 独有 807。以前端生成基线 `permissions.ts` 1033 码三向比对：807 中 **774 在仓库基线内**（本机账本水位 `20261124150000` 滞后，replay 种子补齐即可消）；**33 码不在基线**（19 个两级聚合码 `module:action`，如 `finance:read`/`system:read`/`rd:admin`/`master-data:write`；14 个三级码 `lims:test-method:read`、`master-data:*` 13 个）。33 orphan 多数在 Rust/前端有引用（`finance:read` 23 处、`master-data:write` 28、`rd:admin` 15、`system:read` 13 等），定性为**运行期真实使用但未进迁移种子基线**，方向是补 DB 种子迁移纳入基线，而非清理 prod 残留。
+
+**(E) 旧表 `iam.roles` / `iam.position_roles` 遗留引用**：运行期角色目录权威为 `public.core_roles`（`role.rs::list_roles` 等全部查 core_roles）；旧 `iam.roles` 为空壳（prod 4 行占位、本机 0 行），无 Rust/前端业务读它，无视图/函数依赖。依附 FK 两条：`users_role_id_fkey`（已纳入 ⑧ 迁移 `20261126170000` 待 replay）、`position_roles_role_id_fkey`（另议）。`position_roles` 并非死表：`position.rs` 岗位模块运行期 INSERT/SELECT/DELETE 该表，但其 `role_id` FK 误指旧 `iam.roles`，而前端岗位绑定传入的是 `core_roles` UUID（目录接口来源）；表两库均 0 行，功能未实际产数。处置另议：岗位角色绑定要么 FK 修正指向 `core_roles`、并入 `core_user_roles` 范式，要么岗位角色绑定功能下线；涉及岗位模块接口改造，不随本轮 DROP users 列。
+
+
+
 ## 9. 决策与执行记录（2026-11-25 追加）
 
 | 议题 | 决策 | 落地 |
