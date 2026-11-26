@@ -868,13 +868,12 @@ pub async fn update_production_schedule(
         }
     };
 
-    if let Err(e) = scope.commit().await {
-        tracing::error!("提交生产排产事务失败: {}", e);
-        return ApiResponse::server_error("更新生产排产失败");
-    }
-
     match result {
         Some(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交生产排产事务失败: {}", e);
+                return ApiResponse::server_error("更新生产排产失败");
+            }
             let schedule = ProductionScheduleResponse {
                 id: r.id,
                 schedule_no: r.schedule_no,
@@ -1396,7 +1395,7 @@ async fn transition_schedule(
         }
     };
 
-    let existing: Option<(String,)> = match sqlx::query_as(
+    let existing: Option<(Option<String>,)> = match sqlx::query_as(
         "SELECT status FROM mes.production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
@@ -1414,6 +1413,9 @@ async fn transition_schedule(
 
     let Some((current_status,)) = existing else {
         return ApiResponse::not_found("排产单不存在");
+    };
+    let Some(current_status) = current_status else {
+        return ApiResponse::conflict("排产单状态为空，需人工处理");
     };
 
     let current = match ProductionScheduleStatus::from_db_str(&current_status) {
@@ -1460,7 +1462,7 @@ async fn transition_schedule(
                 "操作成功",
             )
         }
-        Ok(_) => ApiResponse::not_found("排产单不存在"),
+        Ok(_) => ApiResponse::conflict("排产单状态已变化或已删除，请刷新后重试"),
         Err(e) => {
             tracing::error!("更新排产单状态失败: {}", e);
             ApiResponse::server_error("更新排产单状态失败")
