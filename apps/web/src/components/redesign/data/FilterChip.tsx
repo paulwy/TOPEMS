@@ -32,7 +32,7 @@ export const FilterChip: React.FC<FilterChipProps> = ({
         fontSize: 'var(--text-xs)',
         fontWeight: 'var(--font-semibold)',
         letterSpacing: 'var(--tracking-wide)',
-        color: active ? 'var(--text-inverse)' : 'var(--text-secondary)',
+        color: active ? 'var(--text-on-accent)' : 'var(--text-secondary)',
         backgroundColor: active ? 'var(--accent-primary)' : 'var(--surface-2)',
         border: `1px solid ${active ? 'var(--accent-primary)' : 'var(--border-default)'}`,
         borderRadius: 'var(--radius-sm)',

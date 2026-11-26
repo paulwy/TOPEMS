@@ -30,6 +30,8 @@ export interface TopBarProps {
   onToggleSidebar?: () => void;
   sidebarExpanded?: boolean;
   title?: React.ReactNode;
+  /** 中部搜索区插槽；提供时替换内置的搜索入口按钮 */
+  searchSlot?: React.ReactNode;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -41,6 +43,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onToggleSidebar,
   sidebarExpanded = true,
   title = 'TOPEMS',
+  searchSlot,
 }) => {
   const { t } = useTranslation();
   const handleToggle = onToggleSidebar || onMenuToggle;
@@ -115,23 +118,36 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       </div>
 
-      <div className={styles.il5}>
-        <Button
+      {searchSlot && (
+        <div
+          className={styles.il16}
           data-testid='topbar-command-palette'
-          variant='ghost'
-          size='sm'
-          leftIcon={<Search size={16} />}
-          onClick={onCommandOpen}
+          role='search'
           aria-label={`${i18n.t('common.search')} ⌘K`}
         >
-          <span className='desktop-only'>{i18n.t('common.search')}</span>
-          <kbd
-            aria-hidden='true'
-            className={cx('desktop-only', styles.il6)}
+          {searchSlot}
+        </div>
+      )}
+
+      <div className={styles.il5}>
+        {!searchSlot && (
+          <Button
+            data-testid='topbar-command-palette'
+            variant='ghost'
+            size='sm'
+            leftIcon={<Search size={16} />}
+            onClick={onCommandOpen}
+            aria-label={`${i18n.t('common.search')} ⌘K`}
           >
-            ⌘K
-          </kbd>
-        </Button>
+            <span className='desktop-only'>{i18n.t('common.search')}</span>
+            <kbd
+              aria-hidden='true'
+              className={cx('desktop-only', styles.il6)}
+            >
+              ⌘K
+            </kbd>
+          </Button>
+        )}
 
         <ThemeSelector showMenu={false} />
 

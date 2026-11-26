@@ -84,25 +84,25 @@ const statusConfig = {
     labelKey: 'mes.work_order.k26',
     variant: 'info' as const,
     icon: Play,
-    color: 'var(--accent-primary)',
+    color: 'var(--accent-primary-text)',
   },
   paused: {
     labelKey: 'mes.work_order.k27',
     variant: 'warning' as const,
     icon: Pause,
-    color: 'var(--warning-500)',
+    color: 'var(--warning-text)',
   },
   completed: {
     labelKey: 'mes.work_order.k28',
     variant: 'success' as const,
     icon: CheckCircle,
-    color: 'var(--success-500)',
+    color: 'var(--success-text)',
   },
   cancelled: {
     labelKey: 'mes.work_order.k29',
     variant: 'error' as const,
     icon: XCircle,
-    color: 'var(--error-500)',
+    color: 'var(--error-text)',
   },
 };
 
@@ -310,7 +310,7 @@ const MesWorkOrderPage: React.FC = () => {
               height: 32,
               borderRadius: 'var(--radius-sm)',
               backgroundColor: 'color-mix(in srgb, var(--accent-primary) 12%, transparent)',
-              color: 'var(--accent-primary)',
+              color: 'var(--accent-primary-text)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

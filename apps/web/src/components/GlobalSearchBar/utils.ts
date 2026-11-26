@@ -6,6 +6,24 @@ import i18n from '@/i18n';
 const SEARCH_HISTORY_KEY = 'topems_search_history';
 export const MAX_HISTORY_ITEMS = 10;
 
+/**
+ * 结果点击后的落地路由。
+ *
+ * 后端历史版本曾下发 `/sales/orders/{id}`、`/purchase/orders/{id}`，但 Web 端只有订单列表页
+ * （ERP_PATHS.salesOrders = /erp/sales-orders、purchaseOrder = /erp/purchase-order），
+ * 直接跳详情会落到 404。这里做一层归一：订单类路径统一落到列表页，其他路径原样返回。
+ */
+export const resolveResultPath = (result: Pick<SearchResult, 'path' | 'url'>): string => {
+  const raw = result.path || result.url || '/';
+  if (/^\/?sales\/orders(?:[/?].*)?$/.test(raw)) {
+    return '/erp/sales-orders';
+  }
+  if (/^\/?purchase\/orders(?:[/?].*)?$/.test(raw)) {
+    return '/erp/purchase-order';
+  }
+  return raw;
+};
+
 const serviceLabels: Record<string, string> = {
   erp: i18n.t('components.utils.erp_0'),
   crm: i18n.t('components.utils.k1'),

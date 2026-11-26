@@ -247,10 +247,27 @@ export const createCustomTheme = (): Theme => {
               muted: designTokens.colors.grey[500],
             },
             divider: designTokens.colors.grey[700],
-            grey: designTokens.colors.grey,
+            // 暗色下把灰阶整体反相：大量历史页面用 grey.100 当卡片底、grey.900 当文字，
+            // 若沿用亮色灰阶，暗色里就是「浅底 + 深字」甚至同色不可见。
+            // 反相后成对使用（底 grey.100 + 字 grey.900）依然成立，单边使用也不会撞色。
+            grey: {
+              ...designTokens.colors.grey,
+              50: '#0b1220',
+              100: '#111a2e',
+              200: '#1a2438',
+              300: '#243044',
+              400: '#64748b',
+              500: '#94a3b8',
+              600: '#cbd5e1',
+              700: '#e2e8f0',
+              800: '#f1f5f9',
+              900: '#f8fafc',
+            },
             // 暗色下用语义色 light 变体（400 阶），保证深色背景上可读
             primary: {
               ...designTokens.colors.primary,
+              50: '#0d1b33',
+              100: '#12274a',
               main: designTokens.colors.primary[400],
               light: designTokens.colors.primary[300],
               dark: designTokens.colors.primary[500],
@@ -258,6 +275,8 @@ export const createCustomTheme = (): Theme => {
             },
             secondary: {
               ...designTokens.colors.secondary,
+              50: '#181033',
+              100: '#22174a',
               main: designTokens.colors.secondary[400],
               light: designTokens.colors.secondary[300],
               dark: designTokens.colors.secondary[500],
@@ -265,24 +284,32 @@ export const createCustomTheme = (): Theme => {
             },
             success: {
               ...designTokens.colors.success,
+              50: '#0b2216',
+              100: '#123320',
               main: designTokens.colors.success[400],
               light: designTokens.colors.success[300],
               dark: designTokens.colors.success[500],
             },
             warning: {
               ...designTokens.colors.warning,
+              50: '#2a1d07',
+              100: '#3a290b',
               main: designTokens.colors.warning[400],
               light: designTokens.colors.warning[300],
               dark: designTokens.colors.warning[500],
             },
             error: {
               ...designTokens.colors.error,
+              50: '#2a1014',
+              100: '#3a171c',
               main: designTokens.colors.error[400],
               light: designTokens.colors.error[300],
               dark: designTokens.colors.error[500],
             },
             info: {
               ...designTokens.colors.info,
+              50: '#07202e',
+              100: '#0b2c40',
               main: designTokens.colors.info[400],
               light: designTokens.colors.info[300],
               dark: designTokens.colors.info[500],
@@ -830,6 +857,14 @@ export const createCustomTheme = (): Theme => {
             root: {
               fontSize: designTokens.typography.fontSize.sm,
             },
+            input: ({ theme }) => ({
+              // MUI 默认占位符是 rgba(0,0,0,0.38)（白底仅 2.7:1，暗色下也不跟随明暗），
+              // 统一按当前色彩方案的次要文字取色，亮/暗都保持可读。
+              '&::placeholder': {
+                color: theme.palette.text.secondary,
+                opacity: 1,
+              },
+            }),
           },
         },
         MuiInputLabel: {

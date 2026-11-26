@@ -1,15 +1,15 @@
 /* ./components/redesign/primitives/FileUpload.tsx inline-style migration (auto) */
 
 .il1 {
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
 }
 
 .il2 {
-  color: var(--success-500);
+  color: var(--success-text);
 }
 
 .il3 {
-  color: var(--error-500);
+  color: var(--error-text);
 }
 
 .il4 {
@@ -80,7 +80,7 @@
 }
 
 .il15 {
-  color: var(--error-500);
+  color: var(--error-text);
   margin-left: var(--space-2);
 }
 

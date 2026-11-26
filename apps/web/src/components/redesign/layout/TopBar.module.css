@@ -23,7 +23,7 @@
 .il4 {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   letter-spacing: var(--tracking-wider);
 }
 
@@ -112,3 +112,23 @@
   font-size: 14px;
   cursor: pointer;
 }
+
+.il16 {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  margin: 0 var(--space-4);
+  position: relative;
+}
+
+/* 窄屏（<900px）：中部只保留搜索图标入口，避免挤压品牌与操作区 */
+@media (max-width: 899px) {
+  .il16 {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    margin: 0 var(--space-2);
+  }
+}
+

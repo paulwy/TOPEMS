@@ -67,12 +67,12 @@ const priorityConfig = {
   high: {
     labelKey: 'workflow.approvals_page.priority_high',
     variant: 'error' as const,
-    color: 'var(--error-500)',
+    color: 'var(--error-text)',
   },
   medium: {
     labelKey: 'workflow.approvals_page.priority_medium',
     variant: 'warning' as const,
-    color: 'var(--warning-500)',
+    color: 'var(--warning-text)',
   },
   low: {
     labelKey: 'workflow.approvals_page.priority_low',

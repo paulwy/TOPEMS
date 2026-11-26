@@ -56,7 +56,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variantStyles: Record<string, React.CSSProperties> = {
       primary: {
         backgroundColor: 'var(--accent-primary)',
-        color: 'var(--text-inverse)',
+        color: 'var(--text-on-accent)',
         borderColor: 'var(--accent-primary)',
       },
       secondary: {

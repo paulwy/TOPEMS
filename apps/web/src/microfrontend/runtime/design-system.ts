@@ -790,7 +790,14 @@ export class DesignSystemManager {
 
     // 同步主题模式
     el.style.setProperty('--ds-theme-mode', this.currentTheme.mode);
-    el.setAttribute('data-theme', this.currentTheme.mode);
+    // data-theme 是应用级配色开关（ThemeProvider/亮暗令牌靠它解析）。
+    // 微前端运行时默认根节点就是 <html>，若无条件写入会把整站令牌翻转，
+    // 所以全局根只写自己的 data-ds-theme，局部容器才用 data-theme。
+    if (el === document.documentElement) {
+      el.setAttribute('data-ds-theme', this.currentTheme.mode);
+    } else {
+      el.setAttribute('data-theme', this.currentTheme.mode);
+    }
   }
 
   /** 获取 CSS 变量名 */

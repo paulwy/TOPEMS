@@ -46,7 +46,7 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
           style={{
             display: 'inline-flex',
             padding: 'var(--space-4)',
-            color: 'var(--error-500)',
+            color: 'var(--error-text)',
             backgroundColor: 'color-mix(in srgb, var(--error-500) 8%, transparent)',
             borderRadius: 'var(--radius-full)',
             boxShadow: 'var(--glow-error)',

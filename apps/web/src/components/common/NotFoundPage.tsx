@@ -1,6 +1,6 @@
 import { designTokens } from '@topems/tokens';
 import React, { useMemo } from 'react';
-import { Box, Button, Typography, Paper, useTheme } from '@mui/material';
+import { alpha, Box, Button, Typography, Paper, useTheme } from '@mui/material';
 import { Home, Search, FileQuestion } from 'lucide-react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { navigationRegistryV2 } from '@/lib/navigation';
@@ -36,7 +36,7 @@ const NotFoundPage: React.FC = () => {
 
   return (
     <AuthPageTemplate
-      backgroundGradient={theme.palette.grey[100]}
+      backgroundGradient={theme.palette.background.default}
       maxWidth={640}
     >
       <Box
@@ -69,7 +69,11 @@ const NotFoundPage: React.FC = () => {
           sx={{
             width: 72,
             height: 72,
-            bgcolor: 'primary.100',
+            bgcolor: (t) =>
+              alpha(
+                t.palette.mode === 'dark' ? t.palette.common.white : t.palette.common.black,
+                0.06
+              ),
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
@@ -83,13 +87,13 @@ const NotFoundPage: React.FC = () => {
 
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
+          sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}
         >
           {i18n.t('pages.not_found_page.k0')}
         </Typography>
         <Typography
           variant='body1'
-          sx={{ color: 'grey.600', mb: 4 }}
+          sx={{ color: 'text.secondary', mb: 4 }}
         >
           {i18n.t('pages.not_found_page.k1')}
         </Typography>

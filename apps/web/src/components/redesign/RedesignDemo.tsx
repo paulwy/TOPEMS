@@ -221,7 +221,7 @@ const RedesignDemo: React.FC = () => {
                     style={{
                       display: 'inline-flex',
                       padding: 'var(--space-2)',
-                      color: 'var(--accent-primary)',
+                      color: 'var(--accent-primary-text)',
                       backgroundColor: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)',
                       borderRadius: 'var(--radius-sm)',
                     }}
@@ -397,7 +397,7 @@ const RedesignDemo: React.FC = () => {
                 style={{
                   display: 'inline-flex',
                   padding: 'var(--space-3)',
-                  color: 'var(--accent-primary)',
+                  color: 'var(--accent-primary-text)',
                   backgroundColor: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)',
                   borderRadius: 'var(--radius-sm)',
                 }}

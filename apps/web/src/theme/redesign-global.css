@@ -56,9 +56,20 @@ body {
   color-scheme: dark;
 }
 
+/* body 自身声明了 color-scheme: dark，会覆盖从 html 继承的值，
+   因此亮色时必须显式把 body 一起改回 light，否则原生控件/滚动条仍是深色渲染。 */
 [data-theme='light'],
-.redesign-light {
+.redesign-light,
+[data-theme='light'] body {
   color-scheme: light;
+}
+
+/* 与令牌兜底同源：没有显式属性时跟随系统偏好，避免原生控件/滚动条与实际配色相反 */
+@media (prefers-color-scheme: light) {
+  html:not([data-theme='dark']),
+  html:not([data-theme='dark']) body {
+    color-scheme: light;
+  }
 }
 
 /* 图片与媒体 */
@@ -92,13 +103,13 @@ button:disabled,
 }
 
 a {
-  color: var(--accent-secondary);
+  color: var(--accent-secondary-text);
   text-decoration: none;
   transition: color var(--duration-fast) var(--ease-out);
 }
 
 a:hover {
-  color: var(--accent-secondary-hover);
+  color: var(--accent-secondary-text-hover);
 }
 
 :focus-visible {
@@ -153,12 +164,12 @@ a:hover {
 .text-secondary { color: var(--text-secondary); }
 .text-tertiary { color: var(--text-tertiary); }
 .text-disabled { color: var(--text-disabled); }
-.text-accent { color: var(--accent-primary); }
-.text-cyan { color: var(--accent-secondary); }
-.text-success { color: var(--success-500); }
-.text-warning { color: var(--warning-500); }
-.text-error { color: var(--error-500); }
-.text-info { color: var(--info-500); }
+.text-accent { color: var(--accent-primary-text); }
+.text-cyan { color: var(--accent-secondary-text); }
+.text-success { color: var(--success-text); }
+.text-warning { color: var(--warning-text); }
+.text-error { color: var(--error-text); }
+.text-info { color: var(--info-text); }
 
 .bg-primary { background-color: var(--bg-primary); }
 .bg-secondary { background-color: var(--bg-secondary); }

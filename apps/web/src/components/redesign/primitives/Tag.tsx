@@ -19,27 +19,27 @@ export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
       },
       amber: {
         backgroundColor: 'color-mix(in srgb, var(--amber-500) 8%, transparent)',
-        color: 'var(--amber-400)',
+        color: 'var(--accent-primary-text)',
         borderColor: 'color-mix(in srgb, var(--amber-500) 25%, transparent)',
       },
       cyan: {
         backgroundColor: 'color-mix(in srgb, var(--cyan-500) 8%, transparent)',
-        color: 'var(--cyan-400)',
+        color: 'var(--accent-secondary-text)',
         borderColor: 'color-mix(in srgb, var(--cyan-500) 25%, transparent)',
       },
       success: {
         backgroundColor: 'color-mix(in srgb, var(--success-500) 8%, transparent)',
-        color: 'var(--success-500)',
+        color: 'var(--success-text)',
         borderColor: 'color-mix(in srgb, var(--success-500) 25%, transparent)',
       },
       warning: {
         backgroundColor: 'color-mix(in srgb, var(--warning-500) 8%, transparent)',
-        color: 'var(--warning-500)',
+        color: 'var(--warning-text)',
         borderColor: 'color-mix(in srgb, var(--warning-500) 25%, transparent)',
       },
       error: {
         backgroundColor: 'color-mix(in srgb, var(--error-500) 8%, transparent)',
-        color: 'var(--error-500)',
+        color: 'var(--error-text)',
         borderColor: 'color-mix(in srgb, var(--error-500) 25%, transparent)',
       },
     };

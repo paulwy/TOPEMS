@@ -28,28 +28,28 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
       default: { backgroundColor: 'var(--surface-3)', color: 'var(--text-secondary)' },
       amber: {
         backgroundColor: 'color-mix(in srgb, var(--amber-500) 12%, transparent)',
-        color: 'var(--amber-400)',
+        color: 'var(--accent-primary-text)',
       },
       cyan: {
         backgroundColor: 'color-mix(in srgb, var(--cyan-500) 12%, transparent)',
-        color: 'var(--cyan-400)',
+        color: 'var(--accent-secondary-text)',
       },
       success: {
         backgroundColor: 'color-mix(in srgb, var(--success-500) 12%, transparent)',
-        color: 'var(--success-500)',
+        color: 'var(--success-text)',
       },
       warning: {
         backgroundColor: 'color-mix(in srgb, var(--warning-500) 12%, transparent)',
-        color: 'var(--warning-500)',
+        color: 'var(--warning-text)',
       },
       error: {
         backgroundColor: 'color-mix(in srgb, var(--error-500) 12%, transparent)',
-        color: 'var(--error-500)',
+        color: 'var(--error-text)',
       },
       info: {
         // bg 保持更透明（贴近底色）以提升 info 文字对比度（WCAG 1.4.3）
         backgroundColor: 'color-mix(in srgb, var(--info-500) 8%, transparent)',
-        color: 'var(--info-500)',
+        color: 'var(--info-text)',
       },
     };
 

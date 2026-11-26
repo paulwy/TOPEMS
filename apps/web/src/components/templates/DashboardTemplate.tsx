@@ -321,7 +321,8 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'text.disabled',
+              // 空态文案是有效信息，用次要文字色而不是 disabled（后者白底仅 2.7:1）
+              color: 'text.secondary',
               fontSize: 14,
             }}
           >

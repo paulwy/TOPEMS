@@ -61,7 +61,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
   if (variant === 'icon') {
     return (
       <>
-        <Tooltip title={`${i18n.t('components.index.k0')}${openShortcutLabel})`}>
+        <Tooltip title={`${i18n.t('common.search')} (${openShortcutLabel})`}>
           <IconButton
             onClick={() => {
               setOpen(true);
@@ -69,7 +69,7 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
             }}
             size='small'
             ref={iconButtonRef}
-            aria-label={i18n.t('components.index.k0')}
+            aria-label={i18n.t('common.search')}
           >
             <Search size={18} />
           </IconButton>

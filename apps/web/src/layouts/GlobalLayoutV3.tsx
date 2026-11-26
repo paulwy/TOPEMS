@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useMediaQuery } from '@mui/material';
 import type { LucideIcon } from 'lucide-react';
 import { Home, LayoutGrid } from 'lucide-react';
 import { AppShell } from '../components/redesign/layout/AppShell';
+import { GlobalSearchBar } from '../components/GlobalSearchBar';
 import type { NavItem } from '../components/redesign/layout/SideRail';
 import { usePermission } from '../hooks/usePermission';
 import {
@@ -231,6 +233,8 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   const { dbMenus } = useMenuAuthority();
   // 批 13：租户模块激活状态（决定一级业务域是否展示）
   const { activeDomains } = useTenantModules();
+  // 窄屏（<900px）顶栏只放搜索图标入口，宽屏放完整搜索条
+  const isCompactViewport = useMediaQuery('(max-width: 899px)');
 
   // P5: 未读数轮询写入 store，消息中心徽标实时跟随；无未读时徽标自动隐藏
   const unreadCount = useUnreadNotificationCount();
@@ -334,10 +338,6 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   };
 
   // TopBar 按钮处理函数
-  const handleCommandOpen = () => {
-    console.info('Command palette opened');
-  };
-
   const handleNotificationsOpen = () => {
     navigate(NOTIFICATION_PATHS.list);
   };
@@ -358,10 +358,10 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
       onItemClick={handleItemClick}
       footerItems={footerItems}
       fullWidth={fullWidth}
-      onCommandOpen={handleCommandOpen}
       onNotificationsOpen={handleNotificationsOpen}
       onSettingsOpen={handleSettingsOpen}
       onProfileOpen={handleProfileOpen}
+      searchSlot={isCompactViewport ? <GlobalSearchBar variant='icon' /> : <GlobalSearchBar />}
     >
       {children}
     </AppShell>

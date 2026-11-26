@@ -70,7 +70,7 @@ export function ListPageTemplate<T extends object>({
         <div
           style={{
             padding: 'var(--space-4)',
-            color: 'var(--error-500)',
+            color: 'var(--error-text)',
             backgroundColor: 'color-mix(in srgb, var(--error-500) 8%, transparent)',
             border: '1px solid color-mix(in srgb, var(--error-500) 30%, transparent)',
             borderRadius: 'var(--radius-sm)',

@@ -67,8 +67,14 @@ const EmptyResults: React.FC<{ query: string }> = ({ query }) => (
       variant='body2'
       color='text.secondary'
     >
-      {i18n.t('components.search_result_list.k0')} "{query}"{' '}
-      {i18n.t('components.search_result_list.k1')}
+      {i18n.t('components.search_result_list.k8', { query })}
+    </Typography>
+    <Typography
+      variant='caption'
+      color='text.disabled'
+      sx={{ mt: 0.5, display: 'block' }}
+    >
+      {i18n.t('components.search_result_list.k9')}
     </Typography>
   </Box>
 );
@@ -241,26 +247,9 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
               variant='caption'
               color='text.secondary'
             >
-              {i18n.t('components.search_result_list.k2')}{' '}
-              <Box
-                component='span'
-                sx={{ fontWeight: 700, color: 'text.primary' }}
-              >
-                {totalResults}
-              </Box>{' '}
-              {i18n.t('components.search_result_list.k3')}
+              {i18n.t('components.search_result_list.k6', { count: totalResults })}
               {totalGroups > 1 && (
-                <>
-                  {' '}
-                  {i18n.t('components.search_result_list.k4')}{' '}
-                  <Box
-                    component='span'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {totalGroups}
-                  </Box>{' '}
-                  {i18n.t('components.search_result_list.k1')}
-                </>
+                <> {i18n.t('components.search_result_list.k7', { count: totalGroups })}</>
               )}
             </Typography>
             <Typography
@@ -288,7 +277,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
-                  backgroundColor: alpha(theme.palette.action.hover, 0.3),
+                  backgroundColor: theme.palette.action.hover,
                 }}
               >
                 <Box sx={{ color: getModuleColor(group.module, theme), display: 'flex' }}>

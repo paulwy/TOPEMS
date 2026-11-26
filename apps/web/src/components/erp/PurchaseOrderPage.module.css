@@ -2,7 +2,7 @@
 
 .il1 {
   font-weight: 600px;
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   margin-bottom: 2px;
 }
 
@@ -54,7 +54,7 @@
 }
 
 .il11 {
-  color: var(--error-500);
+  color: var(--error-text);
 }
 
 .il12 {
@@ -122,7 +122,7 @@
 }
 
 .il24 {
-  color: var(--error-500);
+  color: var(--error-text);
 }
 
 .il25 {

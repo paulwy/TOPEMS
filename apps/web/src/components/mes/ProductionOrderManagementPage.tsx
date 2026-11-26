@@ -206,7 +206,15 @@ const ProductionOrderManagementPage: React.FC = () => {
                 mb: 3,
               }}
             >
-              <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'action.hover',
+                  borderLeft: '3px solid',
+                  borderLeftColor: 'warning.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
@@ -223,7 +231,9 @@ const ProductionOrderManagementPage: React.FC = () => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: theme.palette.secondary[100],
+                  bgcolor: 'action.hover',
+                  borderLeft: '3px solid',
+                  borderLeftColor: 'secondary.main',
                   borderRadius: 3,
                 }}
               >
@@ -235,12 +245,20 @@ const ProductionOrderManagementPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'secondary.700' }}
+                  sx={{ fontWeight: 700 }}
                 >
                   {stats.released}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'action.hover',
+                  borderLeft: '3px solid',
+                  borderLeftColor: 'primary.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
@@ -254,7 +272,15 @@ const ProductionOrderManagementPage: React.FC = () => {
                   {stats.in_progress}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'action.hover',
+                  borderLeft: '3px solid',
+                  borderLeftColor: 'success.main',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}
@@ -268,7 +294,15 @@ const ProductionOrderManagementPage: React.FC = () => {
                   {stats.completed}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'action.hover',
+                  borderLeft: '3px solid',
+                  borderLeftColor: 'grey.500',
+                  borderRadius: 3,
+                }}
+              >
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}

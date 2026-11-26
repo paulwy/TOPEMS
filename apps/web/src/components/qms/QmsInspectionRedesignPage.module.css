@@ -2,7 +2,7 @@
 
 .il1 {
   font-weight: var(--font-semibold);
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   font-family: var(--font-mono);
 }
 
@@ -90,11 +90,11 @@
 }
 
 .il19 {
-  color: var(--success-500);
+  color: var(--success-text);
 }
 
 .il20 {
-  color: var(--error-500);
+  color: var(--error-text);
 }
 
 .il21 {

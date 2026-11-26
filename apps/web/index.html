@@ -46,6 +46,27 @@
     </style>
     
     <title>TOPEMS - 企业数字化平台</title>
+    <script>
+      // 首屏主题预置：在任何样式/组件挂载前，按持久化偏好 + 系统偏好写入 data-theme。
+      // 设计令牌（redesign-tokens.css）的亮色覆盖只认 [data-theme='light']，
+      // 缺省时令牌停在深色默认值，会与已切到 light 的 MUI 组件产生同色不可见内容。
+      (function () {
+        try {
+          var theme = 'system';
+          var raw = localStorage.getItem('topems-theme-storage');
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.state && parsed.state.theme) theme = parsed.state.theme;
+          }
+          var prefersDark =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark = theme === 'dark' || (theme !== 'light' && prefersDark);
+          document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+        } catch (e) {
+          document.documentElement.dataset.theme = 'light';
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root">

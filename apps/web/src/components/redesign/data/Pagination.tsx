@@ -154,7 +154,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               style={{
                 ...buttonBaseStyle,
                 backgroundColor: page === current ? 'var(--accent-primary)' : 'var(--surface-1)',
-                color: page === current ? 'var(--text-inverse)' : 'var(--text-primary)',
+                color: page === current ? 'var(--text-on-accent)' : 'var(--text-primary)',
                 borderColor: page === current ? 'var(--accent-primary)' : 'var(--border-default)',
                 fontWeight: page === current ? 'var(--font-semibold)' : 'var(--font-regular)',
               }}

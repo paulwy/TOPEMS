@@ -74,7 +74,7 @@
   --cyan-800: #155e75;
   --cyan-900: #164e63;
 
-  /* 语义色 */
+  /* 语义色（底色/描边档） */
   --success-500: #22c55e;
   --success-600: #16a34a;
   --warning-500: #f59e0b;
@@ -84,6 +84,12 @@
   --info-500: #3b82f6;
   --info-600: #2563eb;
 
+  /* 语义色「当文字用」的取色档位（暗色面用亮阶） */
+  --success-text: #4ade80;
+  --warning-text: #fbbf24;
+  --error-text: #f87171;
+  --info-text: #60a5fa;
+
   /* 快捷别名 */
   --accent-primary: var(--amber-500);
   --accent-primary-hover: var(--amber-400);
@@ -91,6 +97,13 @@
   --accent-secondary: var(--cyan-500);
   --accent-secondary-hover: var(--cyan-400);
   --accent-secondary-active: var(--cyan-600);
+
+  /* 强调色「当文字用」的取色档位：
+     accent 500 只适合做底色/描边，直接当文字落在浅色面上对比度不足
+     （amber-500/#f59e0b 在白底约 2.1:1），所以文字另开一档。 */
+  --accent-primary-text: var(--amber-500);
+  --accent-secondary-text: var(--cyan-500);
+  --accent-secondary-text-hover: var(--cyan-400);
 
   /* 发光与阴影 */
   --glow-amber: 0 0 24px rgba(245, 158, 11, 0.25);
@@ -200,7 +213,7 @@
   --z-devtools: 9000;
 }
 
-/* 浅色降级模式（可选，用于打印/后台管理场景） */
+/* 浅色模式 */
 [data-theme='light'],
 .redesign-light {
   --bg-primary: #fafafa;
@@ -223,6 +236,51 @@
   --border-active: #a1a1aa;
   --divider: rgba(0, 0, 0, 0.08);
 
+  --accent-primary-text: var(--amber-700);
+  --accent-secondary-text: var(--cyan-700);
+  --accent-secondary-text-hover: var(--cyan-800);
+
+  --success-text: #15803d;
+  --warning-text: #b45309;
+  --error-text: #b91c1c;
+  --info-text: #1d4ed8;
+
   --glow-amber: 0 0 20px rgba(245, 158, 11, 0.18);
   --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.18);
+}
+
+/* 兜底：html 上没有 data-theme 时（首屏脚本未执行、微前端内嵌、单测环境），
+   按系统偏好解析，与 MUI 自身的 @media (prefers-color-scheme) 行为保持一致。
+   否则会退到 :root 的深色默认值 → 深色令牌配亮色 MUI 组件 = 同色不可见。
+   ⚠ 取值需与上面 [data-theme='light'] 块保持同步。 */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg-primary: #fafafa;
+    --bg-secondary: #f4f4f5;
+    --bg-elevated: #ffffff;
+
+    --surface-1: #ffffff;
+    --surface-2: #f4f4f5;
+    --surface-3: #e4e4e7;
+    --surface-4: #d4d4d8;
+
+    --text-primary: #18181b;
+    --text-secondary: #52525b;
+    --text-tertiary: #71717a;
+    --text-disabled: #a1a1aa;
+    --text-inverse: #ffffff;
+
+    --border-default: #e4e4e7;
+    --border-hover: #d4d4d8;
+    --border-active: #a1a1aa;
+    --divider: rgba(0, 0, 0, 0.08);
+
+    --accent-primary-text: var(--amber-700);
+    --accent-secondary-text: var(--cyan-700);
+    --accent-secondary-text-hover: var(--cyan-800);
+    --success-text: #15803d;
+    --warning-text: #b45309;
+    --error-text: #b91c1c;
+    --info-text: #1d4ed8;
+  }
 }

@@ -39,16 +39,16 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
     const accentColors: Record<string, string> = {
       amber: 'var(--accent-primary)',
       cyan: 'var(--accent-secondary)',
-      success: 'var(--success-500)',
-      warning: 'var(--warning-500)',
-      error: 'var(--error-500)',
+      success: 'var(--success-text)',
+      warning: 'var(--warning-text)',
+      error: 'var(--error-text)',
     };
 
     const trendColor =
       trend === 'up'
-        ? 'var(--success-500)'
+        ? 'var(--success-text)'
         : trend === 'down'
-          ? 'var(--error-500)'
+          ? 'var(--error-text)'
           : 'var(--text-tertiary)';
     const TrendIcon = trend === 'up' ? ArrowUpRight : trend === 'down' ? ArrowDownRight : Minus;
 

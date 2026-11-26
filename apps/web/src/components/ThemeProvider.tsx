@@ -52,7 +52,8 @@ function useExtendedColorScheme() {
 
 function ThemeSync({ children }: ThemeProviderProps) {
   const storeTheme = useThemeStore((state) => state.theme);
-  const { setMode, setColorScheme } = useExtendedColorScheme();
+  // colorScheme 是 useColorScheme 解析后的实际生效方案（system 模式下即系统偏好解析结果）
+  const { setMode, setColorScheme, colorScheme: resolvedScheme } = useExtendedColorScheme();
 
   React.useEffect(() => {
     if (storeTheme === 'system') {
@@ -64,7 +65,7 @@ function ThemeSync({ children }: ThemeProviderProps) {
     }
   }, [storeTheme, setMode, setColorScheme]);
 
-  // 同步 body data-theme 属性 & 过渡 class
+  // 同步 <html> data-theme 属性 & 过渡 class
   React.useEffect(() => {
     if (typeof document === 'undefined') return;
     const html = document.documentElement;
@@ -76,18 +77,17 @@ function ThemeSync({ children }: ThemeProviderProps) {
       body.classList.remove('theme-transition');
     }, 300);
 
-    // 同步 data-theme 到 <html> 与 <body>
-    if (storeTheme === 'dark') {
-      html.dataset.theme = 'dark';
-    } else if (storeTheme === 'light') {
-      html.dataset.theme = 'light';
-    } else {
-      // system: 由 useColorScheme 自动根据系统设置设置 data-theme="light"/"dark"
-      delete html.dataset.theme;
-    }
+    // 同步 data-theme 到 <html>
+    // 关键：system 模式必须落到「解析后的实际方案」，不能删掉属性。
+    // MUI 只写自己的色彩方案标记（CSS 走 @media (prefers-color-scheme)），
+    // 并不会写 data-theme；一旦缺这个属性，[data-theme='light'] 的令牌覆盖就失效，
+    // 设计令牌会停在深色默认值，而 MUI 组件已切到 light —— 文字与背景同色看不见。
+    const effectiveTheme: ResolvedThemeScheme =
+      storeTheme === 'system' ? (resolvedScheme === 'dark' ? 'dark' : 'light') : storeTheme;
+    html.dataset.theme = effectiveTheme;
 
     return () => clearTimeout(transitionTimer);
-  }, [storeTheme]);
+  }, [storeTheme, resolvedScheme]);
 
   return <>{children}</>;
 }

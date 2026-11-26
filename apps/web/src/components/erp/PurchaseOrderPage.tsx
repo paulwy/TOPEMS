@@ -59,7 +59,7 @@ const avatarCircle: React.CSSProperties = {
 const heroOrder: React.CSSProperties = {
   fontSize: 'var(--text-xl)',
   fontWeight: 600,
-  color: 'var(--accent-primary)',
+  color: 'var(--accent-primary-text)',
   marginBottom: 4,
 };
 const heroAmount: React.CSSProperties = {
@@ -101,27 +101,27 @@ const PurchaseOrderPage: React.FC = () => {
       pending_approval: {
         label: t('erp.purchase_order.status.pending_approval'),
         variant: 'warning' as const,
-        color: 'var(--warning-500)',
+        color: 'var(--warning-text)',
       },
       approved: {
         label: t('erp.purchase_order.status.approved'),
         variant: 'info' as const,
-        color: 'var(--info-500)',
+        color: 'var(--info-text)',
       },
       rejected: {
         label: t('erp.purchase_order.status.rejected'),
         variant: 'error' as const,
-        color: 'var(--error-500)',
+        color: 'var(--error-text)',
       },
       ordered: {
         label: t('erp.purchase_order.status.ordered'),
         variant: 'cyan' as const,
-        color: 'var(--accent-primary)',
+        color: 'var(--accent-primary-text)',
       },
       received: {
         label: t('erp.purchase_order.status.received'),
         variant: 'success' as const,
-        color: 'var(--success-500)',
+        color: 'var(--success-text)',
       },
       cancelled: {
         label: t('erp.purchase_order.status.cancelled'),

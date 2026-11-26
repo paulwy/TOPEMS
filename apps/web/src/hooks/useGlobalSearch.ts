@@ -8,6 +8,7 @@ import {
   filterResults,
   getAvailableServices,
   getAvailableTypes,
+  resolveResultPath,
 } from '../components/GlobalSearchBar/utils';
 import { type SearchFilter, type SearchFilterOption } from '../components/GlobalSearchBar/types';
 import { SEARCH_SHORTCUTS, matchShortcut } from './shortcuts';
@@ -235,7 +236,8 @@ export function useGlobalSearch(
     (result: SearchResult) => {
       addToHistory(query);
       // 现行后端字段为 path（旧字段 url 已不下发）；双字段兜底防止空跳转
-      navigate(result.path || result.url || '/');
+      // 订单等历史路径统一落到 Web 端真实存在页面（详见 resolveResultPath 注释）
+      navigate(resolveResultPath(result));
       setOpen(false);
       setQuery('');
     },

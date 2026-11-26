@@ -647,7 +647,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                                         border: 'none',
                                         borderRadius: 'var(--radius-sm)',
                                         color: showChildActive
-                                          ? 'var(--accent-primary)'
+                                          ? 'var(--accent-primary-text)'
                                           : 'var(--text-secondary)',
                                         fontSize: 'var(--text-sm)',
                                         cursor: 'pointer',
@@ -728,7 +728,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                                               border: 'none',
                                               borderRadius: 'var(--radius-sm)',
                                               color: isNavActive
-                                                ? 'var(--accent-primary)'
+                                                ? 'var(--accent-primary-text)'
                                                 : 'var(--text-tertiary)',
                                               fontSize: 'var(--text-xs)',
                                               cursor: 'pointer',
@@ -783,7 +783,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                   backgroundColor: isActive ? 'var(--surface-3)' : 'transparent',
                   border: '1px solid transparent',
                   borderRadius: 'var(--radius-sm)',
-                  color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  color: isActive ? 'var(--accent-primary-text)' : 'var(--text-secondary)',
                   textAlign: expanded ? 'left' : 'center',
                 }}
               >

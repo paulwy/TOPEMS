@@ -28,7 +28,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-4xl);
   font-weight: var(--font-bold);
-  color: var(--error-500);
+  color: var(--error-text);
   line-height: var(--leading-none);
 }
 

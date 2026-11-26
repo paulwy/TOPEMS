@@ -7,7 +7,7 @@
 
 .il2 {
   font-weight: var(--font-semibold);
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   font-family: var(--font-mono);
 }
 

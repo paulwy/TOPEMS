@@ -2,7 +2,7 @@
 
 .il1 {
   font-weight: 600px;
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   margin-bottom: 2px;
 }
 
@@ -65,7 +65,7 @@
   height: 24px;
   border-radius: 50%;
   background-color: var(--accent-primary);
-  color: white;
+  color: var(--text-on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,7 +89,7 @@
 }
 
 .il16 {
-  color: var(--error-500);
+  color: var(--error-text);
 }
 
 .il17 {
@@ -129,7 +129,7 @@
 .il24 {
   font-size: 20px;
   font-weight: 600px;
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   margin-bottom: 4px;
 }
 

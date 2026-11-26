@@ -609,7 +609,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                           padding: 'var(--space-2)',
                           borderRadius: 'var(--radius-sm)',
                           backgroundColor: isActive ? 'var(--accent-primary)' : 'var(--surface-2)',
-                          color: isActive ? 'white' : 'var(--text-secondary)',
+                          color: isActive ? 'var(--text-on-accent)' : 'var(--text-secondary)',
                           fontSize: 'var(--text-xs)',
                         }}
                       >

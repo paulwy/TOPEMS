@@ -55,31 +55,31 @@ const notificationTypeConfig: Record<
   string,
   { labelKey: string; icon: LucideIcon; color: string }
 > = {
-  info: { labelKey: 'notification.notification_center.k13', icon: Info, color: 'var(--info-500)' },
+  info: { labelKey: 'notification.notification_center.k13', icon: Info, color: 'var(--info-text)' },
   success: {
     labelKey: 'notification.notification_center.type_success',
     icon: CheckCircle2,
-    color: 'var(--success-500)',
+    color: 'var(--success-text)',
   },
   warning: {
     labelKey: 'notification.notification_center.type_warning',
     icon: AlertTriangle,
-    color: 'var(--warning-500)',
+    color: 'var(--warning-text)',
   },
   error: {
     labelKey: 'notification.notification_center.type_error',
     icon: AlertCircle,
-    color: 'var(--error-500)',
+    color: 'var(--error-text)',
   },
   message: {
     labelKey: 'notification.notification_center.k17',
     icon: MessageSquare,
-    color: 'var(--accent-primary)',
+    color: 'var(--accent-primary-text)',
   },
   reminder: {
     labelKey: 'notification.notification_center.k15',
     icon: Calendar,
-    color: 'var(--warning-500)',
+    color: 'var(--warning-text)',
   },
   system: {
     labelKey: 'notification.notification_center.type_system_update',

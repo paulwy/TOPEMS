@@ -95,7 +95,7 @@ export const Tabs: React.FC<TabsProps> = ({
                   fontFamily: 'var(--font-mono)',
                   fontSize: '10px',
                   fontWeight: 'var(--font-bold)',
-                  color: isActive ? 'var(--text-inverse)' : 'var(--text-secondary)',
+                  color: isActive ? 'var(--text-on-accent)' : 'var(--text-secondary)',
                   backgroundColor: isActive ? 'var(--accent-primary)' : 'var(--surface-3)',
                   borderRadius: 'var(--radius-full)',
                 }}

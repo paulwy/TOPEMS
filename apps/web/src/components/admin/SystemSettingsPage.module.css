@@ -19,7 +19,7 @@
 .il4 {
   padding: var(--space-8);
   text-align: center;
-  color: var(--error-500);
+  color: var(--error-text);
 }
 
 .il5 {
@@ -51,6 +51,6 @@
 }
 
 .il9 {
-  color: var(--error-500);
+  color: var(--error-text);
   margin-left: 2px;
 }

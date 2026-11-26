@@ -37,5 +37,5 @@
 
 .il5 {
   font-size: var(--text-xs);
-  color: var(--error-500);
+  color: var(--error-text);
 }

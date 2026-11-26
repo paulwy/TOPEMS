@@ -117,7 +117,7 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
       size = 'md',
       variant = 'circular',
       bgColor,
-      textColor = 'var(--text-inverse)',
+      textColor = 'var(--text-on-accent)',
       status,
       statusColor,
       badge,

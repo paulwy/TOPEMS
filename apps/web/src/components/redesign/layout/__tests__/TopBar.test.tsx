@@ -51,4 +51,25 @@ describe('TopBar', () => {
 
     expect(screen.getByLabelText('通知')).toBeInTheDocument();
   });
+
+  it('内置搜索入口在没有 slot 时渲染，在提供 slot 时被替换', () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <TopBar />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('topbar-command-palette')).toBeInTheDocument();
+    expect(screen.getByTestId('topbar-command-palette').getAttribute('role')).toBeNull();
+
+    rerender(
+      <MemoryRouter>
+        <TopBar searchSlot={<span data-testid='fake-search'>搜索条</span>} />
+      </MemoryRouter>
+    );
+    const slot = screen.getByTestId('topbar-command-palette');
+    expect(slot.getAttribute('role')).toBe('search');
+    expect(screen.getByTestId('fake-search')).toBeInTheDocument();
+    // 内置按钮不再渲染（避免同一入口出现两次）
+    expect(slot.querySelector('[data-testid="topbar-command-palette"] button')).toBeNull();
+  });
 });

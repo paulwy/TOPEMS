@@ -62,7 +62,7 @@ const ModuleCard = ({
     if (trend === 'up') return <TrendingUp sx={{ width: 16, height: 16, color: 'success.main' }} />;
     if (trend === 'down')
       return <TrendingDown sx={{ width: 16, height: 16, color: 'error.main' }} />;
-    return <Minus sx={{ width: 16, height: 16, color: 'grey.400' }} />;
+    return <Minus sx={{ width: 16, height: 16, color: 'text.disabled' }} />;
   };
 
   const getTrendValue = () => {
@@ -74,7 +74,7 @@ const ModuleCard = ({
   const getTrendTextColor = () => {
     if (trend === 'up') return 'success.main';
     if (trend === 'down') return 'error.main';
-    return 'grey.400';
+    return 'text.secondary';
   };
 
   return (
@@ -93,7 +93,7 @@ const ModuleCard = ({
         overflow: 'hidden',
         '&:hover': {
           boxShadow: 2,
-          borderColor: 'grey.300',
+          borderColor: 'divider',
           transform: 'scale(1.02)',
         },
       }}
@@ -135,7 +135,7 @@ const ModuleCard = ({
             <Box>
               <Typography
                 variant='subtitle1'
-                sx={{ fontWeight: 600, color: 'grey.900' }}
+                sx={{ fontWeight: 600, color: 'text.primary' }}
               >
                 {name}
               </Typography>
@@ -164,10 +164,10 @@ const ModuleCard = ({
             sx={{
               width: 20,
               height: 20,
-              color: 'grey.300',
+              color: 'text.disabled',
               transition: 'all 0.3s',
               '.group:hover &': {
-                color: 'grey.500',
+                color: 'text.secondary',
                 transform: 'translateX(4px)',
               },
             }}
@@ -193,13 +193,13 @@ const ModuleCard = ({
               >
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 700, color: 'grey.900' }}
+                  sx={{ fontWeight: 700, color: 'text.primary' }}
                 >
                   {typeof value === 'number' ? value.toLocaleString() : String(value)}
                 </Typography>
                 <Typography
                   variant='caption'
-                  sx={{ color: 'grey.500', mt: 0.25 }}
+                  sx={{ color: 'text.secondary', mt: 0.25 }}
                 >
                   {key}
                 </Typography>
@@ -440,7 +440,7 @@ const BIAnalyticsPage = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100', p: 3 }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', p: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box
             sx={{
@@ -708,7 +708,7 @@ const BIAnalyticsPage = () => {
         >
           <Typography
             variant='h6'
-            sx={{ fontWeight: 600, color: 'grey.800', mb: 2 }}
+            sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}
           >
             {t('bi.bi_analytics_page.k6')}
           </Typography>
@@ -732,13 +732,13 @@ const BIAnalyticsPage = () => {
             >
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.600' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('bi.bi_analytics_page.k7')}
               </Typography>
               <Typography
                 variant='body2'
-                sx={{ fontWeight: 500, color: 'grey.900' }}
+                sx={{ fontWeight: 500, color: 'text.primary' }}
               >
                 {new Date().toLocaleString('zh-CN')}
               </Typography>
@@ -755,7 +755,7 @@ const BIAnalyticsPage = () => {
             >
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.600' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('bi.bi_analytics_page.k6')}
               </Typography>
@@ -785,7 +785,7 @@ const BIAnalyticsPage = () => {
             >
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.600' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('bi.bi_analytics_page.k9')}
               </Typography>

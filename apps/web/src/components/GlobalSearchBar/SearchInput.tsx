@@ -112,10 +112,12 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             },
           }}
           autoFocus={autoFocus}
-          aria-label={i18n.t('components.search_input.k0')}
-          aria-autocomplete='list'
-          aria-expanded={!!query}
-          role='combobox'
+          inputProps={{
+            role: 'combobox',
+            'aria-label': i18n.t('components.search_input.k0'),
+            'aria-autocomplete': 'list',
+            'aria-expanded': !!query,
+          }}
         />
         {query && (
           <IconButton
@@ -220,7 +222,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                 cursor: 'pointer',
                 backgroundColor: 'transparent',
                 '&:hover': {
-                  backgroundColor: alpha(theme.palette.action.hover, 0.5),
+                  backgroundColor: theme.palette.action.hover,
                 },
               }}
             >
@@ -243,7 +245,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                 cursor: 'pointer',
                 backgroundColor: 'transparent',
                 '&:hover': {
-                  backgroundColor: alpha(theme.palette.action.hover, 0.5),
+                  backgroundColor: theme.palette.action.hover,
                 },
               }}
             >
@@ -288,7 +290,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     }
                     sx={{
                       '&:hover': {
-                        backgroundColor: alpha(theme.palette.action.hover, 0.3),
+                        backgroundColor: theme.palette.action.hover,
                       },
                     }}
                   />
@@ -328,7 +330,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     }
                     sx={{
                       '&:hover': {
-                        backgroundColor: alpha(theme.palette.action.hover, 0.3),
+                        backgroundColor: theme.palette.action.hover,
                       },
                     }}
                   />
