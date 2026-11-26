@@ -1,7 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use topems_shared_auth::auth::{
-    generate_jwt_token, generate_refresh_token, get_permission_by_id, get_permissions,
-    get_role_by_id, get_roles, verify_jwt_token, Claims,
+    generate_jwt_token, generate_refresh_token, verify_jwt_token, Claims,
 };
 use uuid::Uuid;
 
@@ -338,81 +337,6 @@ fn test_claims_encode_and_verify() {
     assert_eq!(verified.email, Some("test@example.com".to_string()));
     assert_eq!(verified.department, Some("IT".to_string()));
     assert_eq!(verified.tenant_id, Some("tenant-1".to_string()));
-}
-
-#[test]
-fn test_get_permissions_not_empty() {
-    let permissions = get_permissions();
-    assert!(!permissions.is_empty());
-}
-
-#[test]
-fn test_get_permissions_has_expected_entries() {
-    let permissions = get_permissions();
-    let ids: Vec<&str> = permissions.iter().map(|p| p.id.as_str()).collect();
-
-    assert!(ids.contains(&"iam:users_read"));
-    assert!(ids.contains(&"iam:users_create"));
-    assert!(ids.contains(&"pm:projects_read"));
-    assert!(ids.contains(&"doc:documents_read"));
-}
-
-#[test]
-fn test_get_permission_by_id_exists() {
-    let perm = get_permission_by_id("iam:users_read");
-    assert!(perm.is_some());
-    let perm = perm.unwrap();
-    assert_eq!(perm.id, "iam:users_read");
-    assert_eq!(perm.category, "用户管理");
-}
-
-#[test]
-fn test_get_permission_by_id_not_exists() {
-    let perm = get_permission_by_id("nonexistent:permission");
-    assert!(perm.is_none());
-}
-
-#[test]
-fn test_get_roles_not_empty() {
-    let roles = get_roles();
-    assert!(!roles.is_empty());
-}
-
-#[test]
-fn test_get_roles_has_superadmin() {
-    let roles = get_roles();
-    let superadmin = roles.iter().find(|r| r.id == "superadmin");
-    assert!(superadmin.is_some());
-    assert!(!superadmin.unwrap().permissions.is_empty());
-}
-
-#[test]
-fn test_get_role_by_id_exists() {
-    let role = get_role_by_id("viewer");
-    assert!(role.is_some());
-    assert_eq!(role.unwrap().id, "viewer");
-}
-
-#[test]
-fn test_get_role_by_id_not_exists() {
-    let role = get_role_by_id("nonexistent_role");
-    assert!(role.is_none());
-}
-
-#[test]
-fn test_superadmin_has_all_permissions() {
-    let roles = get_roles();
-    let permissions = get_permissions();
-    let superadmin = roles.iter().find(|r| r.id == "superadmin").unwrap();
-
-    assert_eq!(superadmin.permissions.len(), permissions.len());
-}
-
-#[test]
-fn test_viewer_is_default_role() {
-    let roles = get_roles();
-    let viewer = roles.iter().find(|r| r.id == "viewer").unwrap();
-    assert!(viewer.is_default);
 }
 
 #[test]

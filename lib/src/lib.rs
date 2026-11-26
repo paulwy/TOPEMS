@@ -77,9 +77,8 @@ pub use topems_shared_core::list_resp;
 // --- 常用 item-level re-export ---
 pub use topems_shared_auth::auth::{
     auth_middleware, check_permission, check_role, generate_jwt_token, generate_refresh_token,
-    get_permission_by_id, get_permissions, get_role_by_id, get_roles, require_all_permissions,
-    require_any_permission, require_superuser, verify_jwt_token, AuthState, Claims, Permission,
-    Role,
+    require_all_permissions, require_any_permission, require_superuser, verify_jwt_token,
+    AuthState, Claims,
 };
 pub use topems_shared_core::api_version;
 pub use topems_shared_core::api_version::{

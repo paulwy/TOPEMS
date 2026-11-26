@@ -118,6 +118,8 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 
 ⑩ **IAM-2c 超管回显目录源对齐 DB（2026-11-26，代码就绪，待 replay/部署窗口随常规发布）**。普查发现同一超管三处回显口径分裂：`roles.rs` 角色列表与 `batch.rs` 有效权限的超管分支已查 `public.core_permissions` DB 全量，而 `profile.rs`/`crud.rs`(列表+详情)/`profile_ext.rs`(三处) 共 **6 处**超管回显 permissions 仍取 `shared-auth` 内存目录 35 码（旧下划线方言占位，多数 DB 无对应）。**改动**：`models.rs` 新增 `superuser_permission_codes(db)`（系统通道 `scope_read_system` 查 `core_permissions` 全量 code，与 `resolve_user_grants` 同范式）；6 处超管分支统一改调该函数，非超管仍走 `resolve_user_grants` 关联表实时聚合。**效果**：运行期业务代码对内存目录 `get_permissions()` 的引用清零；超管/普通用户回显同源 DB 目录。**验证**：`cargo check`/clippy/fmt 绿；unified-core lib 571、shared-auth lib 230 测试全绿。**遗留（另批）**：① 内存目录函数 `get_permissions/get_roles/get_role_by_id/get_permission_by_id` 现运行期零调用，仅 shared-auth 单测与 `auth_test.rs` 引用，死代码清理（连带测试）另批；② 超管 roles 回显仍硬编码 `["admin","user"]`，未对齐 roles.rs 的 DB 全量角色口径，另议；③ 本批无 DDL、未改库、未动账本。
 
+⑪ **IAM-2d 内存目录死代码甄别与清理（2026-11-26，仅删未接线代码，未改库/未动账本）**。承接 ⑩：超管回显切 DB 目录后，shared-auth 内存目录四函数与配套 struct 运行期业务零调用，仅单测引用。**甄别存活边界**：保留生产在用的 `PermissionResolver`/`PermissionCacheEntry`、`permission.rs` 的 `ModuleCode/PermissionAction`、`get_all_module_permissions`（permission_center 在用）；确认 `Role`/`Permission` 两 struct 无 crate 内外其他模块复用。**删除**：① `auth.rs` 内存目录块——`Role`/`Permission` struct 与 `get_permissions/get_roles/get_role_by_id/get_permission_by_id` 四函数（35 个旧下划线方言码占位）及 4 个专属内联单测；② 两处重导出移除：`lib/shared-auth/src/lib.rs`、`lib/src/lib.rs` 的四函数与两 struct；③ `lib/tests/auth_test.rs` 10 个目录专属测试连带移除。**验证**：`cargo check`/clippy/fmt 绿；shared-auth lib **230→226**；shared 集成测试全绿（`auth_test.rs` 17 通过）；unified-core lib **571** 全绿。**遗留（另批）**：超管 roles 回显仍硬编码 `["admin","user"]`，未对齐 DB 全量角色口径。
+
 
 
 ## 9. 决策与执行记录（2026-11-25 追加）

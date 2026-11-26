@@ -19,10 +19,9 @@ pub mod tier;
 // 细粒度 re-export
 pub use auth::{
     auth_middleware, check_permission, check_role, generate_jwt_token, generate_refresh_token,
-    get_permission_by_id, get_permissions, get_role_by_id, get_roles,
     invalidate_all_permission_caches, invalidate_user_permission_cache, permission_version,
     require_all_permissions, require_any_permission, require_superuser, token_permission_version,
-    verify_jwt_token, AuthState, Claims, Permission, PermissionResolver, Role,
+    verify_jwt_token, AuthState, Claims, PermissionResolver,
 };
 pub use company_context::CompanyContext;
 pub use middleware::{
