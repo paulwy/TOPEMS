@@ -270,8 +270,11 @@ pub async fn login(
         SELECT u.id, u.username, u.email, u.password_hash,
           CASE WHEN $2 = 'en' THEN COALESCE(u.full_name_en, u.full_name) ELSE u.full_name END AS full_name,
           (u.status = 'active') AS is_active, u.is_superuser,
-          COALESCE(u.roles, '{}') AS roles,
-          COALESCE(u.permissions, '{}') AS permissions,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
+                    JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
+                    JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                    JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
           u.created_at AS created_at,
           COALESCE(u.must_change_password, false) AS must_change_password
         FROM iam.users u
@@ -1427,8 +1430,11 @@ pub async fn forgot_password(
             r#"
         SELECT u.id, u.username, u.email, u.password_hash, u.full_name,
           (u.status = 'active') AS is_active, u.is_superuser,
-          COALESCE(u.roles, '{}') AS roles,
-          COALESCE(u.permissions, '{}') AS permissions,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
+                    JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+          COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
+                    JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                    JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
           u.created_at AS created_at,
           COALESCE(u.must_change_password, false) AS must_change_password
         FROM iam.users u
@@ -1508,7 +1514,11 @@ pub async fn forgot_password(
                NOW()
         FROM iam.users u
         WHERE u.status = 'active' AND u.deleted_at IS NULL
-          AND (u.is_superuser OR 'admin' = ANY(u.roles))
+          AND (u.is_superuser OR EXISTS (
+            SELECT 1 FROM public.core_user_roles ur
+            JOIN public.core_roles r ON r.id = ur.role_id
+            WHERE ur.user_id = u.id AND r.name = 'admin'
+          ))
         "#,
         )
         .bind("密码重置申请")
