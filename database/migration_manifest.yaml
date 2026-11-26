@@ -3183,3 +3183,10 @@ pending_forward_patches:
     effect: "建 iam.tenant_permissions（id identity/tenant_id/user_id/role/active/时间戳/软删）+ iam.tool_permissions（id identity/tenant_permission_id FK CASCADE/tool_name/max_permission/allowed_operations text[]/denied_operations text[]）；唯一索引 (tenant_id,user_id) 与 (tenant_permission_id,tool_name)；GRANT 给 topems_app；tenant_permissions 启 RLS"
     destructive_scan: "CREATE TABLE IF NOT EXISTS + CREATE UNIQUE INDEX IF NOT EXISTS + GRANT + ENABLE RLS + DROP/CREATE POLICY；无 DELETE/UPDATE/TRUNCATE/DROP TABLE"
     note: "关闭 V448 记录的『id 无默认值导致 INSERT 失败』缺陷；默认仍走 Memory 存储，切 DatabasePermissionStore 只需改配置"
+  # ===== 2026-11-26：会计期间唯一索引 partial 化 =====
+  - version: "20261126090000"
+    file: "database/migrations/20261126090000_finance_period_unique_partial.sql"
+    status: to_apply
+    effect: "重建 finance.core_finance_periods 的 unique_period 唯一索引：由 (tenant_id, year, month) 全量唯一改为 WHERE deleted_at IS NULL 的 partial 唯一，使软删期间保留审计历史的同时允许同租户同年月重新开启"
+    destructive_scan: "ALTER TABLE ... DROP CONSTRAINT IF EXISTS（原唯一约束必须让位，约束不能 partial）+ CREATE UNIQUE INDEX IF NOT EXISTS ... WHERE deleted_at IS NULL；不涉及 DELETE/UPDATE/TRUNCATE/DROP TABLE/列或类型变更"
+    note: "B328 已补软删与并发谓词，但索引仍把软删行计入唯一性：open_period_handler 的 current=None 分支直接 INSERT，软删后重建会唯一冲突 500。本地 1489 行全 open、0 软删行，重建无冲突；checksum 211bca57e086871b99b14cc1b2f0438e65319e2cd492d63660476e99d4b51b7f"
