@@ -109,6 +109,25 @@ node scripts/ci/api-contract.mjs --spec http://127.0.0.1:8099/api/openapi.json
 `--fail-on-missing` 只在开启 `--probe` 时按 `REAL_MISSING` 退出 1，所以它可以挂进流水线，
 不会因为 313 条注解缺口天天红。
 
+## 补注解的正确姿势（踩过的坑）
+
+`cargo run -p topems-server --bin openapi-gen` 不是纯增量合并：它会先把 base 里
+"不在注解全集 ∩ /api/ 前缀 ∩ 非 SERVER_OWNED" 的路径**整条删掉**，再按各域注解重建。
+拿当前 base 在临时目录干跑一次：`2470 条`，新增 12、**删除 11**——
+删掉的包括 `/api/communication/notification/channels`、`/api/erp/system/company-settings` 等
+手工维护的真实路径。直接跑会把它们弄丢。
+
+所以本轮做法是：
+
+1. 先给 handler 加 `#[utoipa::path]`，并注册进对应 crate 的 ApiDoc `paths(...)`；
+2. `cargo build --bin openapi-gen`，在 `/tmp/gen/docs/api/` 放一份 base 副本，
+   在临时目录跑生成器**干跑**，只取新增路径的 JSON；
+3. 把这些路径对象手工合并进 `docs/api/openapi.json`（不删旧路径）；
+4. `cargo build --release --bin topems-server` 让 `include_str!` 重新内嵌，重启验证。
+
+本轮已按此合并 4 条：`GET /api/core/menu/{groups,groups/{id},menus,menus/{id}}`，
+base 从 2469 → 2473，其余路径一条没动。
+
 ## 下一步建议
 
 1. **补注解**：优先 core / erp / finance —— 这三块占了 600+ 条未覆盖，且都是高频页面在调。

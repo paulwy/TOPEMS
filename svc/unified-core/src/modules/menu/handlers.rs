@@ -32,6 +32,22 @@ const MENU_GROUP_COLUMNS: &str =
 const MENU_COLUMNS: &str =
     "id, tenant_id, group_id, parent_id, name, code, path, icon, sort_order, status, permissions, created_at, updated_at";
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/menu/groups",
+    tag = "Core-Menu",
+    params(
+        ("search" = Option<String>, Query, description = "按名称/编码搜索"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20，上限 100"),
+    ),
+    responses(
+        (status = 200, description = "菜单分组列表 items/total/page/page_size"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn list_groups(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -109,6 +125,18 @@ pub async fn list_groups(
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/menu/groups/{id}",
+    tag = "Core-Menu",
+    params(("id" = Uuid, Path, description = "菜单分组 ID")),
+    responses(
+        (status = 200, description = "菜单分组详情"),
+        (status = 404, description = "分组不存在"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn get_group(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -375,6 +403,24 @@ pub async fn delete_group(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/menu/menus",
+    tag = "Core-Menu",
+    params(
+        ("group_id" = Option<Uuid>, Query, description = "按分组过滤"),
+        ("parent_id" = Option<Uuid>, Query, description = "按父菜单过滤"),
+        ("search" = Option<String>, Query, description = "按名称/编码搜索"),
+        ("status" = Option<String>, Query, description = "状态过滤"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20，上限 100"),
+    ),
+    responses(
+        (status = 200, description = "菜单项列表 items/total/page/page_size"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn list_menus(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -462,6 +508,18 @@ pub async fn list_menus(
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/menu/menus/{id}",
+    tag = "Core-Menu",
+    params(("id" = Uuid, Path, description = "菜单项 ID")),
+    responses(
+        (status = 200, description = "菜单项详情"),
+        (status = 404, description = "菜单不存在"),
+        (status = 500, description = "服务内部错误"),
+    )
+)]
 pub async fn get_menu(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

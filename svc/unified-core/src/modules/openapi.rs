@@ -106,6 +106,11 @@ pub struct Permission {
         crate::modules::iam::user::crud::create_user,
         crate::modules::iam::user::profile_ext::get_my_permissions,
         crate::modules::iam::user::roles::get_user_permissions,
+        // ===== Core menu（系统级共享菜单，tenant_id 可空）=====
+        crate::modules::menu::handlers::list_groups,
+        crate::modules::menu::handlers::get_group,
+        crate::modules::menu::handlers::list_menus,
+        crate::modules::menu::handlers::get_menu,
         // ===== Flow module - task =====
         crate::modules::flow::task::list_tasks,
         crate::modules::flow::task::get_task,
