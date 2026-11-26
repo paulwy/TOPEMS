@@ -149,6 +149,20 @@ run_sql() {
 echo "------------------------------------------------------------"
 echo "步骤 1: 查看当前用户信息"
 echo "------------------------------------------------------------"
+# 先判存：用户名不存在时直接终止，避免「UPDATE 0 行但打印成功」的假成功
+USER_COUNT=$(run_sql "SELECT count(*) FROM core_users WHERE username = :'username';" \
+    -tA -v username="$USERNAME" 2>/dev/null) || {
+    echo "❌ 查询失败（请确认账号口令/端口与 .env 的 DATABASE_URL 一致）"
+    unset PGPASSWORD
+    exit 1
+}
+USER_COUNT=$(tr -d '[:space:]' <<< "$USER_COUNT")
+if [ "$USER_COUNT" = "0" ]; then
+    echo "❌ 用户 ${USERNAME} 不存在（core_users 无匹配行），已终止，未做任何修改"
+    unset PGPASSWORD
+    exit 1
+fi
+
 run_sql "SELECT id, username, email, is_superuser, status
 FROM core_users
 WHERE username = :'username';" -v username="$USERNAME" 2>&1 || {
@@ -187,14 +201,24 @@ echo
 echo "------------------------------------------------------------"
 echo "步骤 2: 更新密码"
 echo "------------------------------------------------------------"
-run_sql "UPDATE core_users
+UPDATE_OUT=$(run_sql "UPDATE core_users
 SET password_hash = :'pwdhash',
     updated_at = NOW()
-WHERE username = :'username';" -v username="$USERNAME" -v pwdhash="$PASSWORD_HASH" 2>&1 || {
+WHERE username = :'username';" -v username="$USERNAME" -v pwdhash="$PASSWORD_HASH" 2>&1) || {
     echo "❌ 更新失败（若被 RLS 拦截，请确认会话 app.tenant_id 已设置）"
     unset PGPASSWORD
     exit 1
 }
+echo "$UPDATE_OUT"
+UPDATED_ROWS=$(sed -n 's/^UPDATE \([0-9][0-9]*\)$/\1/p' <<< "$UPDATE_OUT" | tail -1)
+if [ -z "$UPDATED_ROWS" ] || [ "$UPDATED_ROWS" -eq 0 ]; then
+    echo "❌ 未更新任何行（RLS 策略可能过滤掉了 ${USERNAME}），已终止"
+    unset PGPASSWORD
+    exit 1
+fi
+if [ "$UPDATED_ROWS" -gt 1 ]; then
+    echo "⚠️  命中 ${UPDATED_ROWS} 行（同名用户跨租户），请核对是否只需重置其一"
+fi
 echo
 
 echo "------------------------------------------------------------"

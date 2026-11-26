@@ -13,7 +13,14 @@
   3. ports.env 中每个 *_PORT 键应能对应 services.yaml 中某个服务（或注释声明的虚拟服务/基础设施）。
   4. 进程监听地址默认必须回环（`DEFAULT_BIND_ADDR`），且入口不得硬编码 `0.0.0.0`；
      nginx 反代目标主机也必须是回环 —— 保证「进程只听回环，对外统一走 nginx」不退化。
-  5. 输出差异清单并以非零退出码结束（供 CI/lefthook 门禁使用）。
+  5. env 凭据口径一致性（2026-11-26 新增）：`.env` 是唯一信源，`.env.local` /
+     `config/standalone.env` 只允许覆盖不冲突的值（缺失即继承）：
+     - 单个文件内 `DATABASE_URL` 与 `POSTGRES_*` 必须自洽（防「用户是 topems、口令却是
+       topems_app 的」这类错配）；
+     - 同一文件内不得出现重复键（后值静默覆盖前值，是上次漂移的放大器）；
+     - 次要文件的 `DATABASE_URL`/`REDIS_URL`/`JWT_*`/`POSTGRES_*` 若存在，须与 `.env` 同值。
+     三个 env 文件均为本地不入库文件，缺失即跳过，CI 不受影响。
+  6. 输出差异清单并以非零退出码结束（供 CI/lefthook 门禁使用）。
 
 用法：python3 scripts/dev/check-config-consistency.py
 """
@@ -47,6 +54,163 @@ KNOWN_INFRA = {
     "CORE_PORT", "FLOW_PORT", "FILE_PORT", "DOC_PORT", "AUTOMATION_PORT",
     "POSTGRES_PORT", "REDIS_PORT", "OLLAMA_PORT", "WEB_PORT", "GATEWAY_PORT",
 }
+
+# env 凭据口径（2026-11-26）：.env 为唯一信源，其余两份为覆盖层；三份均不入库，缺失即跳过。
+ENV_CRED_SOURCE = ".env"
+ENV_CRED_OVERLAYS = (".env.local", "config/standalone.env")
+ENV_CRED_SCALARS = (
+    "JWT_SECRET", "JWT_REFRESH_SECRET", "REFRESH_SECRET",
+    "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB",
+)
+
+
+def parse_env_file(path):
+    """解析 KEY=VALUE（不执行、不展开），返回值字典与重复键清单。"""
+    values, dups = {}, []
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    for lineno, line in enumerate(text.splitlines(), 1):
+        s = line.strip()
+        if not s or s.startswith("#") or "=" not in s:
+            continue
+        key, raw = s.split("=", 1)
+        key = key.strip()
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
+            continue
+        if key in values:
+            dups.append(f"{key}@{lineno}")
+        values[key] = raw.strip().strip('"').strip("'")
+    return values, dups
+
+
+def _norm_host(host):
+    return "127.0.0.1" if (host or "").lower() in {"localhost", "127.0.0.1", "::1", "[::1]"} else host
+
+
+def parse_pg_dsn(value):
+    m = re.fullmatch(
+        r"postgres(?:ql)?://(?:(?P<userinfo>[^@/]*)@)?(?P<addr>[^/?]*)(?:/(?P<db>[^?]*))?(?:\?.*)?",
+        (value or "").strip(),
+    )
+    if not m:
+        return None
+    userinfo = m.group("userinfo") or ""
+    user, _, password = userinfo.partition(":")
+    addr = m.group("addr") or ""
+    if addr.startswith("["):
+        host, _, rest = addr.partition("]")
+        host += "]"
+        port = rest[1:] if rest.startswith(":") else ""
+    elif ":" in addr:
+        host, _, port = addr.rpartition(":")
+    else:
+        host, port = addr, ""
+    return {"user": user, "password": password, "host": host, "port": port, "db": m.group("db") or ""}
+
+
+def parse_redis_url(value):
+    m = re.fullmatch(
+        r"rediss?://(?:(?P<userinfo>[^@/]*)@)?(?P<host>[^:/?]*)(?::(?P<port>\d+))?(?:/\d+)?(?:\?.*)?",
+        (value or "").strip(),
+    )
+    if not m:
+        return None
+    userinfo = m.group("userinfo") or ""
+    _, _, password = userinfo.partition(":")
+    return {"password": password, "host": m.group("host") or "", "port": m.group("port") or ""}
+
+
+def _check_intra(label, values):
+    """文件内自洽：DATABASE_URL ↔ POSTGRES_*，REDIS_URL 口令非空。"""
+    errs = []
+    dsn = values.get("DATABASE_URL")
+    if dsn:
+        parsed = parse_pg_dsn(dsn)
+        if parsed is None:
+            errs.append(f"[env-cred] {label}: DATABASE_URL 无法解析为 postgres:// DSN")
+        else:
+            pairs = (
+                ("POSTGRES_USER", parsed["user"]),
+                ("POSTGRES_PASSWORD", parsed["password"]),
+                ("POSTGRES_DB", parsed["db"]),
+                ("POSTGRES_PORT", parsed["port"]),
+                ("POSTGRES_HOST", parsed["host"]),
+            )
+            for key, expected in pairs:
+                if key not in values:
+                    continue
+                got = values[key]
+                if key == "POSTGRES_HOST" and _norm_host(got) == _norm_host(expected):
+                    continue
+                if got != expected:
+                    field = "口令" if key == "POSTGRES_PASSWORD" else key
+                    errs.append(
+                        f"[env-cred] {label}: {field} 与同文件 DATABASE_URL 不一致"
+                        "（账号口令错配会导致认证失败）"
+                    )
+    redis_url = values.get("REDIS_URL")
+    if redis_url and not parse_redis_url(redis_url):
+        errs.append(f"[env-cred] {label}: REDIS_URL 无法解析")
+    return errs
+
+
+def check_env_credentials():
+    errs = []
+    files_checked = 0
+    source = ROOT / ENV_CRED_SOURCE
+    if not source.exists():
+        return errs, files_checked
+
+    def _load(rel):
+        path = ROOT / rel
+        if not path.exists():
+            return None
+        values, dups = parse_env_file(path)
+        if dups:
+            errs.append(
+                f"[env-cred] {rel}: 存在重复键 {', '.join(dups)}"
+                "（后值静默覆盖前值，是凭据漂移的放大器）"
+            )
+        errs.extend(_check_intra(rel, values))
+        return values
+
+    src_values = _load(ENV_CRED_SOURCE)
+    if src_values is None:
+        return errs, files_checked
+    files_checked += 1
+
+    compare_keys = set(ENV_CRED_SCALARS)
+    for rel in ENV_CRED_OVERLAYS:
+        values = _load(rel)
+        if values is None:
+            continue
+        files_checked += 1
+        # 覆盖层不得与信源冲突（缺失即继承，允许）
+        for key in sorted(compare_keys | {k for k in values if k.startswith("POSTGRES_")}):
+            if key not in values or key not in src_values:
+                continue
+            if values[key] == src_values[key]:
+                continue
+            errs.append(f"[env-cred] {rel}: {key} 与 .env 不一致（应以 .env 为唯一信源）")
+
+        for url_key, parser in (("DATABASE_URL", parse_pg_dsn), ("REDIS_URL", parse_redis_url)):
+            if url_key not in values or url_key not in src_values:
+                continue
+            a, b = parser(values[url_key]), parser(src_values[url_key])
+            if not a or not b:
+                continue
+            diffs = []
+            for field in ("user", "password", "host", "port", "db"):
+                if field not in a:
+                    continue
+                va, vb = a.get(field), b.get(field)
+                if field == "host" and _norm_host(va) == _norm_host(vb):
+                    continue
+                if va != vb:
+                    diffs.append("口令" if field == "password" else field)
+            if diffs:
+                errs.append(f"[env-cred] {rel}: {url_key} 与 .env 不一致（{'/'.join(diffs)}）")
+    return errs, files_checked
+
 
 def load_services():
     import yaml
@@ -186,7 +350,11 @@ def main():
     # 3. 监听地址口径：默认回环 + nginx 目标回环
     errors.extend(check_bind_addr())
 
-    # 4. ports.env → services.yaml（非基础设施键应能对应服务 env_var）
+    # 4. env 凭据口径：.env 唯一信源，覆盖层不得冲突（文件不存在则跳过）
+    env_errors, env_files = check_env_credentials()
+    errors.extend(env_errors)
+
+    # 5. ports.env → services.yaml（非基础设施键应能对应服务 env_var）
     for key in sorted(ports):
         if key in KNOWN_INFRA:
             continue
@@ -200,7 +368,8 @@ def main():
         for e in errors:
             print("   -", e)
         sys.exit(1)
-    print(f"✅ 配置一致性校验通过：services.yaml {len(services)} 服务 ↔ ports.env {len(ports)} 项 ↔ nginx upstream 8099 {len(NGINX_FILES)} 份 conf ↔ 监听地址默认回环（nginx 直代 {len(NGINX_DIRECT_FILES)} 份 conf）")
+    env_note = f" ↔ env 凭据口径 {env_files} 份文件" if env_files else " ↔ env 凭据口径（无本地 env，跳过）"
+    print(f"✅ 配置一致性校验通过：services.yaml {len(services)} 服务 ↔ ports.env {len(ports)} 项 ↔ nginx upstream 8099 {len(NGINX_FILES)} 份 conf ↔ 监听地址默认回环（nginx 直代 {len(NGINX_DIRECT_FILES)} 份 conf）{env_note}")
 
 if __name__ == "__main__":
     main()
