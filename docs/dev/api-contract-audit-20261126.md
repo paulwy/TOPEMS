@@ -128,6 +128,22 @@ node scripts/ci/api-contract.mjs --spec http://127.0.0.1:8099/api/openapi.json
 本轮已按此合并 4 条：`GET /api/core/menu/{groups,groups/{id},menus,menus/{id}}`，
 base 从 2469 → 2473，其余路径一条没动。
 
+## 顺带修的一个长耗时接口（`/api/core/system/audit-logs/export`）
+
+并入前端清单后它每轮都超时（20s 上限，实测 40.6s 才返回）。原因不是 SQL：
+同样的查询在 psql 里 2.2s；慢在 Rust 侧把 `SELECT *` 的 `request_details`/`response_details`
+两个大 JSON 列一起解码再序列化。改成显式 8 列 + 轻量 `AuditExportRow` 后：
+
+| | 耗时 | 返回 |
+| --- | --- | --- |
+| 改前 | 40.6s | 200，0 字节 |
+| 改后 | 0.13s | 200，大数据集仍是 0 字节 |
+
+**遗留**：`status=success`、`entity_type=menus` 这类结果集较大的组合仍返回空体
+（小结果集如 `entity_type=user` 返回 414KB 正常）。压缩中间件里
+`to_bytes(body, 10MB).await.unwrap_or_default()` 是唯一的静默丢包点，但 587 行的实际载荷只有 74KB，
+对不上，需要单独排查。已记录，未在本次强修。
+
 ## 下一步建议
 
 1. **补注解**：优先 core / erp / finance —— 这三块占了 600+ 条未覆盖，且都是高频页面在调。

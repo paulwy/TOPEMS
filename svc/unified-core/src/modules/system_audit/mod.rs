@@ -36,6 +36,20 @@ pub struct AuditLog {
     pub created_at: DateTime<Utc>,
 }
 
+/// 导出专用轻量行：`audit_logs` 的 request_details/response_details 是大 JSON 列，
+/// `SELECT *` 把它俩一起解成 Value 会让 4000 行导出跑 40s（实测）。导出只要表头字段。
+#[derive(Debug, sqlx::FromRow, serde::Serialize)]
+pub struct AuditExportRow {
+    pub id: Uuid,
+    pub created_at: DateTime<Utc>,
+    pub user_name: Option<String>,
+    pub action: String,
+    pub entity_type: String,
+    pub entity_id: Option<Uuid>,
+    pub status: String,
+    pub ip_address: Option<String>,
+}
+
 // ─── Query params ────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
@@ -212,8 +226,9 @@ pub async fn export_audit_logs(
         }
     };
 
-    let items: Vec<AuditLog> = sqlx::query_as(
-        r#"SELECT * FROM public.audit_logs
+    let items: Vec<AuditExportRow> = sqlx::query_as(
+        r#"SELECT id, created_at, user_name, action, entity_type, entity_id, status, ip_address
+           FROM public.audit_logs
            WHERE ($1::uuid IS NULL OR user_id = $1)
              AND ($2::text IS NULL OR user_name ILIKE '%' || $2 || '%')
              AND ($3::text IS NULL OR action = $3)
