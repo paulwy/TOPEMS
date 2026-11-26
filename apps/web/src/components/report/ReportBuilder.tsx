@@ -430,7 +430,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 },
               }}
             >
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{type.name}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>{type.name}</Typography>
               <Typography
                 variant='caption'
                 sx={{ color: 'text.secondary', mt: 0.5 }}
@@ -666,7 +666,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 borderRadius: 3,
                 cursor: 'pointer',
                 borderColor: formData.format === format ? 'primary.main' : 'grey.200',
-                bgcolor: formData.format === format ? 'primary.light' : 'transparent',
+                bgcolor: formData.format === format ? 'var(--surface-3)' : 'transparent',
                 '&:hover': {
                   borderColor: formData.format === format ? 'primary.main' : 'primary.light',
                 },
@@ -679,7 +679,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               {format === 'csv' && (
                 <FileJson sx={{ width: 24, height: 24, color: 'blue.500', mb: 1 }} />
               )}
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+              <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
                 {format === 'excel' && 'Excel'}
                 {format === 'pdf' && 'PDF'}
                 {format === 'csv' && 'CSV'}

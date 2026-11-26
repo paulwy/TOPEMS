@@ -498,7 +498,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 <Typography
                   variant='caption'
                   sx={{
-                    color: 'grey.400',
+                    color: 'text.secondary',
                     fontSize: designTokens.typography.fontSize.scale['0.7rem'],
                   }}
                 >

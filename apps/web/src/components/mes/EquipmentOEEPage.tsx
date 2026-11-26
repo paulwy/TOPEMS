@@ -23,9 +23,9 @@ const getOEEColor = (value: number | undefined | null) => {
 };
 const getOEEColorHex = (value: number | undefined | null) => {
   if (value == null || isNaN(value)) return 'text.primary';
-  if (value >= 85) return 'success.700';
-  if (value >= 70) return 'warning.700';
-  return 'error.700';
+  if (value >= 85) return 'var(--success-text)';
+  if (value >= 70) return 'var(--warning-text)';
+  return 'var(--error-text)';
 };
 const formatPercent = (value: number | undefined | null) => {
   if (value == null || isNaN(value)) return '-';

@@ -35,9 +35,9 @@ const apiAdapter: CrudApiAdapter<Permission> = {
 const headerContent = (
   <Box
     sx={{
-      bgcolor: 'blue.50',
-      border: 1,
-      borderColor: 'blue.200',
+      bgcolor: 'var(--surface-2)',
+      borderLeft: '3px solid',
+      borderColor: 'info.main',
       borderRadius: 1,
       p: 2,
     }}
@@ -47,10 +47,10 @@ const headerContent = (
       spacing={1}
       sx={{ alignItems: 'center' }}
     >
-      <AlertCircle sx={{ width: 16, height: 16, color: 'blue.700' }} />
+      <AlertCircle sx={{ width: 16, height: 16, color: 'var(--info-text)' }} />
       <Typography
         variant='subtitle2'
-        color='blue.900'
+        sx={{ color: 'text.primary' }}
       >
         {i18n.t('pages.permission_management_page.k0')}
       </Typography>
