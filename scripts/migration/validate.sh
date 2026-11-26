@@ -29,6 +29,7 @@ ORDER_ISSUES=()
 IDEMPOTENCY_WARNINGS=()
 DOWN_MIGRATION_WARNINGS=()
 CHECKSUM_ERRORS=()
+DUP_VERSIONS=0
 SCHEMA_DRIFT=()
 
 # Terminal colors
@@ -168,6 +169,21 @@ for dir in "${MIGRATION_DIRS[@]}"; do
       continue
     fi
   done
+
+  # Version uniqueness: two files sharing one version collapse into a single sqlx
+  # migration row, so the second is silently skipped and the ledger points at the
+  # wrong file. Catch it here instead of at apply time.
+  dup_versions="$(for f in "${files[@]}"; do basename "$f" | cut -c1-14; done | sort | uniq -d)"
+  if [[ -n "$dup_versions" ]]; then
+    while IFS= read -r dv; do
+      [[ -z "$dv" ]] && continue
+      DUP_VERSIONS=$((DUP_VERSIONS + 1))
+      for f in "${files[@]}"; do
+        [[ "$(basename "$f" | cut -c1-14)" == "$dv" ]] || continue
+        log_err "Duplicate migration version $dv: $(rel_path "$f")"
+      done
+    done <<< "$dup_versions"
+  fi
 done
 
 if [[ ${#INVALID_FILES[@]} -eq 0 ]]; then
@@ -472,6 +488,7 @@ echo "Multi-responsibility flags:    ${#SINGLE_RESPONSIBILITY_WARNINGS[@]}"
 echo "Explicit transaction blocks:   ${#TRANSACTION_VIOLATIONS[@]}"
 echo "Missing down migrations:       ${#DOWN_MIGRATION_WARNINGS[@]}"
 echo "Checksum errors:               ${#CHECKSUM_ERRORS[@]}"
+echo "Duplicate versions:            $DUP_VERSIONS"
 echo "Schema drift issues:           ${#SCHEMA_DRIFT[@]}"
 echo "Errors:                        $ERRORS"
 echo "Warnings:                      $WARNINGS"
