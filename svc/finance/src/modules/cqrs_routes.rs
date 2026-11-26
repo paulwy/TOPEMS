@@ -52,7 +52,7 @@ pub struct PaginatedEventsResponse {
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:voucher:write"])),
+    security(("BearerAuth" = ["finance:voucher:create"])),
     path = "/cqrs/commands/create-voucher",
     responses(
         (status = 200, description = "成功"),
