@@ -231,3 +231,56 @@ fn stubbed<T: serde::Serialize>(data: T, message: &str) -> Response {
 | core 缺口 | 197 | **180** |
 
 剩余 core 180 条里最大簇已不是 stub 而是前端契约与后端真实缺口（tenant 77、根级 29、menu 10 等），system 34 条里有 12 条是这批桩（现在显形为 SOFT），不再进 spec。
+
+## 第十五轮：冒烟 2 条 503「数据库繁忙」= 连接预算容量问题，不是接口缺陷（2026-11-26 19:40）
+
+### 现象
+
+桩显形后首轮全量冒烟 `1266 条 OK=1148 SOFT=114+10 FAIL=0 DEGRADED=2`，2 条 DEGRADED 是：
+
+- `GET /api/wms/analytics/abc-analysis`
+- `GET /api/wms/analytics/age-pareto`
+
+都是 503「数据库繁忙，请稍后重试」，重试 3 次仍 503。冒烟结束后单独串行重测，两条均 **200、0.03–0.09s**，说明不是慢查询也不是接口坏了。
+
+### 根因
+
+服务日志给出真话：`topems_wms::modules::analytics: abc_analysis 开启租户作用域失败: pool timed out while waiting for an open connection`。
+
+`lib/shared-db/src/database/budget.rs` 的连接治理 A 是「进程级总额度 + 建池期记账」：
+
+- 嵌入模式（topems-server）总预算默认 = 推导池数 × `DEFAULT_CONNECTIONS_PER_POOL` = 31 × 2 = **62**
+- 每池 `grant = min(申请值, 公平份额, 余额)`，公平份额 = 62/31 = **2**
+- 即**每个模块池实际只有 2 条连接**，单体里任一模块并发到 3 就开始排队；排队超过 `acquire_timeout`(30s) 就 503
+
+冒烟默认并发 3，wms analytics 三条端点撞在同一个只有 2 连接的池上，第 3 条必然等不到连接。这跟"审计大响应"无关（审计走 core 池，且已流式化）。
+
+### 处理过程（两次踩空，最后才找到真阀门）
+
+不改代码默认值（`DEFAULT_CONNECTIONS_PER_POOL = 2` 是按 prod `max_connections=100` 算的 31×2=62、留 38 条运维余量，动它会把 prod 余量压到 7 条），只在本机 `.env`（gitignored）调整。
+
+**第一刀：只抬总额度 → 无效。** 设 `DB_TOTAL_CONNECTION_BUDGET=124`，启动日志 `granted=3/3`，每池确实从 2 涨到 3，但全量冒烟仍 `DEGRADED=3`、`pool timed out` 9 条，还是那三条 analytics。
+
+原因是**单池申请值被另一个变量钉死在 3**：`lib/shared-bootstrap/src/lib.rs::embedded_pool_limits` 在嵌入模式下读 `DB_MODULE_MAX_CONNECTIONS`（默认 3），再 `default_max.min(configured_max)`。所以预算抬到 124 后，`grant = min(申请 3, 份额 4, 余额) = 3`，一分没多给。
+
+**第二刀：松开单池申请值 → 生效。** 最终本机 `.env` 两行：
+
+```
+DB_MODULE_MAX_CONNECTIONS=6
+DB_TOTAL_CONNECTION_BUDGET=186
+```
+
+- 单池申请 3 → 6；预算 31 池 × 6 = 186（本地 PG `max_connections=500`，当前占用 ~112 条，余量充足）
+- 启动日志：`池 business 预约额度 granted=6/6（权重 1），已分配 6/186`
+
+### 验证
+
+| 口径 | 结果 |
+| --- | --- |
+| 每池授予 | 3 → **6**（`granted=6/6`）|
+| `pool timed out` 日志计数 | 9 → **0** |
+| 全量冒烟 | `1266 条 OK=1150 SOFT=114 FAIL=0 SKIP=2 DEGRADED=0`，判定 OK |
+
+对比三档：每池 2（默认）→ DEGRADED=2，每池 3（只抬总额）→ DEGRADED=3，每池 6 → DEGRADED=0。**每池 3 是临界值，不够用；6 有明确余量。**
+
+> 别的机器复现同样 503 时：先看日志有没有 `pool timed out while waiting for an open connection`，有就同时调 `DB_MODULE_MAX_CONNECTIONS`（单池申请值）和 `DB_TOTAL_CONNECTION_BUDGET`（总额，≥ 池数 × 单池值），并确认该机 PG `max_connections` 撑得住。只调总额度没用，单池申请值会把它夹住。
