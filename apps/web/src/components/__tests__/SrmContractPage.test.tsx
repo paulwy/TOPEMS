@@ -145,16 +145,16 @@ describe('SrmContractPage', () => {
     );
     const props = mockCrudPage.mock.calls[0][0];
 
-    const all = await props.apiAdapter.list({ page: 0, pageSize: 10 });
+    const all = await props.apiAdapter.list({ page: 1, pageSize: 10 });
     expect(srmApi.listContracts).toHaveBeenCalledWith();
     expect(all.total).toBe(3);
     expect(all.data).toHaveLength(3);
 
-    const searched = await props.apiAdapter.list({ page: 0, pageSize: 10, search: 'alpha' });
+    const searched = await props.apiAdapter.list({ page: 1, pageSize: 10, search: 'alpha' });
     expect(searched.total).toBe(1);
     expect(searched.data[0].id).toBe('c-1');
 
-    const paged = await props.apiAdapter.list({ page: 1, pageSize: 2 });
+    const paged = await props.apiAdapter.list({ page: 2, pageSize: 2 });
     expect(paged.total).toBe(3);
     expect(paged.data).toHaveLength(1);
     expect(paged.data[0].id).toBe('c-3');
