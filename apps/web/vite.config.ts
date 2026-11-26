@@ -364,7 +364,10 @@ const buildServiceProxies = (): Record<string, any> => {
     //     从 useServiceStatus / ReportPage 等前端组件发起的相对请求均通过此代理转发，
     //     彻底避免前端直接跨端口访问导致的 CORS 报错（即便后端CORS配置正确，
     //     浏览器同源策略也会拦截直接跨端口请求）。
-    proxies[`/${svc.name}/health`] = createHealthProxyConfig(svc.name, target);
+    // 注意：Vite 的 proxy key 是「前缀匹配」，写成 `/ehs/health` 会把前端页面
+    // `/ehs/health-management`（职业健康管理）一并吞给后端健康检查接口。
+    // 这里用正则锚定整段，只匹配 /{svc}/health 本体（允许带查询串）。
+    proxies[`^/${svc.name}/health(?:\\?.*)?$`] = createHealthProxyConfig(svc.name, target);
 
     // 3. WebSocket
     if (svc.wsPath) {
