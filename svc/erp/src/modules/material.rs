@@ -283,6 +283,14 @@ pub async fn create_material(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
+            // B1/F-37：commit 后发布 SearchableEntityChanged（物料纳入全局检索）
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.system_pool,
+                &state.event_publisher,
+                "material",
+                material.id,
+            )
+            .await;
             ApiResponse::success(material, "创建物料成功")
         }
 
@@ -346,6 +354,14 @@ pub async fn update_material(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
+            // B1/F-37：commit 后发布 SearchableEntityChanged（物料纳入全局检索）
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.system_pool,
+                &state.event_publisher,
+                "material",
+                material.id,
+            )
+            .await;
             ApiResponse::success(material, "更新物料成功")
         }
 
@@ -396,6 +412,14 @@ pub async fn delete_material(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
+            // B1/F-37：commit 后发布 SearchableEntityChanged（软删 → 投影 DELETE）
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.system_pool,
+                &state.event_publisher,
+                "material",
+                id,
+            )
+            .await;
             ApiResponse::success("删除成功".to_string(), "删除物料成功")
         }
         Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("物料不存在".to_string())),

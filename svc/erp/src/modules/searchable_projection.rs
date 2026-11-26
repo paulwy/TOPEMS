@@ -71,6 +71,37 @@ async fn fetch_snapshot_with_tenant(
                 None => (None, None),
             }
         }
+        "material" => {
+            // 物料主数据（erp.materials）：投影列复用约定——
+            // contact_person 存物料编码、address 存规格型号、remark 存描述。
+            // 超管创建的公共物料 tenant_id 为 NULL，由消费端归一为公共租户。
+            let row = sqlx::query(
+                "SELECT id, tenant_id, code, name, specification, status, description, updated_at
+                 FROM erp.materials WHERE id = $1 AND deleted_at IS NULL",
+            )
+            .bind(entity_id)
+            .fetch_optional(&mut *scope)
+            .await
+            .ok()
+            .flatten();
+            match row {
+                Some(r) => {
+                    let snap = Snapshot {
+                        company_id: None,
+                        name: r.try_get::<String, _>("name").ok(),
+                        contact_person: r.try_get::<String, _>("code").ok(),
+                        contact_phone: None,
+                        email: None,
+                        address: r.try_get::<String, _>("specification").ok(),
+                        status: r.try_get::<String, _>("status").ok(),
+                        remark: r.try_get::<String, _>("description").ok(),
+                        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
+                    };
+                    (Some(snap), r.try_get::<Uuid, _>("tenant_id").ok())
+                }
+                None => (None, None),
+            }
+        }
         "sales_order" | "purchase_order" => {
             let table = if entity_type == "sales_order" {
                 "erp.sales_orders"
@@ -170,8 +201,12 @@ pub async fn emit_after_commit(
     entity_id: Uuid,
 ) {
     let Some(publisher) = publisher else { return };
-    let Some(payload) = build_payload_from_pool(db, entity_type, entity_id).await else {
-        return;
+    let payload = match build_payload_from_pool(db, entity_type, entity_id).await {
+        Some(p) => p,
+        None => {
+            tracing::warn!("[erp] emit 跳过：快照通道不可用 {} id={}", entity_type, entity_id);
+            return;
+        }
     };
     if let Err(e) = publisher
         .publish_event(EventType::SearchableEntityChanged, &payload)
@@ -306,6 +341,33 @@ pub async fn searchable_snapshot(
                 address: None,
                 status: r.try_get::<String, _>("status").ok(),
                 remark: r.try_get::<String, _>("remark").ok(),
+                source_updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
+            });
+        }
+    }
+
+    // materials
+    if let Ok(rows) = sqlx::query(
+        "SELECT id, tenant_id, code, name, specification, status, description, updated_at
+         FROM erp.materials WHERE deleted_at IS NULL",
+    )
+    .fetch_all(&mut scope)
+    .await
+    {
+        for r in rows {
+            out.push(SearchableEntityChangedPayload {
+                entity_type: "material".to_string(),
+                entity_id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+                tenant_id: r.try_get::<Uuid, _>("tenant_id").ok(),
+                company_id: None,
+                op: "upsert".to_string(),
+                name: r.try_get::<String, _>("name").ok(),
+                contact_person: r.try_get::<String, _>("code").ok(),
+                contact_phone: None,
+                email: None,
+                address: r.try_get::<String, _>("specification").ok(),
+                status: r.try_get::<String, _>("status").ok(),
+                remark: r.try_get::<String, _>("description").ok(),
                 source_updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
             });
         }
