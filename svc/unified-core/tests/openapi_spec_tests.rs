@@ -34,9 +34,9 @@ fn iam_permission_endpoints_are_in_openapi() {
 #[test]
 fn iam_auth_endpoints_are_in_openapi() {
     let paths = spec_paths();
-    // 注：crud 系列沿用历史约定 path="/users"（不带 /iam 前缀），auth 系列为 /iam/auth/*；
+    // 注：ApiDoc 内 IAM 路径保留 /iam 前缀；crud 用户的对外前缀为 /iam/users，auth 系列为 /iam/auth/*；
     // 仅断言已在 openapi.rs 注册的路径（get_user 等未注册端点待后续补充）。
-    for expect in ["/iam/auth/login", "/iam/auth/register", "/users"] {
+    for expect in ["/iam/auth/login", "/iam/auth/register", "/iam/users"] {
         assert!(paths.iter().any(|p| p == expect), "spec 缺失路径: {expect}");
     }
 }
