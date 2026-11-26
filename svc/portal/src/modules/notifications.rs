@@ -142,16 +142,18 @@ fn build_client(
     headers: &HeaderMap,
 ) -> TypedServiceClient<NotificationApi> {
     match extract_bearer_token(headers) {
-        Some(token) => match TypedServiceClient::new(NotificationApi, base.base_url().to_string()) {
-            Ok(mut c) => {
-                c.set_auth_token(token);
-                if let Some(t) = headers.get("x-tenant-id").and_then(|v| v.to_str().ok()) {
-                    c.add_header("x-tenant-id", t);
+        Some(token) => {
+            match TypedServiceClient::new(NotificationApi, base.base_url().to_string()) {
+                Ok(mut c) => {
+                    c.set_auth_token(token);
+                    if let Some(t) = headers.get("x-tenant-id").and_then(|v| v.to_str().ok()) {
+                        c.add_header("x-tenant-id", t);
+                    }
+                    c
                 }
-                c
+                Err(_) => base.clone(),
             }
-            Err(_) => base.clone(),
-        },
+        }
         None => base.clone(),
     }
 }
