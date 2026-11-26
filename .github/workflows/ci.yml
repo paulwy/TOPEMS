@@ -156,8 +156,11 @@ jobs:
               - 'deploy/docker/**'
             migration:
               - 'svc/**/migrations/**'
-              - 'database/migrations/**'
-              - 'database/baseline/**'
+              # database 下除迁移 SQL 外，归档清单/基线/种子也直接决定 Up-Down-Up
+              # 与 baseline-integrity 的结果；曾有 archive.tsv 变更因未命中过滤而跳过门禁。
+              - 'database/**'
+              - 'scripts/db/**'
+              - 'scripts/migration/**'
               - 'lib/src/migration*/**'
               - 'scripts/check-migrat*'
               - 'scripts/ci/check-baseline-integrity.mjs'
