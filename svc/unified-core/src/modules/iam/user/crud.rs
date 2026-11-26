@@ -130,6 +130,24 @@ pub async fn list_users(
                 m
             });
 
+            // 对称批量查真实权限码（关联表规范化授权），替代原先非超管硬编码占位方言码。
+            let real_permissions: std::collections::HashMap<uuid::Uuid, Vec<String>> =
+                sqlx::query_as::<_, (uuid::Uuid, String)>(
+                    "SELECT ur.user_id, p.code FROM public.core_user_roles ur
+                 JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                 JOIN public.core_permissions p ON p.id = rp.permission_id
+                 WHERE ur.user_id = ANY($1) ORDER BY ur.user_id, p.code",
+                )
+                .bind(&user_ids)
+                .fetch_all(&mut scope)
+                .await
+                .unwrap_or_default()
+                .into_iter()
+                .fold(std::collections::HashMap::new(), |mut m, (uid, code)| {
+                    m.entry(uid).or_default().push(code);
+                    m
+                });
+
             let user_responses: Vec<UserResponse> = users
                 .into_iter()
                 .map(|u| {
@@ -147,7 +165,7 @@ pub async fn list_users(
                             .map(|p| p.id.clone())
                             .collect()
                     } else {
-                        vec!["iam:users_read".to_string()]
+                        real_permissions.get(&u.id).cloned().unwrap_or_default()
                     };
 
                     UserResponse {
@@ -620,6 +638,18 @@ pub async fn get_user(
             .await
             .unwrap_or_default();
 
+            // 对称查真实权限码（关联表规范化授权），替代非超管硬编码占位方言码。
+            let real_permissions: Vec<String> = sqlx::query_scalar::<_, String>(
+                "SELECT DISTINCT p.code FROM public.core_user_roles ur
+                 JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                 JOIN public.core_permissions p ON p.id = rp.permission_id
+                 WHERE ur.user_id = $1 ORDER BY p.code",
+            )
+            .bind(u.id)
+            .fetch_all(&mut rls_scope)
+            .await
+            .unwrap_or_default();
+
             let roles = if u.is_superuser {
                 let mut r = real_roles;
                 r.push("admin".to_string());
@@ -634,7 +664,7 @@ pub async fn get_user(
                     .map(|p| p.id.clone())
                     .collect()
             } else {
-                vec!["iam:users_read".to_string()]
+                real_permissions
             };
 
             let user_response = UserResponse {
