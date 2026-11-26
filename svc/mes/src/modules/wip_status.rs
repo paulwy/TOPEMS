@@ -47,6 +47,12 @@ impl WipStatus {
         )
     }
 
+    /// 终态：completed / transferred，不再接受任何更新或转移。
+    #[must_use]
+    pub const fn is_terminal(self) -> bool {
+        matches!(self, Self::Completed | Self::Transferred)
+    }
+
     /// 仍可发生工序转移的活跃态。
     pub fn transferable_from() -> &'static [&'static str] {
         &["pending", "in_progress"]
@@ -85,6 +91,17 @@ mod tests {
     #[test]
     fn deletable_set_is_completed_only() {
         assert_eq!(WipStatus::deletable_from(), &["completed"]);
+    }
+
+    #[test]
+    fn terminal_states_are_closed() {
+        use WipStatus::*;
+        assert!(!Pending.is_terminal());
+        assert!(!InProgress.is_terminal());
+        assert!(Completed.is_terminal());
+        assert!(Transferred.is_terminal());
+        assert!(Completed.can_transition_to(Completed));
+        assert!(!Completed.can_transition_to(Transferred));
     }
 
     #[test]

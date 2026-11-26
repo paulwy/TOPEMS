@@ -788,14 +788,25 @@ pub async fn update_wip(
     let Some((current_raw,)) = current else {
         return ApiResponse::not_found("WIP不存在");
     };
-    let current_status = current_raw
-        .as_deref()
-        .and_then(WipStatus::from_db_str)
-        .unwrap_or(WipStatus::DEFAULT);
+    // 当前态必须显式可解析：NULL 或未知值不能被回落成默认态参与状态机判断
+    let current_status = match current_raw.as_deref().and_then(WipStatus::from_db_str) {
+        Some(status) => status,
+        None => {
+            let _ = scope.rollback().await;
+            tracing::error!("WIP {} 当前状态为空或非法: {:?}，拒绝更新", id, current_raw);
+            return ApiResponse::conflict("WIP 当前状态为空或非法，请先修复数据后再更新");
+        }
+    };
+    if current_status.is_terminal() {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict("WIP 已完工/已转移，不允许回退或重复更新");
+    }
     let target_status = requested_status.unwrap_or(current_status);
     if !current_status.can_transition_to(target_status) {
         let _ = scope.rollback().await;
-        return ApiResponse::conflict("WIP 已完工/已转移，不允许回退或重复更新");
+        return ApiResponse::conflict(
+            "WIP 状态迁移不允许：只允许 pending→in_progress、in_progress→completed/transferred",
+        );
     }
     let status = Some(target_status);
     let result = sqlx::query_as::<_, WipCreateRow>(
@@ -1029,11 +1040,18 @@ pub async fn transfer_wip(
         }
     };
 
-    let current_status = wip
-        .status
-        .as_deref()
-        .and_then(WipStatus::from_db_str)
-        .unwrap_or(WipStatus::DEFAULT);
+    let current_status = match wip.status.as_deref().and_then(WipStatus::from_db_str) {
+        Some(status) => status,
+        None => {
+            let _ = scope.rollback().await;
+            tracing::error!(
+                "WIP {} 当前状态为空或非法: {:?}，拒绝转移",
+                req.wip_id,
+                wip.status
+            );
+            return ApiResponse::conflict("WIP 当前状态为空或非法，请先修复数据后再转移");
+        }
+    };
     if !WipStatus::transferable_from().contains(&current_status.as_db_str()) {
         let _ = scope.rollback().await;
         return ApiResponse::conflict("WIP 已完工/已转移，不允许继续转移");
