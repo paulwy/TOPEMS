@@ -24,6 +24,7 @@
  * 退出码：0 全部一致（含被跳过的页不计失败）；1 存在「有总数没行」或脚本级错误。
  */
 import { chromium } from 'playwright';
+import { runPool } from './lib/pool.mjs';
 import { login as sharedLogin, installAuth, fetchMenuPaths as sharedMenuPaths, argOf, hasFlag } from './lib/auth-session.mjs';
 
 const argv = process.argv.slice(2);
@@ -38,6 +39,7 @@ const MAX_ROUTES = Number(argOf(argv, 'max', '12'));
 const JSON_OUT = argOf(argv, 'json', '');
 const ALL = hasFlag(argv, 'all');
 const INCLUDE_DASHBOARD = hasFlag(argv, 'include-dashboard') || hasFlag(argv, 'include-dashboards');
+const CONCURRENCY = Number(argOf(argv, 'concurrency', '3'));
 
 // 默认抽查：覆盖改过模板后最容易踩的模块，且本机都有数据
 const DEFAULT_ROUTES = [
@@ -131,13 +133,15 @@ async function inspectRoute(page, route) {
 
   // 在页面脚本执行前把登录态写进 localStorage（同源每个导航都会先跑这段）
   await installAuth(context, creds, TENANT_ID);
+  const pages = [];
 
-  const page = await context.newPage();
   const failures = [];
   const results = [];
 
-  console.log(`列表页一致性检查  web=${WEB_BASE}  路由 ${routes.length} 条`);
-  for (const route of routes) {
+  console.log(`列表页一致性检查  web=${WEB_BASE}  路由 ${routes.length} 条  并发 ${CONCURRENCY}`);
+  await runPool(routes, CONCURRENCY, async (route, workerIdx) => {
+    if (!pages[workerIdx]) pages[workerIdx] = await context.newPage();
+    const page = pages[workerIdx];
     let r;
     try {
       r = await inspectRoute(page, route);
@@ -155,7 +159,7 @@ async function inspectRoute(page, route) {
     console.log(
       `  ${verdict.padEnd(11)} ${route.padEnd(30)} 总数=${String(r.total).padStart(4)}  行=${String(r.rows).padStart(3)}  ${r.ms}ms`
     );
-  }
+  });
 
   await browser.close();
 

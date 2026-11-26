@@ -72,14 +72,18 @@ node scripts/check-page-health.mjs --routes /srm/contract,/srm/evaluation
 ```bash
 cd apps/web
 pnpm verify:frontend          # quick：8 条列表 + 12 条健康 + tsc，实测 68 秒
-pnpm verify:frontend:full     # 全量：--all，约 18 分钟
+pnpm verify:frontend:full     # 全量：--all，约 7 分钟（并发 3）
 ```
 
 顺序有讲究：`tsc --noEmit` 先跑，类型错就直接停（否则巡检结果全是类型错的噪声）；
 然后列表一致性与页面健康。任一步失败即整体 FAIL，退出码 1。
 
-全量实测（2026-11-26）：列表一致性 133 页 / 不一致 0（607s），页面健康 213 页 / 失败 0（485s），
+全量实测（2026-11-26）：列表一致性 134 页 / 不一致 0（215s），页面健康 213 页 / 失败 0（220s），
 总览 `PASS / PASS / 判定 OK`。
+
+并发由脚本内置 `--concurrency`（默认 3）控制：worker 抢队列而不是切片分批，慢页不拖住快页。
+串行版本这两段是 607s + 485s，并发后 215s + 220s，整体从 18 分钟降到 7 分钟；单页命中率不变
+（dev server 冷编译靠 `--timeout 20` 兜住）。
 
 ## 静默空表排查（辅助工具，不进闸）
 

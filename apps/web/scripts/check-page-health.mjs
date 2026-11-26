@@ -24,6 +24,7 @@
  * 退出码：0 全绿；1 有失败项；2 脚本级错误
  */
 import { chromium } from 'playwright';
+import { runPool } from './lib/pool.mjs';
 import { login, installAuth, fetchMenuPaths, argOf, hasFlag } from './lib/auth-session.mjs';
 
 const argv = process.argv.slice(2);
@@ -35,6 +36,7 @@ const TENANT_ID = process.env.TENANT_ID || '00000000-0000-0000-0000-000000000001
 const PAGE_TIMEOUT = Number(argOf(argv, 'timeout', '18')) * 1000;
 const MAX_ROUTES = Number(argOf(argv, 'max', '12'));
 const RETRIES = Number(argOf(argv, 'retries', '1'));
+const CONCURRENCY = Number(argOf(argv, 'concurrency', '3'));
 const JSON_OUT = argOf(argv, 'json', '');
 const ALL = hasFlag(argv, 'all');
 const INCLUDE_DASHBOARDS = hasFlag(argv, 'include-dashboards');
@@ -167,12 +169,14 @@ function verdictOf(r) {
   const browser = await chromium.launch({ channel: 'chrome' }).catch(() => chromium.launch());
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await installAuth(context, creds, TENANT_ID);
-  const page = await context.newPage();
+  const pages = [];
 
-  console.log(`页面健康巡检  web=${WEB_BASE}  路由 ${routes.length} 条`);
+  console.log(`页面健康巡检  web=${WEB_BASE}  路由 ${routes.length} 条  并发 ${CONCURRENCY}`);
   const results = [];
   const failures = [];
-  for (const route of routes) {
+  await runPool(routes, CONCURRENCY, async (route, workerIdx) => {
+    if (!pages[workerIdx]) pages[workerIdx] = await context.newPage();
+    const page = pages[workerIdx];
     const attempt = async () => {
       try {
         return await visit(page, route);
@@ -210,7 +214,7 @@ function verdictOf(r) {
       .filter(Boolean)
       .join(' ');
     console.log(`  ${(verdict === 'OK' && r.retried ? 'OK(重试)' : verdict).padEnd(14)} ${route.padEnd(30)} ${String(r.ms).padStart(6)}ms  ${detail}`);
-  }
+  });
 
   await browser.close();
 
