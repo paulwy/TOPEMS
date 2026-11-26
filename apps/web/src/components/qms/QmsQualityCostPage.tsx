@@ -52,7 +52,8 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
             <Box>
               <Typography
                 sx={{
-                  color: 'info.light',
+                  color: 'common.white',
+                  opacity: 0.85,
                   fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
@@ -65,7 +66,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
                 ¥{stats.total.toLocaleString()}
               </Typography>
             </Box>
-            <DollarSign sx={{ width: 40, height: 40, color: 'info.light' }} />
+            <DollarSign sx={{ width: 40, height: 40, color: 'common.white', opacity: 0.85 }} />
           </Box>
         </CardContent>
       </Card>
@@ -80,7 +81,8 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
             <Box>
               <Typography
                 sx={{
-                  color: 'success.light',
+                  color: 'common.white',
+                  opacity: 0.85,
                   fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
@@ -93,7 +95,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
                 ¥{stats.prevention.toLocaleString()}
               </Typography>
             </Box>
-            <CheckCircle sx={{ width: 40, height: 40, color: 'success.light' }} />
+            <CheckCircle sx={{ width: 40, height: 40, color: 'common.white', opacity: 0.85 }} />
           </Box>
         </CardContent>
       </Card>
@@ -108,7 +110,8 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
             <Box>
               <Typography
                 sx={{
-                  color: 'primary.light',
+                  color: 'common.white',
+                  opacity: 0.85,
                   fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
@@ -121,7 +124,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
                 ¥{stats.appraisal.toLocaleString()}
               </Typography>
             </Box>
-            <BarChart3 sx={{ width: 40, height: 40, color: 'primary.light' }} />
+            <BarChart3 sx={{ width: 40, height: 40, color: 'common.white', opacity: 0.85 }} />
           </Box>
         </CardContent>
       </Card>
@@ -136,7 +139,8 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
             <Box>
               <Typography
                 sx={{
-                  color: 'warning.light',
+                  color: 'common.white',
+                  opacity: 0.85,
                   fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
@@ -149,13 +153,13 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
                 ¥{stats.internal.toLocaleString()}
               </Typography>
             </Box>
-            <TrendingDown sx={{ width: 40, height: 40, color: 'warning.light' }} />
+            <TrendingDown sx={{ width: 40, height: 40, color: 'common.white', opacity: 0.85 }} />
           </Box>
         </CardContent>
       </Card>
       <Card
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[600]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
           color: 'common.white',
         }}
       >
@@ -164,7 +168,8 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
             <Box>
               <Typography
                 sx={{
-                  color: 'error.light',
+                  color: 'common.white',
+                  opacity: 0.85,
                   fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
@@ -177,7 +182,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
                 ¥{stats.external.toLocaleString()}
               </Typography>
             </Box>
-            <AlertTriangle sx={{ width: 40, height: 40, color: 'error.light' }} />
+            <AlertTriangle sx={{ width: 40, height: 40, color: 'common.white', opacity: 0.85 }} />
           </Box>
         </CardContent>
       </Card>
