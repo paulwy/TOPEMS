@@ -15,8 +15,8 @@ use crate::modules::iam::auth::validate_password_strength;
 use crate::modules::iam::tenant_scope::{self, IamScope, UserTarget};
 
 use super::models::{
-    is_valid_email, record_audit_log, superuser_permission_codes, ListUsersParams, UserResponse,
-    UserRow,
+    is_valid_email, record_audit_log, superuser_permission_codes, superuser_role_names,
+    ListUsersParams, UserResponse, UserRow,
 };
 
 #[utoipa::path(
@@ -153,14 +153,13 @@ pub async fn list_users(
 
             // 超管回显 DB 全量目录（一次预取，闭包内复用），不再走 shared-auth 内存目录占位。
             let superuser_codes = superuser_permission_codes(&state.db).await;
+            let superuser_roles = superuser_role_names(&state.db).await;
 
             let user_responses: Vec<UserResponse> = users
                 .into_iter()
                 .map(|u| {
                     let roles = if u.is_superuser {
-                        let mut r = real_roles.get(&u.id).cloned().unwrap_or_default();
-                        r.push("admin".to_string());
-                        r
+                        superuser_roles.clone()
                     } else {
                         real_roles.get(&u.id).cloned().unwrap_or_default()
                     };
@@ -654,9 +653,7 @@ pub async fn get_user(
             .unwrap_or_default();
 
             let roles = if u.is_superuser {
-                let mut r = real_roles;
-                r.push("admin".to_string());
-                r
+                superuser_role_names(&state.db).await
             } else {
                 real_roles
             };

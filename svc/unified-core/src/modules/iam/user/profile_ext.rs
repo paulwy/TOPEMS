@@ -10,7 +10,7 @@ use crate::modules::iam::auth::validate_password_strength;
 
 use super::models::{
     is_valid_email, record_audit_log, resolve_user_grants, superuser_permission_codes,
-    UserResponse, UserRow,
+    superuser_role_names, UserResponse, UserRow,
 };
 
 /// GET /users/me/permissions — 返回当前用户权限（与已有 /permissions/my-permissions 不同路径）
@@ -86,7 +86,7 @@ pub async fn get_my_permissions(
     // 不再硬编码 7 个 C 方言码。
     let (role_names, permission_codes): (Vec<String>, Vec<String>) = if u.is_superuser {
         (
-            vec!["admin".to_string(), "user".to_string()],
+            superuser_role_names(&state.db).await,
             superuser_permission_codes(&state.db).await,
         )
     } else {
@@ -320,7 +320,7 @@ pub async fn update_current_user(
                 Some(u) => {
                     let (roles, permissions) = if u.is_superuser {
                         (
-                            vec!["admin".to_string(), "user".to_string()],
+                            superuser_role_names(&state.db).await,
                             superuser_permission_codes(&state.db).await,
                         )
                     } else {
@@ -672,7 +672,7 @@ pub async fn update_my_avatar(
                 Some(u) => {
                     let (roles, permissions) = if u.is_superuser {
                         (
-                            vec!["admin".to_string(), "user".to_string()],
+                            superuser_role_names(&state.db).await,
                             superuser_permission_codes(&state.db).await,
                         )
                     } else {

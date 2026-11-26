@@ -191,6 +191,26 @@ pub(crate) async fn superuser_permission_codes(db: &Db) -> Vec<String> {
     codes
 }
 
+/// 超管回显：DB 全量角色目录名（平台目录，系统通道读取，与 `superuser_permission_codes` 同范式）。
+/// 取代硬编码 `["admin","user"]` 占位，保证超管/普通用户回显同源 DB 目录。
+pub(crate) async fn superuser_role_names(db: &Db) -> Vec<String> {
+    let mut scope = match db.scope_read_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("解析超管角色目录失败（数据库作用域创建）: {}", e);
+            return Vec::new();
+        }
+    };
+    let names = sqlx::query_scalar::<_, String>(
+        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL ORDER BY name",
+    )
+    .fetch_all(&mut scope)
+    .await
+    .unwrap_or_default();
+    let _ = scope.commit().await;
+    names
+}
+
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub(crate) struct PreferenceRow {
     pub preference_value: serde_json::Value,

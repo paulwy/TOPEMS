@@ -52,7 +52,6 @@ struct SystemParams {
     params: serde_json::Value,
 }
 
-
 /// 桩响应统一出口：这些 system 配置/缓存/日志/参数接口目前返回硬编码值，
 /// 用 `X-Stub: true` 显形，冒烟会判为 SOFT（契约未实现），避免把假实现当成真接口。
 fn stubbed<T: serde::Serialize>(data: T, message: &str) -> Response {

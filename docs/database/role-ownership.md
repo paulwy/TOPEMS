@@ -120,6 +120,8 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 
 ⑪ **IAM-2d 内存目录死代码甄别与清理（2026-11-26，仅删未接线代码，未改库/未动账本）**。承接 ⑩：超管回显切 DB 目录后，shared-auth 内存目录四函数与配套 struct 运行期业务零调用，仅单测引用。**甄别存活边界**：保留生产在用的 `PermissionResolver`/`PermissionCacheEntry`、`permission.rs` 的 `ModuleCode/PermissionAction`、`get_all_module_permissions`（permission_center 在用）；确认 `Role`/`Permission` 两 struct 无 crate 内外其他模块复用。**删除**：① `auth.rs` 内存目录块——`Role`/`Permission` struct 与 `get_permissions/get_roles/get_role_by_id/get_permission_by_id` 四函数（35 个旧下划线方言码占位）及 4 个专属内联单测；② 两处重导出移除：`lib/shared-auth/src/lib.rs`、`lib/src/lib.rs` 的四函数与两 struct；③ `lib/tests/auth_test.rs` 10 个目录专属测试连带移除。**验证**：`cargo check`/clippy/fmt 绿；shared-auth lib **230→226**；shared 集成测试全绿（`auth_test.rs` 17 通过）；unified-core lib **571** 全绿。**遗留（另批）**：超管 roles 回显仍硬编码 `["admin","user"]`，未对齐 DB 全量角色口径。
 
+⑫ **IAM-2e 超管 roles 回显对齐 DB 全量角色目录（2026-11-26，代码就绪，待常规发布）**。承接 ⑪：基准 `roles.rs` 超管分支已查 `public.core_roles` 全量角色名，而 `profile.rs`、`profile_ext.rs`(三处)、`crud.rs`(列表+详情) 超管 roles 数组仍硬编码 `["admin","user"]`（crud 为 `real_roles` 空壳再 push `"admin"`），口径分裂。**改动**：`models.rs` 新增 `superuser_role_names(db)`（系统通道 `scope_read_system` 查 `SELECT name FROM public.core_roles WHERE deleted_at IS NULL ORDER BY name`，与 `superuser_permission_codes` 同范式，Err 时 warn 返回空 Vec、末尾 `commit`）；`profile.rs`/`profile_ext.rs` 三处与 `crud.rs` 列表（闭包外预取复用，同 `superuser_codes` 模式）+ 详情共 **6 处**超管 roles 数组统一改调，非超管仍走 `resolve_user_grants` 关联表实时聚合。**口径边界（本批不动，另议）**：单数 `role` 字段（主角色标签）超管仍占位 `"admin"`；`batch.rs` 不返回 roles（其中两处 `"user"` 是审计日志 action，非角色）。**验证**：check/clippy/fmt 绿；unified-core lib **571**、shared-auth lib **226**、shared 集成 `auth_test.rs` **17** 全绿；无 DDL、未改库、未动账本。
+
 
 
 ## 9. 决策与执行记录（2026-11-25 追加）

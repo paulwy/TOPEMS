@@ -4,7 +4,9 @@ use axum::{extract::State, Json};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
-use super::models::{resolve_user_grants, superuser_permission_codes, UserResponse, UserRow};
+use super::models::{
+    resolve_user_grants, superuser_permission_codes, superuser_role_names, UserResponse, UserRow,
+};
 
 /// D2 U2 环3（决策 C）：用户偏好主数据本地化到 unified-core IAM 域（`core.user_preferences`）。
 ///
@@ -227,7 +229,7 @@ pub async fn get_current_user(
             // 内存目录占位；非超管实时 JOIN 规范化授权表。
             let (roles, permissions) = if u.is_superuser {
                 (
-                    vec!["admin".to_string(), "user".to_string()],
+                    superuser_role_names(&state.db).await,
                     superuser_permission_codes(&state.db).await,
                 )
             } else {
