@@ -1,18 +1,20 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+// 2026-11-26：此文件是 v74「端点绑定」占位（页面未接入）。动作型接口按后端实际方法对齐为 POST，
+// 之前用 GET 只会拿到 405。详见 docs/dev/api-contract-audit-20261126.md
 
 // ── v74 BIZ 接入候选 ai 10 条（2026-10-29）──
 export const aiReadApi = {
   process: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.get('/documents/{id}/process'),
-  vectorizeFromFile: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.get('/documents/vectorize-from-file'),
-  getUserProfile: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.get('/profile/get'),
-  recommendDocuments: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.get('/recommend/documents'),
-  recommendOpportunities: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.get('/recommend/opportunities'),
+  vectorizeFromFile: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.ai.post('/documents/vectorize-from-file', data ?? {}),
+  getUserProfile: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.ai.post('/profile/get', data ?? {}),
+  recommendDocuments: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.ai.post('/recommend/documents', data ?? {}),
+  recommendOpportunities: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.ai.post('/recommend/opportunities', data ?? {}),
   getActivityTrend: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.get('/dashboard/activity-trend'),
   getActivityTrend2: async (): Promise<ApiResponse<Record<string, unknown>>> =>

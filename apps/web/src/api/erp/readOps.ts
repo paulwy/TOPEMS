@@ -1,5 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+// 2026-11-26：此文件是 v74「端点绑定」占位（页面未接入）。动作型接口按后端实际方法对齐为 POST，
+// 之前用 GET 只会拿到 405。详见 docs/dev/api-contract-audit-20261126.md
 
 // ── v74 BIZ 接入候选 erp 50 条（2026-10-29，剔除 addressbook 冒烟 stub 10）──
 export const erpReadApi = {
@@ -13,8 +15,8 @@ export const erpReadApi = {
     apiClient.erp.get('/mdm-v49/get-archive-policy'),
   getPopularEntries: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data-refs/get-popular-entries-handler'),
-  graphqlEndpoint: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/master-data/graphql'),
+  graphqlEndpoint: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.erp.post('/master-data/graphql', data ?? {}),
   listProductionOrders: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/production-orders'),
   qualityAiPredictQuality: async (): Promise<ApiResponse<Record<string, unknown>>> =>

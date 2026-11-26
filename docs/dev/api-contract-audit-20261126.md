@@ -60,7 +60,7 @@ notification 的细节见 `docs/frontend/notification-contract-gap-20261126.md`�
 
 这类缺陷正是"页面还能用、接口其实 500、前端拿空态兜住"的典型。
 
-## 方法不符（405）：17 条前端 GET 打到了只支持写操作的路由
+## 方法不符（405）：17 条前端 GET 打到了只支持写操作的路由（已修）
 
 这些是"前端用 GET 调一个后端只接受 POST/PUT 的动作型接口"，页面点下去必失败；
 当前冒烟只测 GET，所以它们表现为 405，被判 SOFT（不污染判负，但也没被当成缺陷）。
@@ -83,9 +83,11 @@ notification 的细节见 `docs/frontend/notification-contract-gap-20261126.md`�
 - `GET /api/core/iam/permissions/verify-multiple`（frontend）
 - `GET /api/wms/sync/sync-logs`（frontend）
 
-其中 `apiClient.portal.get('/notifications/mark-all-read')`（`apps/web/src/api/portal/readOps3.ts:7`）
-就把"全部已读"写成了 GET，后端是 POST —— 这条一定不会通。
-处理方式需要后端为准逐条确认：要么前端改方法，要么后端补 GET（不推荐给写操作补 GET）。
+处理结果（2026-11-26）：17 条全部改为 POST，涉及 11 个 v74「端点绑定」占位文件
+（`src/api/{ai,analytics,finance,portal,scm,wms,unified-core,erp}/*Ops*.ts`）。
+这些模块页面并未接入（`grep` 无外部引用），所以改方法不影响页面；
+`npx tsc` 通过，逐条 POST 实测：200 的有 profile/get、mark-all-read、sync-logs（scm/wms）、
+gateway-security/audit/export；其余 422/400 是"需要请求体/参数"，属于正常语义，不再是 405。
 
 ## 用法
 

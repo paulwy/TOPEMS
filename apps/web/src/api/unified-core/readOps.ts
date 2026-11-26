@@ -1,12 +1,14 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+// 2026-11-26：此文件是 v74「端点绑定」占位（页面未接入）。动作型接口按后端实际方法对齐为 POST，
+// 之前用 GET 只会拿到 405。详见 docs/dev/api-contract-audit-20261126.md
 
 // ── v74 BIZ 接入候选 unifiedCore（2026-10-29）──
 export const unifiedCoreReadApi = {
-  verifyPermission: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.core.get('/iam/permissions/verify'),
-  verifyMultiplePermissions: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.core.get('/iam/permissions/verify-multiple'),
+  verifyPermission: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.core.post('/iam/permissions/verify', data ?? {}),
+  verifyMultiplePermissions: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.core.post('/iam/permissions/verify-multiple', data ?? {}),
   getMyPermissions: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/iam/permissions/my-permissions'),
   listTasks: async (): Promise<ApiResponse<Record<string, unknown>>> =>
