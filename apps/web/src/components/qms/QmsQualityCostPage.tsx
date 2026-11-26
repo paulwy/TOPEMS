@@ -43,7 +43,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
     >
       <Card
         sx={{
-          background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
+          background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.dark} 100%)`,
           color: 'common.white',
         }}
       >

@@ -406,7 +406,7 @@ const LimsSampleDetailPage: React.FC = () => {
                     i18n.t('pages.lims_sample_detail_page.k45'),
                   ]}
                   contentStyle={{
-                    backgroundColor: 'common.white',
+                    backgroundColor: 'background.paper',
                     border: '1px solid border.default',
                     borderRadius: 'md',
                   }}

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -188,7 +189,7 @@ const ReportViewerContent: React.FC<ReportViewerProps> = ({ report, onClose }) =
         {/* Header */}
         <Box
           sx={{
-            background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.light} 100%)`,
             color: 'common.white',
             p: 3,
           }}
@@ -348,7 +349,7 @@ const ReportViewerContent: React.FC<ReportViewerProps> = ({ report, onClose }) =
             >
               {showAllColumns ? i18n.t('pages.report_viewer.k3') : i18n.t('pages.report_viewer.k2')}
             </Button>
-            <Typography sx={{ fontSize: 14, color: 'grey.500' }}>
+            <Typography sx={{ fontSize: 14, color: 'text.secondary' }}>
               {i18n.t('report:report_viewer.v0_2', { v0: filteredData.length })}
             </Typography>
           </Box>
@@ -367,7 +368,9 @@ const ReportViewerContent: React.FC<ReportViewerProps> = ({ report, onClose }) =
                   mb: 2,
                 }}
               />
-              <Typography sx={{ color: 'grey.500' }}>{i18n.t('pages.report_viewer.k4')}</Typography>
+              <Typography sx={{ color: 'text.secondary' }}>
+                {i18n.t('pages.report_viewer.k4')}
+              </Typography>
             </Box>
           ) : (
             <TableContainer

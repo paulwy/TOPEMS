@@ -78,7 +78,7 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
               {t('doc.documents.file_management')}
             </Typography>
             {selectedFolder && (
-              <Typography sx={{ color: 'grey.500' }}>/ {selectedFolder.name}</Typography>
+              <Typography sx={{ color: 'text.secondary' }}>/ {selectedFolder.name}</Typography>
             )}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

@@ -528,7 +528,7 @@ const ReportBuilderPage = () => {
                         >
                           <FileText
                             size={32}
-                            style={{ color: theme.palette.grey[500] }}
+                            style={{ color: theme.palette.text.secondary }}
                           />
                         </Box>
                         <Typography

@@ -167,7 +167,7 @@ const DetailsPanel: React.FC<{
         bottom: '1rem',
         left: '1rem',
         width: '20rem',
-        backgroundColor: 'common.white',
+        backgroundColor: 'background.paper',
         borderRadius: '0.75rem',
         boxShadow: `0 20px 25px -5px ${designTokens.colors.action.selected}, 0 10px 10px -5px ${designTokens.colors.action.hover}`,
         overflow: 'hidden',
@@ -677,7 +677,7 @@ const MapView: React.FC<MapViewProps> = ({
                   >
                     <div
                       style={{
-                        backgroundColor: 'common.white',
+                        backgroundColor: 'background.paper',
                         padding: '0.5rem 0.75rem',
                         borderRadius: '0.5rem',
                         boxShadow: `0 10px 15px -3px ${designTokens.colors.action.selected}, 0 4px 6px -2px ${designTokens.colors.action.hover}`,
@@ -1053,7 +1053,7 @@ const MapView: React.FC<MapViewProps> = ({
             position: 'absolute',
             top: '1rem',
             left: '8rem',
-            backgroundColor: 'common.white',
+            backgroundColor: 'background.paper',
             borderRadius: '0.5rem',
             boxShadow: `0 4px 6px -1px ${designTokens.colors.action.selected}, 0 2px 4px -1px ${designTokens.colors.action.hover}`,
             padding: '0.5rem 1rem',
@@ -1146,7 +1146,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <div
             style={{
-              backgroundColor: 'common.white',
+              backgroundColor: 'background.paper',
               borderRadius: '0.75rem',
               boxShadow: designTokens.shadows['2xl'],
               width: '90%',
@@ -1186,7 +1186,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <div
             style={{
-              backgroundColor: 'common.white',
+              backgroundColor: 'background.paper',
               borderRadius: '0.75rem',
               boxShadow: designTokens.shadows['2xl'],
               width: '95%',

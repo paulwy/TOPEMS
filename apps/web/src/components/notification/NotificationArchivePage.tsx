@@ -113,14 +113,15 @@ const NotificationArchivePage: React.FC = () => {
     if (!archiveConfig) return null;
     return (
       <Box
-        sx={{
+        sx={(t) => ({
           bgcolor: 'warning.50',
           borderRadius: 3,
           p: 2,
           mb: 2,
           border: 1,
-          borderColor: 'warning.200',
-        }}
+          // 暗色下 warning.50 已被反相成深棕，边框/正文要跟着提亮
+          borderColor: t.palette.mode === 'dark' ? 'warning.700' : 'warning.200',
+        })}
       >
         <Box
           sx={{
@@ -133,19 +134,22 @@ const NotificationArchivePage: React.FC = () => {
             <Settings sx={{ width: 20, height: 20, color: 'warning.main', mr: 1 }} />
             <Typography
               variant='body2'
-              sx={{ fontWeight: 500, color: 'warning.900' }}
+              sx={(t) => ({
+                fontWeight: 500,
+                color: t.palette.mode === 'dark' ? 'warning.200' : 'warning.900',
+              })}
             >
               {i18n.t('pages.notification_archive_page.k0')}
             </Typography>
           </Box>
           <Box
-            sx={{
+            sx={(t) => ({
               display: 'flex',
               alignItems: 'center',
               gap: 3,
               fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-              color: 'warning.800',
-            }}
+              color: t.palette.mode === 'dark' ? 'warning.300' : 'warning.800',
+            })}
           >
             <span>{i18n.t('pages.notification_archive_page.k0')}</span>
             <span>{i18n.t('pages.notification_archive_page.k1')}</span>
@@ -249,7 +253,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
                   width: 16,
                   height: 16,
                   borderRadius: '50%',
-                  bgcolor: 'common.white',
+                  bgcolor: 'background.paper',
                   transition: 'transform 0.2s',
                   transform: formData.enabled ? 'translateX(20px)' : 'translateX(4px)',
                 }}
@@ -284,7 +288,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
             />
             <Typography
               variant='caption'
-              sx={{ color: 'grey.500', mt: 0.5, display: 'block' }}
+              sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}
             >
               {i18n.t('pages.notification_archive_page.k3')}
             </Typography>
@@ -317,7 +321,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
             />
             <Typography
               variant='caption'
-              sx={{ color: 'grey.500', mt: 0.5, display: 'block' }}
+              sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}
             >
               {i18n.t('pages.notification_archive_page.k5')}
             </Typography>
@@ -373,7 +377,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
               variant='caption'
               sx={{
                 fontWeight: 500,
-                color: 'grey.500',
+                color: 'text.secondary',
                 textTransform: 'uppercase',
                 mb: 0.5,
                 display: 'block',
@@ -388,7 +392,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
               variant='caption'
               sx={{
                 fontWeight: 500,
-                color: 'grey.500',
+                color: 'text.secondary',
                 textTransform: 'uppercase',
                 mb: 0.5,
                 display: 'block',
@@ -404,7 +408,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                 variant='caption'
                 sx={{
                   fontWeight: 500,
-                  color: 'grey.500',
+                  color: 'text.secondary',
                   textTransform: 'uppercase',
                   mb: 0.5,
                   display: 'block',
@@ -421,7 +425,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                 variant='caption'
                 sx={{
                   fontWeight: 500,
-                  color: 'grey.500',
+                  color: 'text.secondary',
                   textTransform: 'uppercase',
                   mb: 0.5,
                   display: 'block',
@@ -446,7 +450,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                 variant='caption'
                 sx={{
                   fontWeight: 500,
-                  color: 'grey.500',
+                  color: 'text.secondary',
                   textTransform: 'uppercase',
                   mb: 0.5,
                   display: 'block',
@@ -463,7 +467,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                 variant='caption'
                 sx={{
                   fontWeight: 500,
-                  color: 'grey.500',
+                  color: 'text.secondary',
                   textTransform: 'uppercase',
                   mb: 0.5,
                   display: 'block',
@@ -482,7 +486,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
                 variant='caption'
                 sx={{
                   fontWeight: 500,
-                  color: 'grey.500',
+                  color: 'text.secondary',
                   textTransform: 'uppercase',
                   mb: 0.5,
                   display: 'block',

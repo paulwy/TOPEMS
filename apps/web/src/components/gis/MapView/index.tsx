@@ -455,7 +455,7 @@ const MapView: React.FC<MapViewProps> = ({
             position: 'absolute',
             top: 16,
             left: 128,
-            backgroundColor: 'common.white',
+            backgroundColor: 'background.paper',
             borderRadius: 2,
             boxShadow: designTokens.shadows.md,
             padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
@@ -507,7 +507,7 @@ const MapView: React.FC<MapViewProps> = ({
           title={i18n.t('gis.index.k1')}
           sx={{
             padding: 1,
-            backgroundColor: 'common.white',
+            backgroundColor: 'background.paper',
             borderRadius: 2,
             boxShadow: designTokens.shadows.md,
             '&:hover': {
@@ -526,7 +526,7 @@ const MapView: React.FC<MapViewProps> = ({
           title={i18n.t('gis.index.k3')}
           sx={{
             padding: 1,
-            backgroundColor: 'common.white',
+            backgroundColor: 'background.paper',
             borderRadius: 2,
             boxShadow: designTokens.shadows.md,
             '&:hover': {
@@ -581,7 +581,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <Paper
             sx={{
-              backgroundColor: 'common.white',
+              backgroundColor: 'background.paper',
               borderRadius: 3,
               boxShadow: designTokens.shadows['2xl'],
               width: '90%',
@@ -619,7 +619,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <Paper
             sx={{
-              backgroundColor: 'common.white',
+              backgroundColor: 'background.paper',
               borderRadius: 3,
               boxShadow: designTokens.shadows['2xl'],
               width: '95%',

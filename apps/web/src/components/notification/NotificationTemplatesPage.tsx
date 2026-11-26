@@ -362,7 +362,7 @@ const NotificationTemplatesPage: React.FC = () => {
                 sx={{
                   width: 48,
                   height: 48,
-                  bgcolor: 'grey.500',
+                  bgcolor: 'text.secondary',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',

@@ -629,17 +629,33 @@ export default function CompanyStructurePage() {
       </Box>
 
       {/* 提示信息 */}
-      <Card sx={{ mt: 3, bgcolor: 'info.light', borderColor: 'info.main' }}>
+      <Card
+        sx={(t) => ({
+          mt: 3,
+          // 浅蓝底 + 深蓝字在暗色会互换，改成模式感知的淡底/亮字
+          bgcolor: t.palette.mode === 'dark' ? 'info.100' : 'info.50',
+          borderColor: 'info.main',
+        })}
+      >
         <CardContent>
           <Box sx={{ display: 'flex', gap: 1.5 }}>
             <AlertCircle sx={{ width: 20, height: 20, color: 'info.main' }} />
             <Box>
-              <Typography sx={{ fontWeight: 'medium', color: 'info.dark' }}>
+              <Typography
+                sx={(t) => ({
+                  fontWeight: 'medium',
+                  color: t.palette.mode === 'dark' ? 'info.300' : 'info.700',
+                })}
+              >
                 {t('iam.company_structure_page.k23')}
               </Typography>
               <Box
                 component='ul'
-                sx={{ mt: 1, pl: 2, color: 'info.dark' }}
+                sx={(t) => ({
+                  mt: 1,
+                  pl: 2,
+                  color: t.palette.mode === 'dark' ? 'info.300' : 'info.700',
+                })}
               >
                 <li>{t('iam.company_structure_page.k24')}</li>
                 <li>{t('iam.company_structure_page.k25')}</li>

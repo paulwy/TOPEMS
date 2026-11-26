@@ -318,7 +318,7 @@ export default function QmsEightDDetailPage() {
                           ? theme.palette.success[700]
                           : isCurrent
                             ? theme.palette.primary[700]
-                            : theme.palette.grey[500],
+                            : theme.palette.text.secondary,
                       }}
                     />
                   </Box>

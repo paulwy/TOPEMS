@@ -535,7 +535,7 @@ const DocumentsPage: React.FC = () => {
                 {i18n.t('doc.nav.doc-documents')}
               </Typography>
               {selectedFolder && (
-                <Typography sx={{ color: 'grey.500' }}>/ {selectedFolder.name}</Typography>
+                <Typography sx={{ color: 'text.secondary' }}>/ {selectedFolder.name}</Typography>
               )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

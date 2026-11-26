@@ -109,7 +109,7 @@ const ProductionCostPage: React.FC = () => {
       default:
         return (
           <Minus
-            color={theme.palette.grey[500]}
+            color={theme.palette.text.secondary}
             size={20}
           />
         );

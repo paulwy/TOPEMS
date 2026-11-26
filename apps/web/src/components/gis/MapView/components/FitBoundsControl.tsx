@@ -23,7 +23,7 @@ const FitBoundsControl: React.FC<{
       title={i18n.t('gis.fit_bounds_control.k1')}
       sx={{
         padding: 1,
-        backgroundColor: 'common.white',
+        backgroundColor: 'background.paper',
         borderRadius: 2,
         boxShadow: designTokens.shadows.md,
         '&:hover': {

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -205,7 +206,7 @@ const PluginUploadPage: React.FC = () => {
                       input: {
                         startAdornment: (
                           <InputAdornment position='start'>
-                            <Package sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                            <Package sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                           </InputAdornment>
                         ),
                       },
@@ -225,7 +226,7 @@ const PluginUploadPage: React.FC = () => {
                       input: {
                         startAdornment: (
                           <InputAdornment position='start'>
-                            <Tag sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                            <Tag sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                           </InputAdornment>
                         ),
                       },
@@ -271,7 +272,7 @@ const PluginUploadPage: React.FC = () => {
                             position='start'
                             sx={{ alignSelf: 'flex-start', mt: 1 }}
                           >
-                            <FileText sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                            <FileText sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                           </InputAdornment>
                         ),
                       },
@@ -289,7 +290,7 @@ const PluginUploadPage: React.FC = () => {
                       input: {
                         startAdornment: (
                           <InputAdornment position='start'>
-                            <Tag sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                            <Tag sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                           </InputAdornment>
                         ),
                       },
@@ -387,7 +388,7 @@ const PluginUploadPage: React.FC = () => {
                         input: {
                           startAdornment: (
                             <InputAdornment position='start'>
-                              <DollarSign sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                              <DollarSign sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                             </InputAdornment>
                           ),
                         },
@@ -520,8 +521,7 @@ const PluginUploadPage: React.FC = () => {
                           width: 56,
                           height: 56,
                           borderRadius: 3,
-                          background:
-                            'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+                          background: `linear-gradient(135deg, ${designTokens.colors.primary.light} 0%, ${designTokens.colors.primary.main} 100%)`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',

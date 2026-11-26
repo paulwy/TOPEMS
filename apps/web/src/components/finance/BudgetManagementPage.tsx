@@ -311,7 +311,7 @@ const BudgetManagementPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ mt: 0.5, color: 'grey.500' }}
+                  sx={{ mt: 0.5, color: 'text.secondary' }}
                 >
                   {t('finance.budget_management_page.e4')}
                 </Typography>
@@ -369,7 +369,7 @@ const BudgetManagementPage: React.FC = () => {
             </Box>
             <Typography
               variant='body2'
-              sx={{ color: 'grey.500' }}
+              sx={{ color: 'text.secondary' }}
             >
               {t('finance.budget_management_page.r1', { v1: ' ' })}
               <Box

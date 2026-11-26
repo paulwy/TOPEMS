@@ -27,7 +27,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
     >
       <Card
         sx={{
-          background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
+          background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.dark} 100%)`,
           border: 'none',
         }}
       >
@@ -186,7 +186,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
       </Card>
       <Card
         sx={{
-          background: 'linear-gradient(135deg, error.main 0%, error.dark 100%)',
+          background: `linear-gradient(135deg, ${designTokens.colors.error.main} 0%, ${designTokens.colors.error.dark} 100%)`,
           border: 'none',
         }}
       >

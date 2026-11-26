@@ -144,7 +144,7 @@ const Toast = ({ id, title, message, type, duration, removeNotification }: Toast
       <Button
         onClick={handleClose}
         sx={{
-          color: 'grey.500',
+          color: 'text.secondary',
           border: 'none',
           background: 'transparent',
           cursor: 'pointer',

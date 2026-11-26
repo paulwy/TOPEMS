@@ -39,7 +39,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
               width: 48,
               height: 48,
               borderRadius: 12,
-              background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.dark} 100%)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

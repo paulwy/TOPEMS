@@ -259,7 +259,7 @@ const NotificationStatsPage: React.FC = () => {
                   alignItems: 'center',
                   gap: 24,
                   fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                  color: 'grey.500',
+                  color: 'text.secondary',
                 }}
               >
                 <span>{i18n.t('pages.notification_stats_page.k0')}</span>

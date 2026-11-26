@@ -119,7 +119,7 @@ const DocumentGrid: React.FC<DocumentGridProps> = ({
               </Typography>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 <span>{item.updatedAt}</span>
               </Typography>

@@ -77,13 +77,13 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
                 width: 48,
                 height: 48,
                 borderRadius: 3,
-                backgroundColor: 'common.white',
+                backgroundColor: 'background.paper',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'backgroundColor 0.3s ease',
                 '&:hover': {
-                  backgroundColor: 'common.white',
+                  backgroundColor: 'background.paper',
                 },
                 boxShadow: `0 2px 8px ${designTokens.colors.action.selected}`,
               }}

@@ -81,7 +81,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
     return (
       <div
         style={{
-          backgroundColor: 'common.white',
+          backgroundColor: 'background.paper',
           padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
           borderRadius: 'md',
           boxShadow: designTokens.shadows.md,
@@ -263,7 +263,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
     return (
       <div
         style={{
-          backgroundColor: 'common.white',
+          backgroundColor: 'background.paper',
           borderRadius: 'lg',
           boxShadow: designTokens.shadows.sm,
           padding: 6,
@@ -654,7 +654,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
   return (
     <div
       style={{
-        backgroundColor: 'common.white',
+        backgroundColor: 'background.paper',
         borderRadius: 'lg',
         boxShadow: designTokens.shadows.sm,
         padding: 6,

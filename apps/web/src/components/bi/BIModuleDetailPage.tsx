@@ -288,7 +288,7 @@ const BIModuleDetailPage = () => {
   const config = moduleConfig[moduleId || 'rs'] || {
     name: i18n.t('bi.bi_module_detail_page.rd_mgmt_crumb'),
     icon: '📊',
-    color: 'grey.500',
+    color: 'text.secondary',
   };
   const moduleDataQuery = useQuery<ModuleData>({
     queryKey: [...QUERY_KEYS.AD_HOC.BI_MODULE_DETAIL_BASE, moduleId || 'rs'],

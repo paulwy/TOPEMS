@@ -103,7 +103,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
   return (
     <Paper
       sx={{
-        backgroundColor: 'common.white',
+        backgroundColor: 'background.paper',
         borderRadius: 3,
         border: '1px solid grey.200',
         overflow: 'hidden',

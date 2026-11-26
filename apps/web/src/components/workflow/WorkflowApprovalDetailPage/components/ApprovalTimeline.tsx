@@ -28,7 +28,7 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
         />
         <Typography
           variant='body2'
-          sx={{ color: 'grey.500' }}
+          sx={{ color: 'text.secondary' }}
         >
           {i18n.t('pages.approval_timeline.k0')}
         </Typography>
@@ -75,7 +75,7 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
             <User size={12} />
             <Typography
               variant='caption'
-              sx={{ color: 'grey.500' }}
+              sx={{ color: 'text.secondary' }}
             >
               {record.actor_name || record.actor_id}
             </Typography>
@@ -87,7 +87,7 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
             <Clock size={12} />
             <Typography
               variant='caption'
-              sx={{ color: 'grey.500' }}
+              sx={{ color: 'text.secondary' }}
             >
               {new Date(record.created_at).toLocaleString()}
             </Typography>
@@ -122,7 +122,7 @@ export const TimelineTabContent: React.FC<{
     <Box>
       <Typography
         variant='body2'
-        sx={{ color: 'grey.500', mb: 2 }}
+        sx={{ color: 'text.secondary', mb: 2 }}
       >
         {i18n.t('pages.approval_timeline.k2')}
       </Typography>
@@ -137,7 +137,7 @@ export const TimelineTabContent: React.FC<{
               marginBottom: 8,
             }}
           />
-          <Typography sx={{ color: 'grey.500' }}>
+          <Typography sx={{ color: 'text.secondary' }}>
             {i18n.t('workflow.approval_timeline.k2')}
           </Typography>
         </Box>
@@ -182,7 +182,7 @@ export const TimelineTabContent: React.FC<{
                 </Typography>
                 <Typography
                   variant='caption'
-                  sx={{ color: 'grey.500' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   {i18n.t('pages.approval_timeline.k4')}:{' '}
                   {approval?.assignee_id || i18n.t('workflow.approval_timeline.k3')}
@@ -247,7 +247,7 @@ export const TimelineTabContent: React.FC<{
                     >
                       <User
                         size={14}
-                        style={{ color: theme.palette.grey[500] }}
+                        style={{ color: theme.palette.text.secondary }}
                       />
                       <Typography
                         variant='caption'
@@ -267,7 +267,7 @@ export const TimelineTabContent: React.FC<{
                       />
                       <Typography
                         variant='caption'
-                        sx={{ color: 'grey.500' }}
+                        sx={{ color: 'text.secondary' }}
                       >
                         {new Date(record.created_at).toLocaleString()}
                       </Typography>
@@ -325,7 +325,7 @@ export const TimelineTabContent: React.FC<{
                   </Typography>
                   <Typography
                     variant='caption'
-                    sx={{ color: 'grey.500' }}
+                    sx={{ color: 'text.secondary' }}
                   >
                     {i18n.t('pages.approval_timeline.k6')}: {approval.assignee_id || 'N/A'}
                   </Typography>
@@ -358,7 +358,7 @@ export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Th
     <Box>
       <Typography
         variant='body2'
-        sx={{ color: 'grey.500', mb: 2 }}
+        sx={{ color: 'text.secondary', mb: 2 }}
       >
         {i18n.t('pages.approval_timeline.k8')}
       </Typography>
@@ -377,7 +377,7 @@ export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Th
             >
               <Typography
                 variant='caption'
-                sx={{ color: 'grey.500', fontWeight: 600, display: 'block', mb: 0.5 }}
+                sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}
               >
                 {key}
               </Typography>
@@ -396,7 +396,7 @@ export const FormDataTabContent: React.FC<{ approval: Approval | null; theme: Th
               marginBottom: 8,
             }}
           />
-          <Typography sx={{ color: 'grey.500' }}>
+          <Typography sx={{ color: 'text.secondary' }}>
             {i18n.t('workflow.approval_timeline.k6')}
           </Typography>
           <Typography

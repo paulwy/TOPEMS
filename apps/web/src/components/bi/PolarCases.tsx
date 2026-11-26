@@ -35,7 +35,7 @@ const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, payload }) =
     return (
       <div
         style={{
-          backgroundColor: 'common.white',
+          backgroundColor: 'background.paper',
           padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
           borderRadius: 'md',
           boxShadow: designTokens.shadows.md,

@@ -446,7 +446,7 @@ const SupplierDetailPage: React.FC = () => {
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
-          <Typography sx={{ color: 'grey.500' }}>
+          <Typography sx={{ color: 'text.secondary' }}>
             {t('wms.supplier_detail_page.supplier_not_exist')}
           </Typography>
           <Button

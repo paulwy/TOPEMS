@@ -258,7 +258,7 @@ const BIComparisonPage = () => {
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Filter sx={{ color: 'grey.500' }} />
+              <Filter sx={{ color: 'text.secondary' }} />
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 600, color: 'grey.700' }}

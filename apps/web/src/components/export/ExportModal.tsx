@@ -191,7 +191,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     >
       <Box
         sx={{
-          backgroundColor: 'common.white',
+          backgroundColor: 'background.paper',
           borderRadius: '0.75rem',
           boxShadow: designTokens.shadows['2xl'],
           width: '100%',
@@ -202,7 +202,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
           sx={{
             padding: 3,
             borderBottom: '1px solid border.default',
-            background: 'linear-gradient(90deg, success.light, success.light)',
+            background: `linear-gradient(90deg, ${designTokens.colors.success.light}, ${designTokens.colors.success.light})`,
           }}
         >
           <Box

@@ -192,7 +192,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
         </Typography>
         <Typography
           variant='body2'
-          sx={{ color: 'grey.500' }}
+          sx={{ color: 'text.secondary' }}
         >
           {i18n.t('pages.document_list.k2')}
         </Typography>
@@ -301,7 +301,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                   </Typography>
                   <Typography
                     variant='body2'
-                    sx={{ color: 'grey.500' }}
+                    sx={{ color: 'text.secondary' }}
                   >
                     <span>{item.updatedAt}</span>
                   </Typography>
@@ -342,7 +342,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         textAlign: 'left',
                         fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
-                        color: theme.palette.grey[500],
+                        color: theme.palette.text.secondary,
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                       }}
@@ -355,7 +355,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         textAlign: 'left',
                         fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
-                        color: theme.palette.grey[500],
+                        color: theme.palette.text.secondary,
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                       }}
@@ -368,7 +368,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         textAlign: 'left',
                         fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
-                        color: theme.palette.grey[500],
+                        color: theme.palette.text.secondary,
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                       }}
@@ -381,7 +381,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         textAlign: 'left',
                         fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                         fontWeight: 500,
-                        color: theme.palette.grey[500],
+                        color: theme.palette.text.secondary,
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                       }}
@@ -436,7 +436,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                             padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
                             fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                            color: theme.palette.grey[500],
+                            color: theme.palette.text.secondary,
                           }}
                         >
                           -
@@ -446,7 +446,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                             padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
                             fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                            color: theme.palette.grey[500],
+                            color: theme.palette.text.secondary,
                           }}
                         >
                           {item.updatedAt}
@@ -528,7 +528,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                             padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
                             fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                            color: theme.palette.grey[500],
+                            color: theme.palette.text.secondary,
                           }}
                         >
                           {item.size || '-'}
@@ -538,7 +538,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                             padding: `${designTokens.spacing.md} ${designTokens.spacing.lg}px`,
                             whiteSpace: 'nowrap',
                             fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                            color: theme.palette.grey[500],
+                            color: theme.palette.text.secondary,
                           }}
                         >
                           {item.updatedAt}

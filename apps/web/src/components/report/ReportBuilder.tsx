@@ -251,7 +251,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
   const renderHeader = () => (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
+        background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.light} 100%)`,
         color: 'common.white',
         p: 3,
       }}
@@ -433,7 +433,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{type.name}</Typography>
               <Typography
                 variant='caption'
-                sx={{ color: 'grey.500', mt: 0.5 }}
+                sx={{ color: 'text.secondary', mt: 0.5 }}
               >
                 {type.module}
               </Typography>
@@ -636,7 +636,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           )}
           <Typography
             variant='body2'
-            sx={{ color: 'grey.500' }}
+            sx={{ color: 'text.secondary' }}
           >
             {i18n.t('pages.report_builder.k3')} {formData.selectedColumns.length}{' '}
             {i18n.t('pages.report_builder.k4')}
@@ -686,7 +686,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: 'grey.500', mt: 0.5 }}
+                sx={{ color: 'text.secondary', mt: 0.5 }}
               >
                 {format === 'excel' && i18n.t('pages.report_builder.xlsx_2')}
                 {format === 'pdf' && i18n.t('pages.report_builder.pdf_3')}

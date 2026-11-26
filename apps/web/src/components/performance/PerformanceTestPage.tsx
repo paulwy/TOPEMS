@@ -632,7 +632,7 @@ const PerformanceTestPage: React.FC = () => {
                 <div
                   style={{
                     fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                    color: 'grey.500',
+                    color: 'text.secondary',
                   }}
                 >
                   {metric.description}
@@ -675,7 +675,7 @@ const PerformanceTestPage: React.FC = () => {
                   <div
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'grey.500',
+                      color: 'text.secondary',
                     }}
                   >
                     {t('performance.performance_test_page.k25')}
@@ -686,7 +686,7 @@ const PerformanceTestPage: React.FC = () => {
                   <div
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'grey.500',
+                      color: 'text.secondary',
                     }}
                   >
                     {t('performance.performance_test_page.k26')}
@@ -699,7 +699,7 @@ const PerformanceTestPage: React.FC = () => {
                   <div
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'grey.500',
+                      color: 'text.secondary',
                     }}
                   >
                     {t('performance.performance_test_page.k28')}
@@ -712,7 +712,7 @@ const PerformanceTestPage: React.FC = () => {
                   <div
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'grey.500',
+                      color: 'text.secondary',
                     }}
                   >
                     {t('performance.performance_test_page.k30')}

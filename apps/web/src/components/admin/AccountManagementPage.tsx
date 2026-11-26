@@ -363,7 +363,8 @@ const AccountManagementPage: React.FC = () => {
             <Box
               key={stat.label}
               sx={{
-                bgcolor: 'common.white',
+                // 暗色下白底会和 text.secondary 的浅字同色，改用主题纸面色
+                bgcolor: 'background.paper',
                 borderRadius: 2,
                 p: 3,
               }}

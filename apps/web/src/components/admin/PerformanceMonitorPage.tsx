@@ -138,7 +138,15 @@ const PerformanceMonitorPage: React.FC = () => {
           label: i18n.t('admin.performance_monitor_page.column_status'),
           render: (value: unknown) =>
             value === 'success' ? (
-              <span style={{ color: theme.palette.success[500], fontWeight: 500 }}>
+              <span
+                style={{
+                  color:
+                    theme.palette.mode === 'dark'
+                      ? theme.palette.success[400]
+                      : theme.palette.success[700],
+                  fontWeight: 500,
+                }}
+              >
                 {i18n.t('admin.performance_monitor_page.status_success')}
               </span>
             ) : (
@@ -187,7 +195,7 @@ const PerformanceMonitorPage: React.FC = () => {
       {/* 页面性能指标 */}
       <div
         style={{
-          backgroundColor: 'common.white',
+          backgroundColor: theme.palette.background.paper,
           borderRadius: 8,
           padding: 24,
           marginBottom: 12,
@@ -207,7 +215,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div className={styles.il5}>
             <span
               style={{
-                color: theme.palette.grey[500],
+                color: theme.palette.text.secondary,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -218,7 +226,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div className={styles.il7}>
             <span
               style={{
-                color: theme.palette.grey[500],
+                color: theme.palette.text.secondary,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -229,7 +237,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div className={styles.il9}>
             <span
               style={{
-                color: theme.palette.grey[500],
+                color: theme.palette.text.secondary,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -240,7 +248,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div className={styles.il11}>
             <span
               style={{
-                color: theme.palette.grey[500],
+                color: theme.palette.text.secondary,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -253,7 +261,7 @@ const PerformanceMonitorPage: React.FC = () => {
       {/* 慢 API 调用 */}
       <div
         style={{
-          backgroundColor: 'common.white',
+          backgroundColor: theme.palette.background.paper,
           borderRadius: 8,
           padding: 24,
           marginBottom: 12,
@@ -273,7 +281,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div className={styles.il14}>
             <span
               style={{
-                color: theme.palette.grey[500],
+                color: theme.palette.text.secondary,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -293,7 +301,7 @@ const PerformanceMonitorPage: React.FC = () => {
             />
             <span
               style={{
-                color: theme.palette.grey[500],
+                color: theme.palette.text.secondary,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -304,9 +312,17 @@ const PerformanceMonitorPage: React.FC = () => {
         {slowCalls.length === 0 ? (
           <div className={styles.il15}>
             <CheckCircle
-              style={{ width: 48, height: 48, color: theme.palette.success[500], marginBottom: 8 }}
+              style={{
+                width: 48,
+                height: 48,
+                color:
+                  theme.palette.mode === 'dark'
+                    ? theme.palette.success[400]
+                    : theme.palette.success[700],
+                marginBottom: 8,
+              }}
             />
-            <p style={{ color: theme.palette.grey[500] }}>
+            <p style={{ color: theme.palette.text.secondary }}>
               {i18n.t('admin.performance_monitor_page.no_slow_api')}
             </p>
           </div>
@@ -329,7 +345,7 @@ const PerformanceMonitorPage: React.FC = () => {
                   <p
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                      color: theme.palette.grey[500],
+                      color: theme.palette.text.secondary,
                       margin: `${designTokens.spacing.xs} 0 0`,
                     }}
                   >
@@ -344,7 +360,10 @@ const PerformanceMonitorPage: React.FC = () => {
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                       margin: `${designTokens.spacing.xs} 0 0`,
-                      color: call.status === 'success' ? 'success.main' : 'error.main',
+                      color:
+                        call.status === 'success'
+                          ? theme.palette.success.main
+                          : theme.palette.error.main,
                     }}
                   >
                     {call.status === 'success'
@@ -383,7 +402,7 @@ const PerformanceMonitorPage: React.FC = () => {
                 alignItems: 'center',
                 gap: 8,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color: 'grey.500',
+                color: 'text.secondary',
               }}
             >
               <input

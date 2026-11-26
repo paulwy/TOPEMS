@@ -605,7 +605,7 @@ const BIVisualizationPage = () => {
         <CardContent
           sx={{
             flex: 1,
-            bgcolor: 'common.white',
+            bgcolor: 'background.paper',
             borderRadius: 1,
             m: 1,
             overflow: 'auto',

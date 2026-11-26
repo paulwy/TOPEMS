@@ -45,7 +45,7 @@ export default function HrmPositionPage() {
           {typeof row.code === 'string' && row.code && (
             <Typography
               variant='caption'
-              sx={{ color: 'grey.500' }}
+              sx={{ color: 'text.secondary' }}
             >
               {row.code}
             </Typography>

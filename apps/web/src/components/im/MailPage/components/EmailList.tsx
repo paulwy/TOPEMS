@@ -228,7 +228,7 @@ const EmailList: React.FC<EmailListProps> = ({
                   },
                 }}
               />
-              <Typography sx={{ mt: 1, color: 'grey.500' }}>
+              <Typography sx={{ mt: 1, color: 'text.secondary' }}>
                 {t('im.mail_page_components_email_list.m2')}
               </Typography>
             </Box>
@@ -239,7 +239,7 @@ const EmailList: React.FC<EmailListProps> = ({
                 color='text.disabled'
                 className={styles.il1}
               />
-              <Typography sx={{ color: 'grey.500' }}>{t('im.email_list.k6')}</Typography>
+              <Typography sx={{ color: 'text.secondary' }}>{t('im.email_list.k6')}</Typography>
             </Box>
           ) : (
             <Box sx={{ overflowX: 'auto' }}>
@@ -260,7 +260,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         py: 1.5,
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
-                        color: 'grey.500',
+                        color: 'text.secondary',
                         width: 48,
                       }}
                     >
@@ -289,7 +289,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         py: 1.5,
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
-                        color: 'grey.500',
+                        color: 'text.secondary',
                       }}
                     >
                       {t('im.mail_page_components_email_list.e3')}
@@ -302,7 +302,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         py: 1.5,
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
-                        color: 'grey.500',
+                        color: 'text.secondary',
                       }}
                     >
                       {t('im.mail_page_components_email_detail_dialog.e2')}
@@ -315,7 +315,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         py: 1.5,
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
-                        color: 'grey.500',
+                        color: 'text.secondary',
                       }}
                     >
                       {t('im.mail_page_components_email_detail_dialog.e1')}
@@ -328,7 +328,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         py: 1.5,
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
-                        color: 'grey.500',
+                        color: 'text.secondary',
                       }}
                     >
                       {t('im.mail_page_components_email_list.e6')}
@@ -341,7 +341,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         py: 1.5,
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
-                        color: 'grey.500',
+                        color: 'text.secondary',
                       }}
                     >
                       {t('im.mail_page_components_email_detail_dialog.e5')}
@@ -354,7 +354,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         py: 1.5,
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
-                        color: 'grey.500',
+                        color: 'text.secondary',
                       }}
                     >
                       {t('im.mail_page_components_email_detail_dialog.e6')}
@@ -367,7 +367,7 @@ const EmailList: React.FC<EmailListProps> = ({
                         py: 1.5,
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                         fontWeight: 500,
-                        color: 'grey.500',
+                        color: 'text.secondary',
                       }}
                     >
                       {t('im.mail_page_components_email_list.e9')}
@@ -552,7 +552,7 @@ const EmailList: React.FC<EmailListProps> = ({
           >
             <Typography
               variant='body2'
-              sx={{ color: 'grey.500' }}
+              sx={{ color: 'text.secondary' }}
             >
               {t('im.mail_page_components_email_list.r2', { v1: totalEmails })}
             </Typography>

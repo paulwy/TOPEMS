@@ -229,7 +229,7 @@ const DocumentKnowledgeBasePage: React.FC = () => {
             >
               <FileText
                 size={14}
-                style={{ color: theme.palette.grey[500] }}
+                style={{ color: theme.palette.text.secondary }}
               />
             </Box>
           ),

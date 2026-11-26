@@ -63,7 +63,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         position: 'absolute',
         top: 16,
         left: 16,
-        backgroundColor: 'common.white',
+        backgroundColor: 'background.paper',
         borderRadius: 2,
         boxShadow: designTokens.shadows.md,
         overflow: 'hidden',

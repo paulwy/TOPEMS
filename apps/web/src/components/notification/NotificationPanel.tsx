@@ -143,7 +143,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         top: '100%',
         marginTop: 8,
         width: 384,
-        backgroundColor: 'common.white',
+        backgroundColor: 'background.paper',
         borderRadius: 8,
         boxShadow: designTokens.shadows['2xl'],
         border: '1px solid grey.200',

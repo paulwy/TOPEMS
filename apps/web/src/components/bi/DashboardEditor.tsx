@@ -484,7 +484,7 @@ export const DashboardEditor: React.FC<{
           sx={{
             position: 'relative',
             minHeight: GRID_ROWS * CELL_HEIGHT,
-            backgroundColor: 'common.white',
+            backgroundColor: 'background.paper',
             borderRadius: 3,
             boxShadow: 1,
             overflow: 'hidden',
@@ -531,7 +531,7 @@ export const DashboardEditor: React.FC<{
                 width: widget.w * CELL_WIDTH - 8,
                 height: widget.h * CELL_HEIGHT - 8,
                 margin: 4,
-                backgroundColor: 'common.white',
+                backgroundColor: 'background.paper',
                 borderRadius: 1.5,
                 boxShadow:
                   selectedWidgetId === widget.id

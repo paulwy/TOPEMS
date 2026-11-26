@@ -101,7 +101,7 @@ const TenantSettingsPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     primary_color: 'primary.main',
-    secondary_color: 'grey.500',
+    secondary_color: 'text.secondary',
     custom_domain: '',
     sso_enabled: false,
     two_factor_required: false,

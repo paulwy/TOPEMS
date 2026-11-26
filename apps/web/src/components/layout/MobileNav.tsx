@@ -235,7 +235,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             justifyContent: 'space-between',
             borderBottom: 1,
             borderColor: 'divider',
-            background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.secondary.main} 100%)`,
             color: 'common.white',
           }}
         >

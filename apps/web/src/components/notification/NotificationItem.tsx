@@ -168,7 +168,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: 'grey.500' }}
+            style={{ width: 20, height: 20, color: 'text.secondary' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'

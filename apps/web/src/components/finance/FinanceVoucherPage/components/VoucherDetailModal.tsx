@@ -44,7 +44,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
             <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('finance.finance_voucher_page_components_voucher_detail_modal.e1')}
               </Typography>
@@ -58,7 +58,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
             <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('finance.finance_voucher_page_components_voucher_detail_modal.e2')}
               </Typography>
@@ -72,7 +72,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
             <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('finance.finance_voucher_page_components_voucher_detail_modal.e3')}
               </Typography>
@@ -86,7 +86,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
             <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('finance.finance_approval_config_page.e2')}
               </Typography>
@@ -96,7 +96,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
           <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
             <Typography
               variant='body2'
-              sx={{ color: 'grey.500' }}
+              sx={{ color: 'text.secondary' }}
             >
               {t('finance.finance_voucher_page_components_voucher_detail_modal.e5')}
             </Typography>
@@ -117,7 +117,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
             <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('finance.finance_voucher_page_components_voucher_detail_modal.e6')}
               </Typography>
@@ -131,7 +131,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
             <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {t('finance.finance_voucher_page_components_voucher_detail_modal.e7')}
               </Typography>
@@ -208,7 +208,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
               <Box sx={{ textAlign: 'right' }}>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   {t('finance.finance_voucher_page_components_voucher_detail_modal.e9')}
                 </Typography>
@@ -222,7 +222,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
               <Box sx={{ textAlign: 'right' }}>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   {t('finance.finance_voucher_page_components_voucher_detail_modal.e10')}
                 </Typography>

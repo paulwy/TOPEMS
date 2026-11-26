@@ -68,7 +68,13 @@ const AnnouncementStats: React.FC = () => {
       {stats.map((stat) => (
         <Box
           key={stat.label}
-          sx={{ p: 2, bgcolor: stat.color, borderRadius: 3 }}
+          sx={(t) => ({
+            p: 2,
+            // 实色浅阶在暗色下会和 text.secondary 撞成同色，改为中性底 + 语义左边框
+            bgcolor: 'action.hover',
+            borderRadius: 3,
+            borderLeft: `3px solid ${(t.palette as unknown as Record<string, { main: string }>)[stat.textColor.split('.')[0]]?.main ?? t.palette.text.secondary}`,
+          })}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Bell
@@ -84,7 +90,7 @@ const AnnouncementStats: React.FC = () => {
           </Box>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: stat.textColor }}
+            sx={{ fontWeight: 700, color: 'text.primary' }}
           >
             {stat.value}
           </Typography>

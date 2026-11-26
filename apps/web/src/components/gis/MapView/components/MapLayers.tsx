@@ -94,7 +94,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
               >
                 <Paper
                   sx={{
-                    backgroundColor: 'common.white',
+                    backgroundColor: 'background.paper',
                     padding: `${designTokens.spacing.sm} 12px`,
                     borderRadius: 2,
                     boxShadow: designTokens.shadows.lg,
