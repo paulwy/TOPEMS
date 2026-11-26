@@ -23,7 +23,9 @@ pub struct UpdateFeatureFlagRequest {
     ),
     security(("BearerAuth" = []))
 )]
-pub(crate) async fn list_feature_flags(State(state): State<AppState>) -> Json<ApiResponse<Vec<FeatureFlag>>> {
+pub(crate) async fn list_feature_flags(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<FeatureFlag>>> {
     let flags = state.feature_flag_service.list_all();
     Json(api_success(flags))
 }
