@@ -189,7 +189,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
   ws check                检查 WebSocket 连接状态
 
   deploy                  生产部署（systemd 范式，需 .env.production；docker 部署见 scripts/deploy/docker/topems-docker.sh）
-  reset-password [用户] [密码]  重置用户密码（密码必填，无默认弱口令；update-password 为别名）
+  reset-password [用户] [密码] [--no-verify]  重置用户密码（密码必填；默认做端到端登录验证，update-password 为别名）
   env-sync [--write]      同步本地 env 凭据（.env 为唯一信源 → .env.local / config/standalone.env；默认仅预览）
 
 自动预检（主流程入口自动执行，磁盘 <5GiB 会阻断）:
@@ -481,7 +481,8 @@ case "${1:-help}" in
             exit 1
         fi
         info "调用密码重置脚本..."
-        "$SCRIPT_DIR/dev/update-admin-password.sh" -y "$2" "$3"
+        # 2026-11-26: 透传尾部可选参数（--no-verify / --verify-url <URL>），-y 固定注入
+        "$SCRIPT_DIR/dev/update-admin-password.sh" -y "$2" "$3" "${@:4}"
         ;;
     help|--help|-h)
         show_help

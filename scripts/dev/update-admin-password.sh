@@ -94,16 +94,30 @@ fi
 
 # -y/--yes：跳过交互确认（供 topems.sh 等非交互调用链使用；默认仍需人工确认）
 ASSUME_YES=0
+# 端到端登录验证：默认打 core 登录接口；--no-verify 跳过；--verify-url 可覆盖
+SKIP_VERIFY=0
+VERIFY_URL="${VERIFY_URL:-http://127.0.0.1:${CORE_PORT:-8000}/api/core/iam/auth/login}"
+POSITIONAL=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -y|--yes) ASSUME_YES=1; shift ;;
+        --no-verify|--skip-verify) SKIP_VERIFY=1; shift ;;
+        --verify-url) VERIFY_URL="${2:?--verify-url 需要 URL}"; shift 2 ;;
         -h|--help)
-            echo "用法: [DB_PASSWORD='<口令>'] $0 [-y] <用户名> <新密码>"
-            echo "  -y, --yes   跳过交互确认直接执行"
+            echo "用法: [DB_PASSWORD='<口令>'] $0 [-y] [--no-verify] [--verify-url <URL>] <用户名> <新密码>"
+            echo "  -y, --yes        跳过交互确认直接执行"
+            echo "  --no-verify      跳过端到端登录验证（默认会打 core 登录接口）"
+            echo "  --verify-url     指定登录接口（默认 \${VERIFY_URL:-http://127.0.0.1:8000/api/core/iam/auth/login}）"
             exit 0 ;;
-        *) break ;;
+        # 选项可出现在任意位置（topems.sh 会把 -y 前置、其余追加在后），统一收进 POSITIONAL
+        *) POSITIONAL+=("$1"); shift ;;
     esac
 done
+if [ "${#POSITIONAL[@]}" -gt 0 ]; then
+    set -- "${POSITIONAL[@]}"
+else
+    set --
+fi
 
 # 用户名与密码均为必填（不再提供 admin/admin123 默认弱口令）
 USERNAME="${1:?用法: $0 [-y] <用户名> <新密码>}"
@@ -229,6 +243,41 @@ run_sql "SELECT username, email,
        updated_at
 FROM core_users
 WHERE username = :'username';" -v username="$USERNAME"
+echo
+
+echo "------------------------------------------------------------"
+echo "步骤 4: 端到端登录验证"
+echo "------------------------------------------------------------"
+# 哈希写进库 ≠ 账号能登录：哈希算法、must_change_password、租户 GUC 任一不一致都会导致
+# 重置“成功”但登录失败。默认打一次 core 登录接口；服务不可达则跳过（不阻断重置）。
+if [ "$SKIP_VERIFY" -eq 1 ]; then
+    echo "已按 --no-verify 跳过登录验证"
+elif ! command -v curl &> /dev/null; then
+    echo "⚠️  未安装 curl，跳过登录验证"
+else
+    LOGIN_JSON=$(python3 -c 'import json,sys; print(json.dumps({"username": sys.argv[1], "password": sys.argv[2]}))' \
+        "$USERNAME" "$NEW_PASSWORD")
+    LOGIN_HTTP=$(curl -s -m 10 -o /tmp/.topems_login_check.$$ -w '%{http_code}' \
+        -X POST "$VERIFY_URL" -H 'Content-Type: application/json' -d "$LOGIN_JSON" 2>/dev/null) || LOGIN_HTTP=""
+    if [ -z "$LOGIN_HTTP" ]; then
+        LOGIN_HTTP="000"
+    fi
+    if [ "$LOGIN_HTTP" = "000" ]; then
+        echo "⚠️  登录接口不可达（${VERIFY_URL}），跳过验证；库内哈希已写入"
+    elif [ "$LOGIN_HTTP" = "200" ] && grep -q '"success":true' /tmp/.topems_login_check.$$ 2>/dev/null; then
+        echo "✓ 登录验证通过（${VERIFY_URL} 返回 200/success）"
+    else
+        echo "❌ 登录验证失败（HTTP ${LOGIN_HTTP}）：哈希已写入但认证未通过"
+        if [ "$LOGIN_HTTP" = "404" ] || [ "$LOGIN_HTTP" = "405" ]; then
+            echo "   接口路径可能不符：用 --verify-url 指定正确地址，或 --no-verify 跳过校验"
+        fi
+        echo "   排查：服务是否用同一 JWT/租户配置、must_change_password、RLS 会话 GUC"
+        rm -f /tmp/.topems_login_check.$$
+        unset PGPASSWORD
+        exit 1
+    fi
+    rm -f /tmp/.topems_login_check.$$
+fi
 echo
 
 echo "============================================================"
