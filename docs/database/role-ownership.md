@@ -124,6 +124,24 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 
 ⑬ **超管单数 `role` 字段口径只读复核（2026-11-26，无代码改动、未改库/未动账本）**。承接 ⑫ 遗留项，甄别单数 `role` 是否承载鉴权语义、是否需对齐 DB 角色目录。**结构分两类**：① **JWT Claims.role**（`iam/auth.rs:426/971`，`tenant_scope.rs:422` 测试辅助）：令牌载荷二值 `admin`/`user`；② **UserResponse.role**（回显响应 6 处：`profile.rs:244`、`profile_ext.rs:101/334/686`、`crud.rs:178/672`、`roles.rs:265`）：超管 `"admin"`，非超管 `roles.first()`。**鉴权不依赖单数 role**：后端全仓无 `claims.role`/`UserResponse.role` 读取比较点，授权走 `is_superuser` 布尔 + `permissions` 码 + `roles` 数组；前端真实守卫 `useAuth.hasRole`（`useAuth.tsx:486`）= `is_superuser || roles.includes(role)` 走**数组**，`useRole.isAdmin/getRoleName/currentRole` 同样优先 `is_superuser`；旧 `session.hasRole`（`session.ts:106`）读单数 role 但业务零调用（仅单测引用）。**展示消费（纯兜底标签）**：`ProfileTabBar.tsx:112`、`MobileProfilePage.tsx:66` 直接取 `user.role` 展示；`useProfile.ts:159`/`ProfilePage.tsx:146` 映射进会话模型；前端角色标签文案主要由 `useRole.currentRole`（基于 `is_superuser`/数组）独立本地化产出，不读后端单数 role；前端其余 `role ===` 比较均为 AI 聊天 `msg.role`（user/assistant 对话角色），与 IAM 无关。**DB 目录核对**：`admin` 在本机/prod `core_roles` 均为合法角色名（本机另有 `superadmin`，prod 无），超管占位 `"admin"` 落在目录内、非目录外方言；但超管（`is_superuser`）与 admin 角色绑定是两回事，`"admin"` 本质是首要角色标签占位。**处置口径（待拍板）**：**A 维持现状（推荐）**——保留超管 `"admin"` 占位：不参与鉴权、`admin` 为目录合法名、展示文案由前端 `useRole` 本地化产出，后端 role 仅兜底；改目录首项语义错误（prod/本机首角色不同，超管不等于该角色）。**B 对齐目录首项**——超管 role 取 `superuser_role_names().first()`：超管未绑角色，首项为目录排序首角色，展示误导，不推荐。**C 语义化拆分**——响应去掉单数 `role` 冗余字段、前端展示统一改 `useRole.currentRole`，并评估移除 JWT 二值 `Claims.role`；属前后端契约改动，单列批次。**关联死代码候选**：旧 `session.hasRole` 业务零调用，可随 C 一并清理；`Claims.role` 移除前须先确认下游服务/旧令牌解析是否读取。
 
+⑭ **IAM 目录统一专项（#36）收口梳理与遗留清单（2026-11-26，口径 A 定稿；无代码改动、未改库/未动账本）**。**定稿**：超管单数 `role` 字段按口径 A 维持 `"admin"` 占位（见 ⑬），不改代码、不拆契约。**本专项已闭环批次**：IAM-1 反范式列读取点切关联表聚合；IAM-2 方言码目录/兜底/回显改名；IAM-3 DROP 三列迁移定稿 + 绑定一致性普查；IAM-2b 未接线死代码鉴权分支删除；IAM-3a 迁移本机 replay 验证；IAM-3b 测试夹具改造；#43 另批债普查落档；IAM-2c 超管 permissions 切 DB 全量；IAM-2d 内存目录死代码清理；IAM-2e 超管 roles 切 DB 全量；单数 role 口径复核（本小节）。**开放遗留（按类别，2026-11-26 双库实测复核成立）**：
+
+- **L1 待独立 replay 窗口投放（本轮不投放；唯一入口 `scripts/migration/apply-forward.sh --prod`，禁 `sqlx migrate run`）**：① `20261126160000_iam_tenant_permissions_rls_fail_closed.sql`（tenant_permissions fail-closed 加固）；② `20261126170000_drop_iam_users_legacy_columns.sql`（DROP `iam.users.roles/permissions/role_id` 三列，ticket `IAM-LEGACY-20261126`，destructive-expires `2027-05-25`）。两迁移两库账本均未记账（本机 max `20261124150000`、prod max `20261126110000`）；投放后做 db-tests 全量认证/授权回归；本机账本滞后、5433 验证实例不可达不在本轮强跑。
+
+- **L2 本机重复绑定去重（dev 独有，prod 干净）**：本机 `core_role_permissions` superadmin **3414 行/去重 343**（冗余 3071、同对最大 38 次）、admin **1048/345**（冗余 703、38 次）；prod 15 角色重复全 0。定性为本机种子重放残留（同一 `(role_id,permission_id)` 未 `ON CONFLICT` 重复插入）；可写幂等去重迁移（每组保留一条），供新库/夹具重放防复发；prod 无需处置。
+
+- **L3 本机目录种子补基线（账本滞后）**：本机 `core_permissions` **355** 码、prod **1162** 码；本机 355 全为 prod 子集。prod 独有 807 中 774 在前端基线 `permissions.ts` 1033 码内，本机账本水位滞后 replay 种子补齐即可消。
+
+- **L4 33 orphan 码补 DB 种子（运行期真实使用、未进迁移基线）**：19 个两级聚合码（`module:action`，如 `finance:read`/`system:read`/`rd:admin`/`master-data:write`）+ 14 个三级码（`lims:test-method:read`、`master-data:*` 13 个）；多数被 Rust/前端引用。方向是补 DB 种子迁移纳入基线，**非清理 prod 残留**。
+
+- **L5 空权普通用户业务授权确认（待业务口径，本轮不补权）**：prod 活跃 `chi`/`wangy` 普通用户两边一致地空；授权归属待业务确认。prod 活跃现状实测：`admin`（超管，绑 admin）、`reviewer`（超管，空绑定——漂移 A，定稿不补）、`tenant_admin`（绑 tenant_admin）、`chi`/`wangy`（空权）。
+
+- **L6 旧表/岗位角色绑定处置（另议，涉及岗位模块接口改造）**：旧 `iam.roles` 空壳（prod 4 行占位、本机 0 行），无 Rust/前端业务读、无视图/函数依赖；`position_roles` 非死表（`position.rs` 运行期 INSERT/SELECT/DELETE），但 `role_id` FK 误指旧 `iam.roles`，而前端岗位绑定传 `core_roles` UUID；表两库均 0 行、功能未实际产数。处置二选一：FK 修正指向 `core_roles` 并入 `core_user_roles` 范式，或岗位角色绑定功能下线。`users_role_id_fkey` 已纳入 L1 迁移 170000 待 DROP；`position_roles_role_id_fkey` 本项另议。
+
+- **L7 口径 C 契约拆分（候选批次，未拍板启动）**：响应去掉冗余单数 `role` 字段、前端展示统一改 `useRole.currentRole`，并评估移除 JWT 二值 `Claims.role`；当前定稿口径 A 维持占位。**L8 旧 `session.hasRole` 死代码**：业务零调用（仅单测引用），可随 L7 一并清理；`Claims.role` 移除前须先确认下游服务/旧令牌解析是否读取。
+
+**归属其他专项另案（不并入 #36）**：owner 漂移对象收敛收尾、v2 投影 3 行 `company_id` 全 NULL 回填后收紧 NOT NULL、旧角色 `topems_prod` 撤权/禁用、108 条手工记账 `execution_time` 空/0 回填、`www.topems.net` NXDOMAIN（注册商侧）；checksum 归一已决策「仅本机一次性修复、不进 CI」（§9），非开放项。
+
 
 
 ## 9. 决策与执行记录（2026-11-25 追加）
