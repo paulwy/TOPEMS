@@ -1,3 +1,4 @@
+import { alpha } from '@mui/material/styles';
 import {
   Box,
   Card,
@@ -17,7 +18,6 @@ import { Cpu, HardDrive, Database, AlertTriangle, CheckCircle, Activity } from '
 import { PageContainer } from '@/components';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef } from '@/components/templates/list/types';
-import { getStatusColor } from '@/utils/status';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MonitorPage: React.FC = () => {
@@ -91,19 +91,6 @@ const MonitorPage: React.FC = () => {
     }
   }, [alertsQuery.isError, alertsQuery.error, addNotification]);
 
-  const getMonitorStatusColor = (status: string) => getStatusColor(status, { category: 'monitor' });
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'error.main';
-      case 'warning':
-        return 'warning.main';
-      case 'info':
-        return 'info.main';
-      default:
-        return 'grey.500';
-    }
-  };
   const formatUptime = (seconds: number) => {
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
@@ -123,7 +110,6 @@ const MonitorPage: React.FC = () => {
         label: i18n.t('pages.monitor_page.k6'),
         align: 'center',
         render: (row) => {
-          const color = getMonitorStatusColor(row.status);
           return (
             <Chip
               size='small'
@@ -141,7 +127,7 @@ const MonitorPage: React.FC = () => {
                   <AlertTriangle sx={{ width: 14, height: 14 }} />
                 )
               }
-              sx={{ bgcolor: `${color}20` }}
+              sx={{ bgcolor: 'action.hover' }}
             />
           );
         },
@@ -185,7 +171,6 @@ const MonitorPage: React.FC = () => {
         label: i18n.t('pages.monitor_page.k15'),
         align: 'center',
         render: (row) => {
-          const color = getSeverityColor(row.severity);
           return (
             <Chip
               size='small'
@@ -196,7 +181,15 @@ const MonitorPage: React.FC = () => {
                     ? i18n.t('admin.monitor_page.k12')
                     : i18n.t('admin.monitor_page.k13')
               }
-              sx={{ bgcolor: `${color}20`, color }}
+              sx={{
+                bgcolor: 'action.hover',
+                color:
+                  row.severity === 'critical'
+                    ? 'var(--error-text)'
+                    : row.severity === 'warning'
+                      ? 'var(--warning-text)'
+                      : 'var(--info-text)',
+              }}
             />
           );
         },
@@ -233,7 +226,13 @@ const MonitorPage: React.FC = () => {
                   ? i18n.t('admin.monitor_page.k15')
                   : i18n.t('admin.monitor_page.k16')
             }
-            sx={{ bgcolor: row.status === 'active' ? 'error.light' : 'success.light' }}
+            sx={(t) => ({
+              bgcolor:
+                row.status === 'active'
+                  ? alpha(t.palette.error.main, 0.16)
+                  : alpha(t.palette.success.main, 0.16),
+              color: row.status === 'active' ? 'var(--error-text)' : 'var(--success-text)',
+            })}
           />
         ),
       },
