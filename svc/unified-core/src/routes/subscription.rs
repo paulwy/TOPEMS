@@ -29,7 +29,7 @@ pub struct PlanInfo {
         (status = 200, description = "列出全部订阅计划及模块覆盖")
     )
 )]
-async fn list_plans(State(_state): State<AppState>) -> Json<ApiResponse<Vec<PlanInfo>>> {
+pub(crate) async fn list_plans(State(_state): State<AppState>) -> Json<ApiResponse<Vec<PlanInfo>>> {
     let tiers = [PlanTier::Free, PlanTier::Basic, PlanTier::Advanced];
     let plans: Vec<PlanInfo> = tiers
         .iter()

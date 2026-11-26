@@ -23,7 +23,7 @@ pub struct UpdateFeatureFlagRequest {
     ),
     security(("BearerAuth" = []))
 )]
-async fn list_feature_flags(State(state): State<AppState>) -> Json<ApiResponse<Vec<FeatureFlag>>> {
+pub(crate) async fn list_feature_flags(State(state): State<AppState>) -> Json<ApiResponse<Vec<FeatureFlag>>> {
     let flags = state.feature_flag_service.list_all();
     Json(api_success(flags))
 }
@@ -41,7 +41,7 @@ async fn list_feature_flags(State(state): State<AppState>) -> Json<ApiResponse<V
     ),
     security(("BearerAuth" = []))
 )]
-async fn get_feature_flag(
+pub(crate) async fn get_feature_flag(
     State(state): State<AppState>,
     Path(key): Path<String>,
 ) -> Json<ApiResponse<FeatureFlag>> {
@@ -68,7 +68,7 @@ async fn get_feature_flag(
     ),
     security(("BearerAuth" = []))
 )]
-async fn update_feature_flag(
+pub(crate) async fn update_feature_flag(
     State(state): State<AppState>,
     Path(key): Path<String>,
     Json(req): Json<UpdateFeatureFlagRequest>,
@@ -107,7 +107,7 @@ async fn update_feature_flag(
     ),
     security(("BearerAuth" = []))
 )]
-async fn refresh_feature_flag(
+pub(crate) async fn refresh_feature_flag(
     State(state): State<AppState>,
     Path(key): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {

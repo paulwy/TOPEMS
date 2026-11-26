@@ -169,6 +169,22 @@ let bytes = to_bytes(body, max_size + 1).await.unwrap_or_default(); // max_size 
 不再破坏响应）；`to_bytes` 失败时也不再静默返回空体，改为保留空快照 + 打 `warn`。
 这条路修完，`export?status=success`（10000 行 / ~10MB）与 `audit-logs?page_size=50..200` 都能拿到完整数据。
 
+
+第三轮发现一类"注解写了但没登记"的沉没覆盖：全 crate 有 21 个 handler 已经写了
+`#[utoipa::path]`，却没出现在 `modules/openapi.rs` 的 `paths(...)` 里，等于白写。
+本轮把其中 15 条真正新增的路径补进 spec（另外 6 条与既有路径重复或属别名，未引入重复）：
+
+| 组 | 新增路径 |
+| --- | --- |
+| doc 版本 | `/api/core/doc/documents/{id}/versions`、`/{version}`、`/{version}/restore` |
+| flow 监控 | `/api/core/flow/monitor/instances/{error,overdue}`、`/instances/{id}/retry` |
+| flow 版本 | `/api/core/flow/workflows/{id}/versions`、`/{version_id}`、`/{version_id}/activate` |
+| iam | `/api/core/iam/permissions/grantable`、`/api/core/iam/users/{user_id}/company-scopes` |
+| 订阅/开关 | `/api/core/subscriptions/plans`、`/api/core/system/feature-flags{,/{key},{/key/refresh}}` |
+
+spec **2477 → 2492**，契约匹配 **2603 → 2626**（core 30 → 39）。
+配套改动仅为可见性（`routes/feature_flag.rs`、`routes/subscription.rs` 四个 handler 改
+`pub(crate)`，`routes/mod.rs` 的 `subscription` 模块同改），零行为变更。
 ## 下一步建议
 
 1. **补注解**：优先 core / erp / finance —— 这三块占了 600+ 条未覆盖，且都是高频页面在调。

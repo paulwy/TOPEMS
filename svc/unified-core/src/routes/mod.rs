@@ -22,7 +22,7 @@ mod rate_limit_config;
 // 已随 svc/ai 实现、前端改指 apiClient.ai 后清零删除，模块整体移除。
 mod mdm_dlq;
 mod settings;
-mod subscription;
+pub(crate) mod subscription;
 mod system;
 // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
 mod sse;
