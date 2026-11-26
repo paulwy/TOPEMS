@@ -118,6 +118,59 @@ do_deploy() {
   log "发布完成"
 }
 
+# 清理构建缓存（服务跑的是 bin/，清 target 不影响在线进程）
+#
+#   clean            清 dev 缓存（target/debug + target/tmp）； release 缓存保留，下次增量构建仍快
+#   clean --release  连 release 缓存一起清（彻底回收磁盘，代价是下次构建从头编译 ~15min）
+#   clean --backups N 只保留最近 N 个 bin 备份（默认保留 3 个，N=0 表示全清）
+do_clean() {
+  local also_release=0 keep_backups=3 mode=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --release) also_release=1; shift ;;
+      --backups) mode="backups"; keep_backups="${2:-3}"; shift 2 ;;
+      *) die "clean 未知参数：$1" ;;
+    esac
+  done
+
+  local target="$ROOT/target" before after
+  before="$(df -k "$ROOT" | awk 'NR==2 {print $4}')"
+
+  if [ "$mode" = "backups" ]; then
+    local dir list count i=0
+    dir="${BIN%/*}"
+    list="$(find "$dir" -maxdepth 1 -name "$(basename "$BIN").bak-*" -type f -print0 2>/dev/null \
+      | xargs -0 stat -f '%m %N' 2>/dev/null | sort -rn | cut -d' ' -f2-)"
+    count="$(printf '%s\n' "$list" | grep -c . || true)"
+    for f in $list; do
+      i=$((i+1))
+      if [ "$i" -gt "$keep_backups" ]; then
+        rm -f "$f"; log "删除旧备份：$f"
+      fi
+    done
+    log "备份共 ${count} 个，保留最近 ${keep_backups} 个"
+    return 0
+  fi
+
+  if [ -d "$target/debug" ]; then
+    log "清理 $target/debug"
+    rm -rf "$target/debug"
+  fi
+  [ -d "$target/tmp" ] && { log "清理 $target/tmp"; rm -rf "$target/tmp"; }
+
+  if [ "$also_release" -eq 1 ] && [ -d "$target/release" ]; then
+    log "清理 $target/release（下次构建将从头编译）"
+    rm -rf "$target/release"
+  fi
+
+  after="$(df -k "$ROOT" | awk 'NR==2 {print $4}')"
+  log "可用空间：$((before/1024)) MB → $((after/1024)) MB（释放 $(((after-before)/1024)) MB）"
+  if [ "$also_release" -eq 0 ] && [ -d "$target/release" ]; then
+    log "release 缓存已保留（彻底回收请用 clean --release）"
+  fi
+  log "在线服务未受影响（运行的是 $BIN）"
+}
+
 do_rollback() {
   local latest
   latest="$(find "${BIN%/*}" -maxdepth 1 -name "$(basename "$BIN").bak-*" -type f -print0 2>/dev/null \
@@ -134,5 +187,6 @@ case "${1:-}" in
   deploy) do_deploy ;;
   rollback) do_rollback ;;
   verify) do_verify ;;
-  *) die "用法: $0 {build|deploy|rollback|verify}" ;;
+  clean) do_clean "${@:2}" ;;
+  *) die "用法: $0 {build|deploy|rollback|verify|clean [--release] [--backups N]}" ;;
 esac
