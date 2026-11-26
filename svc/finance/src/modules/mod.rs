@@ -7611,6 +7611,21 @@ pub async fn update_expense_approval(
             }
         },
     };
+    // B350：是否携带字段改写（终态记录只允许纯状态流转）。
+    let editing_fields = req.expense_no.is_some()
+        || req.employee_id.is_some()
+        || req.employee_name.is_some()
+        || req.department.is_some()
+        || req
+            .expense_date
+            .as_deref()
+            .is_some_and(|s| !s.trim().is_empty())
+        || req.expense_type.is_some()
+        || req.total_amount.is_some()
+        || req.description.is_some()
+        || req.approver_id.is_some()
+        || req.approver_name.is_some()
+        || req.approval_note.is_some();
     let employee_id = req
         .employee_id
         .as_deref()
@@ -7661,6 +7676,11 @@ pub async fn update_expense_approval(
     let same_or_no_target = target_status.is_none_or(|target| target == current_status);
     if same_or_no_target && !ExpenseApprovalStatus::EDITABLE.contains(&current_status.as_str()) {
         return ApiResponse::conflict("费用审批已审批/已报销，字段不可再编辑");
+    }
+    // B350：终态记录即使带着状态流转目标，也不允许夹带字段改写。
+    // 旧逻辑只在「无目标态或同态」时拦字段，approved + status=reimbursed 可以顺手改金额/员工。
+    if !ExpenseApprovalStatus::EDITABLE.contains(&current_status.as_str()) && editing_fields {
+        return ApiResponse::conflict("费用审批已进入终态，只允许状态流转，不可修改字段");
     }
     if let Some(target) = target_status {
         if !target.allowed_from().contains(&current_status.as_str()) {
@@ -7843,6 +7863,42 @@ pub async fn approve_expense_approval(
         Some(claims.username.as_str()),
         None,
         "审批通过",
+    )
+    .await
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:expense_approval:update"])),
+    path = "/expense-approvals/{id}/reimburse",
+    tag = "Expense Approval",
+    params(("id" = String, Path, description = "费用审批ID")),
+    responses(
+        (status = 200, description = "报销完成", body = ApiResponse<serde_json::Value>),
+        (status = 409, description = "当前状态不允许报销"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+/// B350：approved → reimbursed 专用动作。
+///
+/// 此前只能通过通用 `PUT /expense-approvals/{id}` 携带 `status=reimbursed` 完成，
+/// 而该入口同时接受金额、员工等字段，终态记录可借道改写明细。专用动作只改状态。
+pub async fn reimburse_expense_approval(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    Path(id): Path<String>,
+) -> ApiResponse<serde_json::Value> {
+    transition_expense_approval(
+        &state,
+        txn_arc,
+        &claims,
+        &id,
+        ExpenseApprovalStatus::Approved,
+        ExpenseApprovalStatus::Reimbursed,
+        None,
+        None,
+        "报销完成",
     )
     .await
 }
@@ -8652,6 +8708,10 @@ pub fn create_routes() -> Router<AppState> {
         .route(
             "/expense-approvals/{id}/approve",
             axum::routing::post(approve_expense_approval),
+        )
+        .route(
+            "/expense-approvals/{id}/reimburse",
+            axum::routing::post(reimburse_expense_approval),
         )
         .route(
             "/expense-approvals/{id}/reject",

@@ -210,6 +210,23 @@ mod tests {
     }
 
     #[test]
+    fn reimbursed_only_reachable_from_approved() {
+        assert_eq!(
+            ExpenseApprovalStatus::Reimbursed.allowed_from(),
+            ["approved", "reimbursed"]
+        );
+        assert!(!ExpenseApprovalStatus::Reimbursed
+            .allowed_from()
+            .contains(&"pending"));
+        assert!(!ExpenseApprovalStatus::Reimbursed
+            .allowed_from()
+            .contains(&"draft"));
+        // 终态都不可再编辑字段：approved→reimbursed 只能走专用动作。
+        assert!(!ExpenseApprovalStatus::EDITABLE.contains(&"reimbursed"));
+        assert!(!ExpenseApprovalStatus::EDITABLE.contains(&"approved"));
+    }
+
+    #[test]
     fn normalize_canonical_values() {
         for (raw, expected) in [
             ("draft", ExpenseApprovalStatus::Draft),
