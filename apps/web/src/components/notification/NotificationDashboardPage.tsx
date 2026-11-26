@@ -11,7 +11,6 @@ import {
   BarChart3,
   PieChart,
   Eye,
-  Settings,
   AlertCircle,
   CheckCircle,
   Info,
@@ -201,20 +200,8 @@ export const NotificationDashboardPage: React.FC = () => {
           });
         },
       },
-      {
-        id: 'notification-settings',
-        label: i18n.t('notification.notification_dashboard_page.k22'),
-        icon: <Settings size={20} />,
-        color: 'info.light',
-        onClick: () => navigate(NOTIFICATION_PATHS.settings),
-      },
-      {
-        id: 'template-management',
-        label: i18n.t('notification.notification_dashboard_page.k23'),
-        icon: <FileText size={20} />,
-        color: 'warning.light',
-        onClick: () => navigate(NOTIFICATION_PATHS.templates),
-      },
+      // 「通知偏好设置」「模板管理」两个快捷入口已摘掉：对应页面的后端接口未实现，
+      // 保留会跳到空表/错误页。恢复条件见 docs/frontend/notification-contract-gap-20261126.md
     ],
     [navigate, addNotification]
   );

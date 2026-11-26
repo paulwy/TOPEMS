@@ -41,15 +41,7 @@ interface NotificationCenterPageProps {
   filters?: Record<string, unknown>;
 }
 
-interface NotificationTemplatesPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
 interface NotificationStatsPageProps {}
-
-interface NotificationSettingsPageProps {}
 
 const notificationDashboardRoute: RouteConfigV2<NotificationDashboardPageProps> = {
   path: NOTIFICATION_PATHS.dashboard,
@@ -131,22 +123,6 @@ const notificationCenterRoute: RouteConfigV2<NotificationCenterPageProps> = {
   action: 'read',
 };
 
-const notificationTemplatesRoute: RouteConfigV2<NotificationTemplatesPageProps> = {
-  path: NOTIFICATION_PATHS.templates,
-  element: lazyWithRetry(
-    () => import('@/components/notification/NotificationTemplatesPage'),
-    'NotificationTemplatesPage'
-  ),
-  module: 'notification',
-  code: 'notification-templates',
-  title: i18n.t('notification.nav.notification-templates'),
-  titleKey: 'notification.nav.notification-templates',
-  template: 'list',
-  group: 'setting',
-  requiredPermissions: ['notification:dashboard:read'],
-  action: 'read',
-};
-
 const notificationStatsRoute: RouteConfigV2<NotificationStatsPageProps> = {
   path: NOTIFICATION_PATHS.statistics,
   element: lazyWithRetry(
@@ -163,21 +139,10 @@ const notificationStatsRoute: RouteConfigV2<NotificationStatsPageProps> = {
   action: 'read',
 };
 
-const notificationSettingsRoute: RouteConfigV2<NotificationSettingsPageProps> = {
-  path: NOTIFICATION_PATHS.settings,
-  element: lazyWithRetry(
-    () => import('@/components/notification/NotificationSettingsPage'),
-    'NotificationSettingsPage'
-  ),
-  module: 'notification',
-  code: 'notification-settings',
-  title: i18n.t('notification.nav.notification-settings'),
-  titleKey: 'notification.nav.notification-settings',
-  template: 'settings',
-  group: 'setting',
-  requiredPermissions: ['notification:dashboard:read'],
-  action: 'read',
-};
+// 未启用：notification-templates / notification-settings。
+// 这两页的数据源（模板 CRUD、通道/偏好/订阅/Webhook 等）在后端没有实现，
+// 页面会以空表或错误态呈现，先摘掉入口止血，缺口清单见
+// docs/frontend/notification-contract-gap-20261126.md。
 
 // ---- 第二部分：路由配置 ----
 export const notificationModuleConfig: RouteModuleConfig = {
@@ -198,9 +163,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
     notificationArchiveRoute,
     notificationDetailRoute,
     notificationCenterRoute,
-    notificationTemplatesRoute,
     notificationStatsRoute,
-    notificationSettingsRoute,
   ],
 };
 
@@ -266,18 +229,6 @@ export const notificationNavConfig: ModuleNavConfig = {
       description: i18n.t('notification.nav.notification-center_desc'),
     },
     {
-      code: 'notification-templates',
-      label: i18n.t('notification.nav.notification-templates'),
-      labelKey: 'notification.nav.notification-templates',
-      icon: 'FileText',
-      path: NOTIFICATION_PATHS.templates,
-      permission: 'notification:dashboard:read',
-      order: 4,
-      group: 'setting',
-      showInSidebar: false,
-      description: i18n.t('notification.nav.notification-templates_desc'),
-    },
-    {
       code: 'notification-statistics',
       label: i18n.t('notification.nav.notification-statistics'),
       labelKey: 'notification.nav.notification-statistics',
@@ -288,18 +239,6 @@ export const notificationNavConfig: ModuleNavConfig = {
       group: 'analytics',
       showInSidebar: false,
       description: i18n.t('notification.nav.notification-statistics_desc'),
-    },
-    {
-      code: 'notification-settings',
-      label: i18n.t('notification.nav.notification-settings'),
-      labelKey: 'notification.nav.notification-settings',
-      icon: 'Settings',
-      path: NOTIFICATION_PATHS.settings,
-      permission: 'notification:dashboard:read',
-      order: 5,
-      group: 'setting',
-      showInSidebar: false,
-      description: i18n.t('notification.nav.notification-settings_desc'),
     },
   ],
 };
