@@ -5860,6 +5860,24 @@
     },
     {
       "schema": "iam",
+      "table": "tenant_permissions",
+      "rls_enabled": true,
+      "force_rls": false,
+      "policies": [
+        {
+          "name": "tenant_isolation_tenant_permissions",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "((NULLIF(current_setting('app.tenant_id'::text, true), ''::text) IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = ''::text) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))",
+          "with_check": ""
+        }
+      ]
+    },
+    {
+      "schema": "iam",
       "table": "user_positions",
       "rls_enabled": true,
       "force_rls": true,
@@ -12163,6 +12181,24 @@
           ],
           "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
           "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table": "search_recent",
+      "rls_enabled": true,
+      "force_rls": true,
+      "policies": [
+        {
+          "name": "tenant_isolation_search_recent",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "(((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text))",
+          "with_check": ""
         }
       ]
     },
