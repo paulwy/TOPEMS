@@ -84,7 +84,7 @@ pub fn create_routes(state: AppState) -> Router<AppState> {
         )
         .route(
             "/audit/permission-changes/export",
-            get(handlers::export_permission_changes),
+            get(handlers::export_permission_changes).post(handlers::export_permission_changes),
         )
         // ===== 访问控制审计 (stub) =====
         .route("/audit/access-logs", get(handlers::list_access_logs))
@@ -95,7 +95,7 @@ pub fn create_routes(state: AppState) -> Router<AppState> {
         .route("/audit/access-logs/{id}", get(handlers::get_access_log))
         .route(
             "/audit/access-logs/export",
-            get(handlers::export_access_logs),
+            get(handlers::export_access_logs).post(handlers::export_access_logs),
         )
         .with_state(state.clone())
         .layer(axum::middleware::from_fn_with_state(

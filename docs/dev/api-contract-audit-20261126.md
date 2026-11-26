@@ -284,3 +284,38 @@ DB_TOTAL_CONNECTION_BUDGET=186
 对比三档：每池 2（默认）→ DEGRADED=2，每池 3（只抬总额）→ DEGRADED=3，每池 6 → DEGRADED=0。**每池 3 是临界值，不够用；6 有明确余量。**
 
 > 别的机器复现同样 503 时：先看日志有没有 `pool timed out while waiting for an open connection`，有就同时调 `DB_MODULE_MAX_CONNECTIONS`（单池申请值）和 `DB_TOTAL_CONNECTION_BUDGET`（总额，≥ 池数 × 单池值），并确认该机 PG `max_connections` 撑得住。只调总额度没用，单池申请值会把它夹住。
+
+## 第十六轮：tenant 全家桶一次性进契约（core 缺口 180 → 101）（2026-11-26 21:20）
+
+### 发现：77 条「缺失」几乎全是沉没覆盖，不是后端缺实现
+
+前一轮 core 缺口 180 条里 tenant 占 77，看着像"前端写了 77 个租户管理接口、后端只有几个"。按 `svc/unified-core/src/routes/master.rs` 的路由表核对后结论相反：**后端租户模块有 90 条路由（82 个 handler），功能覆盖 analytics / billing / security / sessions / webhooks / integrations / domains / email-config / features / users 全家桶，但 `modules/tenant/handlers.rs` 里 `#[utoipa::path]` 一个都没有**——既没注解也没登记，spec 里 0 条，所以前端每一条都算"缺失"。
+
+之前判断"这 77 条是前端空想接口"是错的；真问题仍是同一类：**注解缺失 → spec 缺失 → 契约误判为缺口**。
+
+### 做法：从路由表反推注解，不用手写
+
+1. 解析 `routes/master.rs` 得到 `(method, path, handler)` 共 90 对
+2. 每个 handler 选一条主路径写 `#[utoipa::path]`（优先 `/tenant/{id}/...` 短路径），共注解 82 个 handler；tag 统一 `Core-Tenant`
+3. `modules/openapi.rs` 登记这 82 个 handler
+4. 干跑 `openapi-gen`，只并入 65 条 `/api/core/tenant*` 路径（同轮还有并行会话的 ehs/notification/audit 变更，未并入）
+5. 剩下 8 条同 handler 的别名路径（`/tenant/tenants`、`/tenant/list`、`/tenant/{id}/metrics`、`/tenant/{id}/billing/invoices` 等）用"克隆同 operationId 的 path item"方式补进 spec，避免手写漂移
+
+### 顺手修：3 条 POST 导出别名
+
+前端 `writeOps.ts` / `security.ts` 用 `POST .../export`，后端只挂 GET，必然 404/405。给三处同一 handler 补 POST 别名（axum `get(h).post(h)`，单条 route 内合成，避免重复 route 注册 panic）：
+
+- `/api/core/audit/permission-changes/export`
+- `/api/core/audit/access-logs/export`
+- `/api/core/tenant/{id}/security/audit-logs/export`
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2507 | **2578** |
+| 契约匹配 | 2643 | **2722** |
+| core 缺口 | 180 | **101** |
+| core 命中 | 56 | **135** |
+
+tenant 簇从 77 → **0**（POST export 也已补齐）。core 剩余 101 条的分布：`/api/core/*` 29（前端模板串无法静态解析）、system 23、iam 12、automation 8、menu 6、comments/favorites/file/flow 各 4、audit 3 等。

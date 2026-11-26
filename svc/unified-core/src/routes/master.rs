@@ -147,7 +147,8 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         )
         .route(
             "/tenant/{id}/security/audit-logs/export",
-            get(modules::tenant::handlers::export_tenant_audit_logs),
+            get(modules::tenant::handlers::export_tenant_audit_logs)
+                .post(modules::tenant::handlers::export_tenant_audit_logs),
         )
         .route(
             "/tenant/{id}/security/audit-logs/{log_id}",

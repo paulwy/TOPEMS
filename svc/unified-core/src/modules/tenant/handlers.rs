@@ -26,6 +26,13 @@ fn require_company_context(action: &str) -> Result<Uuid, String> {
 }
 
 /// List all tenants with pagination and filtering (super admin only)
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/list",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 list GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_tenants(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -179,6 +186,16 @@ pub async fn list_tenants(
 }
 
 /// Get tenant by ID
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 id GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -213,6 +230,16 @@ pub async fn get_tenant(
 }
 
 /// Get tenant by code (for subdomain routing)
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/by-code/{code}",
+    tag = "Core-Tenant",
+    params(
+        ("code" = String, Path, description = "租户代码"),
+    ),
+    responses((status = 200, description = "租户 code GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_by_code(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -247,6 +274,13 @@ pub async fn get_tenant_by_code(
 }
 
 /// Create new tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/create",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 create POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_tenant(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -574,6 +608,13 @@ async fn activate_basic_modules(
 /// Onboard a new tenant in a single atomic transaction: create the tenant
 /// row, seed the default admin user + membership + role assignment, and
 /// persist the default department setting. Backs `POST /tenant/onboard`.
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/onboard",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 onboard POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn onboard_tenant(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -695,6 +736,16 @@ pub async fn onboard_tenant(
 }
 
 /// Update tenant
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 id PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -781,6 +832,16 @@ pub async fn update_tenant(
 }
 
 /// Activate tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/activate",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 activate POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn activate_tenant(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -822,6 +883,16 @@ pub async fn activate_tenant(
 }
 
 /// Suspend tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/suspend",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 suspend POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn suspend_tenant(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -864,6 +935,16 @@ pub async fn suspend_tenant(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Get tenant quota and usage
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/tenants/{id}/quota",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 quota GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_quota(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -951,6 +1032,16 @@ pub async fn get_tenant_quota(
 }
 
 /// List tenant modules
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/tenants/{id}/modules",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 modules GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_tenant_modules(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -987,6 +1078,17 @@ pub async fn list_tenant_modules(
 }
 
 /// Activate module for tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/tenants/{tenant_id}/modules/{module_code}/activate",
+    tag = "Core-Tenant",
+    params(
+        ("tenant_id" = String, Path, description = "路径参数"),
+        ("module_code" = String, Path, description = "模块代码"),
+    ),
+    responses((status = 200, description = "租户 activate POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn activate_module(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1051,6 +1153,17 @@ pub async fn activate_module(
 }
 
 /// Deactivate module for tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/tenants/{tenant_id}/modules/{module_code}/deactivate",
+    tag = "Core-Tenant",
+    params(
+        ("tenant_id" = String, Path, description = "路径参数"),
+        ("module_code" = String, Path, description = "模块代码"),
+    ),
+    responses((status = 200, description = "租户 deactivate POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn deactivate_module(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1113,6 +1226,16 @@ pub async fn deactivate_module(
 }
 
 /// Delete tenant
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 id DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_tenant(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1148,6 +1271,16 @@ pub async fn delete_tenant(
 }
 
 /// Get tenant users with pagination
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/users",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 users GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_users(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1304,6 +1437,16 @@ pub async fn get_tenant_users(
 }
 
 /// Invite member to tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/users/invite",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 invite POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn invite_member(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1374,6 +1517,17 @@ pub async fn invite_member(
 }
 
 /// Remove member from tenant
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/users/{user_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("user_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 user_id DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn remove_member(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1416,6 +1570,17 @@ pub async fn remove_member(
 }
 
 /// Update member role
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/users/{user_id}/role",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("user_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 role PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_member_role(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1465,6 +1630,16 @@ pub async fn update_member_role(
 }
 
 /// Get tenant stats
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/stats",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 stats GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1549,6 +1724,16 @@ pub async fn get_tenant_stats(
 }
 
 /// Get usage metrics
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/usage",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 usage GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_usage_metrics(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1623,6 +1808,16 @@ pub async fn get_usage_metrics(
 }
 
 /// Get billing info
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/billing",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 billing GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_billing_info(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1673,6 +1868,16 @@ pub async fn get_billing_info(
 }
 
 /// Get invoices
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/invoices",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 invoices GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_invoices(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -1684,6 +1889,13 @@ pub async fn get_invoices(
 }
 
 /// Get current tenant context
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/context",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 context GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_current_tenant_context(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1755,6 +1967,13 @@ pub async fn get_current_tenant_context(
 }
 
 /// Get my tenants
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/my",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 my GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_my_tenants(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1819,6 +2038,13 @@ pub struct SwitchTenantResponse {
     clippy::cast_sign_loss
 )]
 /// Switch tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/switch",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 switch POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn switch_tenant(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1925,6 +2151,16 @@ pub async fn switch_tenant(
 }
 
 /// Get tenant by slug (alias for code)
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/slug/{slug}",
+    tag = "Core-Tenant",
+    params(
+        ("slug" = String, Path, description = "租户 slug"),
+    ),
+    responses((status = 200, description = "租户 slug GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_by_slug(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2044,6 +2280,16 @@ async fn tenant_setting_put(
 }
 
 /// `GET /tenant/{id}/settings`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/settings",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 settings GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_settings(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2060,6 +2306,16 @@ pub async fn get_tenant_settings(
 }
 
 /// `PUT /tenant/{id}/settings`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/settings",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 settings PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_settings(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2085,6 +2341,16 @@ pub async fn update_tenant_settings(
 }
 
 /// `GET /tenant/{id}/branding`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/branding",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 branding GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_branding(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2101,6 +2367,16 @@ pub async fn get_tenant_branding(
 }
 
 /// `PUT /tenant/{id}/branding`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/branding",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 branding PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_branding(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2211,6 +2487,16 @@ fn tenant_features_to_array(map: &serde_json::Map<String, serde_json::Value>) ->
 }
 
 /// `GET /tenant/{id}/features`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/features",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 features GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_features(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2230,6 +2516,16 @@ pub async fn get_tenant_features(
 }
 
 /// `PUT /tenant/{id}/features`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/features",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 features PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_features(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2269,6 +2565,17 @@ async fn tenant_features_set(
 }
 
 /// `POST /tenant/{id}/features/{feature}/enable`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/features/{feature}/enable",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("feature" = String, Path, description = "功能键"),
+    ),
+    responses((status = 200, description = "租户 enable POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn enable_tenant_feature(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2285,6 +2592,17 @@ pub async fn enable_tenant_feature(
 }
 
 /// `POST /tenant/{id}/features/{feature}/disable`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/features/{feature}/disable",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("feature" = String, Path, description = "功能键"),
+    ),
+    responses((status = 200, description = "租户 disable POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn disable_tenant_feature(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2345,6 +2663,16 @@ async fn tenant_setting_array(
 }
 
 /// `GET /tenant/{id}/domains`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/domains",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 domains GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_domains(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2364,6 +2692,16 @@ pub async fn get_tenant_domains(
 }
 
 /// `POST /tenant/{id}/domains`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/domains",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 domains POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn add_tenant_domain(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2405,6 +2743,17 @@ pub async fn add_tenant_domain(
 }
 
 /// `DELETE /tenant/{id}/domains/{domain}`
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/domains/{domain}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("domain" = String, Path, description = "域名"),
+    ),
+    responses((status = 200, description = "租户 domain DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn remove_tenant_domain(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2430,6 +2779,16 @@ pub async fn remove_tenant_domain(
 }
 
 /// `GET /tenant/{id}/email-config`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/email-config",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 email-config GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_email_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2446,6 +2805,16 @@ pub async fn get_tenant_email_config(
 }
 
 /// `PUT /tenant/{id}/email-config`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/email-config",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 email-config PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_email_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2549,6 +2918,16 @@ async fn tenant_coll_write(
 }
 
 /// `GET /tenant/{id}/integrations`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/integrations",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 integrations GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_tenant_integrations(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2568,6 +2947,16 @@ pub async fn list_tenant_integrations(
 }
 
 /// `POST /tenant/{id}/integrations`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/integrations",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 integrations POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_tenant_integration(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2620,6 +3009,17 @@ pub async fn create_tenant_integration(
 }
 
 /// `PUT /tenant/{id}/integrations/{integration_id}`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/integrations/{integration_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("integration_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 integration_id PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_integration(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2671,6 +3071,17 @@ pub async fn update_tenant_integration(
 }
 
 /// `DELETE /tenant/{id}/integrations/{integration_id}`
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/integrations/{integration_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("integration_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 integration_id DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_tenant_integration(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2708,6 +3119,16 @@ pub async fn delete_tenant_integration(
 }
 
 /// `GET /tenant/{id}/webhooks`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/webhooks",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 webhooks GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_tenant_webhooks(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2727,6 +3148,16 @@ pub async fn list_tenant_webhooks(
 }
 
 /// `POST /tenant/{id}/webhooks`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/webhooks",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 webhooks POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_tenant_webhook(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2767,6 +3198,17 @@ pub async fn create_tenant_webhook(
 }
 
 /// `PUT /tenant/{id}/webhooks/{webhook_id}`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/webhooks/{webhook_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("webhook_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 webhook_id PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_webhook(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2806,6 +3248,17 @@ pub async fn update_tenant_webhook(
 }
 
 /// `DELETE /tenant/{id}/webhooks/{webhook_id}`
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/webhooks/{webhook_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("webhook_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 webhook_id DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_tenant_webhook(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2831,6 +3284,17 @@ pub async fn delete_tenant_webhook(
 }
 
 /// `POST /tenant/{id}/webhooks/{webhook_id}/test`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/webhooks/{webhook_id}/test",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("webhook_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 test POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn test_tenant_webhook(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2868,6 +3332,16 @@ const TENANT_SEC_PREFIX: &str = "tenant_security_";
 const TENANT_SEC_KEYS_PREFIX: &str = "tenant_security_apikeys_";
 
 /// `GET /tenant/{id}/security`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 security GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_security(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2884,6 +3358,16 @@ pub async fn get_tenant_security(
 }
 
 /// `PUT /tenant/{id}/security`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 security PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_security(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2901,6 +3385,16 @@ pub async fn update_tenant_security(
 }
 
 /// `GET /tenant/{id}/security/password-policy`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/password-policy",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 password-policy GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_password_policy(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2917,6 +3411,16 @@ pub async fn get_tenant_password_policy(
 }
 
 /// `PUT /tenant/{id}/security/password-policy`
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/password-policy",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 password-policy PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_password_policy(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2945,6 +3449,16 @@ pub async fn update_tenant_password_policy(
 }
 
 /// `POST /tenant/{id}/security/enable-2fa`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/enable-2fa",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 enable-2fa POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn enable_tenant_2fa(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -2974,6 +3488,16 @@ pub async fn enable_tenant_2fa(
 }
 
 /// `POST /tenant/{id}/security/disable-2fa`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/disable-2fa",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 disable-2fa POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn disable_tenant_2fa(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3003,6 +3527,16 @@ pub async fn disable_tenant_2fa(
 }
 
 /// `GET /tenant/{id}/security/api-keys`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/api-keys",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 api-keys GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_tenant_api_keys(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3022,6 +3556,16 @@ pub async fn list_tenant_api_keys(
 }
 
 /// `POST /tenant/{id}/security/generate-api-key`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/generate-api-key",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 generate-api-key POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn generate_tenant_api_key(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3061,6 +3605,17 @@ pub async fn generate_tenant_api_key(
 }
 
 /// `POST /tenant/{id}/security/rotate-api-key/{key_id}`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/rotate-api-key/{key_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("key_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 key_id POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn rotate_tenant_api_key(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3100,6 +3655,17 @@ pub async fn rotate_tenant_api_key(
 }
 
 /// `DELETE /tenant/{id}/security/api-keys/{key_id}`
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/api-keys/{key_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("key_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 key_id DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_tenant_api_key(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3129,6 +3695,16 @@ const TENANT_SEC_SESSIONS_PREFIX: &str = "tenant_security_sessions_";
 const TENANT_SEC_IPLIST_PREFIX: &str = "tenant_security_iplist_";
 
 /// `GET /tenant/{id}/security/audit-logs`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/audit-logs",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 audit-logs GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_tenant_audit_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3148,6 +3724,16 @@ pub async fn list_tenant_audit_logs(
 }
 
 /// `GET /tenant/{id}/security/audit-logs/export`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/audit-logs/export",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 export GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_tenant_audit_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3172,6 +3758,17 @@ pub async fn export_tenant_audit_logs(
 }
 
 /// `GET /tenant/{id}/security/audit-logs/{log_id}`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/audit-logs/{log_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("log_id" = String, Path, description = "审计日志 ID"),
+    ),
+    responses((status = 200, description = "租户 log_id GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_audit_log(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3196,6 +3793,16 @@ pub async fn get_tenant_audit_log(
 }
 
 /// `GET /tenant/{id}/security/sessions`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/sessions",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 sessions GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_tenant_sessions(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3215,6 +3822,16 @@ pub async fn list_tenant_sessions(
 }
 
 /// `POST /tenant/{id}/security/sessions/revoke-all`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/sessions/revoke-all",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 revoke-all POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn revoke_all_tenant_sessions(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3250,6 +3867,17 @@ pub async fn revoke_all_tenant_sessions(
 }
 
 /// `POST /tenant/{id}/security/sessions/{session_id}/revoke`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/sessions/{session_id}/revoke",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("session_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 revoke POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn revoke_tenant_session(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3294,6 +3922,16 @@ pub async fn revoke_tenant_session(
 }
 
 /// `POST /tenant/{id}/security/ip-whitelist`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/ip-whitelist",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 ip-whitelist POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn add_tenant_ip_whitelist(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3334,6 +3972,17 @@ pub async fn add_tenant_ip_whitelist(
 }
 
 /// `DELETE /tenant/{id}/security/ip-whitelist/{ip_id}`
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/security/ip-whitelist/{ip_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("ip_id" = String, Path, description = "路径参数"),
+    ),
+    responses((status = 200, description = "租户 ip_id DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn remove_tenant_ip_whitelist(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3403,6 +4052,16 @@ async fn tenant_billing_default(
 }
 
 /// `GET /tenant/{id}/billing/subscription`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/billing/subscription",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 subscription GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_subscription(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3427,6 +4086,16 @@ pub async fn get_tenant_subscription(
 }
 
 /// `POST /tenant/{id}/billing/plan`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/billing/plan",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 plan POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_tenant_plan(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3452,6 +4121,16 @@ pub async fn update_tenant_plan(
 }
 
 /// `POST /tenant/{id}/billing/subscription/cancel`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/billing/subscription/cancel",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 cancel POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn cancel_tenant_subscription(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3476,6 +4155,16 @@ pub async fn cancel_tenant_subscription(
 }
 
 /// `POST /tenant/{id}/billing/card`
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/billing/card",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 card POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn add_tenant_card(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3510,6 +4199,16 @@ pub async fn add_tenant_card(
 }
 
 /// `DELETE /tenant/{id}/billing/card`
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/billing/card",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 card DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn remove_tenant_card(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3529,6 +4228,17 @@ pub async fn remove_tenant_card(
 }
 
 /// `GET /tenant/{id}/billing/invoices/{invoice_id}`（无发票表=真实不存在）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/billing/invoices/{invoice_id}",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("invoice_id" = String, Path, description = "账单 ID"),
+    ),
+    responses((status = 200, description = "租户 invoice_id GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_invoice(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -3538,6 +4248,17 @@ pub async fn get_tenant_invoice(
 }
 
 /// `POST /tenant/{id}/billing/invoices/{invoice_id}/pay`（无发票表=真实不存在）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/billing/invoices/{invoice_id}/pay",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+        ("invoice_id" = String, Path, description = "账单 ID"),
+    ),
+    responses((status = 200, description = "租户 pay POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn pay_tenant_invoice(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -3549,6 +4270,16 @@ pub async fn pay_tenant_invoice(
 // ===== analytics（core_tenant_usage/core_tenant_users 真聚合）=====
 
 /// `GET /tenant/{id}/analytics/overview`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/analytics/overview",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 overview GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_analytics_overview(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3620,6 +4351,16 @@ pub async fn get_tenant_analytics_overview(
 }
 
 /// `GET /tenant/{id}/analytics/usage`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/analytics/usage",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 usage GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_usage(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3666,6 +4407,16 @@ pub async fn get_tenant_usage(
 }
 
 /// `GET /tenant/{id}/analytics/api-usage`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/analytics/api-usage",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 api-usage GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_api_usage(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3716,6 +4467,16 @@ pub async fn get_tenant_api_usage(
 }
 
 /// `GET /tenant/{id}/analytics/activity`（无活动记录表=真实空）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/analytics/activity",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 activity GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_activity(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3756,6 +4517,16 @@ pub async fn get_tenant_activity(
 }
 
 /// `GET /tenant/{id}/analytics/top-endpoints`（无端点统计表=真实空）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/analytics/top-endpoints",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 top-endpoints GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_top_endpoints(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3796,6 +4567,16 @@ pub async fn get_tenant_top_endpoints(
 }
 
 /// `GET /tenant/{id}/analytics/user-stats`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/analytics/user-stats",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 user-stats GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_user_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3835,6 +4616,16 @@ pub async fn get_tenant_user_stats(
 }
 
 /// `GET /tenant/{id}/analytics/real-time`
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/tenant/{id}/analytics/real-time",
+    tag = "Core-Tenant",
+    params(
+        ("id" = String, Path, description = "租户 ID"),
+    ),
+    responses((status = 200, description = "租户 real-time GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tenant_real_time(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3884,6 +4675,13 @@ pub async fn get_tenant_real_time(
 }
 
 /// `GET /governance/trends`（治理面板趋势：读 core_tenant_usage 近 6 期，真实数据）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/governance/trends",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 trends GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_governance_trends(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -3928,6 +4726,13 @@ pub async fn get_governance_trends(
 }
 
 /// `POST /governance/refresh`（触发治理面板刷新）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/governance/refresh",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 refresh POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn refresh_governance(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -3940,6 +4745,13 @@ pub async fn refresh_governance(
 
 /// `POST /internal/usage/collect`（系统完善：core_tenant_usage 幂等聚合采集——当前月快照）
 /// 数据源：core_tenants（active）+ core_tenant_users（成员计数）；storage/api_calls 无采集源置 0。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/internal/usage/collect",
+    tag = "Core-Tenant",
+    responses((status = 200, description = "租户 collect POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn collect_tenant_usage(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
