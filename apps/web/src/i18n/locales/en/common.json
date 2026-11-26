@@ -965,6 +965,7 @@
   "common.confirm_delete_message": "Are you sure you want to delete this record? This action cannot be undone.",
   "common.confirm_delete_named": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
   "common.deleting": "Deleting...",
+  "common.submitting": "Submitting...",
   "common.success": "Success",
   "common.fail": "Failed",
   "common.add": "Add",

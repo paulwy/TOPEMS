@@ -394,6 +394,7 @@
   "common.confirm_delete_message": "确定要删除这条记录吗？此操作不可恢复。",
   "common.confirm_delete_named": "确定要删除「{{name}}」吗？此操作不可恢复。",
   "common.deleting": "删除中",
+  "common.submitting": "提交中…",
   "common.success": "成功",
   "common.fail": "失败",
   "common.add": "添加",

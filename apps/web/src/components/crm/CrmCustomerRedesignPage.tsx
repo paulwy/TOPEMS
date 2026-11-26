@@ -177,6 +177,8 @@ const CrmCustomerRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // A-08：新建/编辑弹窗的行内校验错误（key 对应 field-N 的 id）
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -269,10 +271,13 @@ const CrmCustomerRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
+      setFormErrors({});
       pushToast('success', t('crm.customer_list_page.toast_create_success'));
     },
-    onError: () => {
-      pushToast('error', t('crm.customer_list_page.toast_create_fail'));
+    onError: (error: unknown) => {
+      // A-08：把服务端原因带出来，避免“创建失败请重试”这种无信息提示
+      const detail = error instanceof Error && error.message ? `：${error.message}` : '';
+      pushToast('error', `${t('crm.customer_list_page.toast_create_fail')}${detail}`);
     },
   });
 
@@ -293,12 +298,72 @@ const CrmCustomerRedesignPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
+      setFormErrors({});
       pushToast('success', t('crm.customer_list_page.toast_update_success'));
     },
-    onError: () => {
-      pushToast('error', t('crm.customer_list_page.toast_update_fail'));
+    onError: (error: unknown) => {
+      const detail = error instanceof Error && error.message ? `：${error.message}` : '';
+      pushToast('error', `${t('crm.customer_list_page.toast_update_fail')}${detail}`);
     },
   });
+
+  // ── 新建/编辑弹窗：取值 + 校验 + 提交（A-08/A-09） ──
+  // 该页沿用 DOM id 取值的历史实现（不改布局），但提交前必须做客户端校验：
+  // 必填项为空时给行内红字 + toast，而不是把空值直接打到后端再只落一条控制台日志。
+  const readCustomerForm = (): Partial<Customer> => ({
+    customer_name: (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+    contact_phone: (document.getElementById('field-5') as HTMLInputElement)?.value || '',
+    email: (document.getElementById('field-6') as HTMLInputElement)?.value || '',
+    address: (document.getElementById('field-7') as HTMLInputElement)?.value || '',
+    industry: (document.getElementById('field-2') as HTMLInputElement)?.value || '',
+    level:
+      ((document.getElementById('field-3') as HTMLSelectElement)?.value as Customer['level']) ||
+      'C',
+    customer_type:
+      (document.getElementById('field-8') as HTMLSelectElement)?.value || 'enterprise',
+    status: 'active',
+  });
+
+  const validateCustomerForm = (data: Partial<Customer>): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    const name = String(data.customer_name ?? '').trim();
+    if (!name) {
+      errors['field-1'] = t('crm.customer_list_page.err_customer_name_required');
+    } else if (name.length < 2) {
+      errors['field-1'] = t('crm.customer_list_page.err_customer_name_too_short');
+    }
+    if (!String(data.level ?? '').trim()) {
+      errors['field-3'] = t('crm.customer_list_page.err_level_required');
+    }
+    const email = String(data.email ?? '').trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors['field-6'] = t('crm.customer_list_page.err_email_invalid');
+    }
+    return errors;
+  };
+
+  const submitPending = createMutation.isPending || updateMutation.isPending;
+
+  const handleSubmitCustomer = async () => {
+    // 提交中直接忽略（连点两次会造两条客户记录）
+    if (submitPending) return;
+    const formData = readCustomerForm();
+    const errors = validateCustomerForm(formData);
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      pushToast('error', t('crm.customer_list_page.toast_form_invalid'));
+      return;
+    }
+    try {
+      if (selectedCustomer) {
+        await updateMutation.mutateAsync({ id: selectedCustomer.id, data: formData });
+      } else {
+        await createMutation.mutateAsync(formData);
+      }
+    } catch {
+      // 失败提示由 mutation.onError 统一 toast；弹窗保持打开、输入不丢
+    }
+  };
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredCustomers = customers;
@@ -420,6 +485,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
               leftIcon={<Edit2 size={14} />}
               onClick={() => {
                 setSelectedCustomer(row);
+                setFormErrors({});
                 setCreateModalOpen(true);
               }}
             >
@@ -489,6 +555,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 leftIcon={<Plus size={16} />}
                 onClick={() => {
                   setSelectedCustomer(null);
+                  setFormErrors({});
                   setCreateModalOpen(true);
                 }}
               >
@@ -655,7 +722,10 @@ const CrmCustomerRedesignPage: React.FC = () => {
       {/* 新建/编辑客户弹窗 */}
       <Modal
         open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setFormErrors({});
+        }}
         title={
           selectedCustomer
             ? t('crm.customer_list_page.modal_edit_title')
@@ -672,33 +742,15 @@ const CrmCustomerRedesignPage: React.FC = () => {
             </Button>
             <Button
               variant='primary'
-              onClick={() => {
-                const formData: Partial<Customer> = {
-                  customer_name:
-                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
-                  contact_phone:
-                    (document.getElementById('field-5') as HTMLInputElement)?.value || '',
-                  email: (document.getElementById('field-6') as HTMLInputElement)?.value || '',
-                  address: (document.getElementById('field-7') as HTMLInputElement)?.value || '',
-                  industry: (document.getElementById('field-2') as HTMLInputElement)?.value || '',
-                  level:
-                    ((document.getElementById('field-3') as HTMLSelectElement)
-                      ?.value as Customer['level']) || 'C',
-                  customer_type:
-                    (document.getElementById('field-8') as HTMLSelectElement)?.value ||
-                    'enterprise',
-                  status: 'active',
-                };
-                if (selectedCustomer) {
-                  updateMutation.mutate({ id: selectedCustomer.id, data: formData });
-                } else {
-                  createMutation.mutate(formData);
-                }
-              }}
+              onClick={handleSubmitCustomer}
+              disabled={submitPending}
+              aria-busy={submitPending}
             >
-              {selectedCustomer
-                ? t('crm.customer_list_page.btn_save')
-                : t('crm.customer_list_page.btn_submit_create')}
+              {submitPending
+                ? t('crm.customer_list_page.btn_submitting')
+                : selectedCustomer
+                  ? t('crm.customer_list_page.btn_save')
+                  : t('crm.customer_list_page.btn_submit_create')}
             </Button>
           </>
         }
@@ -716,6 +768,8 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 id='field-1'
                 placeholder={t('crm.customer_list_page.ph_customer_name_example')}
                 defaultValue={selectedCustomer?.customer_name}
+                error={formErrors['field-1']}
+                onChange={() => setFormErrors((prev) => ({ ...prev, 'field-1': '' }))}
               />
             </div>
             <div>
@@ -741,6 +795,8 @@ const CrmCustomerRedesignPage: React.FC = () => {
               <Select
                 id='field-3'
                 defaultValue={selectedCustomer?.level || 'B'}
+                error={formErrors['field-3']}
+                onChange={() => setFormErrors((prev) => ({ ...prev, 'field-3': '' }))}
                 options={[
                   { value: 'A', label: t('crm.customer_list_page.level_a') },
                   { value: 'B', label: t('crm.customer_list_page.level_b') },
@@ -803,6 +859,8 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 id='field-6'
                 placeholder={t('crm.customer_list_page.ph_email')}
                 defaultValue={selectedCustomer?.email}
+                error={formErrors['field-6']}
+                onChange={() => setFormErrors((prev) => ({ ...prev, 'field-6': '' }))}
               />
             </div>
           </div>

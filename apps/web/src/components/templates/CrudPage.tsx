@@ -1078,10 +1078,15 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 fields={schema.fields as SchemaField[]}
                 values={wizardValues}
                 onChange={setWizardValues}
-                onComplete={() => {
-                  createMutation.mutate(wizardValues as Partial<T>);
-                  setCreateOpen(false);
-                  setWizardValues({});
+                onComplete={async () => {
+                  // A-09：await 真实结果，失败时不关弹窗、保留输入
+                  try {
+                    await createMutation.mutateAsync(wizardValues as Partial<T>);
+                    setCreateOpen(false);
+                    setWizardValues({});
+                  } catch {
+                    // 错误提示由 createMutation.onError 统一 toast
+                  }
                 }}
                 onCancel={() => {
                   setCreateOpen(false);
@@ -1100,6 +1105,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   submitLabel={t('common.create', i18n.t('components.crud_page.k28'))}
                   resetLabel={t('common.cancel', i18n.t('components.crud_page.k29'))}
                   showReset
+                  isSubmitting={createMutation.isPending}
                   onSubmitSuccess={() => setCreateOpen(false)}
                   onReset={() => setCreateOpen(false)}
                   onFieldChange={(_name, _value, values) => {
@@ -1107,7 +1113,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   }}
                   onSubmit={async (values) => {
                     const combinedValues = { ...values, ...wizardValues };
-                    createMutation.mutate(combinedValues as Partial<T>);
+                    // A-08/A-09：必须 await —— 失败时异常回抛给 FormBuilder，
+                    // 弹窗保持打开、已填内容不丢；同时在请求期间禁用提交按钮。
+                    await createMutation.mutateAsync(combinedValues as Partial<T>);
                   }}
                 />
                 {hasNestedTables &&
@@ -1152,9 +1160,16 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 onChange={setWizardValues}
                 onComplete={() => {
                   const id = String(editTarget[idField]);
-                  updateMutation.mutate({ id, data: wizardValues as Partial<T> });
-                  setEditTarget(null);
-                  setWizardValues({});
+                  // A-09：与新建一致，按真实结果决定是否关闭
+                  void updateMutation
+                    .mutateAsync({ id, data: wizardValues as Partial<T> })
+                    .then(() => {
+                      setEditTarget(null);
+                      setWizardValues({});
+                    })
+                    .catch(() => {
+                      // 错误提示由 updateMutation.onError 统一 toast
+                    });
                 }}
                 onCancel={() => {
                   setEditTarget(null);
@@ -1174,6 +1189,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   submitLabel={t('common.save', i18n.t('components.crud_page.k31'))}
                   resetLabel={t('common.cancel', i18n.t('components.crud_page.k32'))}
                   showReset
+                  isSubmitting={updateMutation.isPending}
                   onSubmitSuccess={() => setEditTarget(null)}
                   onReset={() => setEditTarget(null)}
                   onFieldChange={(_name, _value, values) => {
@@ -1182,7 +1198,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   onSubmit={async (values) => {
                     const id = String(editTarget[idField]);
                     const combinedValues = { ...values, ...wizardValues };
-                    updateMutation.mutate({ id, data: combinedValues as Partial<T> });
+                    await updateMutation.mutateAsync({ id, data: combinedValues as Partial<T> });
                   }}
                 />
                 {hasNestedTables &&
