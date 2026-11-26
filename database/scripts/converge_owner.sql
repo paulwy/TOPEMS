@@ -47,7 +47,7 @@ BEGIN
   RAISE NOTICE 'relations converged: %', c;
 END $$;
 
--- 3) 函数/过程 归属
+-- 3) 函数/过程 归属（扩展内置函数随扩展管理，不改属主）
 DO $$
 DECLARE f record; c int := 0;
 BEGIN
@@ -57,6 +57,11 @@ BEGIN
             WHERE n.nspname !~ '^pg_'
               AND n.nspname <> 'information_schema'
               AND pg_get_userbyid(p.proowner) <> 'topems_owner'
+              AND NOT EXISTS (
+                    SELECT 1 FROM pg_depend d
+                     WHERE d.objid = p.oid AND d.classid = 'pg_proc'::regclass
+                       AND d.deptype = 'e'
+                  )
   LOOP
     EXECUTE format('ALTER FUNCTION %I.%I(%s) OWNER TO topems_owner', f.sch, f.fn, f.args);
     c := c + 1;
@@ -64,7 +69,7 @@ BEGIN
   RAISE NOTICE 'functions converged: %', c;
 END $$;
 
--- 4) 枚举/域/范围类型 归属
+-- 4) 枚举/域/范围类型 归属（扩展类型随扩展管理，不改属主）
 DO $$
 DECLARE t record; c int := 0;
 BEGIN
@@ -74,6 +79,11 @@ BEGIN
               AND n.nspname <> 'information_schema'
               AND ty.typtype IN ('e','d','r')
               AND pg_get_userbyid(ty.typowner) <> 'topems_owner'
+              AND NOT EXISTS (
+                    SELECT 1 FROM pg_depend d
+                     WHERE d.objid = ty.oid AND d.classid = 'pg_type'::regclass
+                       AND d.deptype = 'e'
+                  )
   LOOP
     EXECUTE format('ALTER TYPE %I.%I OWNER TO topems_owner', t.sch, t.typ);
     c := c + 1;
