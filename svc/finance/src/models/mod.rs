@@ -611,6 +611,26 @@ pub struct CreateAccountRequest {
     pub name_en: Option<String>,
 }
 
+/// B342: 批量创建下级科目请求。前端 `batchCreateChildren(parentId, accounts)` 直接发送 `{ accounts: [...] }`。
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct BatchAccountChildItem {
+    pub code: String,
+    pub name: String,
+    #[serde(default, alias = "category")]
+    pub account_type: Option<AccountType>,
+    #[serde(default)]
+    pub currency: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub name_en: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, ToSchema)]
+pub struct BatchCreateAccountChildrenRequest {
+    pub accounts: Vec<BatchAccountChildItem>,
+}
+
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateVoucherRequest {
     #[serde(deserialize_with = "deserialize_date")]
