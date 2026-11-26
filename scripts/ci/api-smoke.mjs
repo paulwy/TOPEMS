@@ -120,7 +120,7 @@ async function probeOnce(token, item) {
     const msg = String(body?.message || '');
     let verdict = 'OK';
     // 连接池打满属容量信号，不是接口逻辑坏了：单独标 DEGRADED，进汇总不进退出码
-    const poolStarved = /pool timed out|开启租户作用域失败|事务开启失败/.test(msg);
+    const poolStarved = r.status === 503 && /数据库繁忙/.test(msg);
     if (r.status >= 500 && r.status !== 501) verdict = poolStarved ? 'DEGRADED' : 'FAIL';
     else if (r.status === 401) verdict = 'SKIP';
     else if (r.status === 404 && (/接口不存在/.test(msg) || /路径/.test(msg))) verdict = 'FAIL';

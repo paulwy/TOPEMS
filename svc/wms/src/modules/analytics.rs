@@ -153,7 +153,7 @@ async fn get_inventory_turnover(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("inventory_turnover 开启租户作用域失败: {}", e);
-            return ApiResponse::server_error("查询失败");
+            return ApiResponse::error(503, "数据库繁忙，请稍后重试");
         }
     };
 
@@ -292,7 +292,7 @@ async fn get_order_fulfillment(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("order_fulfillment 开启租户作用域失败: {}", e);
-            return ApiResponse::server_error("查询失败");
+            return ApiResponse::error(503, "数据库繁忙，请稍后重试");
         }
     };
 
@@ -696,7 +696,7 @@ pub async fn get_abc_analysis(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("abc_analysis 开启租户作用域失败: {}", e);
-            return ApiResponse::server_error("查询失败");
+            return ApiResponse::error(503, "数据库繁忙，请稍后重试");
         }
     };
 
@@ -864,7 +864,7 @@ pub async fn get_age_pareto(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("age_pareto 开启租户作用域失败: {}", e);
-            return ApiResponse::server_error("查询失败");
+            return ApiResponse::error(503, "数据库繁忙，请稍后重试");
         }
     };
 
@@ -1003,7 +1003,7 @@ pub async fn get_location_utilization(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("location_utilization 开启租户作用域失败: {}", e);
-            return ApiResponse::server_error("查询失败");
+            return ApiResponse::error(503, "数据库繁忙，请稍后重试");
         }
     };
 
