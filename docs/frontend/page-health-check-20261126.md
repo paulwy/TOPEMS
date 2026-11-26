@@ -104,6 +104,28 @@ pnpm verify:frontend:full     # 全量：--all，约 18 分钟
 会留下 console error，已经被页面健康检查抓红（`/srm/contract` 就是这样被抓到的），
 所以它只作排查辅助，不进 `verify:frontend`。
 
+## itemsField 契约巡检（静态解析 + 打接口）
+
+`createCrudPageAdapter(api, { itemsField: 'contracts' })` 是前端对响应体的承诺。后端把字段改名后，
+`normalizeListResponse` 会退到 `items / materials / data` 兜底——不抛错、不报红，只是数据悄悄变空，
+在「本来就没数据」的租户上永远暴露不出来。
+
+`pnpm check:items-field` 做的事：grep 出每处 `itemsField` 声明 → 解析到 API 对象 → 找到 `list` 里的
+`apiClient.<svc>.get('<path>')` → 用 admin token 直接打接口 → 看承诺的字段在不在。
+
+首轮结果（13 处声明）：
+
+```
+OK  EquipmentManagementPage  equipments   → /api/mes/equipment           keys=equipments,total,page,page_size
+OK  EquipmentOEEPage         records      → /api/mes/equipment-oee       keys=records,total,page,page_size
+OK  TeamManagementPage       teams        → /api/mes/teams               keys=teams,total,page,page_size
+OK  InboundOrderPage         orders       → /api/wms/inbound-orders      keys=orders,items,total,page,page_size
+…（13/13 匹配，缺失 0）
+```
+
+**边界**：解析靠正则，手写适配器只覆盖 `list: api.x.list` 形态；解析不出来的记 `SKIP` 不判负
+（宁可漏报，也不要假红）。它验证的是「字段名对得上」，不验证「数据内容对不对」。
+
 ## 取舍与盲区
 
 - 不进 PR CI：要起后端 + 前端 + 无头浏览器，成本高于收益；定位发版前 / Nightly。
