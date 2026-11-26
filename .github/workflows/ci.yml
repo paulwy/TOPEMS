@@ -41,10 +41,10 @@ on:
 
 # Cancel superseded runs on the same ref to save CI minutes.
 concurrency:
-  # 按分支单组：进行中的长作业不会被打断；新提交只取消尚未开始的排队 run，
-  # 避免每个 commit 各占一个 runner 造成排队雪崩。
+  # 按分支单组：main 上以最新提交为准，新提交立即取消上一轮 run，
+  # 避免长作业把后续提交长期堵在排队（旧 run 结果对新 HEAD 无意义）。
   group: ci-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
