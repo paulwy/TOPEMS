@@ -8,7 +8,10 @@ use uuid::Uuid;
 
 use crate::modules::iam::auth::validate_password_strength;
 
-use super::models::{is_valid_email, record_audit_log, resolve_user_grants, UserResponse, UserRow};
+use super::models::{
+    is_valid_email, record_audit_log, resolve_user_grants, superuser_permission_codes,
+    UserResponse, UserRow,
+};
 
 /// GET /users/me/permissions — 返回当前用户权限（与已有 /permissions/my-permissions 不同路径）
 #[utoipa::path(
@@ -84,10 +87,7 @@ pub async fn get_my_permissions(
     let (role_names, permission_codes): (Vec<String>, Vec<String>) = if u.is_superuser {
         (
             vec!["admin".to_string(), "user".to_string()],
-            topems_shared_auth::auth::get_permissions()
-                .iter()
-                .map(|p| p.id.clone())
-                .collect(),
+            superuser_permission_codes(&state.db).await,
         )
     } else {
         resolve_user_grants(&state.db, u.id).await
@@ -321,10 +321,7 @@ pub async fn update_current_user(
                     let (roles, permissions) = if u.is_superuser {
                         (
                             vec!["admin".to_string(), "user".to_string()],
-                            topems_shared_auth::auth::get_permissions()
-                                .iter()
-                                .map(|p| p.id.clone())
-                                .collect(),
+                            superuser_permission_codes(&state.db).await,
                         )
                     } else {
                         resolve_user_grants(&state.db, u.id).await
@@ -676,10 +673,7 @@ pub async fn update_my_avatar(
                     let (roles, permissions) = if u.is_superuser {
                         (
                             vec!["admin".to_string(), "user".to_string()],
-                            topems_shared_auth::auth::get_permissions()
-                                .iter()
-                                .map(|p| p.id.clone())
-                                .collect(),
+                            superuser_permission_codes(&state.db).await,
                         )
                     } else {
                         resolve_user_grants(&state.db, u.id).await

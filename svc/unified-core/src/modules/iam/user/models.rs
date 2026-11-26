@@ -172,6 +172,25 @@ pub(crate) async fn resolve_user_grants(
     (roles, permissions)
 }
 
+/// 超管回显：DB 全量权限目录 code（平台目录，系统通道读取，与 `resolve_user_grants` 同范式）。
+/// 取代 shared-auth 内存目录占位，保证超管/普通用户回显同源 DB 目录。
+pub(crate) async fn superuser_permission_codes(db: &Db) -> Vec<String> {
+    let mut scope = match db.scope_read_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("解析超管权限目录失败（数据库作用域创建）: {}", e);
+            return Vec::new();
+        }
+    };
+    let codes =
+        sqlx::query_scalar::<_, String>("SELECT code FROM public.core_permissions ORDER BY code")
+            .fetch_all(&mut scope)
+            .await
+            .unwrap_or_default();
+    let _ = scope.commit().await;
+    codes
+}
+
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub(crate) struct PreferenceRow {
     pub preference_value: serde_json::Value,

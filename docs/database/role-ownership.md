@@ -116,6 +116,8 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 
 **(E) 旧表 `iam.roles` / `iam.position_roles` 遗留引用**：运行期角色目录权威为 `public.core_roles`（`role.rs::list_roles` 等全部查 core_roles）；旧 `iam.roles` 为空壳（prod 4 行占位、本机 0 行），无 Rust/前端业务读它，无视图/函数依赖。依附 FK 两条：`users_role_id_fkey`（已纳入 ⑧ 迁移 `20261126170000` 待 replay）、`position_roles_role_id_fkey`（另议）。`position_roles` 并非死表：`position.rs` 岗位模块运行期 INSERT/SELECT/DELETE 该表，但其 `role_id` FK 误指旧 `iam.roles`，而前端岗位绑定传入的是 `core_roles` UUID（目录接口来源）；表两库均 0 行，功能未实际产数。处置另议：岗位角色绑定要么 FK 修正指向 `core_roles`、并入 `core_user_roles` 范式，要么岗位角色绑定功能下线；涉及岗位模块接口改造，不随本轮 DROP users 列。
 
+⑩ **IAM-2c 超管回显目录源对齐 DB（2026-11-26，代码就绪，待 replay/部署窗口随常规发布）**。普查发现同一超管三处回显口径分裂：`roles.rs` 角色列表与 `batch.rs` 有效权限的超管分支已查 `public.core_permissions` DB 全量，而 `profile.rs`/`crud.rs`(列表+详情)/`profile_ext.rs`(三处) 共 **6 处**超管回显 permissions 仍取 `shared-auth` 内存目录 35 码（旧下划线方言占位，多数 DB 无对应）。**改动**：`models.rs` 新增 `superuser_permission_codes(db)`（系统通道 `scope_read_system` 查 `core_permissions` 全量 code，与 `resolve_user_grants` 同范式）；6 处超管分支统一改调该函数，非超管仍走 `resolve_user_grants` 关联表实时聚合。**效果**：运行期业务代码对内存目录 `get_permissions()` 的引用清零；超管/普通用户回显同源 DB 目录。**验证**：`cargo check`/clippy/fmt 绿；unified-core lib 571、shared-auth lib 230 测试全绿。**遗留（另批）**：① 内存目录函数 `get_permissions/get_roles/get_role_by_id/get_permission_by_id` 现运行期零调用，仅 shared-auth 单测与 `auth_test.rs` 引用，死代码清理（连带测试）另批；② 超管 roles 回显仍硬编码 `["admin","user"]`，未对齐 roles.rs 的 DB 全量角色口径，另议；③ 本批无 DDL、未改库、未动账本。
+
 
 
 ## 9. 决策与执行记录（2026-11-25 追加）

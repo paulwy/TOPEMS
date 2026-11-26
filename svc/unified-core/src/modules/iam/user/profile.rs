@@ -4,7 +4,7 @@ use axum::{extract::State, Json};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
-use super::models::{resolve_user_grants, UserResponse, UserRow};
+use super::models::{resolve_user_grants, superuser_permission_codes, UserResponse, UserRow};
 
 /// D2 U2 环3（决策 C）：用户偏好主数据本地化到 unified-core IAM 域（`core.user_preferences`）。
 ///
@@ -223,15 +223,12 @@ pub async fn get_current_user(
 
     match user {
         Some(u) => {
-            // P0-4：超管返回全量目录（保持原行为）；非超管改为实时 JOIN 规范化授权表，
-            // 不再硬编码 7 个 C 方言码。
+            // 超管返回 DB 全量权限目录（与 roles/batch 超管分支同口径），不再走 shared-auth
+            // 内存目录占位；非超管实时 JOIN 规范化授权表。
             let (roles, permissions) = if u.is_superuser {
                 (
                     vec!["admin".to_string(), "user".to_string()],
-                    topems_shared_auth::auth::get_permissions()
-                        .iter()
-                        .map(|p| p.id.clone())
-                        .collect(),
+                    superuser_permission_codes(&state.db).await,
                 )
             } else {
                 resolve_user_grants(&state.db, u.id).await
