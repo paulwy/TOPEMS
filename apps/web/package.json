@@ -66,7 +66,8 @@
     "check:pages": "node scripts/check-page-health.mjs",
     "check:pages:all": "node scripts/check-page-health.mjs --all --include-dashboards --max 200",
     "verify:frontend": "node scripts/verify-frontend.mjs",
-    "verify:frontend:full": "node scripts/verify-frontend.mjs --full"
+    "verify:frontend:full": "node scripts/verify-frontend.mjs --full",
+    "check:silent-empty": "node scripts/check-silent-empty.mjs --all --max 220"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",

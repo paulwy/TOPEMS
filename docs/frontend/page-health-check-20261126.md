@@ -81,6 +81,29 @@ pnpm verify:frontend:full     # 全量：--all，约 18 分钟
 全量实测（2026-11-26）：列表一致性 133 页 / 不一致 0（607s），页面健康 213 页 / 失败 0（485s），
 总览 `PASS / PASS / 判定 OK`。
 
+## 静默空表排查（辅助工具，不进闸）
+
+`pnpm check:silent-empty`：接口返回了数组、页面表格却是「共 0 / 行 0」的页会被列成候选。
+动机是 `/srm/contract` 那类「接口有数据、适配器解析失败、空态兜住」的静默丢失——
+两层检查都可能漏（总数和行数都是 0）。
+
+**首轮全量（213 页）得到 13 个候选，逐页核对后全部是辅助列表，不是缺陷**：
+
+| 候选 | 页面实际列表 | 命中的数组 |
+| --- | --- | --- |
+| `/finance/assets`、`/finance/ledger`、`/finance/cost` | 资产/分录/成本记录（真为空） | `chart of accounts` 30 条（筛选下拉） |
+| `/wms/batch-management`、`/wms/transfer`、`/wms/stock-take` | 批次/调拨/盘点（真为空） | `warehouses` 29、`locations` 10（筛选） |
+| `/hrm/leave`、`/hrm/contracts` | 请假/合同（真为空） | `employees` 17（选人） |
+| `/crm/recommendation` | 推荐结果（真为空） | `customers` 100（候选池） |
+| `/bi/dataset` | 数据集（真为空） | `data-sources` 4（下拉） |
+| `/mes/equipment-oee` | OEE 记录（`records:[]`，真为空） | `statistics.by_equipment` 10（聚合卡） |
+| `/crm/customer-segmentation` | 分层明细（真为空） | `quadrants` 2（图表） |
+| `/mes/production-cost` | 成本明细（真为空） | `cost_by_month` / `forecast_data`（图表） |
+
+结论：这类工具的召回靠「数组存在」，精度靠人工。真正的「解析失败型静默空表」在抛错时
+会留下 console error，已经被页面健康检查抓红（`/srm/contract` 就是这样被抓到的），
+所以它只作排查辅助，不进 `verify:frontend`。
+
 ## 取舍与盲区
 
 - 不进 PR CI：要起后端 + 前端 + 无头浏览器，成本高于收益；定位发版前 / Nightly。
