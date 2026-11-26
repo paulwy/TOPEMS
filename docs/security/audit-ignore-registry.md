@@ -9,6 +9,7 @@
 | RUSTSEC-2026-0253 | 2026-10-07 | lru 0.16.4 | unsound（catch_unwind+panic Drop 路径） | 本仓无触发用法，随 async-graphql 滚动消除 | — |
 | RUSTSEC-2026-0387 | 2026-10-28 | crypto-bigint 0.5.5 | Timing（常数时间操作差异） | ES 算法零使用（仅 RS256/HS256/None），见下 | 待 jsonwebtoken 滚动升级 |
 | RUSTSEC-2026-0459 | 2026-11-19 | libsqlite3-sys 0.30.1 | SQLite 未初始化页缓存内存读取（CVE-2026-119375） | sqlite 后端未启用，仅 lock 惰性解析、不编译不链接，见下 | 待 sqlx 改用 libsqlite3-sys >=0.39 |
+| RUSTSEC-2026-0543 | 2026-11-26 | chrono 0.4.x | unmaintained（无已知漏洞） | 无 patched 版本；跨 26 服务时间类型迁移需专项，见下 | 完成 jiff/time 迁移 |
 
 ## RUSTSEC-2026-0459 详细理由（libsqlite3-sys 0.30.1，2026-11-19）
 
@@ -21,6 +22,17 @@
   属本地文件攻击；本仓无任何 sqlite 读写路径。
 - **解除路径**：下游 `sqlx 0.9.1` 精确锁定 `sqlx-sqlite =0.9.1`（进而锁定 0.30.1），
   需 sqlx 发布改用 `libsqlite3-sys >=0.39` 的版本后才可消除；当前无可用的同 minor 修复。
+
+## RUSTSEC-2026-0543 详细理由（chrono 0.4.x，2026-11-26）
+
+- **公告性质**：chrono 维护者停止维护，RustSec 标记为 `unmaintained`，**无已知安全漏洞**，
+  也无 patched 版本；`cargo audit` 仅作为 warning，`cargo deny` 默认将其视为拒绝项。
+- **为何不在本轮升级**：chrono 已贯穿 26 个服务与共享库（模型时间字段、SQLx `chrono` 特性、
+  serde 序列化、JWT 过期时间、审计时间戳）。迁移 jiff/time 属跨服务类型契约改造，
+  与 f64→Decimal、UUID/时间字段统一同级别，需独立专项与全量回归，不能作为 CI 收口动作。
+- **暴露面**：运行时不处理不可信时区/日历输入；时间解析入口统一为 chrono 的 RFC3339 /
+  NaiveDate，无自定义日历算术。
+- **解除条件**：完成 jiff/time 迁移专项后，删除本 ignore 并同步删除 `deny.toml` 条目。
 
 ## RUSTSEC-2023-0071 详细理由
 

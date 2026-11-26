@@ -28,6 +28,10 @@ yanked = "deny"
 # RUSTSEC-2026-0253（lru 0.16.4, informational unsound）：经 async-graphql 传递锁定，
 #   触发需 catch_unwind + panic 落在 Drop 路径（本仓无此用法）；2026-10-07 快照比对确认仅此 1 条
 #   informational，随 async-graphql 升级滚动消除（P3-8 2026-10-24 登记接受）。
+# RUSTSEC-2026-0387（crypto-bigint 0.5.5，计时差异）：链 jsonwebtoken → p256/p384 → crypto-bigint；
+#   本仓 JWT 仅用 RS256/HS256/None，ES256/ES384 零调用，运行时不触达该链；待 jsonwebtoken 升级后消除。
+# RUSTSEC-2026-0543（chrono 0.4.x, unmaintained）：无已知漏洞、无 patched 版本；
+#   chrono 贯穿 26 服务的时间类型/SQLx 映射，迁移 jiff/time 需跨服务专项，不能作为 CI 收口。
 # RUSTSEC-2026-0459（libsqlite3-sys 0.30.1, CVE-2026-119375）：链 sqlx →（可选）sqlx-sqlite
 #   → libsqlite3-sys；本仓 sqlx 仅启用 postgres 特性，全仓无 crate 启用 sqlite，
 #   该 crate 仅解析进 lock、不编译不链接；无 sqlite 文件读写路径。解除需上游 sqlx 改用
@@ -38,6 +42,8 @@ ignore = [
   "RUSTSEC-2026-0192",
   "RUSTSEC-2026-0253",
   "RUSTSEC-2026-0459",
+  "RUSTSEC-2026-0387",
+  "RUSTSEC-2026-0543",
 ]
 
 # ────────────────────────────────────────────────────────────────────────────
