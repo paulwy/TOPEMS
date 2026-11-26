@@ -121,8 +121,10 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
                         sx={{
                           height: 18,
                           fontSize: designTokens.typography.fontSize.scale['0.65rem'],
-                          backgroundColor: meta.bg,
+                          backgroundColor: 'var(--surface-2)',
                           color: meta.color,
+                          border: '1px solid',
+                          borderColor: meta.bg,
                           fontWeight: 600,
                         }}
                       />

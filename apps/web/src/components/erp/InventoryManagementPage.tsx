@@ -67,8 +67,23 @@ const StatCard: React.FC<{
   gradient?: boolean;
 }> = ({ label, value, icon, bgColor, iconColor, gradient }) => {
   const theme = useTheme();
+  const role = iconColor.split('.')[0];
+  const paletteRole = ['primary', 'secondary', 'success', 'warning', 'error', 'info'].includes(role)
+    ? role
+    : '';
+  const accent = paletteRole
+    ? (theme.palette[paletteRole as 'primary'].main as string)
+    : `var(--divider)`;
+  void bgColor;
   return (
-    <Box sx={{ p: 2, bgcolor: bgColor, borderRadius: 3 }}>
+    <Box
+      sx={{
+        p: 2,
+        bgcolor: 'var(--surface-2)',
+        borderLeft: `3px solid ${accent}`,
+        borderRadius: 3,
+      }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
         <Box
           sx={{

@@ -116,7 +116,13 @@ const SrmOrderStats: React.FC = () => {
       {statCards.map((stat) => (
         <Box
           key={stat.label}
-          sx={{ p: 2, bgcolor: stat.color, borderRadius: 3 }}
+          sx={{
+            p: 2,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: stat.color,
+            borderRadius: 3,
+          }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box

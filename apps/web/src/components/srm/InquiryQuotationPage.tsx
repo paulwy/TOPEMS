@@ -25,6 +25,22 @@ import { srmApi, type Inquiry, type Quotation } from '@/api/srm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 
+const STAT_ACCENTS: Record<string, string> = {
+  primary: 'var(--accent-primary)',
+  info: 'var(--info-500)',
+  warning: 'var(--warning-500)',
+  success: 'var(--success-500)',
+  default: 'var(--divider)',
+};
+
+const STAT_TEXT: Record<string, string> = {
+  primary: 'var(--accent-primary-text)',
+  info: 'var(--info-text)',
+  warning: 'var(--warning-text)',
+  success: 'var(--success-text)',
+  default: 'var(--text-primary)',
+};
+
 const InquiryQuotationPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -220,12 +236,19 @@ const InquiryQuotationPage: React.FC = () => {
             sx={{
               p: 2,
               borderRadius: 2,
-              bgcolor: `${stat.color}.light`,
+              bgcolor: 'var(--surface-2)',
+              borderLeft: `3px solid ${STAT_ACCENTS[stat.color] ?? 'var(--text-tertiary)'}`,
               minWidth: 120,
               textAlign: 'center',
             }}
           >
-            <Box sx={{ fontSize: 20, fontWeight: 600, color: `${stat.color}.dark` }}>
+            <Box
+              sx={{
+                fontSize: 20,
+                fontWeight: 600,
+                color: STAT_TEXT[stat.color] ?? 'var(--text-primary)',
+              }}
+            >
               {stat.value}
             </Box>
             <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{stat.label}</Box>

@@ -349,30 +349,30 @@ const DataAnalysisPage = () => {
                     label: t('bi.data_analysis_page.k32'),
                     value: '¥913,000',
                     change: '+12.5%',
-                    color: 'success.main',
+                    color: 'var(--success-text)',
                   },
                   {
                     label: t('bi.data_analysis_page.k33'),
                     value: '3,130',
                     change: '+8.3%',
-                    color: 'primary.main',
+                    color: 'var(--accent-primary-text)',
                   },
                   {
                     label: t('bi.data_analysis_page.k34'),
                     value: '1,270',
                     change: '+15.2%',
-                    color: 'secondary.main',
+                    color: 'var(--accent-secondary-text)',
                   },
                   {
                     label: t('bi.data_analysis_page.sales_amount_axis'),
                     value: '¥291.7',
                     change: '+3.8%',
-                    color: 'warning.main',
+                    color: 'var(--warning-text)',
                   },
                 ].map((metric, idx) => (
                   <Box
                     key={idx}
-                    sx={{ p: 2, backgroundColor: theme.palette.grey[50], borderRadius: 1 }}
+                    sx={{ p: 2, backgroundColor: 'var(--surface-2)', borderRadius: 1 }}
                   >
                     <Typography
                       variant='caption'

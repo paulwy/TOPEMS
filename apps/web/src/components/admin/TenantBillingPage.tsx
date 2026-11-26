@@ -482,7 +482,7 @@ const TenantBillingPage: React.FC = () => {
                             sx={{
                               '& .MuiListItemText-primary': {
                                 fontSize: designTokens.typography.fontSize.scale['0.8rem'],
-                                color: feature.included ? 'text.primary' : 'text.disabled',
+                                color: 'text.primary',
                               },
                             }}
                           />

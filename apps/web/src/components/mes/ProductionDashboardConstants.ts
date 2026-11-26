@@ -22,9 +22,21 @@ export const ALARM_LEVEL_META: Record<
   RealtimeAlarm['level'],
   { label: string; color: string; bg: string }
 > = {
-  critical: { label: i18n.t('mes.constants.k9'), color: ct.background.paper, bg: 'error.main' },
-  warning: { label: i18n.t('mes.constants.k10'), color: ct.background.paper, bg: 'warning.main' },
-  info: { label: i18n.t('mes.constants.k11'), color: ct.background.paper, bg: 'primary.main' },
+  critical: {
+    label: i18n.t('mes.constants.k9'),
+    color: 'var(--error-text)',
+    bg: 'var(--error-500)',
+  },
+  warning: {
+    label: i18n.t('mes.constants.k10'),
+    color: 'var(--warning-text)',
+    bg: 'var(--warning-500)',
+  },
+  info: {
+    label: i18n.t('mes.constants.k11'),
+    color: 'var(--accent-primary-text)',
+    bg: 'var(--accent-primary)',
+  },
 };
 
 export const SCHEDULE_STATUS_META: Record<string, { label: string; color: string }> = {

@@ -211,15 +211,19 @@ export const createCustomTheme = (): Theme => {
             },
             success: {
               ...designTokens.colors.success,
+              contrastText: '#18181b',
             },
             warning: {
               ...designTokens.colors.warning,
+              contrastText: '#18181b',
             },
             error: {
               ...designTokens.colors.error,
+              contrastText: '#18181b',
             },
             info: {
               ...designTokens.colors.info,
+              contrastText: '#18181b',
             },
             grey: designTokens.colors.grey,
             background: {
@@ -289,6 +293,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.success[400],
               light: designTokens.colors.success[300],
               dark: designTokens.colors.success[500],
+              contrastText: '#0f172a',
             },
             warning: {
               ...designTokens.colors.warning,
@@ -297,6 +302,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.warning[400],
               light: designTokens.colors.warning[300],
               dark: designTokens.colors.warning[500],
+              contrastText: '#0f172a',
             },
             error: {
               ...designTokens.colors.error,
@@ -305,6 +311,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.error[400],
               light: designTokens.colors.error[300],
               dark: designTokens.colors.error[500],
+              contrastText: '#0f172a',
             },
             info: {
               ...designTokens.colors.info,
@@ -313,6 +320,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.info[400],
               light: designTokens.colors.info[300],
               dark: designTokens.colors.info[500],
+              contrastText: '#0f172a',
             },
             action: {
               selected: 'rgba(148, 163, 184, 0.16)',

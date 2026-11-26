@@ -300,9 +300,10 @@ const ProductionGantt: React.FC<{
                           left: `${left}%`,
                           width: `${width}%`,
                           borderRadius: 1,
-                          // 待开始条用中性底：grey.400 上压白字只有 1.88:1
-                          backgroundColor: s.status === 'pending' ? 'grey.200' : meta.color,
-                          color: s.status === 'pending' ? 'text.secondary' : 'common.white',
+                          // 任何落到 grey.* 的灰色条（待开始/已报废/离线）都用中性底：
+                          // grey.400 上压白字只有 1.88:1
+                          backgroundColor: meta.color.startsWith('grey') ? 'grey.200' : meta.color,
+                          color: meta.color.startsWith('grey') ? 'text.secondary' : 'common.white',
                           display: 'flex',
                           alignItems: 'center',
                           px: 1,

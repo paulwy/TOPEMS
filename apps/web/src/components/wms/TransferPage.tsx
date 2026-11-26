@@ -76,7 +76,9 @@ const TransferStats: React.FC = () => {
           key={card.label}
           sx={{
             p: 2,
-            bgcolor: card.bgColor,
+            bgcolor: 'var(--surface-2)',
+            borderLeft: '3px solid',
+            borderColor: card.color,
             borderRadius: 3,
           }}
         >

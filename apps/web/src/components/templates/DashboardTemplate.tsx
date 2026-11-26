@@ -623,7 +623,7 @@ const DataTable: React.FC<{ table: DataTableConfig }> = ({ table }) => {
                 <TableCell
                   colSpan={columns.length}
                   align='center'
-                  sx={{ py: 4, color: 'text.disabled' }}
+                  sx={{ py: 4, color: 'text.secondary' }}
                 >
                   {i18n.t('components.dashboard_template.k1')}
                 </TableCell>

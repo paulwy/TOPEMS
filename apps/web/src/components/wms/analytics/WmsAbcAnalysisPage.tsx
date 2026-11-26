@@ -26,6 +26,12 @@ const ABC_COLORS: Record<string, string> = {
   C: designTokens.colors.success.dark,
 };
 
+const ABC_TEXT_COLORS: Record<string, string> = {
+  A: 'var(--error-text)',
+  B: 'var(--warning-text)',
+  C: 'var(--success-text)',
+};
+
 export default function WmsAbcAnalysisPage() {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -192,11 +198,11 @@ export default function WmsAbcAnalysisPage() {
                 {abc.map((item, i) => (
                   <tr
                     key={item.category}
-                    className={i % 2 ? 'bg-gray-50' : ''}
+                    style={{ background: i % 2 ? 'var(--surface-2)' : 'transparent' }}
                   >
                     <td
                       className='px-3 py-2 font-semibold'
-                      style={{ color: ABC_COLORS[item.category] }}
+                      style={{ color: ABC_TEXT_COLORS[item.category] ?? 'var(--text-primary)' }}
                     >
                       {t('wms.abc_analysis.category_label', { category: item.category })}
                     </td>
@@ -206,7 +212,10 @@ export default function WmsAbcAnalysisPage() {
                     <td className='px-3 py-2 text-right'>{item.value_percentage.toFixed(1)}%</td>
                   </tr>
                 ))}
-                <tr className='font-semibold bg-gray-100'>
+                <tr
+                  className='font-semibold'
+                  style={{ background: 'var(--surface-3)' }}
+                >
                   <td className='px-3 py-2'>{t('wms.abc_analysis.total')}</td>
                   <td className='px-3 py-2 text-right'>{totalCount.toLocaleString()}</td>
                   <td className='px-3 py-2 text-right'>100%</td>
