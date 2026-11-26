@@ -13,8 +13,12 @@ export const scmWriteApi = {
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.scm.post('/sync/supplier-from-srm', data ?? {}),
-  getSyncLogs: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  getSyncLogs: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.scm.post('/sync/sync-logs', data ?? {}),
-  getSyncStatistics: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  getSyncStatistics: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.scm.post('/sync/statistics', data ?? {}),
 };

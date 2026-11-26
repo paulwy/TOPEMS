@@ -5,7 +5,9 @@ import type { ApiResponse } from '../client';
 
 // ── v74 to_bind 补绑（2026-10-29，P2）──
 export const portalApi = {
-  exportGatewayAudit: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> => {
+  exportGatewayAudit: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.portal.post('/gateway-security/audit/export', data ?? {});
   },
 

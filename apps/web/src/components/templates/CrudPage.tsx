@@ -1276,10 +1276,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 const raw = deleteTarget[idField];
                 const name = raw ? `${schema.title} ${String(raw)}` : '';
                 return name
-                  ? t('common.confirm_delete_named', {
-                      name,
-                      defaultValue: `确定要删除「${name}」吗？此操作不可恢复。`,
-                    })
+                  ? t('common.confirm_delete_named', { name })
                   : t('common.confirm_delete_message', i18n.t('components.crud_page.k36'));
               })()}
             </Box>

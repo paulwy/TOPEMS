@@ -5,9 +5,13 @@ import type { ApiResponse } from '../client';
 
 // ── v74 BIZ 接入候选 analytics 14 条（2026-10-29）──
 export const analyticsReadApi = {
-  validatePermission: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  validatePermission: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.post('/permission/validate', data ?? {}),
-  filterData: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  filterData: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.post('/permission/filter', data ?? {}),
   getQualityAnalytics: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.get('/analytics/quality'),

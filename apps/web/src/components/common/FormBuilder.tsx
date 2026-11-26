@@ -405,7 +405,8 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
       const hit = field.options?.find((option) => String(option.value) === String(raw));
       return hit ? hit.label : String(raw);
     }
-    if (Array.isArray(raw)) return raw.length > 0 ? raw.map((item) => String(item)).join('、') : '—';
+    if (Array.isArray(raw))
+      return raw.length > 0 ? raw.map((item) => String(item)).join('、') : '—';
     return String(raw);
   }, []);
 

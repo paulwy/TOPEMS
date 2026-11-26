@@ -319,8 +319,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
     level:
       ((document.getElementById('field-3') as HTMLSelectElement)?.value as Customer['level']) ||
       'C',
-    customer_type:
-      (document.getElementById('field-8') as HTMLSelectElement)?.value || 'enterprise',
+    customer_type: (document.getElementById('field-8') as HTMLSelectElement)?.value || 'enterprise',
     status: 'active',
   });
 

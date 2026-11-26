@@ -7,13 +7,20 @@ import type { ApiResponse } from '../client';
 export const aiReadApi = {
   process: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.get('/documents/{id}/process'),
-  vectorizeFromFile: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  vectorizeFromFile: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.post('/documents/vectorize-from-file', data ?? {}),
-  getUserProfile: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.post('/profile/get', data ?? {}),
-  recommendDocuments: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  getUserProfile: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => apiClient.ai.post('/profile/get', data ?? {}),
+  recommendDocuments: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.post('/recommend/documents', data ?? {}),
-  recommendOpportunities: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  recommendOpportunities: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.post('/recommend/opportunities', data ?? {}),
   getActivityTrend: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.get('/dashboard/activity-trend'),

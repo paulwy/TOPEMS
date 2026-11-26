@@ -8,7 +8,9 @@ import type { ApiResponse } from '../client';
 // 路径归一：/api/finance、/finance 前缀剥离；无前缀即相对路径 → apiClient.finance
 
 export const financeWriteApi = {
-  generateConsolidatedReport: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  generateConsolidatedReport: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/reports/consolidated/generate', data ?? {}),
   createConsolidationEntity: async (
     data?: Record<string, unknown>

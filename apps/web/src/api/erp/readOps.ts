@@ -15,7 +15,9 @@ export const erpReadApi = {
     apiClient.erp.get('/mdm-v49/get-archive-policy'),
   getPopularEntries: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data-refs/get-popular-entries-handler'),
-  graphqlEndpoint: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  graphqlEndpoint: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/graphql', data ?? {}),
   listProductionOrders: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/production-orders'),

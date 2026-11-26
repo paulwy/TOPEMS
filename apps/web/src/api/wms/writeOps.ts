@@ -9,6 +9,8 @@ export const wmsWriteApi = {
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.wms.post('/sync/outbound-order/{id}/to-shipping', data ?? {}),
-  getSyncLogs: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  getSyncLogs: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.wms.post('/sync/sync-logs', data ?? {}),
 };

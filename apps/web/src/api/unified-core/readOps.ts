@@ -5,9 +5,13 @@ import type { ApiResponse } from '../client';
 
 // ── v74 BIZ 接入候选 unifiedCore（2026-10-29）──
 export const unifiedCoreReadApi = {
-  verifyPermission: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  verifyPermission: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/iam/permissions/verify', data ?? {}),
-  verifyMultiplePermissions: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  verifyMultiplePermissions: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/iam/permissions/verify-multiple', data ?? {}),
   getMyPermissions: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/iam/permissions/my-permissions'),

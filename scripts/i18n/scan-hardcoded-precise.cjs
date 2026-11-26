@@ -31,6 +31,9 @@ const WHITELIST_FILES = [
   // lib/reactQuery.ts：FALLBACK_TEXTS 为 React 渲染周期外的刻意兜底文本
   // （safeTranslate 键缺失/异常时的中文 fallback，注释见文件头），非 UI 硬编码
   'lib/reactQuery.ts',
+  // GlobalLayoutV3：模块名首屏兜底。i18n 命名空间是独立 chunk，导航首屏在 chunk
+  // 到达前只能渲染静态 zh/en 名称，避免暴露原始 key；chunk 就绪后由 i18n.t 覆盖。
+  'layouts/GlobalLayoutV3.tsx',
   // hooks/useWebSocket.ts：WS 签名密钥缺失时的开发期 logger.warn 日志文案
   // （提示配置 VITE_WS_SIGNING_SECRET，非 UI 渲染文案，不进 i18n）
   'hooks/useWebSocket.ts',
