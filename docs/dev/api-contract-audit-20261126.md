@@ -51,6 +51,7 @@ notification 的细节见 `docs/frontend/notification-contract-gap-20261126.md`�
 | 首轮（含前端清单） | `OK=1156 SOFT=121 FAIL=2 SKIP=2` |
 | 修 menu 后复跑 | `1281 条 OK=1156 SOFT=121 FAIL=0 SKIP=2 DEGRADED=2`，判定 OK |
 | 405 改 POST 后复跑 | `1264 条 OK=1156 SOFT=104 FAIL=0 SKIP=2 DEGRADED=2`，405 归零 |
+| 菜单注解 + 导出优化后 | `1264 条 OK=1157 SOFT=104 FAIL=0 SKIP=2 DEGRADED=1`，判定 OK |
 
 两条 FAIL 都是 `500 内部服务器错误`，且都不在 spec 里、原来的冒烟永远测不到：
 
