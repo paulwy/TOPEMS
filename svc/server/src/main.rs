@@ -144,8 +144,49 @@ fn derived_db_pools() -> u32 {
     pools
 }
 
+/// 打印用法（`--help`）。
+///
+/// 历史坑：本进程没有参数解析，敲 `topems-server --help` 会真的把服务拉起来并占端口，
+/// 排查时极易误连生产库。故在初始化日志/建池之前直接返回。
+fn print_help() {
+    println!(
+        "topems-server {} —— TOPEMS 模块化单体统一入口",
+        env!("CARGO_PKG_VERSION")
+    );
+    println!();
+    println!("用法:");
+    println!("  topems-server                启动服务（读 .env / 环境变量）");
+    println!("  topems-server --help | -h    显示本帮助并退出");
+    println!("  topems-server --version | -V 显示版本号并退出");
+    println!();
+    println!("关键环境变量:");
+    println!("  DATABASE_URL           必填，缺失即启动失败（2026-11-18 生产写入事故防线）");
+    println!("  SERVER_PORT            监听端口（默认 8099）");
+    println!("  LOG_FORMAT             text|json|file（默认 text）；RUST_LOG 控制级别");
+    println!();
+    println!("探活:");
+    println!("  curl -s -o /dev/null -w '%{{http_code}}' http://127.0.0.1:<SERVER_PORT>/api/server/health");
+    println!("  curl -s -X POST http://127.0.0.1:<SERVER_PORT>/api/core/iam/auth/login \\");
+    println!("       -H 'Content-Type: application/json' -d '{{\"username\":\"admin\",\"password\":\"...\"}}'");
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+    // 命令行闸门：--help/--version 在建池与监听之前返回，避免“看帮助顺手起了服务”。
+    if let Some(arg) = std::env::args().nth(1) {
+        match arg.as_str() {
+            "-h" | "--help" => {
+                print_help();
+                return Ok(());
+            }
+            "-V" | "--version" => {
+                println!("topems-server {}", env!("CARGO_PKG_VERSION"));
+                return Ok(());
+            }
+            _ => {}
+        }
+    }
+
     // 初始化日志：LOG_FORMAT=text|json|file 控制格式（默认 text），RUST_LOG 控制级别
     // （默认 topems-server=info + 端口排查相关 directives），支持滚动文件与 JSON 结构化
     init_logging("topems-server");
