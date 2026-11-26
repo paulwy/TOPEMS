@@ -97,10 +97,10 @@ export const FormDrawer = React.memo(function FormDrawer({
           padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
           borderRadius: 4,
           border: `1px solid ${designTokens.colors.grey[300]}`,
-          backgroundColor: 'background.paper',
+          backgroundColor: 'var(--bg-elevated)',
           cursor: loading ? 'not-allowed' : 'pointer',
           fontSize: 14,
-          color: 'grey.800',
+          color: 'var(--text-primary)',
         }}
       >
         {cancelText}
@@ -119,7 +119,7 @@ export const FormDrawer = React.memo(function FormDrawer({
               : designTokens.colors.primary.dark,
           cursor: loading || disableSubmit ? 'not-allowed' : 'pointer',
           fontSize: 14,
-          color: 'common.white',
+          color: `${designTokens.colors.common.white}`,
           fontWeight: 500,
           display: 'flex',
           alignItems: 'center',
@@ -132,7 +132,7 @@ export const FormDrawer = React.memo(function FormDrawer({
               width: 14,
               height: 14,
               border: `2px solid ${designTokens.colors.cyber.metal.topLight}`,
-              borderTopColor: 'common.white',
+              borderTopColor: `${designTokens.colors.common.white}`,
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
               display: 'inline-block',

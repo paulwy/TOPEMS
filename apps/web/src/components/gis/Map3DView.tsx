@@ -73,8 +73,8 @@ function DeviceMarker({
           position={[position[0], position[1] + 0.08, position[2]]}
           center
           style={{
-            background: 'action.active',
-            color: 'common.white',
+            background: 'var(--text-secondary)',
+            color: `${designTokens.colors.common.white}`,
             padding: `${designTokens.spacing.sm} 12px`,
             borderRadius: '4px',
             fontSize: '12px',
@@ -129,8 +129,8 @@ function StorageMarker({
           position={[position[0], position[1] + 0.05, position[2]]}
           center
           style={{
-            background: 'action.active',
-            color: 'common.white',
+            background: 'var(--text-secondary)',
+            color: `${designTokens.colors.common.white}`,
             padding: `${designTokens.spacing.sm} 12px`,
             borderRadius: '4px',
             fontSize: '12px',

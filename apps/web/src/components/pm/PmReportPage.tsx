@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, CheckCircle, AlertTriangle, DollarSign, TrendingUp } from 'lucide-react';
@@ -462,8 +463,8 @@ const PmReportPage: React.FC = () => {
                     dataKey='value'
                     name={i18n.t('pm.pm_report_page.k33')}
                   >
-                    <Cell fill='success.main' />
-                    <Cell fill='error.main' />
+                    <Cell fill={designTokens.colors.success.main} />
+                    <Cell fill={designTokens.colors.error.main} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>

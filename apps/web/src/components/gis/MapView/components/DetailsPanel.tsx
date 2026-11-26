@@ -59,7 +59,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
         >
           <X
             size={20}
-            style={{ color: 'common.white' }}
+            style={{ color: `${designTokens.colors.common.white}` }}
           />
         </IconButton>
       </MuiBox>

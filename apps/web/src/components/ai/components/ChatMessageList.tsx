@@ -143,7 +143,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         <Box sx={{ textAlign: 'center', py: 12 }}>
           <Sparkles
             size={48}
-            style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: 'text.disabled' }}
+            style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: 'var(--text-disabled)' }}
           />
           <Typography
             variant='h6'

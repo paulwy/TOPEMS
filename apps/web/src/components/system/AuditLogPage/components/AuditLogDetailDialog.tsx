@@ -281,7 +281,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all',
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'grey.800',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {typeof currentLog.request_details === 'string'
@@ -306,7 +306,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
                       whiteSpace: 'pre-wrap',
                       wordBreak: 'break-all',
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'grey.800',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {typeof currentLog.response_details === 'string'

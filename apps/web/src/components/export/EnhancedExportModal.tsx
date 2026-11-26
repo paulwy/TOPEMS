@@ -196,7 +196,7 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
       {/* Header */}
       <DialogTitle
         sx={{
-          background: 'linear-gradient(135deg, primary.main, secondary.main)',
+          background: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.secondary.main})`,
           color: 'primary.contrastText',
           p: 3,
           display: 'flex',

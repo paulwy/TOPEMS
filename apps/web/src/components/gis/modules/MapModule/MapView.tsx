@@ -167,7 +167,7 @@ const DetailsPanel: React.FC<{
         bottom: '1rem',
         left: '1rem',
         width: '20rem',
-        backgroundColor: 'background.paper',
+        backgroundColor: 'var(--bg-elevated)',
         borderRadius: '0.75rem',
         boxShadow: `0 20px 25px -5px ${designTokens.colors.action.selected}, 0 10px 10px -5px ${designTokens.colors.action.hover}`,
         overflow: 'hidden',
@@ -205,7 +205,7 @@ const DetailsPanel: React.FC<{
             style={{
               width: '1.25rem',
               height: '1.25rem',
-              color: 'common.white',
+              color: `${designTokens.colors.common.white}`,
             }}
           />
         </button>
@@ -677,7 +677,7 @@ const MapView: React.FC<MapViewProps> = ({
                   >
                     <div
                       style={{
-                        backgroundColor: 'background.paper',
+                        backgroundColor: 'var(--bg-elevated)',
                         padding: '0.5rem 0.75rem',
                         borderRadius: '0.5rem',
                         boxShadow: `0 10px 15px -3px ${designTokens.colors.action.selected}, 0 4px 6px -2px ${designTokens.colors.action.hover}`,
@@ -782,8 +782,8 @@ const MapView: React.FC<MapViewProps> = ({
                         marginTop: '0.5rem',
                         padding: '0.25rem 0.5rem',
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                        color: 'cyan.600',
-                        backgroundColor: 'cyan.50',
+                        color: 'var(--cyan-600)',
+                        backgroundColor: 'var(--cyan-50)',
                         borderRadius: '0.25rem',
                         border: 'none',
                         cursor: 'pointer',
@@ -877,8 +877,8 @@ const MapView: React.FC<MapViewProps> = ({
                         marginTop: '0.5rem',
                         padding: '0.25rem 0.5rem',
                         fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                        color: 'cyan.600',
-                        backgroundColor: 'cyan.50',
+                        color: 'var(--cyan-600)',
+                        backgroundColor: 'var(--cyan-50)',
                         borderRadius: '0.25rem',
                         border: 'none',
                         cursor: 'pointer',
@@ -1053,7 +1053,7 @@ const MapView: React.FC<MapViewProps> = ({
             position: 'absolute',
             top: '1rem',
             left: '8rem',
-            backgroundColor: 'background.paper',
+            backgroundColor: 'var(--bg-elevated)',
             borderRadius: '0.5rem',
             boxShadow: `0 4px 6px -1px ${designTokens.colors.action.selected}, 0 2px 4px -1px ${designTokens.colors.action.hover}`,
             padding: '0.5rem 1rem',
@@ -1078,7 +1078,7 @@ const MapView: React.FC<MapViewProps> = ({
             position: 'absolute',
             bottom: '1rem',
             left: '1rem',
-            backgroundColor: 'warning.lighter',
+            backgroundColor: 'var(--surface-2)',
             border: `1px solid ${designTokens.colors.warning[200]}`,
             borderRadius: '0.5rem',
             padding: '0.5rem 1rem',
@@ -1137,7 +1137,7 @@ const MapView: React.FC<MapViewProps> = ({
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundColor: 'action.active',
+            backgroundColor: 'var(--text-secondary)',
             zIndex: designTokens.zIndex.overlay,
             display: 'flex',
             alignItems: 'center',
@@ -1146,7 +1146,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <div
             style={{
-              backgroundColor: 'background.paper',
+              backgroundColor: 'var(--bg-elevated)',
               borderRadius: '0.75rem',
               boxShadow: designTokens.shadows['2xl'],
               width: '90%',
@@ -1177,7 +1177,7 @@ const MapView: React.FC<MapViewProps> = ({
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundColor: 'action.active',
+            backgroundColor: 'var(--text-secondary)',
             zIndex: designTokens.zIndex.overlay,
             display: 'flex',
             alignItems: 'center',
@@ -1186,7 +1186,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <div
             style={{
-              backgroundColor: 'background.paper',
+              backgroundColor: 'var(--bg-elevated)',
               borderRadius: '0.75rem',
               boxShadow: designTokens.shadows['2xl'],
               width: '95%',

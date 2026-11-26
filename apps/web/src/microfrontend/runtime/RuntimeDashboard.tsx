@@ -1273,9 +1273,9 @@ const DesignSystemTab: React.FC = () => {
                 key={v.name}
                 sx={{ mb: 0.5 }}
               >
-                <span style={{ color: 'primary.300' }}>{v.name}</span>
+                <span style={{ color: 'var(--accent-primary-hover)' }}>{v.name}</span>
                 <span className={styles.il1}>: </span>
-                <span style={{ color: 'warning.400' }}>{v.value}</span>
+                <span style={{ color: 'var(--warning-500)' }}>{v.value}</span>
                 <span className={styles.il2}>;</span>
               </Box>
             ))}
@@ -1527,7 +1527,10 @@ const LifecycleTab: React.FC = () => {
                 />
                 {idx < stateFlow.length - 1 && (
                   <span
-                    style={{ color: 'text.disabled', margin: `0 ${designTokens.spacing.xs}px` }}
+                    style={{
+                      color: 'var(--text-disabled)',
+                      margin: `0 ${designTokens.spacing.xs}px`,
+                    }}
                   >
                     |
                   </span>

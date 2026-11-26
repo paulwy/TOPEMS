@@ -22,8 +22,8 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: 'full',
-            backgroundColor: 'primary.100',
+            borderRadius: 'var(--radius-full)',
+            backgroundColor: 'var(--surface-2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -60,15 +60,15 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: 'full',
-            backgroundColor: 'secondary.100',
+            borderRadius: 'var(--radius-full)',
+            backgroundColor: 'var(--surface-2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: 'purple.600' }}
+            style={{ width: 20, height: 20, color: 'var(--violet-500)' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -110,8 +110,8 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: 'full',
-            backgroundColor: 'warning.100',
+            borderRadius: 'var(--radius-full)',
+            backgroundColor: 'var(--surface-2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -160,7 +160,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           style={{
             width: 40,
             height: 40,
-            borderRadius: 'full',
+            borderRadius: 'var(--radius-full)',
             backgroundColor: 'surface.100',
             display: 'flex',
             alignItems: 'center',
@@ -168,7 +168,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: 'text.secondary' }}
+            style={{ width: 20, height: 20, color: 'var(--text-secondary)' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -309,7 +309,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                   width: 8,
                   height: 8,
                   backgroundColor: theme.palette.primary.main,
-                  borderRadius: 'full',
+                  borderRadius: 'var(--radius-full)',
                   flexShrink: 0,
                   marginTop: 6,
                 }}

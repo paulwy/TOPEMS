@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Card, CardContent, CardHeader, Typography } from '@mui/material';
 import {
@@ -43,8 +44,8 @@ const PmReportScheduleChart: React.FC<PmReportScheduleChartProps> = ({ stats }) 
                 dataKey='value'
                 name={i18n.t('pm.pm_report_page.attr_607558')}
               >
-                <Cell fill='success.main' />
-                <Cell fill='error.main' />
+                <Cell fill={designTokens.colors.success.main} />
+                <Cell fill={designTokens.colors.error.main} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

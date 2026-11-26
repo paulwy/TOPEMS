@@ -644,7 +644,7 @@ export default function ConsolidationReportsPage() {
                               padding: 3,
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
-                              color: 'text.secondary',
+                              color: 'var(--text-secondary)',
                             }}
                           >
                             {priorPeriod.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
@@ -655,7 +655,7 @@ export default function ConsolidationReportsPage() {
                               padding: 3,
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
-                              color: change >= 0 ? 'success.main' : 'error.main',
+                              color: change >= 0 ? 'var(--success-text)' : 'var(--error-text)',
                             }}
                           >
                             {change.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
@@ -666,7 +666,7 @@ export default function ConsolidationReportsPage() {
                               padding: 3,
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
-                              color: changeRate >= 0 ? 'success.main' : 'error.main',
+                              color: changeRate >= 0 ? 'var(--success-text)' : 'var(--error-text)',
                             }}
                           >
                             {changeRate.toFixed(2)}%

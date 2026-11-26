@@ -81,9 +81,9 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
     return (
       <div
         style={{
-          backgroundColor: 'background.paper',
+          backgroundColor: 'var(--bg-elevated)',
           padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px`,
-          borderRadius: 'md',
+          borderRadius: 'var(--radius-md)',
           boxShadow: designTokens.shadows.md,
           border: '1px solid border.default',
           minWidth: '120px',
@@ -99,7 +99,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
               margin: `${designTokens.spacing.xs} 0`,
             }}
           >
-            <span style={{ color: item.color || 'primary.light' }}>●</span>
+            <span style={{ color: item.color || 'var(--accent-primary-hover)' }}>●</span>
             {item.dataKey}: {String(item.value)}
           </p>
         ))}
@@ -195,7 +195,7 @@ const GaugeChart = ({
             x='0'
             y='0'
             textAnchor='middle'
-            fill='grey.900'
+            fill={designTokens.colors.grey[900]}
             fontSize='36'
             fontWeight='700'
           >
@@ -205,7 +205,7 @@ const GaugeChart = ({
             x='0'
             y='24'
             textAnchor='middle'
-            fill='grey.600'
+            fill={designTokens.colors.grey[600]}
             fontSize='14'
           >
             {label || ''}
@@ -215,7 +215,7 @@ const GaugeChart = ({
           x='25'
           y='140'
           textAnchor='middle'
-          fill='grey.400'
+          fill={designTokens.colors.grey[400]}
           fontSize='12'
         >
           {min}
@@ -224,7 +224,7 @@ const GaugeChart = ({
           x='175'
           y='140'
           textAnchor='middle'
-          fill='grey.400'
+          fill={designTokens.colors.grey[400]}
           fontSize='12'
         >
           {max}
@@ -263,8 +263,8 @@ export const ChartComponent: React.FC<ChartConfig> = ({
     return (
       <div
         style={{
-          backgroundColor: 'background.paper',
-          borderRadius: 'lg',
+          backgroundColor: 'var(--bg-elevated)',
+          borderRadius: 'var(--radius-lg)',
           boxShadow: designTokens.shadows.sm,
           padding: 6,
           minHeight: '200px',
@@ -279,7 +279,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             style={{
               fontSize: '18px',
               fontWeight: 600,
-              color: 'grey.900',
+              color: 'var(--text-primary)',
               marginBottom: 4,
             }}
           >
@@ -654,8 +654,8 @@ export const ChartComponent: React.FC<ChartConfig> = ({
   return (
     <div
       style={{
-        backgroundColor: 'background.paper',
-        borderRadius: 'lg',
+        backgroundColor: 'var(--bg-elevated)',
+        borderRadius: 'var(--radius-lg)',
         boxShadow: designTokens.shadows.sm,
         padding: 6,
       }}
@@ -665,7 +665,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
           style={{
             fontSize: '18px',
             fontWeight: 600,
-            color: 'grey.900',
+            color: 'var(--text-primary)',
             marginBottom: 4,
           }}
         >

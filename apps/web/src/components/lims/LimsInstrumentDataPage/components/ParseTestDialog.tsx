@@ -98,7 +98,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                     fontFamily: 'monospace',
                     fontSize: '12px',
                     border: `1px solid ${theme.palette.grey[300]}`,
-                    borderRadius: 'xs',
+                    borderRadius: 'var(--radius-sm)',
                   }}
                   value={formatJson(parseTestData.raw_data)}
                   onChange={(e) =>

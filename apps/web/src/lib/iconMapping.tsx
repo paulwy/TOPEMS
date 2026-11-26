@@ -381,7 +381,11 @@ export const renderIcon = (iconName?: string, size = 16, color?: string) => {
   if (!IconComponent) return null;
   return (
     <IconComponent
-      style={{ width: size, height: size, ...(color ? { color } : { color: 'primary.main' }) }}
+      style={{
+        width: size,
+        height: size,
+        ...(color ? { color } : { color: 'var(--accent-primary)' }),
+      }}
     />
   );
 };

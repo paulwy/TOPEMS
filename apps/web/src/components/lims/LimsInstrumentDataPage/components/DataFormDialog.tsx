@@ -88,7 +88,7 @@ const DataFormDialog: React.FC<DataFormDialogProps> = ({
                 fontFamily: 'monospace',
                 fontSize: '12px',
                 border: `1px solid ${theme.palette.grey[300]}`,
-                borderRadius: 'xs',
+                borderRadius: 'var(--radius-sm)',
               }}
               value={formatJson(formData.raw_data)}
               onChange={(e) =>

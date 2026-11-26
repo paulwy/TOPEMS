@@ -223,7 +223,7 @@ const ModuleCard: React.FC<{
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <StarIcon
             size={16}
-            style={{ color: 'warning.500', fill: 'warning.500' }}
+            style={{ color: 'var(--warning-500)', fill: 'var(--warning-500)' }}
           />
           <Typography
             variant='body2'
@@ -315,7 +315,7 @@ const ModuleDetailDialog: React.FC<{
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
               <StarIcon
                 size={16}
-                style={{ color: 'warning.500', fill: 'warning.500' }}
+                style={{ color: 'var(--warning-500)', fill: 'var(--warning-500)' }}
               />
               <Typography
                 variant='body2'
@@ -387,7 +387,7 @@ const ModuleDetailDialog: React.FC<{
                 >
                   <CheckIcon
                     size={16}
-                    style={{ color: 'teal.500', marginRight: 8 }}
+                    style={{ color: 'var(--teal-500)', marginRight: 8 }}
                   />
                   <ListItemText primary={feature} />
                 </ListItem>

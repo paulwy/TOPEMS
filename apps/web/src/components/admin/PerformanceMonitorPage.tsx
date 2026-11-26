@@ -336,7 +336,7 @@ const PerformanceMonitorPage: React.FC = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: 16,
-                  backgroundColor: 'warning.100',
+                  backgroundColor: 'var(--surface-2)',
                   borderRadius: 8,
                 }}
               >
@@ -402,7 +402,7 @@ const PerformanceMonitorPage: React.FC = () => {
                 alignItems: 'center',
                 gap: 8,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color: 'text.secondary',
+                color: 'var(--text-secondary)',
               }}
             >
               <input

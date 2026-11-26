@@ -128,7 +128,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
                 fontFamily: 'monospace',
                 fontSize: '12px',
                 border: `1px solid ${theme.palette.grey[300]}`,
-                borderRadius: 'xs',
+                borderRadius: 'var(--radius-sm)',
               }}
               value={formatJson(formData.parse_config)}
               onChange={(e) =>
@@ -155,7 +155,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
                 fontFamily: 'monospace',
                 fontSize: '12px',
                 border: `1px solid ${theme.palette.grey[300]}`,
-                borderRadius: 'xs',
+                borderRadius: 'var(--radius-sm)',
               }}
               value={formatJson(formData.quality_rules)}
               onChange={(e) =>

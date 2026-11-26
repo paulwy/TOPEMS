@@ -351,7 +351,7 @@ const DataAssetCatalogPage: React.FC = () => {
             flex: 1,
             padding: '8px 12px',
             border: '1px solid',
-            borderColor: 'grey.300',
+            borderColor: 'var(--surface-4)',
             borderRadius: '4px',
             fontSize: '14px',
           }}

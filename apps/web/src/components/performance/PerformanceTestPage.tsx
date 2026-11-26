@@ -510,7 +510,7 @@ const PerformanceTestPage: React.FC = () => {
             </div>
             <h1
               style={{
-                color: 'common.white',
+                color: `${designTokens.colors.common.white}`,
                 fontWeight: 700,
                 fontSize: designTokens.typography.fontSize.scale['2rem'],
                 marginBottom: '0.5rem',
@@ -520,7 +520,7 @@ const PerformanceTestPage: React.FC = () => {
             </h1>
             <p
               style={{
-                color: 'common.white',
+                color: `${designTokens.colors.common.white}`,
                 maxWidth: '600px',
                 margin: '0 auto',
                 fontSize: designTokens.typography.fontSize.scale['1rem'],
@@ -534,8 +534,8 @@ const PerformanceTestPage: React.FC = () => {
                 display: 'inline-block',
                 marginTop: '1rem',
                 padding: '0.5rem 1rem',
-                background: 'action.disabledBackground',
-                color: 'common.white',
+                background: 'var(--surface-2)',
+                color: `${designTokens.colors.common.white}`,
                 borderRadius: '20px',
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
@@ -558,7 +558,7 @@ const PerformanceTestPage: React.FC = () => {
               <div
                 key={index}
                 style={{
-                  background: 'common.white',
+                  background: `${designTokens.colors.common.white}`,
                   backdropFilter: 'blur(20px)',
                   borderRadius: '16px',
                   boxShadow: `0 10px 40px ${theme.palette.action.selected}`,
@@ -613,7 +613,7 @@ const PerformanceTestPage: React.FC = () => {
                     style={{
                       fontWeight: 600,
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'grey.700',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {metric.label}
@@ -624,7 +624,7 @@ const PerformanceTestPage: React.FC = () => {
                     fontWeight: 700,
                     fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                     marginBottom: '0.25rem',
-                    color: 'grey.900',
+                    color: 'var(--text-primary)',
                   }}
                 >
                   {metric.value}
@@ -632,7 +632,7 @@ const PerformanceTestPage: React.FC = () => {
                 <div
                   style={{
                     fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                    color: 'text.secondary',
+                    color: 'var(--text-secondary)',
                   }}
                 >
                   {metric.description}
@@ -644,7 +644,7 @@ const PerformanceTestPage: React.FC = () => {
           <div style={{ marginTop: designTokens.spacing['2xl'], textAlign: 'center' }}>
             <div
               style={{
-                background: 'common.white',
+                background: `${designTokens.colors.common.white}`,
                 backdropFilter: 'blur(20px)',
                 borderRadius: '16px',
                 boxShadow: `0 10px 40px ${theme.palette.action.selected}`,
@@ -659,7 +659,7 @@ const PerformanceTestPage: React.FC = () => {
                   fontWeight: 600,
                   fontSize: designTokens.typography.fontSize.scale['1.125rem'],
                   marginBottom: '1rem',
-                  color: 'grey.900',
+                  color: 'var(--text-primary)',
                 }}
               >
                 {i18n.t('pages.performance_test_page.k3')}
@@ -675,23 +675,23 @@ const PerformanceTestPage: React.FC = () => {
                   <div
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'text.secondary',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('performance.performance_test_page.k25')}
                   </div>
-                  <div style={{ fontWeight: 500, color: 'grey.900' }}>/performance</div>
+                  <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>/performance</div>
                 </div>
                 <div>
                   <div
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'text.secondary',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('performance.performance_test_page.k26')}
                   </div>
-                  <div style={{ fontWeight: 500, color: 'grey.900' }}>
+                  <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
                     {t('performance.performance_test_page.k27')}
                   </div>
                 </div>
@@ -699,12 +699,12 @@ const PerformanceTestPage: React.FC = () => {
                   <div
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'text.secondary',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('performance.performance_test_page.k28')}
                   </div>
-                  <div style={{ fontWeight: 500, color: 'success.600' }}>
+                  <div style={{ fontWeight: 500, color: 'var(--success-600)' }}>
                     {t('performance.performance_test_page.k29')}
                   </div>
                 </div>
@@ -712,12 +712,12 @@ const PerformanceTestPage: React.FC = () => {
                   <div
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                      color: 'text.secondary',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {t('performance.performance_test_page.k30')}
                   </div>
-                  <div style={{ fontWeight: 500, color: 'success.600' }}>
+                  <div style={{ fontWeight: 500, color: 'var(--success-600)' }}>
                     {t('performance.performance_test_page.k31')}
                   </div>
                 </div>
@@ -735,7 +735,7 @@ const PerformanceTestPage: React.FC = () => {
                   style={{
                     padding: '0.75rem 1.5rem',
                     background: `linear-gradient(135deg, ${theme.palette.primary[900]} 0%, ${theme.palette.primary.main} 100%)`,
-                    color: 'common.white',
+                    color: `${designTokens.colors.common.white}`,
                     border: 'none',
                     borderRadius: '8px',
                     fontWeight: 600,
@@ -754,8 +754,8 @@ const PerformanceTestPage: React.FC = () => {
                   }}
                   style={{
                     padding: '0.75rem 1.5rem',
-                    background: 'common.white',
-                    color: 'primary.500',
+                    background: `${designTokens.colors.common.white}`,
+                    color: 'var(--accent-primary)',
                     border: `1px solid ${theme.palette.primary.main}`,
                     borderRadius: '8px',
                     fontWeight: 600,
@@ -773,7 +773,7 @@ const PerformanceTestPage: React.FC = () => {
             <div
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color: 'common.white',
+                color: `${designTokens.colors.common.white}`,
               }}
             >
               {i18n.t('pages.performance_test_page.k6')}

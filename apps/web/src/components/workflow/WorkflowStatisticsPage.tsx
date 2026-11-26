@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * 流程统计分析页面
  *
@@ -448,7 +449,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
               />
               <Bar
                 dataKey={i18n.t('pages.workflow_statistics_page.k69')}
-                fill='secondary.main'
+                fill={designTokens.colors.secondary.main}
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>

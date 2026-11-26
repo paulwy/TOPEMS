@@ -27,8 +27,8 @@ const StatsChartPieImpl = lazy(() =>
 const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
   <div
     style={{
-      backgroundColor: 'background.paper',
-      borderRadius: 'lg',
+      backgroundColor: 'var(--bg-elevated)',
+      borderRadius: 'var(--radius-lg)',
       boxShadow: designTokens.shadows.sm,
       padding: 6,
     }}
@@ -37,7 +37,7 @@ const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
       style={{
         fontSize: '18px',
         fontWeight: 600,
-        color: 'grey.900',
+        color: 'var(--text-primary)',
         marginBottom: 4,
       }}
     >
@@ -49,7 +49,7 @@ const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
         alignItems: 'center',
         justifyContent: 'center',
         height: '160px',
-        color: 'grey.400',
+        color: 'var(--text-tertiary)',
       }}
     >
       <p>{i18n.t('shared.stats_chart.impl.k0')}</p>
