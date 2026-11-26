@@ -10,24 +10,84 @@
 #   topems db reset-admin-password -p <新密码>
 #   topems db reset-admin-password -u <用户名>
 #
+# 2026-11-26 修复:
+#   1) 连接参数改为「用户/口令/主机/端口/库名」整体从 DATABASE_URL 解析，
+#      不再出现「默认 DB_USER=topems 却取到 topems_app 口令」的账号口令错配。
+#   2) psql 不再用 `-c` + `:'var'`（新版 psql 的 -c 不做变量插值，会报 syntax error
+#      at or near ":"），统一改为 stdin heredoc + -v 传入。
+#
 # =============================================
 
 set -e
 
-# 数据库连接配置（口令不设明文默认：优先环境变量，其次从 config/standalone.env 提取）
-DB_HOST="${DB_HOST:-localhost}"
-DB_PORT="${DB_PORT:-5432}"
-DB_NAME="${DB_NAME:-topems}"
-DB_USER="${DB_USER:-topems}"
-DB_PASSWORD="${DB_PASSWORD:-}"
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
-if [ -z "$DB_PASSWORD" ] && [ -f "$PROJECT_ROOT/config/standalone.env" ]; then
-    DB_PASSWORD="$(sed -n 's#^DATABASE_URL=postgres://[^:]*:\([^@]*\)@.*#\1#p' "$PROJECT_ROOT/config/standalone.env" | head -1)"
+
+# 显式环境变量（缺省为空，稍后由 DATABASE_URL 补齐）
+ENV_HOST="${DB_HOST:-}"
+ENV_PORT="${DB_PORT:-}"
+ENV_NAME="${DB_NAME:-}"
+ENV_USER="${DB_USER:-}"
+ENV_PASSWORD="${DB_PASSWORD:-}"
+
+# 解析 postgres://user:pass@host:port/db[?opts]
+parse_dsn() {
+    local dsn="$1"
+    dsn="${dsn#*://}"
+    DSN_NAME="" DSN_HOST="" DSN_PORT="" DSN_USER="" DSN_PASSWORD=""
+
+    # userinfo@hostpart
+    if [[ "$dsn" == *"@"* ]]; then
+        local userinfo="${dsn%%@*}"
+        dsn="${dsn#*@}"
+        DSN_USER="${userinfo%%:*}"
+        if [[ "$userinfo" == *":"* ]]; then
+            DSN_PASSWORD="${userinfo#*:}"
+        fi
+    fi
+
+    dsn="${dsn%%\?*}"          # 去掉查询参数
+    local hostpart="${dsn%%/*}"
+    DSN_NAME="${dsn#*/}"
+    [[ "$DSN_NAME" == "$dsn" ]] && DSN_NAME=""
+
+    if [[ "$hostpart" == *":"* ]]; then
+        DSN_HOST="${hostpart%%:*}"
+        DSN_PORT="${hostpart##*:}"
+    else
+        DSN_HOST="$hostpart"
+    fi
+}
+
+# 连接串来源优先级：$DATABASE_URL > .env > .env.local > config/standalone.env
+DSN_SOURCE=""
+DSN=""
+if [ -n "${DATABASE_URL:-}" ]; then
+    DSN="$DATABASE_URL"; DSN_SOURCE="环境变量 DATABASE_URL"
+else
+    for f in "$PROJECT_ROOT/.env" "$PROJECT_ROOT/.env.local" "$PROJECT_ROOT/config/standalone.env"; do
+        if [ -f "$f" ]; then
+            candidate="$(sed -n 's#^DATABASE_URL=\(.*\)$#\1#p' "$f" | head -1)"
+            if [ -n "$candidate" ]; then
+                DSN="$candidate"; DSN_SOURCE="$f"
+                break
+            fi
+        fi
+    done
 fi
+
+if [ -n "$DSN" ]; then
+    parse_dsn "$DSN"
+fi
+
+DB_HOST="${ENV_HOST:-${DSN_HOST:-localhost}}"
+DB_PORT="${ENV_PORT:-${DSN_PORT:-5432}}"
+DB_NAME="${ENV_NAME:-${DSN_NAME:-topems}}"
+DB_USER="${ENV_USER:-${DSN_USER:-topems}}"
+DB_PASSWORD="${ENV_PASSWORD:-$DSN_PASSWORD}"
+
 if [ -z "$DB_PASSWORD" ]; then
-    echo "错误: 未设置 DB_PASSWORD 环境变量，且无法从 config/standalone.env 提取数据库口令" >&2
+    echo "错误: 无法解析数据库口令（既无 DB_PASSWORD 环境变量，也未在 .env / .env.local / config/standalone.env 找到 DATABASE_URL）" >&2
     echo "用法: DB_PASSWORD='<口令>' bash scripts/dev/update-admin-password.sh <用户名> <新密码>" >&2
     exit 2
 fi
@@ -38,7 +98,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -y|--yes) ASSUME_YES=1; shift ;;
         -h|--help)
-            echo "用法: DB_PASSWORD='<口令>' $0 [-y] <用户名> <新密码>"
+            echo "用法: [DB_PASSWORD='<口令>'] $0 [-y] <用户名> <新密码>"
             echo "  -y, --yes   跳过交互确认直接执行"
             exit 0 ;;
         *) break ;;
@@ -61,6 +121,9 @@ echo "数据库连接信息:"
 echo "  Host: ${DB_HOST}:${DB_PORT}"
 echo "  Database: ${DB_NAME}"
 echo "  User: ${DB_USER}"
+if [ -n "$DSN_SOURCE" ]; then
+    echo "  凭据来源: ${DSN_SOURCE}"
+fi
 echo
 echo "目标用户: ${USERNAME}"
 echo "新密码: ${NEW_PASSWORD}"
@@ -76,15 +139,20 @@ if ! command -v psql &> /dev/null; then
     exit 1
 fi
 
+# 统一执行入口：SQL 走 stdin（psql 的 -c 不做 :'var' 变量插值）
+run_sql() {
+    local sql="$1"; shift
+    psql -X -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
+        -v ON_ERROR_STOP=1 "$@" -f - <<< "$sql"
+}
+
 echo "------------------------------------------------------------"
 echo "步骤 1: 查看当前用户信息"
 echo "------------------------------------------------------------"
-psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -v username="$USERNAME" -c "
-SELECT id, username, email, is_superuser, status 
-FROM core_users 
-WHERE username = :'username';
-" 2>&1 || {
-    echo "❌ 查询失败"
+run_sql "SELECT id, username, email, is_superuser, status
+FROM core_users
+WHERE username = :'username';" -v username="$USERNAME" 2>&1 || {
+    echo "❌ 查询失败（请确认账号口令/端口与 .env 的 DATABASE_URL 一致）"
     unset PGPASSWORD
     exit 1
 }
@@ -119,13 +187,11 @@ echo
 echo "------------------------------------------------------------"
 echo "步骤 2: 更新密码"
 echo "------------------------------------------------------------"
-psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -v username="$USERNAME" -v pwdhash="$PASSWORD_HASH" -c "
-UPDATE core_users 
+run_sql "UPDATE core_users
 SET password_hash = :'pwdhash',
     updated_at = NOW()
-WHERE username = :'username';
-" 2>&1 || {
-    echo "❌ 更新失败"
+WHERE username = :'username';" -v username="$USERNAME" -v pwdhash="$PASSWORD_HASH" 2>&1 || {
+    echo "❌ 更新失败（若被 RLS 拦截，请确认会话 app.tenant_id 已设置）"
     unset PGPASSWORD
     exit 1
 }
@@ -134,13 +200,11 @@ echo
 echo "------------------------------------------------------------"
 echo "步骤 3: 验证结果"
 echo "------------------------------------------------------------"
-psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -v username="$USERNAME" -c "
-SELECT username, email, 
-       substring(password_hash, 1, 30) || '...' as password_hash_preview, 
-       updated_at 
-FROM core_users 
-WHERE username = :'username';
-"
+run_sql "SELECT username, email,
+       substring(password_hash, 1, 30) || '...' AS password_hash_preview,
+       updated_at
+FROM core_users
+WHERE username = :'username';" -v username="$USERNAME"
 echo
 
 echo "============================================================"
