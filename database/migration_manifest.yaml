@@ -3229,7 +3229,7 @@ pending_forward_patches:
     status: to_apply
     effect: "iam.tenant_permissions 策略收紧为 app.rls_system='on' 或 tenant_id 精确匹配，补 FORCE RLS；未设置 tenant 时 fail-closed"
     destructive_scan: "ALTER TABLE ENABLE/FORCE RLS + ALTER/CREATE POLICY；无 DELETE/UPDATE/TRUNCATE/DROP TABLE"
-    note: "remediation：20261125160000 建表策略含 NULLIF(...) IS NULL / 空串 / 零租户豁免，且缺 FORCE；本迁移按 20261124200000 同形加固，旧文件加入 RLS_SHAPE_REMEDIATED 静态豁免；checksum 307a7aa2a331d6c241617b1b3c0c90f5b77849c68514685aa5e7670246d5fdf8"
+    note: "remediation：20261125160000 建表策略含 NULLIF(...) IS NULL / 空串 / 零租户豁免，且缺 FORCE；本迁移按 20261124200000 同形加固，旧文件加入 RLS_SHAPE_REMEDIATED 静态豁免；checksum 13b9f7f0afa4c9a4afa515e1f32c86a711c3bd3219480739cad36b7654c297f8"
 
   # ===== 2026-11-26：iam.users 反范式冗余列与旧单角色列删除（IAM-3） =====
   - version: "20261126170000"
