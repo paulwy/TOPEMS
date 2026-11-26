@@ -2006,7 +2006,7 @@ pub async fn submit_approval(
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:approval:admin"])),
+    security(("BearerAuth" = ["finance:expense_approval:update"])),
     path = "/approvals/approve",
     responses(
         (status = 200, description = "成功"),
@@ -7264,10 +7264,17 @@ fn parse_expense_date(raw: &str) -> Option<DateTime<Utc>> {
 
 pub async fn list_expense_approvals(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    // B349：显式租户谓词（此前只靠 RLS，缺上下文时会静默查空）
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) if !t.is_nil() => t,
+        Ok(_) => return ApiResponse::bad_request("缺少租户上下文"),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let page = params
         .get("page")
         .and_then(|v| v.as_u64())
@@ -7315,7 +7322,7 @@ pub async fn list_expense_approvals(
                   expense_type, total_amount, status, description, approver_id, approver_name,
                   approval_note, created_at, updated_at
            FROM finance.expense_approvals
-           WHERE deleted_at IS NULL
+           WHERE deleted_at IS NULL AND tenant_id = $5::uuid
              AND ($1::text IS NULL OR expense_no ILIKE $1 OR employee_name ILIKE $1)
              AND status = ANY($2::text[])
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
@@ -7324,6 +7331,7 @@ pub async fn list_expense_approvals(
     .bind(&status_filter)
     .bind(i64::try_from(page_size).unwrap_or(i64::MAX))
     .bind(i64::try_from(offset).unwrap_or(i64::MAX))
+    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await;
 
@@ -7351,12 +7359,13 @@ pub async fn list_expense_approvals(
             let total: i64 = sqlx::query_scalar(only_own_schema_query!(
                 "finance",
                 r#"SELECT COUNT(*) FROM finance.expense_approvals
-                   WHERE deleted_at IS NULL
+                   WHERE deleted_at IS NULL AND tenant_id = $3::uuid
                      AND ($1::text IS NULL OR expense_no ILIKE $1 OR employee_name ILIKE $1)
                      AND status = ANY($2::text[])"#
             ))
             .bind(&search)
             .bind(&status_filter)
+            .bind(tenant_id)
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
@@ -7372,7 +7381,7 @@ pub async fn list_expense_approvals(
 // gate: admin-only
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:approval:admin"])),
+    security(("BearerAuth" = ["finance:expense_approval:create"])),
     path = "/expense-approvals",
     tag = "Expense Approval",
     request_body = serde_json::Value,
@@ -7387,10 +7396,13 @@ pub async fn create_expense_approval(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<ExpenseApprovalUpsert>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
+    // B349：缺失/非法租户直接 400，不再落到 NULL tenant_id 的历史行为
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) if !t.is_nil() => t,
+        Ok(_) => return ApiResponse::bad_request("缺少租户上下文"),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     // 必填校验：expense_no 为空串/缺失 → 400（此前空串直接落库并返回 200）
     let expense_no = match req.expense_no.as_deref().map(str::trim) {
         Some(s) if !s.is_empty() => s.to_string(),
@@ -7484,10 +7496,17 @@ pub async fn create_expense_approval(
 
 pub async fn get_expense_approval(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
+    // B349：显式租户谓词，跨租户 ID 一律 404
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) if !t.is_nil() => t,
+        Ok(_) => return ApiResponse::bad_request("缺少租户上下文"),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let id_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::from(TopemsError::NotFound("无效的ID".to_string())),
@@ -7513,9 +7532,10 @@ pub async fn get_expense_approval(
                       expense_type, total_amount, status, description, approver_id, approver_name,
                       approval_note, created_at, updated_at
                FROM finance.expense_approvals
-               WHERE id = $1 AND deleted_at IS NULL"#
+               WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"#
     ))
     .bind(id_uuid)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -7829,7 +7849,7 @@ pub async fn approve_expense_approval(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:approval:admin"])),
+    security(("BearerAuth" = ["finance:expense_approval:update"])),
     path = "/expense-approvals/{id}/reject",
     tag = "Expense Approval",
     params(("id" = String, Path, description = "费用审批ID")),
@@ -7875,10 +7895,13 @@ async fn transition_expense_approval(
     let Ok(id_uuid) = Uuid::parse_str(id) else {
         return ApiResponse::not_found("费用审批不存在");
     };
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(claims);
-    if tenant_id.is_nil() {
-        return ApiResponse::bad_request("缺少租户上下文");
-    }
+    // B349：审批/驳回属写动作，缺租户直接 400，不再回退平台租户
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(claims)
+    {
+        Ok(t) if !t.is_nil() => t,
+        Ok(_) => return ApiResponse::bad_request("缺少租户上下文"),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return crate::shared::err_resp(TopemsError::DatabaseTransaction(
@@ -8546,30 +8569,81 @@ pub fn create_routes() -> Router<AppState> {
         )));
 
     // ===== 审批配置/费用审批 域 =====
-    let approval_routes = Router::new()
+    // B349：此前整个域只挂 finance:expense_approval:read，只读角色可建/改/删审批配置、
+    // 建费用审批、提交/审批/驳回、删费用审批。按方法拆子 Router，各挂对应码；
+    // 写子 Router 合并后统一再套一层 read（能读才能改）。
+    let approval_config_read_routes = Router::new()
         .route(
             "/approval-configs",
-            axum::routing::get(list_approval_configs_handler).post(create_approval_config_handler),
+            axum::routing::get(list_approval_configs_handler),
         )
         .route(
             "/approval-configs/{config_id}",
-            axum::routing::get(get_approval_config_handler)
-                .put(update_approval_config_handler)
-                .delete(delete_approval_config_handler),
+            axum::routing::get(get_approval_config_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:approval_config:read",
+        )));
+    let approval_config_create_routes = Router::new()
+        .route(
+            "/approval-configs",
+            axum::routing::post(create_approval_config_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:approval_config:create",
+        )));
+    let approval_config_update_routes = Router::new()
+        .route(
+            "/approval-configs/{config_id}",
+            axum::routing::put(update_approval_config_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:approval_config:update",
+        )));
+    let approval_config_delete_routes = Router::new()
+        .route(
+            "/approval-configs/{config_id}",
+            axum::routing::delete(delete_approval_config_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:approval_config:delete",
+        )));
+    let approval_config_write_routes = Router::new()
+        .merge(approval_config_create_routes)
+        .merge(approval_config_update_routes)
+        .merge(approval_config_delete_routes)
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:approval_config:read",
+        )));
+
+    let expense_approval_read_routes = Router::new()
+        .route(
+            "/expense-approvals",
+            axum::routing::get(list_expense_approvals),
+        )
+        .route(
+            "/expense-approvals/{id}",
+            axum::routing::get(get_expense_approval),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense_approval:read",
+        )));
+    let expense_approval_create_routes = Router::new()
+        .route(
+            "/expense-approvals",
+            axum::routing::post(create_expense_approval),
         )
         .route("/approvals/submit", axum::routing::post(submit_approval))
         .route("/approvals/approve", axum::routing::post(approve_approval))
         .route("/approvals/reject", axum::routing::post(reject_approval))
         .route("/approvals/cancel", axum::routing::post(cancel_approval))
-        .route(
-            "/expense-approvals",
-            axum::routing::get(list_expense_approvals).post(create_expense_approval),
-        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense_approval:create",
+        )));
+    let expense_approval_update_routes = Router::new()
         .route(
             "/expense-approvals/{id}",
-            axum::routing::get(get_expense_approval)
-                .put(update_expense_approval)
-                .delete(delete_expense_approval),
+            axum::routing::put(update_expense_approval),
         )
         .route(
             "/expense-approvals/{id}/submit",
@@ -8584,8 +8658,29 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(reject_expense_approval),
         )
         .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense_approval:update",
+        )));
+    let expense_approval_delete_routes = Router::new()
+        .route(
+            "/expense-approvals/{id}",
+            axum::routing::delete(delete_expense_approval),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:expense_approval:delete",
+        )));
+    let expense_approval_write_routes = Router::new()
+        .merge(expense_approval_create_routes)
+        .merge(expense_approval_update_routes)
+        .merge(expense_approval_delete_routes)
+        .layer(axum::middleware::from_fn(require_permission(
             "finance:expense_approval:read",
         )));
+
+    let approval_routes = Router::new()
+        .merge(approval_config_read_routes)
+        .merge(approval_config_write_routes)
+        .merge(expense_approval_read_routes)
+        .merge(expense_approval_write_routes);
 
     // ===== 应收/应付/收款/账龄 域 =====
     let ar_ap_routes = Router::new()
@@ -8693,6 +8788,13 @@ mod voucher_route_perm_tests {
     /// 否则服务启动即 panic。此用例只构建路由表，不连接数据库。
     #[test]
     fn voucher_routes_merge_without_panic() {
+        let _router = create_routes();
+    }
+
+    /// B349: 审批域按读/建/改/删拆成多个子 Router 后必须能正常合并，
+    /// 否则服务启动即 panic。此用例只构建路由表，不连接数据库。
+    #[test]
+    fn approval_routes_merge_without_panic() {
         let _router = create_routes();
     }
 }
