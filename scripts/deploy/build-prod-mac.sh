@@ -168,7 +168,7 @@ do_clean() {
   if [ "$also_release" -eq 0 ] && [ -d "$target/release" ]; then
     log "release 缓存已保留（彻底回收请用 clean --release）"
   fi
-  log "在线服务未受影响（运行的是 $BIN）"
+  log "在线服务未受影响（运行的是 ${BIN}）"
 }
 
 do_rollback() {
