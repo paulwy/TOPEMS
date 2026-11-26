@@ -221,12 +221,15 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             </Box>
             <Chip
               label={data.governance_level}
-              sx={(theme) => ({
-                bgcolor: getScoreColor(data.overall_score),
-                color: theme.palette.common.white,
+              sx={{
+                // 白字压 success/warning/grey.300 只有 1.5~1.8:1，改中性底 + 语义描边
+                bgcolor: 'var(--surface-3)',
+                color: 'text.primary',
+                border: '1px solid',
+                borderColor: getScoreColor(data.overall_score),
                 fontWeight: 600,
                 px: 1,
-              })}
+              }}
             />
           </Box>
         </Box>
@@ -344,11 +347,13 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
                   <Chip
                     label={data.risk_assessment.overall_risk_level}
                     size='small'
-                    sx={(theme) => ({
+                    sx={{
                       ml: 'auto',
-                      bgcolor: getRiskColor(data.risk_assessment.overall_risk_level),
-                      color: theme.palette.common.white,
-                    })}
+                      bgcolor: 'var(--surface-3)',
+                      color: 'text.primary',
+                      border: '1px solid',
+                      borderColor: getRiskColor(data.risk_assessment.overall_risk_level),
+                    }}
                   />
                 </Box>
 

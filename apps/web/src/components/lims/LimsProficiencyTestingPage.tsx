@@ -63,7 +63,16 @@ const StatCard: React.FC<{
   bgColor: string;
   iconColor: string;
 }> = ({ label, value, icon, bgColor, iconColor }) => (
-  <Box sx={{ p: 2, bgcolor: bgColor, borderRadius: 3 }}>
+  <Box
+    sx={{
+      // 浅底 + 浅灰字在暗色只有 1.03:1，统一中性底 + 语义左边框
+      p: 2,
+      bgcolor: 'var(--surface-2)',
+      borderLeft: '3px solid',
+      borderColor: bgColor,
+      borderRadius: 3,
+    }}
+  >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
       <Box sx={{ display: 'flex', color: iconColor }}>{icon}</Box>
       <Box

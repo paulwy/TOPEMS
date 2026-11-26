@@ -130,6 +130,15 @@ export interface KanbanPageTemplateProps extends BoxProps {
 
 // ============ 看板页模板组件 ============
 
+const TAG_TEXT_COLOR: Record<string, string> = {
+  'primary.main': 'var(--accent-primary-text)',
+  'secondary.main': 'var(--accent-secondary-text)',
+  'success.main': 'var(--success-text)',
+  'warning.main': 'var(--warning-text)',
+  'error.main': 'var(--error-text)',
+  'info.main': 'var(--info-text)',
+};
+
 export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
   title,
   subtitle,
@@ -491,9 +500,11 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               sx={{
                 height: 20,
                 fontSize: designTokens.typography.fontSize.scale['0.6rem'],
-                bgcolor:
-                  tag.color || (theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.100'),
-                color: tag.color || (theme.palette.mode === 'dark' ? 'grey.400' : 'grey.700'),
+                // 原来 bgcolor 与 color 都取 tag.color，芯片文字与底色完全相同（1:1）
+                bgcolor: 'var(--surface-3)',
+                border: '1px solid',
+                borderColor: tag.color || 'divider',
+                color: tag.color ? TAG_TEXT_COLOR[tag.color] || 'text.secondary' : 'text.secondary',
               }}
             />
           ))}
