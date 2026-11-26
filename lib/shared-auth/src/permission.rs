@@ -890,36 +890,6 @@ pub fn validate_permission_code(code: &str) -> Result<(), TopemsError> {
     Ok(())
 }
 
-/// 计算用户拥有的所有有效权限码（包括角色蕴含）
-pub fn compute_effective_permissions(
-    is_superuser: bool,
-    direct_permissions: &[String],
-    role_permissions: &[String],
-) -> Vec<String> {
-    if is_superuser {
-        return get_all_permission_codes();
-    }
-
-    let mut effective = Vec::new();
-    effective.extend_from_slice(direct_permissions);
-    effective.extend_from_slice(role_permissions);
-
-    // 去重
-    effective.sort();
-    effective.dedup();
-    effective
-}
-
-/// 获取所有权限码（超级管理员拥有全部）
-fn get_all_permission_codes() -> Vec<String> {
-    let all_perms = get_all_module_permissions();
-    let mut codes: Vec<String> = all_perms.iter().map(|p| p.to_string()).collect();
-    codes.push("iam:cross_tenant".to_string());
-    codes.sort();
-    codes.dedup();
-    codes
-}
-
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
@@ -1096,39 +1066,6 @@ mod tests {
         // 不具备其他模块权限
         let hrm_read = ModulePermission::new(ModuleCode::Hrm, PermissionAction::Read);
         assert!(!pos.has_permission(&hrm_read));
-    }
-
-    // ===== 有效权限计算 =====
-    #[test]
-    fn test_compute_effective_permissions() {
-        // 超级管理员 - 全部权限
-        let perms = compute_effective_permissions(true, &[], &[]);
-        assert!(!perms.is_empty(), "超级管理员应有全部权限");
-        assert!(perms.iter().any(|p| p == "iam:read"));
-        assert!(perms.iter().any(|p| p == "iam:admin"));
-        assert!(perms.iter().any(|p| p == "iam:cross_tenant"));
-
-        // 普通用户 - 直接权限 + 角色权限
-        let perms = compute_effective_permissions(
-            false,
-            &["custom:perm".to_string()],
-            &["role:perm".to_string()],
-        );
-        assert!(perms.contains(&"custom:perm".to_string()));
-        assert!(perms.contains(&"role:perm".to_string()));
-        assert!(
-            !perms.iter().any(|p| p == "iam:read"),
-            "普通用户不应有默认权限"
-        );
-
-        // 去重
-        let perms =
-            compute_effective_permissions(false, &["dup".to_string(), "dup".to_string()], &[]);
-        assert_eq!(
-            perms.iter().filter(|p| p.as_str() == "dup").count(),
-            1,
-            "应去重"
-        );
     }
 
     // ===== 新增：PermissionMetadataCache 纯函数测试 =====
