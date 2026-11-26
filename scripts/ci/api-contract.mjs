@@ -1,0 +1,280 @@
+#!/usr/bin/env node
+/**
+ * 前端调用 → OpenAPI 契约对账
+ *
+ * 目的：发现「前端调了一个后端根本不存在的路径」这类静默缺口。
+ * 通知模块就是这么暴露出来的：142 条调用里只有 9 条能在 spec 里解析，其余 404，
+ * 而其中一部分又被 comm_stub 以 200 空数据兜底，比 404 更隐蔽。
+ *
+ * 做法：
+ * 1. 从 apps/web/src/config/runtime.ts 解析各命名空间的 baseURL（services 表）；
+ * 2. 扫 apps/web/src/api/**\/*.ts，抓 apiClient.<ns>.<get|post|put|patch|delete>('...') 的第一个字面量/模板路径；
+ * 3. 把 `${...}` 和 spec 里的 `{param}` 都归一成 `*`，按 方法+段数+段内容 比对；
+ * 4. 没匹配上的记为 MISSING，按命名空间汇总。
+ *
+ * 只做静态对账，不需要登录、不需要后端在跑，只要有一份 openapi.json。
+ *
+ * 用法：
+ *   node scripts/ci/api-contract.mjs                     # 全量，汇总
+ *   node scripts/ci/api-contract.mjs --only notification  # 只看某个命名空间，打印明细
+ *   node scripts/ci/api-contract.mjs --spec http://127.0.0.1:8099/api/openapi.json
+ *   node scripts/ci/api-contract.mjs --json /tmp/contract.json --fail-on-missing
+ *
+ * 退出码：0 = 无 MISSING（或未开启 --fail-on-missing）；1 = 有 MISSING 且开启了 fail。
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '../..');
+const WEB = path.join(ROOT, 'apps/web');
+const API_DIR = path.join(WEB, 'src/api');
+const RUNTIME = path.join(WEB, 'src/config/runtime.ts');
+
+function arg(name, dflt = null) {
+  const i = process.argv.indexOf(`--${name}`);
+  if (i === -1) return dflt;
+  const v = process.argv[i + 1];
+  return v && !v.startsWith('--') ? v : true;
+}
+
+const SPEC_SRC = arg('spec', path.join(ROOT, 'docs/api/openapi.json'));
+const ONLY = arg('only', null);
+const JSON_OUT = arg('json', null);
+const FAIL = !!arg('fail-on-missing', false);
+const PROBE = !!arg('probe', false);
+const BASE = arg('base', 'http://127.0.0.1:8099');
+const TOKEN_FILE = arg('token-file', '/tmp/tok7.txt');
+
+function loadBases() {
+  const src = fs.readFileSync(RUNTIME, 'utf8');
+  const map = {};
+  const re = /['\"]?([a-zA-Z][\w-]*)['\"]?\s*:\s*getEnv\([^,]+,\s*'(\/api[^']*)'/g;
+  let m;
+  while ((m = re.exec(src))) map[m[1]] = m[2];
+  return map;
+}
+
+async function loadSpec() {
+  if (/^https?:/.test(SPEC_SRC)) {
+    const r = await fetch(SPEC_SRC);
+    if (!r.ok) throw new Error(`拉 spec 失败 ${r.status}`);
+    return r.json();
+  }
+  return JSON.parse(fs.readFileSync(SPEC_SRC, 'utf8'));
+}
+
+function walk(dir, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      if (e.name === '__tests__' || e.name === 'node_modules') continue;
+      walk(p, out);
+    } else if (/\.(ts|tsx)$/.test(e.name)) out.push(p);
+  }
+  return out;
+}
+
+/** 把调用路径归一：去 query、`${...}` → `*` */
+function normCall(p) {
+  let s = p.split('?')[0].split('#')[0];
+  s = s.replace(/`\s*\+/g, '').replace(/\$\{[^}]*\}/g, '*');
+  // 模板没闭合（如 `${queryString`）时按变量处理
+  s = s.replace(/\$\{[^`]*$/g, '*');
+  s = s.replace(/\+/g, '');
+  if (!s.startsWith('/')) s = '/' + s;
+  return s.replace(/\/+/g, '/').replace(/(.)\/$/, '$1');
+}
+
+/** spec 路径归一：`{param}` → `*` */
+function normSpec(p) {
+  return p.replace(/\{[^}]*\}/g, '*').replace(/\/+/g, '/');
+}
+
+function segs(p) {
+  return p.split('/').filter(Boolean);
+}
+
+function match(specPaths, method, callPath) {
+  const cs = segs(callPath);
+  for (const sp of Object.keys(specPaths)) {
+    const ss = segs(normSpec(sp));
+    if (ss.length !== cs.length) continue;
+    let ok = true;
+    for (let i = 0; i < ss.length; i++) {
+      if (ss[i] === '*') continue;
+      if (ss[i] !== cs[i]) { ok = false; break; }
+    }
+    if (!ok) continue;
+    const item = specPaths[sp] || {};
+    if (item[method.toLowerCase()]) return sp;
+  }
+  return null;
+}
+
+const CALL_RE = /apiClient\.([\w]+)\.(get|post|put|patch|delete|head)\s*(?:<[^>]*>)?\s*\(\s*(`[^`]*`|'[^']*'|"[^"]*")/g;
+
+async function main() {
+  const bases = loadBases();
+  const spec = await loadSpec();
+  const specPaths = spec.paths || {};
+
+  // namespace 是否存在 baseURL：不在 map 里的（如 pm 走 alias）也允许，直接按 /api/<ns> 拼
+  const files = walk(API_DIR);
+  const calls = [];
+  for (const f of files) {
+    const rel = path.relative(WEB, f);
+    const src = fs.readFileSync(f, 'utf8');
+    let m;
+    CALL_RE.lastIndex = 0;
+    while ((m = CALL_RE.exec(src))) {
+      const ns = m[1];
+      const method = m[2].toUpperCase();
+      const raw = m[3].slice(1, -1);
+      // 只处理纯路径（含模板变量），跳过明显拼接了变量的非路径表达式
+      const norm = normCall(raw);
+      const prefix = bases[ns];
+      if (!prefix) continue;
+      const full = norm.startsWith(prefix) ? norm : `${prefix}${norm}`.replace(/\/+/g, '/');
+      const line = src.slice(0, m.index).split('\n').length;
+      calls.push({ ns, method, raw, full, file: rel, line });
+    }
+  }
+
+  const missing = [];
+  const ok = [];
+  for (const c of calls) {
+    const hit = match(specPaths, c.method, c.full);
+    if (hit) ok.push({ ...c, spec: hit });
+    else missing.push(c);
+  }
+
+  const byNs = {};
+  for (const c of calls) {
+    byNs[c.ns] ??= { total: 0, ok: 0, missing: 0 };
+    byNs[c.ns].total++;
+  }
+  for (const c of ok) byNs[c.ns].ok++;
+  for (const c of missing) byNs[c.ns].missing++;
+
+  const nsList = ONLY
+    ? Object.keys(byNs).filter((k) => k === ONLY)
+    : Object.keys(byNs).filter((k) => byNs[k].missing > 0);
+
+  console.log(`契约对账  spec=${SPEC_SRC}`);
+  console.log(`扫描 ${files.length} 个前端 api 文件，抓到 ${calls.length} 条静态可解析调用`);
+  console.log(`匹配 ${ok.length}，未匹配 ${missing.length}\n`);
+
+  console.log('命名空间        调用  匹配  缺口');
+  for (const ns of nsList.sort((a, b) => byNs[b].missing - byNs[a].missing)) {
+    const s = byNs[ns];
+    console.log(
+      `${ns.padEnd(15)} ${String(s.total).padStart(4)} ${String(s.ok).padStart(6)} ${String(s.missing).padStart(6)}`
+    );
+  }
+
+  if (ONLY) {
+    console.log('\n明细：');
+    for (const c of missing.filter((x) => x.ns === ONLY)) {
+      console.log(`  MISSING  ${c.method.padEnd(6)} ${c.full}   ${c.file}:${c.line}`);
+    }
+  }
+
+  // --probe：把「spec 里没有」的路径真的打一遍，区分
+  //   1) 接口存在但没写进 spec（2xx）
+  //   2) 接口不存在（404 文案）
+  //   3) 接口存在但被 stub 兜底（2xx + pending upstream support 之类）——最隐蔽的一类
+  //   4) 需要参数/方法不符（400/405/422）
+  if (PROBE) {
+    const token = fs.existsSync(TOKEN_FILE) ? fs.readFileSync(TOKEN_FILE, 'utf8').trim() : '';
+    const candidates = missing.filter(
+      (c) => c.method === 'GET' && !c.full.includes('*') && !c.full.includes('{')
+    );
+    const buckets = { SPEC_GAP: [], STUB: [], REAL_MISSING: [], NEEDS_PARAM: [], OTHER: [] };
+    const STUB_RE = /pending upstream support|not implemented|未实现|待实现|占位/i;
+    const CONC = Number(arg('concurrency', 5));
+    let idx = 0;
+    async function worker() {
+      while (idx < candidates.length) {
+        const c = candidates[idx++];
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 15000);
+          const r = await fetch(BASE + c.full, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'X-Tenant-Id': '00000000-0000-0000-0000-000000000001',
+            },
+            signal: ctrl.signal,
+          });
+          clearTimeout(t);
+          const text = await r.text();
+          c.status = r.status;
+          if (r.status === 200 || r.status === 201) {
+            if (STUB_RE.test(text)) buckets.STUB.push(c);
+            else buckets.SPEC_GAP.push(c);
+          } else if (r.status === 404 && /接口不存在|路径/.test(text)) buckets.REAL_MISSING.push(c);
+          else if ([400, 405, 422].includes(r.status)) buckets.NEEDS_PARAM.push(c);
+          else buckets.OTHER.push(c);
+        } catch (e) {
+          c.status = -1;
+          buckets.OTHER.push(c);
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: Math.max(1, Math.min(CONC, 8)) }, worker));
+
+    console.log(`\n实测分类（GET，无模板变量，共 ${candidates.length} 条）：`);
+    console.log(`  接口存在但未写进 spec（2xx） : ${buckets.SPEC_GAP.length}`);
+    console.log(`  被 stub 兜底（2xx + pending）  : ${buckets.STUB.length}`);
+    console.log(`  接口真的不存在（404 文案）    : ${buckets.REAL_MISSING.length}`);
+    console.log(`  存在但需要参数/方法不符       : ${buckets.NEEDS_PARAM.length}`);
+    console.log(`  其他（401/5xx/网络）          : ${buckets.OTHER.length}`);
+
+    const nsOf = (arr) => {
+      const m = {};
+      for (const c of arr) m[c.ns] = (m[c.ns] || 0) + 1;
+      return Object.entries(m).sort((a, b) => b[1] - a[1]);
+    };
+    console.log('\n按命名空间（real missing / stub）：');
+    const rm = Object.fromEntries(nsOf(buckets.REAL_MISSING));
+    const st = Object.fromEntries(nsOf(buckets.STUB));
+    const allNs = [...new Set([...Object.keys(rm), ...Object.keys(st)])].sort(
+      (a, b) => (rm[b] || 0) - (rm[a] || 0) || (st[b] || 0) - (st[a] || 0)
+    );
+    for (const k of allNs) console.log(`  ${k.padEnd(14)} ${String(rm[k] || 0).padStart(3)} / ${String(st[k] || 0).padStart(3)}`);
+
+    if (ONLY) {
+      for (const c of buckets.REAL_MISSING.filter((x) => x.ns === ONLY))
+        console.log(`  REAL_MISSING ${c.method} ${c.full}  ${c.file}:${c.line}`);
+      for (const c of buckets.STUB.filter((x) => x.ns === ONLY))
+        console.log(`  STUB         ${c.method} ${c.full}  ${c.file}:${c.line}`);
+    }
+
+    if (JSON_OUT) {
+      fs.writeFileSync(
+        JSON_OUT,
+        JSON.stringify({ spec: SPEC_SRC, candidates: candidates.length, ...buckets }, null, 2)
+      );
+      console.log(`\n明细已写入 ${JSON_OUT}`);
+    }
+    process.exit(FAIL && buckets.REAL_MISSING.length > 0 ? 1 : 0);
+  }
+
+  if (JSON_OUT) {
+    fs.writeFileSync(
+      JSON_OUT,
+      JSON.stringify({ spec: SPEC_SRC, total: calls.length, ok: ok.length, missing, byNs }, null, 2)
+    );
+    console.log(`\n明细已写入 ${JSON_OUT}`);
+  }
+
+  if (FAIL && missing.length > 0) process.exit(1);
+}
+
+main().catch((e) => {
+  console.error('契约对账失败:', e.message);
+  process.exit(2);
+});
