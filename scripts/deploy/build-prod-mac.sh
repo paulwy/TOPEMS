@@ -58,12 +58,37 @@ check_tools() {
   command -v curl >/dev/null 2>&1 || die "未找到 curl"
 }
 
+# 已知失败签名：proc-macro dylib 损坏（rustc + macOS 26/27 + strip）
+#   "can't find crate for `xxx_derive`"、"mis-aligned LINKEDIT string pool"
+# 处理：把报错的 derive crate 清掉重编，再重试一次（大 workspace 并行编 proc-macro 时偶发）。
+PROC_MACRO_BAD_SIG='can.t find crate for|mis-aligned LINKEDIT'
+
 do_build() {
   check_tools
   prepare_env
+  local log_file="$ROOT/target/topems-release-build.log"
+  mkdir -p "$(dirname "$log_file")"
   log "构建 topems-server（release，strip 已强制 none）"
   log "protoc=${PROTOC:-未设置} cargo=$(command -v cargo)"
-  ( cd "$ROOT" && cargo build --release -p topems-server )
+  log "构建日志：$log_file"
+
+  if ! ( cd "$ROOT" && cargo build --release -p topems-server 2>&1 | tee "$log_file" ); then
+    if grep -qE "$PROC_MACRO_BAD_SIG" "$log_file"; then
+      local bad
+      bad="$(grep -oE "can.?t find crate for \`[a-z0-9_]+\`" "$log_file" | grep -oE "\`[a-z0-9_]+\`" | tr -d '`' | sort -u)"
+      [ -n "$bad" ] || bad="zeroize_derive"
+      log "命中 proc-macro dylib 损坏签名，清理并重试：${bad//$'\n'/ }"
+      local pkg
+      for pkg in $bad; do
+        ( cd "$ROOT" && cargo clean --release -p "$pkg" >/dev/null 2>&1 || true )
+      done
+      ( cd "$ROOT" && cargo clean --release -p topems-server >/dev/null 2>&1 || true )
+      ( cd "$ROOT" && cargo build --release -p topems-server 2>&1 | tee -a "$log_file" ) || die "重试仍失败，见 $log_file"
+    else
+      die "构建失败，见 $log_file"
+    fi
+  fi
+
   [ -x "$ROOT/target/release/topems-server" ] || die "构建产物不存在"
   log "构建完成：$(stat -f '%z bytes' "$ROOT/target/release/topems-server")"
 }
