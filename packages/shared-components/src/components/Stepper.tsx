@@ -103,7 +103,7 @@ const CustomStepIcon: React.FC<
         justifyContent: 'center',
         backgroundColor: getBackgroundColor(),
         border: variant === 'outlined' ? `2px solid ${getBorderColor()}` : 'none',
-        color: status === 'pending' ? theme.palette.text.disabled : theme.palette.common.white,
+        color: status === 'pending' ? theme.palette.text.secondary : theme.palette.common.white,
         transition: 'all 0.3s ease',
         animation: status === 'active' ? `${pulse} 2s infinite` : 'none',
         '& svg': {
@@ -175,7 +175,7 @@ const Stepper: React.FC<StepperProps> = ({
                           ? 'success.main'
                           : status === 'error'
                             ? 'error.main'
-                            : 'text.disabled'
+                            : 'text.secondary'
                     }
                   >
                     {step.label}

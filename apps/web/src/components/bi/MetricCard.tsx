@@ -220,7 +220,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       return (
         <Minus
           size={16}
-          color='grey.400'
+          color='var(--text-tertiary)'
         />
       );
     }
@@ -401,7 +401,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 <Typography
                   variant='body2'
                   sx={{
-                    color: 'grey.400',
+                    color: 'text.secondary',
                     fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   }}
                 >
@@ -412,7 +412,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             {subtitle && (
               <Typography
                 variant='caption'
-                sx={{ color: 'grey.400', marginTop: 0.5, display: 'block' }}
+                sx={{ color: 'text.secondary', marginTop: 0.5, display: 'block' }}
               >
                 {subtitle}
               </Typography>

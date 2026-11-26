@@ -623,8 +623,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     padding: `${designTokens.spacing.md} 20px`,
                     backgroundColor: this.state.isReporting
                       ? 'var(--text-tertiary)'
-                      : 'var(--warning-text)',
-                    color: `${designTokens.colors.common.white}`,
+                      : 'var(--warning-500)',
+                    color: 'var(--text-on-accent)',
                     borderRadius: 'var(--radius-md)',
                     border: 'none',
                     cursor: this.state.isReporting ? 'not-allowed' : 'pointer',
