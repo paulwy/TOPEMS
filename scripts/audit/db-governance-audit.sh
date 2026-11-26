@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# db-governance-audit.sh — 三库（prod/topems/prepare）索引·约束·类型治理只读审计
+# db-governance-audit.sh — 两库（prod/topems）索引·约束·类型治理只读审计
 # 2026-11-03 P3 数据库治理启动：无 PK / 无二级索引 / CHECK / UNIQUE 缺失矩阵 + 无 PK 有数据表清单
-# 用法: bash scripts/audit/db-governance-audit.sh [db...]  默认 topems_prod topems topems_prepare
+# 用法: bash scripts/audit/db-governance-audit.sh [db...]  默认 topems_prod topems
+# 注：历史对拍库 topems_prepare 已于 2026-11-26 作为演练残留清理（见 gap-tracker v1.125），如需对拍可手动传库名。
 set -euo pipefail
 DB_URL="${DB_URL:-postgres://}"  # 默认本机 socket 认证（拼成 postgres:///<db>），不内嵌口令；跨机审计时导出完整基址如 postgres://user@host:5432
 
-dbs=("$@"); [ ${#dbs[@]} -eq 0 ] && dbs=(topems_prod topems topems_prepare)
+dbs=("$@"); [ ${#dbs[@]} -eq 0 ] && dbs=(topems_prod topems)
 
 for db in "${dbs[@]}"; do
   echo "==================== $db ===================="

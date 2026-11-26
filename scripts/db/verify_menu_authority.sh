@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ============================================================================
-# 菜单单一权威 Phase 0：五库账本与差异基线（只读）
+# 菜单单一权威 Phase 0：四库账本与差异基线（只读）
 #
 # 核验范围：
-#   1. topems(dev) / topems_test / topems_prepare / 5433 / prod 各库的
+#   1. topems(dev) / topems_test / 5433 / prod 各库的
 #      core_menus 所在 schema、行数、code 集合；
 #   2. 各库 _sqlx_migrations 中 20261102* / 20261103* 的 success 与 checksum；
 #   3. 权威 DB code 集合 vs 前端 navItems（scripts/verify_navigation.mjs --json，
@@ -17,7 +17,7 @@
 #   bash scripts/db/verify_menu_authority.sh --out docs/quality/menu-authority-baseline-2026-11-05.md
 #
 # 环境变量（可选覆盖；默认从仓库根 .env 的 DATABASE_URL 派生）：
-#   TOPEMS_DB_URL / TOPEMS_TEST_URL / TOPEMS_PREPARE_URL / TOPEMS_5433_URL
+#   TOPEMS_DB_URL / TOPEMS_TEST_URL / TOPEMS_5433_URL
 #   TOPEMS_PROD_SSH（默认 xingzhai@192.168.110.115）
 #   TOPEMS_PROD_DB（默认 topems_prod）
 #
@@ -44,7 +44,6 @@ fi
 
 DEV_URL="${TOPEMS_DB_URL:-$BASE_URL}"
 TEST_URL="${TOPEMS_TEST_URL:-$(printf '%s' "$BASE_URL" | sed -E 's#/topems([?]|$)#/topems_test\1#')}"
-PREPARE_URL="${TOPEMS_PREPARE_URL:-$(printf '%s' "$BASE_URL" | sed -E 's#/topems([?]|$)#/topems_prepare\1#')}"
 PORT5433_URL="${TOPEMS_5433_URL:-$(printf '%s' "$BASE_URL" | sed -E 's#:5432/#:5433/#; s#/topems([?]|$)#/topems\1#')}"
 PROD_SSH="${TOPEMS_PROD_SSH:-xingzhai@192.168.110.115}"
 PROD_DB="${TOPEMS_PROD_DB:-topems_prod}"
@@ -102,7 +101,7 @@ console.log(`FE navItems: ${items.length} 条（unique code ${codes.length}）`)
 ' "$TMP_DIR/fe_nav.json" "$TMP_DIR/fe_codes.txt"
 
 # ---- 逐库采集 ----
-declare -a LABELS=("topems(dev)" "topems_test" "topems_prepare" "5433/topems" "prod/topems_prod")
+declare -a LABELS=("topems(dev)" "topems_test" "5433/topems" "prod/topems_prod")
 declare -a STATUS=() SCHEMA_SUMMARY=() AUTH_SCHEMA=() TOTAL=() LEDGER_LINES=() CODE_FILES=()
 
 collect_one() {
@@ -160,24 +159,23 @@ collect_one() {
 
 collect_one local "$DEV_URL" 0
 collect_one local "$TEST_URL" 1
-collect_one local "$PREPARE_URL" 2
-collect_one local "$PORT5433_URL" 3
-collect_one ssh "" 4
+collect_one local "$PORT5433_URL" 2
+collect_one ssh "" 3
 
 # ---- 生成 Markdown ----
 emit() {
-  echo "# 菜单单一权威 Phase 0 基线（五库账本 + 前端 395 差异）"
+  echo "# 菜单单一权威 Phase 0 基线（四库账本 + 前端 395 差异）"
   echo
   echo "> 生成时间：$(date '+%Y-%m-%d %H:%M:%S %Z') ｜ 生成脚本：[verify_menu_authority.sh](scripts/db/verify_menu_authority.sh)"
   echo "> 口径：仅 SELECT；前端基线来自 [verify_navigation.mjs](scripts/verify_navigation.mjs) \`--json\`（395 条唯一 code）。"
   echo "> dev 连接串：\`$(mask_url "$DEV_URL")\`（其余本地库按库名/端口派生，prod 走 SSH + psql）。"
   echo
-  echo "## 1. 五库核验"
+  echo "## 1. 四库核验"
   echo
   echo "| 库 | 可达性 | core_menus 各 schema 行数 | 权威 schema | 权威 code 数 | 20261102*/20261103* 账本 |"
   echo "|---|---|---|---|---|---|"
   local i
-  for i in 0 1 2 3 4; do
+  for i in 0 1 2 3; do
     local ledger_cell="${LEDGER_LINES[$i]//$'\n'/<br>}"
     ledger_cell="${ledger_cell//|/\\|}"
     echo "| ${LABELS[$i]} | ${STATUS[$i]} | ${SCHEMA_SUMMARY[$i]} | ${AUTH_SCHEMA[$i]} | ${TOTAL[$i]} | ${ledger_cell} |"
@@ -188,7 +186,7 @@ emit() {
   echo
   echo "| 库 | DB code | FE code | DB 多出（FE 缺失） | 前端多出（DB 缺失） | DB 内重复 code |"
   echo "|---|---|---|---|---|---|"
-  for i in 0 1 2 3 4; do
+  for i in 0 1 2 3; do
     local f="${CODE_FILES[$i]:-}"
     if [[ -z "$f" ]]; then
       if [[ "${STATUS[$i]}" == 可达* ]]; then
@@ -209,7 +207,7 @@ emit() {
   echo
   echo "## 3. 差异明细（按库）"
   echo
-  for i in 0 1 2 3 4; do
+  for i in 0 1 2 3; do
     local f="${CODE_FILES[$i]:-}"
     echo "### ${LABELS[$i]}（权威 schema: ${AUTH_SCHEMA[$i]}）"
     echo
@@ -245,7 +243,7 @@ emit() {
   echo "1. **documented 426 已漂移**：TODO.md 记录的 \`core_menus 426 条\` 来自已消失的 \`topems_test\`；当前实测 prod \`public.core_menus\` = **424**，差 -2。"
   echo "2. **环境 schema 分裂**：prod 权威在 \`public\`；dev 同时存在 \`public\`(184) 与 legacy \`mes\`(610) 两份，\`iam/flow\` 为 0。后端菜单读取使用连接池 search_path 下的非限定 \`core_menus\`，dev 将命中 \`public\`（184），而非 legacy \`mes\`。"
   echo "3. **dev 账本 checksum 非 sqlx 实执行**：dev/topems 的 20261102*~20261103* 行 checksum 以 \`manual-\` 开头（手工登记），不可作为 sqlx 校验依据；prod 为真实 64 字节哈希。"
-  echo "4. **五库可达性**：\`topems_test\` 与 5433 在本机不可达（分别为 database does not exist / Connection refused），未做任何猜测补数。"
+  echo "4. **四库可达性**：\`topems_test\` 与 5433 在本机不可达（分别为 database does not exist / Connection refused），未做任何猜测补数。历史对拍库 \`topems_prepare\` 已于 2026-11-26 作为演练残留清理。"
 }
 
 if [[ -n "$OUT" ]]; then

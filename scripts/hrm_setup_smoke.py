@@ -14,8 +14,10 @@
 
 用法：
   python3 scripts/hrm_setup_smoke.py --base-url http://127.0.0.1:18020
+  # --dsn 可选，指向按需自建/重建的独立 HRM 探针库（历史探针库 topems_hrm_setup_test
+  # 已于 2026-11-26 作为演练残留清理）；仅用于并发条数断言与 --cleanup。
   python3 scripts/hrm_setup_smoke.py --base-url http://127.0.0.1:18020 \\
-      --dsn postgres://topems_it:...@127.0.0.1:5432/topems_hrm_setup_test
+      --dsn postgres://topems_it:...@127.0.0.1:5432/<hrm-probe-db>
 """
 from __future__ import annotations
 
