@@ -1,5 +1,6 @@
 -- 运行角色全库授权（幂等 · 动态版 · 库名/角色名参数化）
--- 用途：服务运行时池（NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE，仅 DML）
+-- 用途：服务运行时池（NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE，主体仅 DML；
+--       仅 5 个运行期自愈 schema 例外保留 CREATE，见 §5.5）
 -- 迁移/DDL 走 MIGRATE_URL owner 池（topems），见 .env
 -- 调用方式：
 --   psql <目标库 DSN> -v ON_ERROR_STOP=1 -v runtime_role=topems_app \
@@ -92,6 +93,30 @@ BEGIN
       'GRANT USAGE, SELECT ON SEQUENCE %I.%I TO %I',
       r.sequence_schema, r.sequence_name, v_role
     );
+  END LOOP;
+END
+$$;
+
+-- ================================================
+-- 5.5 例外：运行期自愈建表的 5 个 schema 保留 CREATE
+-- 依据 docs/database/role-ownership.md §5：以下代码路径在请求链路里执行
+-- CREATE TABLE IF NOT EXISTS，即使表已存在也会校验 schema 的 CREATE 权限：
+--   erp holidays/vehicles/consolidation、finance forecast_v53、
+--   unified-core tenant/handlers（hrm.companies）、master_data 自愈表。
+-- 其余 schema 不给 CREATE；运行期新建对象由 owner-sweep.sh 定期收敛回 owner。
+-- 与 database/scripts/converge_owner.sql 第 6 段清单保持一致。
+-- ================================================
+DO $$
+DECLARE
+  v_role TEXT := current_setting('topems.runtime_role');
+  v_expected TEXT[] := ARRAY['public', 'erp', 'finance', 'master_data', 'hrm'];
+  r TEXT;
+BEGIN
+  FOREACH r IN ARRAY v_expected LOOP
+    -- 仅对当前库已存在的自愈 schema 授权；空库/子集环境跳过缺失项，不报错
+    IF EXISTS (SELECT FROM information_schema.schemata WHERE schema_name = r) THEN
+      EXECUTE format('GRANT CREATE ON SCHEMA %I TO %I', r, v_role);
+    END IF;
   END LOOP;
 END
 $$;
