@@ -67,6 +67,10 @@ allow = [
   "Unlicense",
   "MPL-2.0",
   "bzip2-1.0.6",
+  # Mozilla 根证书数据（webpki-root-certs），仅数据许可，OSI/FSF 认可
+  "CDLA-Permissive-2.0",
+  # Boost 许可，OSI/FSF 认可，redis 经 xxhash-rust 引入
+  "BSL-1.0",
 ]
 # 许可证置信度阈值（0-1），低于此值会 warn
 confidence-threshold = 0.8
