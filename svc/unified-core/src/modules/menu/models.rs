@@ -158,7 +158,7 @@ mod tests {
     fn test_menu_group_serde() {
         let mg = MenuGroup {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             name: "系统管理".to_string(),
             code: "system".to_string(),
             icon: Some("settings".to_string()),
@@ -180,7 +180,7 @@ mod tests {
     fn test_menu_serde() {
         let m = Menu {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             group_id: Uuid::new_v4(),
             parent_id: None,
             name: "用户管理".to_string(),
