@@ -64,7 +64,9 @@
     "check:list-pages": "node scripts/check-list-page-consistency.mjs",
     "check:list-pages:all": "node scripts/check-list-page-consistency.mjs --all --max 40",
     "check:pages": "node scripts/check-page-health.mjs",
-    "check:pages:all": "node scripts/check-page-health.mjs --all --include-dashboards --max 200"
+    "check:pages:all": "node scripts/check-page-health.mjs --all --include-dashboards --max 200",
+    "verify:frontend": "node scripts/verify-frontend.mjs",
+    "verify:frontend:full": "node scripts/verify-frontend.mjs --full"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",

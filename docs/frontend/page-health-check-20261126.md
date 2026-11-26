@@ -65,6 +65,22 @@ node scripts/check-page-health.mjs --routes /srm/contract,/srm/evaluation
 软失败 3 页：`/mobile/profile`(2)、`/finance/account-balance`(1)、`/mes/energy-management`(8)，
 页面本身可正常打开；三项的定性与验收口径见 `docs/ops/frontend-soft-failures-20261126.md`。
 
+## 发版前总闸
+
+两层检查 + 类型检查合成一条命令，避免「只跑了其中一层」的错觉：
+
+```bash
+cd apps/web
+pnpm verify:frontend          # quick：8 条列表 + 12 条健康 + tsc，实测 68 秒
+pnpm verify:frontend:full     # 全量：--all，约 18 分钟
+```
+
+顺序有讲究：`tsc --noEmit` 先跑，类型错就直接停（否则巡检结果全是类型错的噪声）；
+然后列表一致性与页面健康。任一步失败即整体 FAIL，退出码 1。
+
+全量实测（2026-11-26）：列表一致性 133 页 / 不一致 0（607s），页面健康 213 页 / 失败 0（485s），
+总览 `PASS / PASS / 判定 OK`。
+
 ## 取舍与盲区
 
 - 不进 PR CI：要起后端 + 前端 + 无头浏览器，成本高于收益；定位发版前 / Nightly。
