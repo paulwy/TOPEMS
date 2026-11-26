@@ -142,6 +142,27 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 
 **归属其他专项另案（不并入 #36）**：owner 漂移对象收敛收尾、v2 投影 3 行 `company_id` 全 NULL 回填后收紧 NOT NULL、旧角色 `topems_prod` 撤权/禁用、108 条手工记账 `execution_time` 空/0 回填、`www.topems.net` NXDOMAIN（注册商侧）；checksum 归一已决策「仅本机一次性修复、不进 CI」（§9），非开放项。
 
+⑮ **L1 两迁移 replay 窗口准备复核（2026-11-26，本机事务内 dry-run ROLLBACK，未投放、未记账）**。承接 L1，投放前复核迁移文件/守卫/checksum/前置对象与回归清单。
+
+**交付物核对**：
+- `20261126160000_iam_tenant_permissions_rls_fail_closed.sql`：manifest `to_apply`；checksum `13b9f7f0…c297f8` 与磁盘 SHA-256 一致；`to_regclass` 守卫表不存在跳过；ENABLE+FORCE RLS；策略存在 ALTER / 不存在 CREATE，表达式 `app.rls_system='on' OR tenant_id 精确匹配`；后置断言必须同时 ENABLE+FORCE、且新策略不含空租户/未设置/零租户豁免分支。
+- `20261126170000_drop_iam_users_legacy_columns.sql`：manifest `to_apply`；checksum `1400c106…68d34abb` 与磁盘一致；`to_regclass` 守卫；DROP CONSTRAINT `users_role_id_fkey` + DROP INDEX `idx_users_role_id` + DROP COLUMN `roles/permissions/role_id`；destructive 标记齐全（kind DROP CONSTRAINT/COLUMN、ticket `IAM-LEGACY-20261126`、expires `2027-05-25`、rows-at-review=0、backup 路径）；收尾断言三列不存在。
+- **backup 快照在位**：`backups/db-iam-users-legacy-columns/iam.users-topems-20261126.csv`（本机 2 行）、`…topems_prod-20261126.csv`（prod 9 行），列 `id/username/email/is_superuser/role_id/roles/permissions`。
+
+**本机事务 dry-run（BEGIN→`\i`→校验→ROLLBACK，EXIT=0）**：① 160000 后 RLS=true/FORCE=true，新策略 `tenant_isolation_tenant_permissions` 表达式为系统通道 OR 精确匹配，无豁免分支；② 170000 后三列残留=0、`idx_users_role_id` 残留=0、`users_role_id_fkey` 残留=0（FK 与索引均随 DROP COLUMN 级联清理）。
+
+**两库前置对象实测**：本机 `topems` 三列在、FK 在、索引在；`iam.tenant_permissions` RLS=t/FORCE=f、1 条旧策略。prod `topems_prod` 三列在、FK `users_role_id_fkey` 在、索引 `idx_users_role_id` 在；`iam.tenant_permissions` **RLS=f/FORCE=f、无任何策略**。两账本均未记账（本机 max `20261124150000`、prod max `20261126110000`）。
+
+**复核发现（非阻断，建议补丁，待拍板是否在投放前修迁移）**：
+- **D1（170000 DROP INDEX 缺 schema 限定）**：第 50 行 `DROP INDEX IF EXISTS idx_users_role_id;` 为裸名，而文件 `search_path = pg_catalog, public, pg_temp` 不含 `iam`，dry-run 报 NOTICE `index does not exist, skipping`（该语句 no-op）。最终状态仍正确——`DROP COLUMN role_id` 自动级联删除单列索引与 FK（已实测残留 0）。建议补丁：改为 `DROP INDEX IF EXISTS iam.idx_users_role_id;` 使显式清理生效；改文件需重算 checksum 并同步 `checksums.txt`/manifest。
+- **D2（160000 未清理并存旧策略 `rls_tenant_isolation`）**：本机 `iam.tenant_permissions` 另有旧策略 `rls_tenant_isolation`，表达式含 `tenant_id IS NULL`/空串/零租户 fail-open 豁免；PostgreSQL 多条策略 OR 合并，旧策略会旁路新 fail-closed 策略。**prod 该表无旧策略（投放不受影响）**；旧策略为本机 dev 历史线残留。160000 后置断言只校验新策略名 `tenant_isolation_tenant_permissions`，未排除其他 fail-open 策略。建议补丁：补 `DROP POLICY IF EXISTS rls_tenant_isolation ON iam.tenant_permissions;`（幂等），或后置断言表内策略集合仅含新策略；干净库/CI 演练库由迁移链重建，不会产生该旧策略。
+
+**Replay 回归清单（投放窗口执行，唯一入口 `scripts/migration/apply-forward.sh`，禁 `sqlx migrate run`）**：
+- **A 投放前预检（只读）**：① 复核两账本无 160000/170000 记账、checksum 与 `checksums.txt` 一致、backup CSV 在位；② prod 前置三列/FK/索引在、`tenant_permissions` 无旧 fail-open 策略；③ 基线测试绿：unified-core lib **571**、shared-auth lib **226**、shared 集成 `auth_test` **17**。
+- **B 投放（prod）**：按版本序先 160000（非破坏性）后 170000（破坏性）；命令形态 `bash scripts/migration/apply-forward.sh --db topems_prod --prod --anchor <anchor> --only 20261126160000,20261126170000 --defer <其余 pending> --allow-destructive=20261126170000`，环境 `PROD_CHANGE_TICKET=IAM-LEGACY-20261126`；170000 破坏性预演 DROP 行数必须为 0；其余 pending 版本显式进 `--defer`。
+- **C 投放后回归**：① RLS：`DB_DSN=… bash scripts/dev/verify-rls.sh`（策略表 RLS 启用、缺口 0）；复核 `tenant_permissions` FORCE=t、策略表达式 fail-closed、无旧豁免分支；② 授权冒烟：`verify-runtime-permissions.sh`（非超管读 200/写 403）、`verify_menu_authority.sh`、`verify-route-matrix.sh`；③ 测试：`cargo test -p topems-unified-core --lib`（571）、`-p topems-shared-auth --lib`（226）、`-p topems-shared --test auth_test`（17），及 `svc/unified-core/tests/iam_permission_tests.rs` 与各模块 `*_permission_tests.rs`；④ 端到端：`admin`/`reviewer`/`tenant_admin`/`chi`/`wangy` 登录 200；超管全量放行、普通用户按关联表角色/权限；用户列表/详情/`/users/me` 回显 roles/permissions 正确；⑤ 账本：两版本已记账、checksum 一致，`ledger-ddl-drift`/`manifest-drift` 门禁绿。
+- **D 回滚/兜底**：170000 三列数据以 backup CSV 为重建依据（无自动回滚迁移，破坏性窗口）；投放前确认无长事务/锁等待；失败时按脚本输出「已应用清单 + 未应用清单 + 逆序回滚入口」处置，已落账前序版本保持不回滚。
+
 
 
 ## 9. 决策与执行记录（2026-11-25 追加）
