@@ -5,7 +5,7 @@
 # 连接口径：$DB_DSN 显式覆盖 > $DATABASE_URL > 仓库根 .env（不再硬编码 -U topems，该角色已不存在）
 # 生产示例：DB_DSN="postgresql:///topems_prod?user=xingzhai" bash scripts/dev/verify-rls.sh
 set -uo pipefail
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../.." 2>/dev/null || pwd)"
 if [ -z "${DATABASE_URL:-}" ] && [ -f "$ROOT_DIR/.env" ]; then
   set -a; . "$ROOT_DIR/.env"; set +a
 fi
@@ -14,12 +14,28 @@ if [ -z "$DB_DSN" ]; then
   echo "❌ 未解析到 DATABASE_URL（环境变量与 .env 均为空）" >&2
   exit 2
 fi
+# psql 发现：非交互 shell（生产 Mac mini 的 LaunchAgent/ssh）PATH 里通常没有 /opt/homebrew/bin
+PSQL_BIN="$(command -v psql 2>/dev/null || true)"
+if [ -z "$PSQL_BIN" ]; then
+  for cand in /opt/homebrew/bin/psql /opt/homebrew/opt/postgresql@18/bin/psql /opt/homebrew/opt/postgresql@17/bin/psql /usr/local/bin/psql; do
+    [ -x "$cand" ] && PSQL_BIN="$cand" && break
+  done
+fi
+if [ -z "$PSQL_BIN" ]; then
+  echo "❌ 找不到 psql（PATH 与 /opt/homebrew/bin 均无），无法校验；不给出成功的假结论" >&2
+  exit 1
+fi
+echo "使用 psql: $PSQL_BIN"
+
 echo "== RLS 租户隔离验证 $(date '+%F %T') =="
 # 1. 策略覆盖总量
-TOTAL=$(psql "$DB_DSN" -tAc "SELECT COUNT(DISTINCT schemaname||'.'||tablename) FROM pg_policies")
+TOTAL=$("$PSQL_BIN" "$DB_DSN" -tAc "SELECT COUNT(DISTINCT schemaname||'.'||tablename) FROM pg_policies") || {
+  echo "❌ 查询失败（连接或权限问题，不给出成功的假结论）" >&2
+  exit 1
+}
 echo "策略覆盖表总数：$TOTAL"
 # 2. 有策略但 RLS 未启用的表（缺口）
-GAPS=$(psql "$DB_DSN" -tAc "
+GAPS=$("$PSQL_BIN" "$DB_DSN" -tAc "
 SELECT p.schemaname||'.'||p.tablename
 FROM pg_policies p
 JOIN pg_class c ON c.relname = p.tablename
@@ -40,7 +56,8 @@ fi
 KEY_TABLES="public.core_files public.core_roles public.core_tenant_users ehs.qa_ehs_hazards"
 MISS=0
 for t in $KEY_TABLES; do
-  CNT=$(psql "$DB_DSN" -tAc "SELECT COUNT(*) FROM pg_policies WHERE schemaname||'.'||tablename='$t'" )
+  CNT=$("$PSQL_BIN" "$DB_DSN" -tAc "SELECT COUNT(*) FROM pg_policies WHERE schemaname||'.'||tablename='$t'" ) || CNT=""
+  if [ -z "$CNT" ]; then echo "  ⚠ 关键表查询失败：$t"; MISS=$((MISS+1)); continue; fi
   if [ "$CNT" -eq 0 ]; then echo "  ⚠ 关键表缺策略：$t"; MISS=$((MISS+1)); fi
 done
 [ "$MISS" -eq 0 ] && echo "关键表抽样：全部有策略"
