@@ -10,11 +10,15 @@
 #   topems db reset-admin-password -p <新密码>
 #   topems db reset-admin-password -u <用户名>
 #
-# 2026-11-26 修复:
+# 2026-11-26 修复与增强:
 #   1) 连接参数改为「用户/口令/主机/端口/库名」整体从 DATABASE_URL 解析，
 #      不再出现「默认 DB_USER=topems 却取到 topems_app 口令」的账号口令错配。
 #   2) psql 不再用 `-c` + `:'var'`（新版 psql 的 -c 不做变量插值，会报 syntax error
 #      at or near ":"），统一改为 stdin heredoc + -v 传入。
+#   3) 支持生产形态：unix socket + peer 认证（DSN 无 host/无口令）、
+#      .env.production 作为来源、psql 从 /opt/homebrew/bin 兜底发现、
+#      无 python-bcrypt 时用 htpasswd 生成（$2y$ 归一为 $2b$）。
+#   4) 端到端登录验证：多端口候选探测（CORE_PORT/MONOLITH_PORT/SERVER_PORT/8000/8099）。
 #
 # =============================================
 
@@ -23,20 +27,54 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-# 显式环境变量（缺省为空，稍后由 DATABASE_URL 补齐）
-ENV_HOST="${DB_HOST:-}"
-ENV_PORT="${DB_PORT:-}"
-ENV_NAME="${DB_NAME:-}"
-ENV_USER="${DB_USER:-}"
-ENV_PASSWORD="${DB_PASSWORD:-}"
+usage_exit() {
+    echo "用法: [DB_PASSWORD='<口令>'] $0 [-y] [--no-verify] [--verify-url <URL>] [--dsn <DSN>] <用户名> <新密码>"
+    echo "  -y, --yes        跳过交互确认直接执行"
+    echo "  --no-verify      跳过端到端登录验证（默认会打 core 登录接口）"
+    echo "  --verify-url     指定登录接口（默认自动探测 127.0.0.1:<CORE_PORT|8000|8099>/api/core/iam/auth/login）"
+    echo "  --dsn            显式连接串，优先于 \$DATABASE_URL 与本地 env 文件"
+    echo "                   生产示例: --dsn \"\$(plutil -extract EnvironmentVariables.DATABASE_URL raw <plist>)\""
+    echo "环境变量: DATABASE_URL / DB_HOST / DB_PORT / DB_NAME / DB_USER / DB_PASSWORD / VERIFY_URL"
+    exit 0
+}
 
-# 解析 postgres://user:pass@host:port/db[?opts]
+# ---------------- 选项（可出现在任意位置） ----------------
+ASSUME_YES=0
+SKIP_VERIFY=0
+VERIFY_URL="${VERIFY_URL:-}"
+DSN_OPT=""
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -y|--yes) ASSUME_YES=1; shift ;;
+        --no-verify|--skip-verify) SKIP_VERIFY=1; shift ;;
+        --verify-url) VERIFY_URL="${2:?--verify-url 需要 URL}"; shift 2 ;;
+        --dsn) DSN_OPT="${2:?--dsn 需要连接串}"; shift 2 ;;
+        -h|--help) usage_exit ;;
+        *) POSITIONAL+=("$1"); shift ;;
+    esac
+done
+if [ "${#POSITIONAL[@]}" -gt 0 ]; then
+    set -- "${POSITIONAL[@]}"
+else
+    set --
+fi
+
+# ---------------- 连接串解析 ----------------
+# 解析 postgres://[user[:pass]@][host[:port]]/db[?k=v]，兼容
+#   生产 socket 形态: postgresql:///topems_prod?user=xingzhai（host 缺省 = unix socket）
 parse_dsn() {
     local dsn="$1"
-    dsn="${dsn#*://}"
     DSN_NAME="" DSN_HOST="" DSN_PORT="" DSN_USER="" DSN_PASSWORD=""
+    DSN_SOCKET=0
 
-    # userinfo@hostpart
+    dsn="${dsn#*://}"
+    local query=""
+    if [[ "$dsn" == *"?"* ]]; then
+        query="${dsn#*\?}"
+        dsn="${dsn%%\?*}"
+    fi
+
     if [[ "$dsn" == *"@"* ]]; then
         local userinfo="${dsn%%@*}"
         dsn="${dsn#*@}"
@@ -46,26 +84,44 @@ parse_dsn() {
         fi
     fi
 
-    dsn="${dsn%%\?*}"          # 去掉查询参数
     local hostpart="${dsn%%/*}"
     DSN_NAME="${dsn#*/}"
     [[ "$DSN_NAME" == "$dsn" ]] && DSN_NAME=""
 
-    if [[ "$hostpart" == *":"* ]]; then
+    if [ -z "$hostpart" ]; then
+        DSN_SOCKET=1
+    elif [[ "$hostpart" == *":"* ]]; then
         DSN_HOST="${hostpart%%:*}"
         DSN_PORT="${hostpart##*:}"
     else
         DSN_HOST="$hostpart"
     fi
+
+    if [ -n "$query" ]; then
+        local IFS='&'
+        local -a qparts=()
+        read -ra qparts <<< "$query"
+        local q
+        for q in "${qparts[@]}"; do
+            case "$q" in
+                user=*) [ -z "$DSN_USER" ] && DSN_USER="${q#user=}" ;;
+                password=*) [ -z "$DSN_PASSWORD" ] && DSN_PASSWORD="${q#password=}" ;;
+                port=*) [ -z "$DSN_PORT" ] && DSN_PORT="${q#port=}" ;;
+                dbname=*) [ -z "$DSN_NAME" ] && DSN_NAME="${q#dbname=}" ;;
+            esac
+        done
+    fi
 }
 
-# 连接串来源优先级：$DATABASE_URL > .env > .env.local > config/standalone.env
+# 连接串来源优先级：--dsn > $DATABASE_URL > .env > .env.local > .env.production > config/standalone.env
 DSN_SOURCE=""
 DSN=""
-if [ -n "${DATABASE_URL:-}" ]; then
+if [ -n "$DSN_OPT" ]; then
+    DSN="$DSN_OPT"; DSN_SOURCE="--dsn 参数"
+elif [ -n "${DATABASE_URL:-}" ]; then
     DSN="$DATABASE_URL"; DSN_SOURCE="环境变量 DATABASE_URL"
 else
-    for f in "$PROJECT_ROOT/.env" "$PROJECT_ROOT/.env.local" "$PROJECT_ROOT/config/standalone.env"; do
+    for f in "$PROJECT_ROOT/.env" "$PROJECT_ROOT/.env.local" "$PROJECT_ROOT/.env.production" "$PROJECT_ROOT/config/standalone.env"; do
         if [ -f "$f" ]; then
             candidate="$(sed -n 's#^DATABASE_URL=\(.*\)$#\1#p' "$f" | head -1)"
             if [ -n "$candidate" ]; then
@@ -76,47 +132,26 @@ else
     done
 fi
 
+DSN_HOST="" DSN_PORT="" DSN_NAME="" DSN_USER="" DSN_PASSWORD="" DSN_SOCKET=0
 if [ -n "$DSN" ]; then
     parse_dsn "$DSN"
 fi
 
-DB_HOST="${ENV_HOST:-${DSN_HOST:-localhost}}"
-DB_PORT="${ENV_PORT:-${DSN_PORT:-5432}}"
-DB_NAME="${ENV_NAME:-${DSN_NAME:-topems}}"
-DB_USER="${ENV_USER:-${DSN_USER:-topems}}"
-DB_PASSWORD="${ENV_PASSWORD:-$DSN_PASSWORD}"
-
-if [ -z "$DB_PASSWORD" ]; then
-    echo "错误: 无法解析数据库口令（既无 DB_PASSWORD 环境变量，也未在 .env / .env.local / config/standalone.env 找到 DATABASE_URL）" >&2
-    echo "用法: DB_PASSWORD='<口令>' bash scripts/dev/update-admin-password.sh <用户名> <新密码>" >&2
-    exit 2
+EXPLICIT_HOST="${DB_HOST:-}"
+DB_HOST="${EXPLICIT_HOST:-${DSN_HOST:-localhost}}"
+DB_PORT="${DB_PORT:-${DSN_PORT:-5432}}"
+DB_NAME="${DB_NAME:-${DSN_NAME:-topems}}"
+DB_USER="${DB_USER:-${DSN_USER:-topems}}"
+DB_PASSWORD="${DB_PASSWORD:-$DSN_PASSWORD}"
+if [ "$DSN_SOCKET" = 1 ] && [ -z "$EXPLICIT_HOST" ]; then
+    DB_HOST=""
 fi
 
-# -y/--yes：跳过交互确认（供 topems.sh 等非交互调用链使用；默认仍需人工确认）
-ASSUME_YES=0
-# 端到端登录验证：默认打 core 登录接口；--no-verify 跳过；--verify-url 可覆盖
-SKIP_VERIFY=0
-VERIFY_URL="${VERIFY_URL:-http://127.0.0.1:${CORE_PORT:-8000}/api/core/iam/auth/login}"
-POSITIONAL=()
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -y|--yes) ASSUME_YES=1; shift ;;
-        --no-verify|--skip-verify) SKIP_VERIFY=1; shift ;;
-        --verify-url) VERIFY_URL="${2:?--verify-url 需要 URL}"; shift 2 ;;
-        -h|--help)
-            echo "用法: [DB_PASSWORD='<口令>'] $0 [-y] [--no-verify] [--verify-url <URL>] <用户名> <新密码>"
-            echo "  -y, --yes        跳过交互确认直接执行"
-            echo "  --no-verify      跳过端到端登录验证（默认会打 core 登录接口）"
-            echo "  --verify-url     指定登录接口（默认 \${VERIFY_URL:-http://127.0.0.1:8000/api/core/iam/auth/login}）"
-            exit 0 ;;
-        # 选项可出现在任意位置（topems.sh 会把 -y 前置、其余追加在后），统一收进 POSITIONAL
-        *) POSITIONAL+=("$1"); shift ;;
-    esac
-done
-if [ "${#POSITIONAL[@]}" -gt 0 ]; then
-    set -- "${POSITIONAL[@]}"
-else
-    set --
+# 口令可缺省：生产 unix socket + peer 认证没有口令（依赖 pg_hba / ~/.pgpass）
+if [ -z "$DB_PASSWORD" ] && [ -z "$DSN" ]; then
+    echo "错误: 既无 DB_PASSWORD 环境变量，也未解析到 DATABASE_URL（.env / .env.local / .env.production / config/standalone.env）" >&2
+    echo "用法: DB_PASSWORD='<口令>' $0 <用户名> <新密码>   或   $0 --dsn '<DSN>' <用户名> <新密码>" >&2
+    exit 2
 fi
 
 # 用户名与密码均为必填（不再提供 admin/admin123 默认弱口令）
@@ -132,7 +167,11 @@ echo "TOPEMS Admin 用户密码重置脚本"
 echo "============================================================"
 echo
 echo "数据库连接信息:"
-echo "  Host: ${DB_HOST}:${DB_PORT}"
+if [ "$DSN_SOCKET" = 1 ]; then
+    echo "  Host: unix socket（peer 认证）"
+else
+    echo "  Host: ${DB_HOST}:${DB_PORT}"
+fi
 echo "  Database: ${DB_NAME}"
 echo "  User: ${DB_USER}"
 if [ -n "$DSN_SOURCE" ]; then
@@ -143,21 +182,37 @@ echo "目标用户: ${USERNAME}"
 echo "新密码: ${NEW_PASSWORD}"
 echo
 
-# 设置密码环境变量
-export PGPASSWORD="${DB_PASSWORD}"
+# 口令为空时不要导出空 PGPASSWORD（libpq 会把空值当作口令尝试）
+if [ -n "$DB_PASSWORD" ]; then
+    export PGPASSWORD="${DB_PASSWORD}"
+fi
 
-# 检查 psql 是否可用
-if ! command -v psql &> /dev/null; then
-    echo "❌ 错误: psql 未安装"
-    echo "请安装 PostgreSQL 客户端工具"
+# psql 发现：非交互 shell 的 PATH 常缺 /opt/homebrew/bin（生产 Mac mini 即此形态）
+PSQL_BIN="$(command -v psql 2>/dev/null || true)"
+if [ -z "$PSQL_BIN" ]; then
+    for cand in /opt/homebrew/bin/psql /opt/homebrew/opt/postgresql@18/bin/psql /opt/homebrew/opt/postgresql@17/bin/psql /usr/local/bin/psql; do
+        if [ -x "$cand" ]; then
+            PSQL_BIN="$cand"
+            break
+        fi
+    done
+fi
+if [ -z "$PSQL_BIN" ]; then
+    echo "❌ 错误: 找不到 psql（PATH 与 /opt/homebrew/bin 均无）"
+    echo "  macOS: brew install postgresql@18   或   brew install libpq"
+    unset PGPASSWORD
     exit 1
 fi
 
 # 统一执行入口：SQL 走 stdin（psql 的 -c 不做 :'var' 变量插值）
 run_sql() {
     local sql="$1"; shift
-    psql -X -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
-        -v ON_ERROR_STOP=1 "$@" -f - <<< "$sql"
+    if [ "$DSN_SOCKET" = 1 ]; then
+        "$PSQL_BIN" -X -U "${DB_USER}" -d "${DB_NAME}" -v ON_ERROR_STOP=1 "$@" -f - <<< "$sql"
+    else
+        "$PSQL_BIN" -X -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
+            -v ON_ERROR_STOP=1 "$@" -f - <<< "$sql"
+    fi
 }
 
 echo "------------------------------------------------------------"
@@ -166,7 +221,7 @@ echo "------------------------------------------------------------"
 # 先判存：用户名不存在时直接终止，避免「UPDATE 0 行但打印成功」的假成功
 USER_COUNT=$(run_sql "SELECT count(*) FROM core_users WHERE username = :'username';" \
     -tA -v username="$USERNAME" 2>/dev/null) || {
-    echo "❌ 查询失败（请确认账号口令/端口与 .env 的 DATABASE_URL 一致）"
+    echo "❌ 查询失败（请确认账号口令/端口与 DATABASE_URL 一致；生产 socket 形态请确认角色 peer 可登录）"
     unset PGPASSWORD
     exit 1
 }
@@ -180,7 +235,7 @@ fi
 run_sql "SELECT id, username, email, is_superuser, status
 FROM core_users
 WHERE username = :'username';" -v username="$USERNAME" 2>&1 || {
-    echo "❌ 查询失败（请确认账号口令/端口与 .env 的 DATABASE_URL 一致）"
+    echo "❌ 查询失败（请确认账号口令/端口与 DATABASE_URL 一致）"
     unset PGPASSWORD
     exit 1
 }
@@ -197,19 +252,27 @@ if [ "$ASSUME_YES" -eq 0 ]; then
 fi
 echo
 
-# 动态生成 bcrypt 哈希
-if command -v python3 &> /dev/null; then
-    echo "生成 bcrypt 哈希..."
-    PASSWORD_HASH=$(python3 -c "import bcrypt, sys; print(bcrypt.hashpw(sys.argv[1].encode(), bcrypt.gensalt()).decode())" "$NEW_PASSWORD" 2>/dev/null) || {
-        echo "❌ 错误: 需要安装 bcrypt 库（pip install bcrypt）"
-        unset PGPASSWORD
-        exit 1
-    }
-else
-    echo "❌ 错误: 需要 Python 3 来生成密码哈希"
+# 动态生成 bcrypt 哈希：优先 python-bcrypt；缺失则用 htpasswd（生产机常见，$2y$ 归一为 $2b$）
+PASSWORD_HASH=""
+HASH_METHOD=""
+echo "生成 bcrypt 哈希..."
+if command -v python3 &> /dev/null && python3 -c "import bcrypt" 2>/dev/null; then
+    PASSWORD_HASH=$(python3 -c "import bcrypt, sys; print(bcrypt.hashpw(sys.argv[1].encode(), bcrypt.gensalt()).decode())" "$NEW_PASSWORD" 2>/dev/null) || PASSWORD_HASH=""
+    [ -n "$PASSWORD_HASH" ] && HASH_METHOD="python-bcrypt"
+fi
+if [ -z "$PASSWORD_HASH" ] && command -v htpasswd &> /dev/null; then
+    PASSWORD_HASH=$(htpasswd -bnBC 12 "" "$NEW_PASSWORD" 2>/dev/null | tr -d ':\r\n')
+    PASSWORD_HASH="${PASSWORD_HASH/#\$2y\$/\$2b\$}"
+    [ -n "$PASSWORD_HASH" ] && HASH_METHOD="htpasswd（\$2y\$→\$2b\$）"
+fi
+if [ -z "$PASSWORD_HASH" ]; then
+    echo "❌ 错误: 无法生成 bcrypt 哈希"
+    echo "  方案一: python3 -m pip install --user bcrypt"
+    echo "  方案二: macOS 自带 htpasswd（brew install httpd 亦可）"
     unset PGPASSWORD
     exit 1
 fi
+echo "  哈希来源: ${HASH_METHOD}"
 echo
 
 echo "------------------------------------------------------------"
@@ -249,34 +312,61 @@ echo "------------------------------------------------------------"
 echo "步骤 4: 端到端登录验证"
 echo "------------------------------------------------------------"
 # 哈希写进库 ≠ 账号能登录：哈希算法、must_change_password、租户 GUC 任一不一致都会导致
-# 重置“成功”但登录失败。默认打一次 core 登录接口；服务不可达则跳过（不阻断重置）。
+# 重置“成功”但登录失败。默认打一次登录接口；服务不可达则跳过（不阻断重置）。
 if [ "$SKIP_VERIFY" -eq 1 ]; then
     echo "已按 --no-verify 跳过登录验证"
 elif ! command -v curl &> /dev/null; then
     echo "⚠️  未安装 curl，跳过登录验证"
 else
-    LOGIN_JSON=$(python3 -c 'import json,sys; print(json.dumps({"username": sys.argv[1], "password": sys.argv[2]}))' \
-        "$USERNAME" "$NEW_PASSWORD")
-    LOGIN_HTTP=$(curl -s -m 10 -o /tmp/.topems_login_check.$$ -w '%{http_code}' \
-        -X POST "$VERIFY_URL" -H 'Content-Type: application/json' -d "$LOGIN_JSON" 2>/dev/null) || LOGIN_HTTP=""
-    if [ -z "$LOGIN_HTTP" ]; then
-        LOGIN_HTTP="000"
+    # 未显式指定接口时按候选端口探测「路由存在」（GET 期望 405/401/400，避免盲发口令）
+    if [ -z "$VERIFY_URL" ]; then
+        seen=" "
+        candidates=()
+        for p in "${CORE_PORT:-}" "${MONOLITH_PORT:-}" "${SERVER_PORT:-}" 8000 8099; do
+            [ -z "$p" ] && continue
+            case "$seen" in *" $p "*) continue ;; esac
+            seen="$seen$p "
+            candidates+=("$p")
+        done
+        for p in "${candidates[@]}"; do
+            probe="http://127.0.0.1:${p}/api/core/iam/auth/login"
+            code=$(curl -s -m 3 -o /dev/null -w '%{http_code}' "$probe" 2>/dev/null) || code=""
+            case "$code" in
+                405|401|400|200) VERIFY_URL="$probe"; break ;;
+            esac
+        done
     fi
-    if [ "$LOGIN_HTTP" = "000" ]; then
-        echo "⚠️  登录接口不可达（${VERIFY_URL}），跳过验证；库内哈希已写入"
-    elif [ "$LOGIN_HTTP" = "200" ] && grep -q '"success":true' /tmp/.topems_login_check.$$ 2>/dev/null; then
-        echo "✓ 登录验证通过（${VERIFY_URL} 返回 200/success）"
+
+    if [ -z "$VERIFY_URL" ]; then
+        echo "⚠️  未探测到可用的登录接口（已试 CORE_PORT/${CORE_PORT:-未设置}、8000、8099），跳过验证；库内哈希已写入"
     else
-        echo "❌ 登录验证失败（HTTP ${LOGIN_HTTP}）：哈希已写入但认证未通过"
-        if [ "$LOGIN_HTTP" = "404" ] || [ "$LOGIN_HTTP" = "405" ]; then
-            echo "   接口路径可能不符：用 --verify-url 指定正确地址，或 --no-verify 跳过校验"
+        LOGIN_JSON=$(python3 -c 'import json,sys; print(json.dumps({"username": sys.argv[1], "password": sys.argv[2]}))' \
+            "$USERNAME" "$NEW_PASSWORD" 2>/dev/null) || LOGIN_JSON=""
+        if [ -z "$LOGIN_JSON" ]; then
+            echo "⚠️  python3 不可用，无法构造登录请求，跳过验证"
+        else
+            LOGIN_HTTP=$(curl -s -m 10 -o /tmp/.topems_login_check.$$ -w '%{http_code}' \
+                -X POST "$VERIFY_URL" -H 'Content-Type: application/json' -d "$LOGIN_JSON" 2>/dev/null) || LOGIN_HTTP=""
+            if [ -z "$LOGIN_HTTP" ]; then
+                LOGIN_HTTP="000"
+            fi
+            if [ "$LOGIN_HTTP" = "000" ]; then
+                echo "⚠️  登录接口不可达（${VERIFY_URL}），跳过验证；库内哈希已写入"
+            elif [ "$LOGIN_HTTP" = "200" ] && grep -q '"success":true' /tmp/.topems_login_check.$$ 2>/dev/null; then
+                echo "✓ 登录验证通过（${VERIFY_URL} 返回 200/success）"
+            else
+                echo "❌ 登录验证失败（HTTP ${LOGIN_HTTP}）：哈希已写入但认证未通过"
+                if [ "$LOGIN_HTTP" = "404" ] || [ "$LOGIN_HTTP" = "405" ]; then
+                    echo "   接口路径可能不符：用 --verify-url 指定正确地址，或 --no-verify 跳过校验"
+                fi
+                echo "   排查：服务是否用同一 JWT/租户配置、must_change_password、RLS 会话 GUC"
+                rm -f /tmp/.topems_login_check.$$
+                unset PGPASSWORD
+                exit 1
+            fi
+            rm -f /tmp/.topems_login_check.$$
         fi
-        echo "   排查：服务是否用同一 JWT/租户配置、must_change_password、RLS 会话 GUC"
-        rm -f /tmp/.topems_login_check.$$
-        unset PGPASSWORD
-        exit 1
     fi
-    rm -f /tmp/.topems_login_check.$$
 fi
 echo
 
