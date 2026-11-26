@@ -247,7 +247,7 @@ export const GisFencePage: React.FC = () => {
     position: parseCoordinates(fence.coordinates),
     radius: fence.radius,
     coordinates: fence.coordinatesArr,
-    color: fence.status === 'active' ? theme.palette.error.main : theme.palette.grey[500],
+    color: fence.status === 'active' ? theme.palette.error.main : theme.palette.text.secondary,
     alertOnEnter: fence.alertOnEnter,
     alertOnExit: fence.alertOnExit,
   }));

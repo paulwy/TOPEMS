@@ -70,7 +70,7 @@ const MailPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='body2'
-                    sx={{ mt: 0.5, color: 'grey.500' }}
+                    sx={{ mt: 0.5, color: 'text.secondary' }}
                   >
                     {t('im.mail_page_index.e2')}
                   </Typography>

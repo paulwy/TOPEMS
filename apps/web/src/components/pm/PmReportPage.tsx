@@ -573,7 +573,7 @@ const PmReportPage: React.FC = () => {
                 </Table>
               </Box>
             ) : (
-              <Box sx={{ textAlign: 'center', py: 4, color: 'grey.500' }}>
+              <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
                 <TrendingUp sx={{ width: 48, height: 48, mx: 'auto', mb: 2, color: 'grey.300' }} />
                 <Typography>{i18n.t('pm.pm_report_page.k35')}</Typography>
               </Box>

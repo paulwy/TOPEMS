@@ -232,17 +232,17 @@ const BiddingPage: React.FC = () => {
         ].map((stat) => (
           <Box
             key={stat.label}
-            sx={{
+            sx={(t) => ({
               p: 2,
               borderRadius: 2,
-              bgcolor: `${stat.color}.light`,
+              // 实色 .light 在暗色下会变成「浅底 + 浅字」，改用主色 12% 薄膜 + 语义左边框
+              bgcolor: 'action.hover',
+              borderLeft: `3px solid ${(t.palette as unknown as Record<string, { main: string }>)[stat.color]?.main ?? t.palette.text.secondary}`,
               minWidth: 120,
               textAlign: 'center',
-            }}
+            })}
           >
-            <Box sx={{ fontSize: 20, fontWeight: 600, color: `${stat.color}.dark` }}>
-              {stat.value}
-            </Box>
+            <Box sx={{ fontSize: 20, fontWeight: 600, color: 'text.primary' }}>{stat.value}</Box>
             <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{stat.label}</Box>
           </Box>
         ))}

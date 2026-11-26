@@ -586,7 +586,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                             color:
                               activeCategory === cat.id
                                 ? theme.palette.secondary[400]
-                                : theme.palette.grey[500],
+                                : theme.palette.text.secondary,
                           }}
                         >
                           {cat.icon}

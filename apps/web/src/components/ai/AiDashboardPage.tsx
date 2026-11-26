@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 /**
  * AI 智能助手仪表盘页面 - V4.0 标准化改造
  *
@@ -629,7 +630,7 @@ export const AiDashboardPage: React.FC = () => {
             p: 4,
             mb: 4,
             borderRadius: 3,
-            background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.secondary.main} 100%)`,
             color: 'common.white',
           }}
         >
@@ -650,7 +651,7 @@ export const AiDashboardPage: React.FC = () => {
               size='small'
               variant='contained'
               sx={{
-                bgcolor: 'common.white',
+                bgcolor: 'background.paper',
                 color: 'primary.main',
                 '&:hover': { bgcolor: 'grey.100' },
               }}

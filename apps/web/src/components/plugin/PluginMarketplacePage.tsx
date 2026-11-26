@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -120,7 +121,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
                 width: 48,
                 height: 48,
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
+                background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.main} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -394,7 +395,7 @@ const PluginDetailModal: React.FC<{
               width: 48,
               height: 48,
               borderRadius: 3,
-              background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
+              background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.main} 100%)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -992,7 +993,7 @@ const PluginMarketplacePage: React.FC = () => {
                 width: 40,
                 height: 40,
                 borderRadius: 2,
-                background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
+                background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.main} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1176,7 +1177,7 @@ const PluginMarketplacePage: React.FC = () => {
                     width: 56,
                     height: 56,
                     borderRadius: 3,
-                    background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+                    background: `linear-gradient(135deg, ${designTokens.colors.primary.light} 0%, ${designTokens.colors.primary.main} 100%)`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

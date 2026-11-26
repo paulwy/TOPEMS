@@ -403,28 +403,41 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                   ) : undefined
                 }
                 label={stat.trend.label || `${stat.trend.value > 0 ? '+' : ''}${stat.trend.value}%`}
-                sx={{
-                  position: 'absolute',
-                  top: 12,
-                  right: 12,
-                  bgcolor:
-                    stat.trend.direction === 'up'
-                      ? stat.gradient
-                        ? 'glass.topLight'
-                        : 'success.light'
-                      : stat.trend.direction === 'down'
-                        ? stat.gradient
-                          ? 'glass.topLight'
-                          : 'error.light'
-                        : 'grey.200',
-                  color: stat.gradient
-                    ? 'var(--color-primary-foreground)'
-                    : stat.trend.direction === 'up'
-                      ? 'success.main'
-                      : stat.trend.direction === 'down'
-                        ? 'error.main'
-                        : 'text.secondary',
-                  fontWeight: 500,
+                sx={(t) => {
+                  // 芯片必须「浅底 + 同色系深字」：直接用 main 当文字会和 light 底撞成同色
+                  const dark = t.palette.mode === 'dark';
+                  const up = stat.trend!.direction === 'up';
+                  const down = stat.trend!.direction === 'down';
+                  return {
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    bgcolor: stat.gradient
+                      ? 'glass.topLight'
+                      : up
+                        ? dark
+                          ? 'success.100'
+                          : 'success.50'
+                        : down
+                          ? dark
+                            ? 'error.100'
+                            : 'error.50'
+                          : dark
+                            ? 'grey.200'
+                            : 'grey.100',
+                    color: stat.gradient
+                      ? 'var(--color-primary-foreground)'
+                      : up
+                        ? dark
+                          ? 'success.300'
+                          : 'success.700'
+                        : down
+                          ? dark
+                            ? 'error.300'
+                            : 'error.700'
+                          : 'text.secondary',
+                    fontWeight: 500,
+                  };
                 }}
               />
             )}

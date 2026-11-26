@@ -75,7 +75,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
           <Box sx={{ px: 2, py: 1.5, bgcolor: 'grey.50', textAlign: 'right' }}>
             <Typography
               variant='caption'
-              sx={{ color: 'grey.500' }}
+              sx={{ color: 'text.secondary' }}
             >
               {i18n.t('components.preview_content.k0')} {previewData.length}{' '}
               {i18n.t('components.preview_content.k1')}
@@ -221,7 +221,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
                 >
                   <Typography
                     variant='caption'
-                    sx={{ color: 'grey.500' }}
+                    sx={{ color: 'text.secondary' }}
                   >
                     {field.label}
                   </Typography>

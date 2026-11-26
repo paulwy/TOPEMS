@@ -31,7 +31,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
         position: 'absolute',
         top: 16,
         right: 16,
-        backgroundColor: 'common.white',
+        backgroundColor: 'background.paper',
         borderRadius: 2,
         boxShadow: designTokens.shadows.md,
         overflow: 'hidden',

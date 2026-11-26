@@ -389,7 +389,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         >
           <div
             style={{
-              backgroundColor: 'common.white',
+              backgroundColor: 'background.paper',
               borderRadius: 'lg',
               boxShadow: designTokens.shadows.lg,
               padding: 8,

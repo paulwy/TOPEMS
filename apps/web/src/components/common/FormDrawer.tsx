@@ -97,7 +97,7 @@ export const FormDrawer = React.memo(function FormDrawer({
           padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
           borderRadius: 4,
           border: `1px solid ${designTokens.colors.grey[300]}`,
-          backgroundColor: 'common.white',
+          backgroundColor: 'background.paper',
           cursor: loading ? 'not-allowed' : 'pointer',
           fontSize: 14,
           color: 'grey.800',

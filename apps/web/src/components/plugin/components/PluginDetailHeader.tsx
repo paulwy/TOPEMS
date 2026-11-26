@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +41,7 @@ const PluginDetailHeader: React.FC<PluginDetailHeaderProps> = ({
             height: 72,
             borderRadius: 3,
             flexShrink: 0,
-            background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.light} 0%, ${designTokens.colors.primary.main} 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -95,7 +96,7 @@ const PluginDetailHeader: React.FC<PluginDetailHeaderProps> = ({
               size='medium'
             />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Download sx={{ width: 18, height: 18, color: 'grey.500' }} />
+              <Download sx={{ width: 18, height: 18, color: 'text.secondary' }} />
               <Typography variant='body2'>
                 {t('plugin.detail_page.install_count', {
                   count: plugin.install_count?.toLocaleString() || 0,
@@ -103,7 +104,7 @@ const PluginDetailHeader: React.FC<PluginDetailHeaderProps> = ({
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Shield sx={{ width: 18, height: 18, color: 'grey.500' }} />
+              <Shield sx={{ width: 18, height: 18, color: 'text.secondary' }} />
               <Typography variant='body2'>
                 {plugin.author_name || t('plugin.common.unknown_author')}
               </Typography>

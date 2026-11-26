@@ -257,7 +257,11 @@ const PdmStatsPage: React.FC = () => {
           value: stats.completedBatches,
           color: theme.palette.success.main,
         },
-        { name: t('pdm.pdm_stats_page.k26'), value: stats.cancelledBatches, color: 'grey.500' },
+        {
+          name: t('pdm.pdm_stats_page.k26'),
+          value: stats.cancelledBatches,
+          color: 'text.secondary',
+        },
       ].filter((d) => d.value > 0),
     },
     {

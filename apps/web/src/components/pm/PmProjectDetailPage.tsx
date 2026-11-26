@@ -149,7 +149,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.pm_project_detail_page.k10')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.code}</Typography>
@@ -164,7 +164,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.pm_project_detail_page.k11')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -181,7 +181,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.pm_project_detail_page.k12')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -198,7 +198,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.pm_project_detail_page.k13')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -215,7 +215,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.pm_project_detail_page.k14')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -230,7 +230,7 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.pm_project_detail_page.k15')}
               </Typography>
               <StatusBadge
@@ -390,7 +390,7 @@ const PmProjectDetailPage: React.FC = () => {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}
+                      sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
                     >
                       {i18n.t('pages.pm_project_detail_page.k4')}
                     </TableCell>
@@ -410,7 +410,7 @@ const PmProjectDetailPage: React.FC = () => {
                             <Typography
                               variant='body2'
                               sx={{
-                                color: 'grey.500',
+                                color: 'text.secondary',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
@@ -536,7 +536,7 @@ const PmProjectDetailPage: React.FC = () => {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}
+                      sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}
                     >
                       {t('pm.project_detail.no_milestone_data')}
                     </TableCell>
@@ -556,7 +556,7 @@ const PmProjectDetailPage: React.FC = () => {
                             <Typography
                               variant='body2'
                               sx={{
-                                color: 'grey.500',
+                                color: 'text.secondary',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
@@ -656,7 +656,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.project_budget')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -673,7 +673,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.actual_cost')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
@@ -690,7 +690,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.committed_cost')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
@@ -707,7 +707,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.remaining_budget')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
@@ -724,7 +724,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.cost_variance')}
               </Typography>
               <Typography
@@ -744,7 +744,7 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.budget_utilization_rate')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -774,7 +774,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.recognized_revenue')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -791,7 +791,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.accounts_receivable')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
@@ -808,7 +808,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.invoiced_amount')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
@@ -827,7 +827,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.gross_profit')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
@@ -842,7 +842,7 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.gross_margin')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -885,7 +885,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {t('pm.project_detail.labor_cost')}
                 </Typography>
@@ -899,7 +899,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {t('pm.project_detail.material_cost')}
                 </Typography>
@@ -913,7 +913,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {t('pm.project_detail.expense_cost')}
                 </Typography>
@@ -927,7 +927,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Box sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {t('pm.project_detail.subcontract_cost')}
                 </Typography>
@@ -941,7 +941,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {t('pm.project_detail.other_cost')}
                 </Typography>
@@ -976,7 +976,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.cost_center_id')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -993,7 +993,7 @@ const PmProjectDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.cost_center_name')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -1008,7 +1008,7 @@ const PmProjectDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.execution_status')}
               </Typography>
               <StatusBadge

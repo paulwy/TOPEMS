@@ -610,7 +610,7 @@ const BiIndexPage = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Clock
                       size={18}
-                      style={{ marginRight: 8, color: theme.palette.grey[500] }}
+                      style={{ marginRight: 8, color: theme.palette.text.secondary }}
                     />
                     <Typography
                       variant='subtitle1'
@@ -639,7 +639,7 @@ const BiIndexPage = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: 'grey.500',
+                              color: 'text.secondary',
                             }}
                           >
                             {activity.icon}

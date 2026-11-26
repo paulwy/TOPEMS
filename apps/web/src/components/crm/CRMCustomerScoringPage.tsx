@@ -25,7 +25,7 @@ const getGradeBadge = (scoreLevel: string) => {
   };
   const config = gradeConfig[scoreLevel] || {
     label: scoreLevel,
-    color: 'grey.500',
+    color: 'text.secondary',
   };
   return (
     <Chip
@@ -56,7 +56,7 @@ const getScoreTrendIcon = (trend: string) => {
     case 'down':
       return <TrendingDown sx={{ width: 16, height: 16, color: 'error.main' }} />;
     default:
-      return <Minus sx={{ width: 16, height: 16, color: 'grey.500' }} />;
+      return <Minus sx={{ width: 16, height: 16, color: 'text.secondary' }} />;
   }
 };
 

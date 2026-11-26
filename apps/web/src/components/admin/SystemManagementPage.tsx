@@ -141,7 +141,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                   </Typography>
                   <Typography
                     variant='caption'
-                    sx={{ color: 'grey.500' }}
+                    sx={{ color: 'text.secondary' }}
                   >
                     {i18n.t('pages.system_management_page.k1')}
                   </Typography>

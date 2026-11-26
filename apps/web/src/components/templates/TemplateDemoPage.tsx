@@ -758,7 +758,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {i18n.t('components.template_demo_page.k60')}
               </Typography>
@@ -830,7 +830,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   {i18n.t('components.template_demo_page.k62')}
                 </Typography>
@@ -877,7 +877,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   {i18n.t('components.template_demo_page.k64')}
                 </Typography>
@@ -924,7 +924,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   {i18n.t('components.template_demo_page.k66')}
                 </Typography>
@@ -984,7 +984,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
               </Typography>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {i18n.t('components.template_demo_page.k45')} {templates.length}{' '}
                 {i18n.t('components.template_demo_page.k46')}
@@ -1057,7 +1057,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                   },
                 }}
               />
-              <Typography sx={{ ml: 1, color: 'grey.500' }}>
+              <Typography sx={{ ml: 1, color: 'text.secondary' }}>
                 {i18n.t('components.template_demo_page.k69')}
               </Typography>
             </Box>
@@ -1108,7 +1108,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                           </Typography>
                           <Typography
                             variant='caption'
-                            sx={{ color: 'grey.500' }}
+                            sx={{ color: 'text.secondary' }}
                           >
                             {template.description}
                           </Typography>
@@ -1388,7 +1388,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                       >
                         <Typography
                           variant='body2'
-                          sx={{ color: 'grey.500' }}
+                          sx={{ color: 'text.secondary' }}
                         >
                           {key}
                         </Typography>

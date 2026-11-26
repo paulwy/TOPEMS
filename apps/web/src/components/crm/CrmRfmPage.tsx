@@ -31,7 +31,7 @@ const CrmRfmPage: React.FC = () => {
     new: theme.palette.secondary.main,
     at_risk: theme.palette.warning.main,
     cannot_lost: theme.palette.error.main,
-    hibernating: theme.palette.grey[500],
+    hibernating: theme.palette.text.secondary,
     lost: theme.palette.grey[600],
   };
 

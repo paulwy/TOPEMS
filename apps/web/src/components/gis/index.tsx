@@ -688,7 +688,7 @@ const GisContent: React.FC = () => {
                   />
                 }
                 sx={{
-                  bgcolor: 'common.white',
+                  bgcolor: 'background.paper',
                   border: 1,
                   borderColor: 'grey.200',
                   borderRadius: 2,

@@ -119,7 +119,7 @@ const DocumentCenterPage: React.FC = () => {
     return (
       <File
         size={24}
-        style={{ color: theme.palette.grey[500] }}
+        style={{ color: theme.palette.text.secondary }}
       />
     );
   };
@@ -728,7 +728,7 @@ const DocumentCenterPage: React.FC = () => {
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: 'grey.500' }}
+                sx={{ color: 'text.secondary' }}
               >
                 {i18n.t('pages.document_center_page.k3')}
               </Typography>
@@ -763,7 +763,7 @@ const DocumentCenterPage: React.FC = () => {
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <File sx={{ width: 20, height: 20, color: 'grey.500' }} />
+                      <File sx={{ width: 20, height: 20, color: 'text.secondary' }} />
                       <Typography
                         variant='body2'
                         sx={{ color: 'grey.700' }}
@@ -835,7 +835,7 @@ const DocumentCenterPage: React.FC = () => {
                   marginBottom: 8,
                 }}
               />
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pages.document_center_page.k49')}
               </Typography>
               <Typography
@@ -942,7 +942,7 @@ const DocumentCenterPage: React.FC = () => {
                       />
                       <Typography
                         variant='caption'
-                        sx={{ color: 'grey.500' }}
+                        sx={{ color: 'text.secondary' }}
                       >
                         {ver.created_by || i18n.t('pages.document_center_page.k55')}
                       </Typography>
@@ -958,7 +958,7 @@ const DocumentCenterPage: React.FC = () => {
                       />
                       <Typography
                         variant='caption'
-                        sx={{ color: 'grey.500' }}
+                        sx={{ color: 'text.secondary' }}
                       >
                         {new Date(ver.created_at).toLocaleString()}
                       </Typography>
@@ -1013,7 +1013,7 @@ const DocumentCenterPage: React.FC = () => {
               {previewVersion.content}
             </Box>
           ) : (
-            <Typography sx={{ color: 'grey.500', py: 4, textAlign: 'center' }}>
+            <Typography sx={{ color: 'text.secondary', py: 4, textAlign: 'center' }}>
               {i18n.t('pages.document_center_page.k60')}
             </Typography>
           )}

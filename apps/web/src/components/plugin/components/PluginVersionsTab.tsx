@@ -90,7 +90,7 @@ const PluginVersionsTab: React.FC<PluginVersionsTabProps> = ({
               )}
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <HardDrive sx={{ width: 16, height: 16, color: 'grey.500' }} />
+                  <HardDrive sx={{ width: 16, height: 16, color: 'text.secondary' }} />
                   <Typography
                     variant='body2'
                     color='textSecondary'
@@ -102,7 +102,7 @@ const PluginVersionsTab: React.FC<PluginVersionsTabProps> = ({
                 </Box>
                 {version.min_app_version && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Shield sx={{ width: 16, height: 16, color: 'grey.500' }} />
+                    <Shield sx={{ width: 16, height: 16, color: 'text.secondary' }} />
                     <Typography
                       variant='body2'
                       color='textSecondary'

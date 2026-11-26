@@ -69,7 +69,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
     return toolMode === tool
       ? { bgcolor: 'primary.dark', color: 'common.white' }
       : {
-          bgcolor: 'common.white',
+          bgcolor: 'background.paper',
           color: 'grey.700',
           hover: 'grey.50',
         };

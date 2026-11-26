@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { X, FileText, Plus } from 'lucide-react';
@@ -49,12 +50,12 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ onShowBuilder }) => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
+                  bgcolor: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.light} 100%)`,
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
+                  background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.light} 100%)`,
                 }}
               >
                 <FileText
@@ -74,7 +75,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ onShowBuilder }) => {
                 </Typography>
                 <Typography
                   variant='caption'
-                  sx={{ color: 'grey.500' }}
+                  sx={{ color: 'text.secondary' }}
                 >
                   Report Center
                 </Typography>

@@ -70,7 +70,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'grey.500', mb: 0.5 }}
+            sx={{ color: 'text.secondary', mb: 0.5 }}
           >
             {i18n.t('pages.approval_header.id_0')}
           </Typography>
@@ -84,7 +84,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'grey.500', mb: 0.5 }}
+            sx={{ color: 'text.secondary', mb: 0.5 }}
           >
             {i18n.t('pages.approval_header.k1')}
           </Typography>
@@ -93,7 +93,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'grey.500', mb: 0.5 }}
+            sx={{ color: 'text.secondary', mb: 0.5 }}
           >
             {i18n.t('pages.approval_header.id_2')}
           </Typography>
@@ -107,7 +107,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'grey.500', mb: 0.5 }}
+            sx={{ color: 'text.secondary', mb: 0.5 }}
           >
             {i18n.t('pages.approval_header.k3')}
           </Typography>
@@ -116,7 +116,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'grey.500', mb: 0.5 }}
+            sx={{ color: 'text.secondary', mb: 0.5 }}
           >
             {i18n.t('pages.approval_header.k4')}
           </Typography>
@@ -132,7 +132,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
         <Box>
           <Typography
             variant='body2'
-            sx={{ color: 'grey.500', mb: 0.5 }}
+            sx={{ color: 'text.secondary', mb: 0.5 }}
           >
             {i18n.t('pages.approval_header.k5')}
           </Typography>
@@ -143,7 +143,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500', mb: 0.5 }}
+                sx={{ color: 'text.secondary', mb: 0.5 }}
               >
                 {i18n.t('pages.approval_header.k6')}
               </Typography>
@@ -152,7 +152,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
             <Box>
               <Typography
                 variant='body2'
-                sx={{ color: 'grey.500', mb: 0.5 }}
+                sx={{ color: 'text.secondary', mb: 0.5 }}
               >
                 {i18n.t('pages.approval_header.k7')}
               </Typography>
@@ -166,7 +166,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
           <Box>
             <Typography
               variant='body2'
-              sx={{ color: 'grey.500', mb: 0.5 }}
+              sx={{ color: 'text.secondary', mb: 0.5 }}
             >
               {i18n.t('pages.approval_header.k8')}
             </Typography>
@@ -180,7 +180,7 @@ const ApprovalHeader: React.FC<ApprovalHeaderProps> = ({ approval, theme }) => {
         <Box sx={{ mt: 2 }}>
           <Typography
             variant='body2'
-            sx={{ color: 'grey.500', mb: 1 }}
+            sx={{ color: 'text.secondary', mb: 1 }}
           >
             {i18n.t('pages.approval_header.k9')}
           </Typography>

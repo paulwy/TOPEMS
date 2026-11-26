@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Package, Star, Download, ExternalLink } from 'lucide-react';
@@ -37,7 +38,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
                 width: 48,
                 height: 48,
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
+                background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.primary.main} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

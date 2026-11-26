@@ -386,7 +386,7 @@ const OverlayLoader: React.FC<{
       sx={{
         position: 'absolute',
         inset: 0,
-        backgroundColor: 'common.white',
+        backgroundColor: 'background.paper',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

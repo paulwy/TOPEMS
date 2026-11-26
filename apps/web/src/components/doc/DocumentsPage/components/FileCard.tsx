@@ -146,7 +146,7 @@ const FileCard: React.FC<FileCardProps> = ({
             display: 'flex',
             alignItems: 'center',
             fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-            color: 'grey.500',
+            color: 'text.secondary',
             mb: 1.5,
           }}
         >

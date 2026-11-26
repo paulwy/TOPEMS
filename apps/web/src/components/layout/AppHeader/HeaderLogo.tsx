@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, IconButton, Typography } from '@mui/material';
 import { Menu as MenuIcon } from 'lucide-react';
@@ -52,7 +53,7 @@ export const HeaderLogo: React.FC<HeaderLogoProps> = ({
             width: 36,
             height: 36,
             borderRadius: 1.5,
-            background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.secondary.main} 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

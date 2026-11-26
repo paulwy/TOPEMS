@@ -148,7 +148,7 @@ const PluginReviewsTab: React.FC<PluginReviewsTabProps> = ({
                 </Box>
                 {review.helpful_count !== undefined && review.helpful_count > 0 && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <ThumbsUp sx={{ width: 14, height: 14, color: 'grey.500' }} />
+                    <ThumbsUp sx={{ width: 14, height: 14, color: 'text.secondary' }} />
                     <Typography
                       variant='caption'
                       color='textSecondary'

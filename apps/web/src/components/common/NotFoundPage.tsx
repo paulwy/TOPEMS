@@ -54,7 +54,7 @@ const NotFoundPage: React.FC = () => {
             fontWeight: 800,
             lineHeight: 1,
             letterSpacing: '-0.05em',
-            background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
+            background: `linear-gradient(135deg, ${designTokens.colors.primary.main} 0%, ${designTokens.colors.secondary.main} 100%)`,
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',

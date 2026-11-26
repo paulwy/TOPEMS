@@ -27,7 +27,7 @@ const StatsChartPieImpl = lazy(() =>
 const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
   <div
     style={{
-      backgroundColor: 'common.white',
+      backgroundColor: 'background.paper',
       borderRadius: 'lg',
       boxShadow: designTokens.shadows.sm,
       padding: 6,

@@ -259,7 +259,7 @@ export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }
                 width: 12,
                 height: 12,
                 borderRadius: 1,
-                bgcolor: 'common.white',
+                bgcolor: 'background.paper',
               }}
             />
             <Typography
@@ -275,7 +275,7 @@ export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }
                 width: 12,
                 height: 12,
                 borderRadius: 1,
-                bgcolor: 'common.white',
+                bgcolor: 'background.paper',
               }}
             />
             <Typography
@@ -291,7 +291,7 @@ export const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }
                 width: 12,
                 height: 12,
                 borderRadius: 1,
-                bgcolor: 'common.white',
+                bgcolor: 'background.paper',
               }}
             />
             <Typography

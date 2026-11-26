@@ -373,7 +373,7 @@ const PluginDetailPage: React.FC = () => {
               )}
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <HardDrive sx={{ width: 16, height: 16, color: 'grey.500' }} />
+                  <HardDrive sx={{ width: 16, height: 16, color: 'text.secondary' }} />
                   <Typography
                     variant='body2'
                     color='textSecondary'
@@ -385,7 +385,7 @@ const PluginDetailPage: React.FC = () => {
                 </Box>
                 {version.min_app_version && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Shield sx={{ width: 16, height: 16, color: 'grey.500' }} />
+                    <Shield sx={{ width: 16, height: 16, color: 'text.secondary' }} />
                     <Typography
                       variant='body2'
                       color='textSecondary'
@@ -518,7 +518,7 @@ const PluginDetailPage: React.FC = () => {
                 </Box>
                 {review.helpful_count !== undefined && review.helpful_count > 0 && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <ThumbsUp sx={{ width: 14, height: 14, color: 'grey.500' }} />
+                    <ThumbsUp sx={{ width: 14, height: 14, color: 'text.secondary' }} />
                     <Typography
                       variant='caption'
                       color='textSecondary'

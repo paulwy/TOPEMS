@@ -99,7 +99,7 @@ const FlowInstanceDetailPage: React.FC = () => {
         return (
           <AlertCircle
             size={20}
-            style={{ color: theme.palette.grey[500] }}
+            style={{ color: theme.palette.text.secondary }}
           />
         );
     }
@@ -127,7 +127,7 @@ const FlowInstanceDetailPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {i18n.t('pages.workflow_instance_detail_page.id_0')}
                 </Typography>
@@ -141,7 +141,7 @@ const FlowInstanceDetailPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {i18n.t('pages.workflow_instance_detail_page.id_1')}
                 </Typography>
@@ -155,7 +155,7 @@ const FlowInstanceDetailPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {i18n.t('pages.workflow_instance_detail_page.k2')}
                 </Typography>
@@ -164,7 +164,7 @@ const FlowInstanceDetailPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {i18n.t('pages.workflow_instance_detail_page.k3')}
                 </Typography>
@@ -182,7 +182,7 @@ const FlowInstanceDetailPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {i18n.t('pages.workflow_instance_detail_page.k4')}
                 </Typography>
@@ -193,7 +193,7 @@ const FlowInstanceDetailPage: React.FC = () => {
               <Box>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 0.5 }}
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
                 >
                   {i18n.t('pages.workflow_instance_detail_page.k5')}
                 </Typography>
@@ -205,7 +205,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                 <Box>
                   <Typography
                     variant='body2'
-                    sx={{ color: 'grey.500', mb: 0.5 }}
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
                     {i18n.t('pages.workflow_instance_detail_page.k6')}
                   </Typography>
@@ -219,7 +219,7 @@ const FlowInstanceDetailPage: React.FC = () => {
               <Box sx={{ mt: 2 }}>
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500', mb: 1 }}
+                  sx={{ color: 'text.secondary', mb: 1 }}
                 >
                   {i18n.t('pages.workflow_instance_detail_page.k7')}
                 </Typography>
@@ -257,7 +257,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 />
-                <Typography sx={{ color: 'grey.500' }}>
+                <Typography sx={{ color: 'text.secondary' }}>
                   {i18n.t('workflow.workflow_instance_detail_page.k11')}
                 </Typography>
               </Box>
@@ -407,7 +407,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 />
-                <Typography sx={{ color: 'grey.500' }}>
+                <Typography sx={{ color: 'text.secondary' }}>
                   {i18n.t('workflow.workflow_instance_detail_page.k13')}
                 </Typography>
               </Box>

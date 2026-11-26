@@ -247,7 +247,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                   sx={{
                     width: 8,
                     height: 8,
-                    bgcolor: 'common.white',
+                    bgcolor: 'background.paper',
                     borderRadius: 'full',
                     animation: 'pulse 1.5s infinite',
                   }}
@@ -308,7 +308,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                       : designTokens.colors.cyber.metal.bottomShadow,
                   },
                   '&.Mui-disabled': {
-                    bgcolor: 'common.white',
+                    bgcolor: 'background.paper',
                     color: 'text.secondary',
                   },
                 }}

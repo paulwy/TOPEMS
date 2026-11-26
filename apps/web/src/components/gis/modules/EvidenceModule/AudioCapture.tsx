@@ -199,7 +199,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
             sx={{
               mb: 16,
               p: 12,
-              bgcolor: 'common.white',
+              bgcolor: 'background.paper',
               border: 1,
               borderColor: 'error.main',
               borderRadius: 8,

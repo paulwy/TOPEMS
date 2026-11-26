@@ -523,7 +523,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           <Typography variant='h6'>{i18n.t('templates.index.k13')}</Typography>
           <Typography
             variant='subtitle1'
-            sx={{ color: 'grey.500' }}
+            sx={{ color: 'text.secondary' }}
           >
             {state.title || i18n.t('templates.index.k14')}
           </Typography>

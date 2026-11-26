@@ -192,7 +192,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     >
       <div
         style={{
-          backgroundColor: 'common.white',
+          backgroundColor: 'background.paper',
           borderRadius: 'lg',
           boxShadow: designTokens.shadows['2xl'],
           width: '100%',
@@ -261,7 +261,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'common.white',
+                backgroundColor: 'background.paper',
                 zIndex: designTokens.zIndex.contentLayer,
               }}
             >
@@ -289,7 +289,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'common.white',
+                backgroundColor: 'background.paper',
                 zIndex: designTokens.zIndex.contentLayer,
               }}
             >

@@ -243,7 +243,7 @@ const CompactHero: React.FC = () => {
           width: 100,
           height: 100,
           borderRadius: '50%',
-          bgcolor: 'common.white',
+          bgcolor: 'background.paper',
           opacity: 0.08,
         }}
       />
@@ -265,7 +265,7 @@ const CompactHero: React.FC = () => {
         <Button
           size='small'
           sx={{
-            bgcolor: 'common.white',
+            bgcolor: 'background.paper',
             color: 'primary.main',
             fontWeight: 600,
             textTransform: 'none',

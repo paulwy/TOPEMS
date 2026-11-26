@@ -56,7 +56,7 @@ const DocumentDropZone: React.FC<DocumentDropZoneProps> = ({
       </Typography>
       <Typography
         variant='body2'
-        sx={{ color: 'grey.500' }}
+        sx={{ color: 'text.secondary' }}
       >
         {t('doc.documents.drop_format_tip')}
       </Typography>

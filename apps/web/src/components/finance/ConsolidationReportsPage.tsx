@@ -59,7 +59,7 @@ import { APPROVAL_STATUS_LABELS, type ApprovalStatus } from './generated/finance
 const CONSOLIDATION_MODULE_AVAILABLE = false;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  draft: { label: i18n.t('finance.consolidation_reports_page.k5'), color: 'grey.500' },
+  draft: { label: i18n.t('finance.consolidation_reports_page.k5'), color: 'text.secondary' },
   calculating: { label: i18n.t('finance.consolidation_reports_page.k6'), color: 'primary' },
   completed: { label: i18n.t('finance.consolidation_reports_page.k7'), color: 'success' },
   published: { label: i18n.t('finance.consolidation_reports_page.k8'), color: 'secondary' },
@@ -291,7 +291,7 @@ export default function ConsolidationReportsPage() {
           {
             name: t('finance.consolidation_reports_page.pie_draft'),
             value: statusDistribution.draft,
-            color: 'grey.500',
+            color: 'text.secondary',
           },
           {
             name: t('finance.consolidation_reports_page.pie_calculating'),
@@ -644,7 +644,7 @@ export default function ConsolidationReportsPage() {
                               padding: 3,
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
-                              color: 'grey.500',
+                              color: 'text.secondary',
                             }}
                           >
                             {priorPeriod.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}

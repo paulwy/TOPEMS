@@ -145,7 +145,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k10')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -162,7 +162,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k11')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -179,7 +179,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k12')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -196,7 +196,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k13')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -211,7 +211,7 @@ const PmContractDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k14')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -240,7 +240,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k15')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -257,7 +257,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k16')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
@@ -274,7 +274,7 @@ const PmContractDetailPage: React.FC = () => {
                 borderColor: 'grey.100',
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k17')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>-</Typography>
@@ -287,7 +287,7 @@ const PmContractDetailPage: React.FC = () => {
                 py: 1,
               }}
             >
-              <Typography sx={{ color: 'grey.500' }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {i18n.t('pm.pm_contract_detail_page.k18')}
               </Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>-</Typography>
@@ -323,7 +323,7 @@ const PmContractDetailPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           {milestones.length === 0 ? (
-            <Typography sx={{ textAlign: 'center', color: 'grey.500', py: 6 }}>
+            <Typography sx={{ textAlign: 'center', color: 'text.secondary', py: 6 }}>
               {i18n.t('pages.pm_contract_detail_page.k4')}
             </Typography>
           ) : (
@@ -360,7 +360,7 @@ const PmContractDetailPage: React.FC = () => {
                       {milestone.description && (
                         <Typography
                           variant='body2'
-                          sx={{ color: 'grey.500', mt: 0.5 }}
+                          sx={{ color: 'text.secondary', mt: 0.5 }}
                         >
                           {milestone.description}
                         </Typography>
@@ -369,7 +369,7 @@ const PmContractDetailPage: React.FC = () => {
                     <Box sx={{ textAlign: 'right' }}>
                       <Typography
                         variant='body2'
-                        sx={{ color: 'grey.500' }}
+                        sx={{ color: 'text.secondary' }}
                       >
                         {i18n.t('pages.pm_contract_detail_page.k5')}
                       </Typography>
@@ -406,7 +406,7 @@ const PmContractDetailPage: React.FC = () => {
         </CardHeader>
         <CardContent sx={{ p: 0 }}>
           {payments.length === 0 ? (
-            <Typography sx={{ textAlign: 'center', color: 'grey.500', py: 6 }}>
+            <Typography sx={{ textAlign: 'center', color: 'text.secondary', py: 6 }}>
               {i18n.t('pages.pm_contract_detail_page.k7')}
             </Typography>
           ) : (

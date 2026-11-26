@@ -69,7 +69,7 @@ export const archiveNotificationSchema: EntitySchema = {
             <Typography
               variant='caption'
               sx={{
-                color: 'grey.500',
+                color: 'text.secondary',
                 maxWidth: 400,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',

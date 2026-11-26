@@ -98,7 +98,7 @@ export const notificationTemplateSchema: EntitySchema = {
                 <Typography
                   variant='caption'
                   sx={{
-                    color: 'grey.500',
+                    color: 'text.secondary',
                     display: 'block',
                     maxWidth: 200,
                     overflow: 'hidden',
