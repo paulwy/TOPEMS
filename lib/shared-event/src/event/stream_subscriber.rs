@@ -594,11 +594,26 @@ impl StreamEventSubscriber {
             self.ensure_consumer_group(&stream_key).await?;
         }
 
-        let mut con = self.redis_client.get_multiplexed_async_connection().await?;
+        // 关键：redis 1.x 的 ConnectionManager 默认 response_timeout 只有 500ms，
+        // 而 XREADGROUP 用 BLOCK 5000ms 阻塞读，必然被判超时（日志里的
+        // "Redis 连接错误: timed out"），XAUTOCLAIM 偶发 >500ms 也会被判失败。
+        // 这里按 block_ms 抬高超时，并把回收连接固定到 5s。
+        let read_timeout = Duration::from_millis(self.config.block_ms.saturating_add(2000));
+        let read_cfg = redis::AsyncConnectionConfig::new()
+            .set_response_timeout(Some(read_timeout));
+        let mut con = self
+            .redis_client
+            .get_multiplexed_async_connection_with_config(&read_cfg)
+            .await?;
         // XAUTOCLAIM 使用独立连接：XREADGROUP 是 BLOCK 读取，若与回收命令共用同一条
         // 多路复用连接，回收命令会排在阻塞读之后，等到响应时客户端已超时（Err），
         // 表现为 PEL 消息反复投递（delivery-count 飙升）却始终不 ACK、不处理。
-        let mut claim_con = self.redis_client.get_multiplexed_async_connection().await?;
+        let claim_cfg = redis::AsyncConnectionConfig::new()
+            .set_response_timeout(Some(Duration::from_secs(5)));
+        let mut claim_con = self
+            .redis_client
+            .get_multiplexed_async_connection_with_config(&claim_cfg)
+            .await?;
 
         // PEL 回收节奏：每 round 拉一次新消息（BLOCK），回收每 N 轮做一次即可。
         // 回收本身是「失败消息重投」的兜底，高频执行只会放大 Redis 压力与超时噪点。
@@ -876,7 +891,11 @@ impl StreamEventSubscriber {
                     // 回收失败不能静默：否则 PEL 消息永远不处理也不 ACK。
                     // 但连接层面的超时（timed out）会持续复现，重建专用连接比反复报错更有效。
                     warn!("XAUTOCLAIM 失败 - Stream: {}: {}", stream_key, e);
-                    match self.redis_client.get_multiplexed_async_connection().await {
+                    match self
+                        .redis_client
+                        .get_multiplexed_async_connection_with_config(&claim_cfg)
+                        .await
+                    {
                         Ok(fresh) => claim_con = fresh,
                         Err(re) => warn!("回收连接重建失败: {}", re),
                     }
