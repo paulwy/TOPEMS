@@ -129,6 +129,13 @@ node scripts/ci/api-contract.mjs --spec http://127.0.0.1:8099/api/openapi.json
 本轮已按此合并 4 条：`GET /api/core/menu/{groups,groups/{id},menus,menus/{id}}`，
 base 从 2469 → 2473，其余路径一条没动。
 
+第二轮按同一流程补 core 的审计接口：`GET /api/core/system/audit-logs`、
+`/audit-logs/{id}`、`/audit-logs/export`、`/audit-logs/stats`
+（`svc/unified-core/src/modules/system_audit/mod.rs` 加 `#[utoipa::path]`，
+登记到 `modules/openapi.rs`）。干跑增量 16 条（含 ehs / notification / menu），
+只取这 4 条并入 base：**2473 → 2477**。顺带把列表接口的 `page_size` 钳位从 200 改成 100，
+与 `PaginatedResponse` 内部上限对齐，避免"返回 200 行、metadata 写 100"的翻页错位。
+
 ## 顺带修的一个长耗时接口（`/api/core/system/audit-logs/export`）
 
 并入前端清单后它每轮都超时（20s 上限，实测 40.6s 才返回）。原因不是 SQL：

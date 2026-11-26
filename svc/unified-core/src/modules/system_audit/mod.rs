@@ -76,13 +76,34 @@ pub struct AuditStatsParams {
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/system/audit-logs",
+    tag = "Core-System",
+    params(
+        ("user_id" = Option<String>, Query, description = "按操作人 ID 过滤"),
+        ("user_name" = Option<String>, Query, description = "按操作人名称模糊过滤"),
+        ("action" = Option<String>, Query, description = "按动作过滤"),
+        ("entity_type" = Option<String>, Query, description = "按实体类型过滤"),
+        ("status" = Option<String>, Query, description = "success / failed / error / unknown"),
+        ("start_date" = Option<String>, Query, description = "起始时间（ISO8601）"),
+        ("end_date" = Option<String>, Query, description = "结束时间（ISO8601）"),
+        ("search" = Option<String>, Query, description = "动作/实体/操作人模糊搜索"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20，上限 200"),
+    ),
+    responses((status = 200, description = "审计日志分页列表"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_audit_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<AuditLog>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.page_size.or(params.page_size).unwrap_or(20).min(200);
+    // PaginatedResponse 内部把 page_size 钳到 100，这里必须先对齐，
+    // 否则 page_size=200 会返回 200 行、metadata 却写 100（前端按 100 算总页数）。
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
     let user_uuid = params
@@ -162,6 +183,16 @@ pub async fn list_audit_logs(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/system/audit-logs/{id}",
+    tag = "Core-System",
+    params(
+        ("id" = Uuid, Path, description = "审计日志 ID"),
+    ),
+    responses((status = 200, description = "审计日志详情"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_audit_log(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -201,6 +232,23 @@ pub async fn get_audit_log(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/system/audit-logs/export",
+    tag = "Core-System",
+    params(
+        ("user_id" = Option<String>, Query, description = "按操作人 ID 过滤"),
+        ("user_name" = Option<String>, Query, description = "按操作人名称模糊过滤"),
+        ("action" = Option<String>, Query, description = "按动作过滤"),
+        ("entity_type" = Option<String>, Query, description = "按实体类型过滤"),
+        ("status" = Option<String>, Query, description = "success / failed / error / unknown"),
+        ("start_date" = Option<String>, Query, description = "起始时间（ISO8601）"),
+        ("end_date" = Option<String>, Query, description = "结束时间（ISO8601）"),
+        ("search" = Option<String>, Query, description = "动作/实体/操作人模糊搜索"),
+    ),
+    responses((status = 200, description = "导出审计日志（JSON，最多 10000 条）"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_audit_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -267,6 +315,7 @@ pub async fn export_audit_logs(
         search
     );
 
+
     let _ = scope.commit().await;
 
     ApiResponse::success(
@@ -281,6 +330,18 @@ pub async fn export_audit_logs(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/system/audit-logs/stats",
+    tag = "Core-System",
+    params(
+        ("start_date" = Option<String>, Query, description = "起始时间（ISO8601）"),
+        ("end_date" = Option<String>, Query, description = "结束时间（ISO8601）"),
+        ("group_by" = Option<String>, Query, description = "分组维度，默认 action"),
+    ),
+    responses((status = 200, description = "审计日志统计"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_audit_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

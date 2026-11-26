@@ -111,6 +111,11 @@ pub struct Permission {
         crate::modules::menu::handlers::get_group,
         crate::modules::menu::handlers::list_menus,
         crate::modules::menu::handlers::get_menu,
+        // ===== Core system audit（审计日志列表/详情/导出/统计）=====
+        crate::modules::system_audit::list_audit_logs,
+        crate::modules::system_audit::get_audit_log,
+        crate::modules::system_audit::export_audit_logs,
+        crate::modules::system_audit::get_audit_stats,
         // ===== Flow module - task =====
         crate::modules::flow::task::list_tasks,
         crate::modules::flow::task::get_task,
