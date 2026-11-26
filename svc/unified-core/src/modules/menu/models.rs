@@ -5,7 +5,8 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MenuGroup {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    /// 系统级菜单分组 tenant_id 为 NULL（54/54 行如此），必须 Option
+    pub tenant_id: Option<Uuid>,
     pub name: String,
     pub code: String,
     pub icon: Option<String>,
@@ -18,7 +19,8 @@ pub struct MenuGroup {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Menu {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    /// 同 MenuGroup：内置菜单为全局共享，tenant_id 为 NULL
+    pub tenant_id: Option<Uuid>,
     pub group_id: Uuid,
     pub parent_id: Option<Uuid>,
     pub name: String,

@@ -42,6 +42,24 @@
 
 notification 的细节见 `docs/frontend/notification-contract-gap-20261126.md`。
 
+## 首轮全量：多覆盖 368 条，立刻抓到 2 个真 500
+
+`api-contract --emit-get` + `api-smoke --extra` 把 368 条前端 GET 并入冒烟，总数从 916 变成 1281：
+
+| 轮次 | 结果 |
+| --- | --- |
+| 首轮（含前端清单） | `OK=1156 SOFT=121 FAIL=2 SKIP=2` |
+| 修 menu 后复跑 | `1281 条 OK=1156 SOFT=121 FAIL=0 SKIP=2 DEGRADED=2`，判定 OK |
+
+两条 FAIL 都是 `500 内部服务器错误`，且都不在 spec 里、原来的冒烟永远测不到：
+
+- `GET /api/core/menu/groups`、`GET /api/core/menu/menus` ——
+  日志 `decoding column "tenant_id": unexpected null`。库里的 54 个菜单分组、187 个菜单项
+  tenant_id **全是 NULL**（系统级共享菜单），而 `MenuGroup`/`Menu` 的 `tenant_id` 声明成 `Uuid`。
+  改成 `Option<Uuid>` 后两个接口 200，`data.items` 正常返回。
+
+这类缺陷正是"页面还能用、接口其实 500、前端拿空态兜住"的典型。
+
 ## 用法
 
 ```bash
