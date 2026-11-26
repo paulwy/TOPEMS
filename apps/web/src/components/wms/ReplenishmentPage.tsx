@@ -342,7 +342,15 @@ const ReplenishmentPage: React.FC = () => {
           {statistics?.total_suggestions || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+      <Box
+        sx={(t) => ({
+          p: 2,
+          // 实色浅阶在暗色下会变成浅底浅字，改中性底 + 语义左边框
+          bgcolor: 'action.hover',
+          borderRadius: 3,
+          borderLeft: `3px solid ${t.palette.warning.main}`,
+        })}
+      >
         <Stack
           direction='row'
           spacing={1}
@@ -361,12 +369,20 @@ const ReplenishmentPage: React.FC = () => {
         </Stack>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: 'warning.dark' }}
+          sx={{ fontWeight: 700, color: 'var(--warning-text)' }}
         >
           {statistics?.pending_suggestions || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 3 }}>
+      <Box
+        sx={(t) => ({
+          p: 2,
+          // 实色浅阶在暗色下会变成浅底浅字，改中性底 + 语义左边框
+          bgcolor: 'action.hover',
+          borderRadius: 3,
+          borderLeft: `3px solid ${t.palette.info.main}`,
+        })}
+      >
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -375,12 +391,20 @@ const ReplenishmentPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: 'info.dark' }}
+          sx={{ fontWeight: 700, color: 'var(--info-text)' }}
         >
           {statistics?.total_orders || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
+      <Box
+        sx={(t) => ({
+          p: 2,
+          // 实色浅阶在暗色下会变成浅底浅字，改中性底 + 语义左边框
+          bgcolor: 'action.hover',
+          borderRadius: 3,
+          borderLeft: `3px solid ${t.palette.success.main}`,
+        })}
+      >
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -389,7 +413,7 @@ const ReplenishmentPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: 'success.dark' }}
+          sx={{ fontWeight: 700, color: 'var(--success-text)' }}
         >
           {statistics?.completed_orders || 0}
         </Typography>

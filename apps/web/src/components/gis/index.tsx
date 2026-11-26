@@ -1035,12 +1035,27 @@ const GisContent: React.FC = () => {
                     fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     fontWeight: 500,
                     whiteSpace: 'nowrap',
-                    color: activeTab === tab.id ? 'cyan.dark' : 'text.secondary',
+                    color:
+                      activeTab === tab.id
+                        ? theme.palette.mode === 'dark'
+                          ? 'cyan.300'
+                          : 'cyan.800'
+                        : 'text.secondary',
                     borderBottom: activeTab === tab.id ? 2 : 0,
-                    borderColor: activeTab === tab.id ? 'cyan.dark' : 'transparent',
-                    bgcolor: activeTab === tab.id ? 'cyan.light' : 'transparent',
+                    borderColor: activeTab === tab.id ? 'cyan.700' : 'transparent',
+                    bgcolor:
+                      activeTab === tab.id
+                        ? theme.palette.mode === 'dark'
+                          ? 'grey.200'
+                          : 'cyan.50'
+                        : 'transparent',
                     '&:hover': {
-                      bgcolor: activeTab === tab.id ? 'cyan.light' : 'grey.50',
+                      bgcolor:
+                        activeTab === tab.id
+                          ? theme.palette.mode === 'dark'
+                            ? 'grey.200'
+                            : 'cyan.50'
+                          : 'grey.50',
                     },
                     textTransform: 'none',
                   }}

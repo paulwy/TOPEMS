@@ -207,7 +207,7 @@ const PdmStatsPage: React.FC = () => {
       title: t('pdm.pdm_stats_page.k18'),
       value: stats.totalFormulas,
       icon: <Package sx={{ width: 24, height: 24 }} />,
-      gradient: ['warning.main', theme.palette.warning.dark] as [string, string],
+      gradient: [theme.palette.warning.main, theme.palette.warning.dark] as [string, string],
       description: t('pdm.pdm_stats_page.e2', { v1: stats.activeFormulas }),
       trend: { value: 0, direction: 'neutral' as const },
     },
