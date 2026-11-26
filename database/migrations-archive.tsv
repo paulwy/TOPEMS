@@ -43,3 +43,11 @@ version	description	status	reason_category	reason	evidence	decided_on
 20261107000043	finance smallfiles perms batch41	replayable-not-applied	legacy-hole	历史空档；dry-run 幂等通过但未执行（效果是否已在库中未被采纳为记账依据）	dry-run PASS	2026-11-25
 20261115140800	family tenant plugins to iam	archived	fk-precondition	外键前置数据缺失：core_tenant_plugins.tenant_id 引用的租户不存在	violates foreign key constraint "core_tenant_plugins_tenant_id_fkey"	2026-11-25
 20261115140900	family tenant users to public	archived	rls-seed-conflict	种子写入与当前 RLS 策略不兼容	rls	2026-11-25
+20261115140000	family assets to erp assets	archived	dep-moved	源散表已不存在：public.assets（数据搬迁无源可迁）	relation "public.assets" does not exist	2026-11-26
+20261115140100	family employees to hrm employees	archived	dep-moved	源散表已不存在：public.employees（数据搬迁无源可迁）	relation "public.employees" does not exist	2026-11-26
+20261115140200	family mail emails to core emails	archived	dep-moved	源散表已不存在：mail.emails（数据搬迁无源可迁）	relation "mail.emails" does not exist	2026-11-26
+20261115140300	family erp connections to integration	archived	dep-moved	源散表已不存在：public.erp_connections（数据搬迁无源可迁）	relation "public.erp_connections" does not exist	2026-11-26
+20261115140600	family storage files to core files	archived	dep-moved	源散表已不存在：storage.files（数据搬迁无源可迁）	relation "storage.files" does not exist	2026-11-26
+20261115140700	family doc service files to core files	archived	dep-moved	先序隔离表未落地（随 140600 同链）：public.migration_quarantine_rows	relation "public.migration_quarantine_rows" does not exist	2026-11-26
+20261115141000	family core workflows to public	archived	dep-moved	源散表已不存在：flow.core_workflows（数据搬迁无源可迁）	relation "flow.core_workflows" does not exist	2026-11-26
+20261115141100	family flow workflows to public	archived	dep-moved	先序隔离表未落地（随 140600 同链）：public.migration_quarantine_rows	relation "public.migration_quarantine_rows" does not exist	2026-11-26
