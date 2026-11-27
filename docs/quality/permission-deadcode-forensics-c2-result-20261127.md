@@ -346,6 +346,18 @@
 - **盲区边界**：① 本轮为后端 API 下发口径，未跑浏览器内动态菜单/按钮显隐与 SDK 远端注入采集；② 菜单端点非 admin 403，业务经理/tenant_admin 的实际可见菜单面未覆盖；③ inline-trace 仍缺 route/handler 字段，端点级守卫定位延续 #102 盲区①③；④ 未造最小业务单据复核写门放行后落库/下游回传。以上仍属未立项扩面项，不在本轮执行。
 - **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`runtime-dispatch-recon.json`（6 角色导航可见集合、admin 菜单/分组/metadata 计数、菜单码与 581 交集、metadata 目录漂移与 description 分布、导航过滤判定及口径注记）；脚本 `/tmp/topems-c2/scan-runtime-dispatch.py`。
 
+### 13.10 活码/兜底存疑码静态复核：search:admin 与 monitor:admin（#108，静态只读）
+
+- **背景**：承接 §13.3/§13.4 写冒烟遗留的两点存疑——`search:admin` 活码样本薄（仅 1 写候选）、`monitor:admin` 兜底拦截门定位不清（卡在访问门还是写门）。本轮静态只读复核源码路由与守卫接线，不起实例、不写隔离库、不改鉴权、不下活码定论。
+- **守卫口径（源码核准，`lib/shared-auth/src/middleware/permission.rs`）**：
+  - `require_module_access(module)`：`Claims::has_module_permission(module)`，拥有 `<module>:` 前缀任一码（或 `all`/`*`/超管）即放行，否则 403「需要 {module} 模块权限」。
+  - `require_module_write(module)`：GET/HEAD/OPTIONS 直接放行；其余方法拼 `format!("{module}:admin")`，`Claims::has_permission` 缺失即 403「需要 {module} 模块管理员权限（{code}）」。
+- **`search:admin`（活码，样本薄定性）**：`svc/search/src/main.rs` 业务路由仅 `GET /suggestions`、`GET/DELETE /recent`、`GET /api/search(/?)`；写动作**只有 `DELETE /recent`**（`clear_recent`）一个端点。#99 静态清单 1 个写候选与源码一致，**非漏扫**；样本薄源于 search 模块写面本身仅单端点。运行期 tenant_admin/admin 该端点 allow 1，guest 0/0（卡在访问门、未到写门 denied）。活码判定成立但证据强度受模块写面限制，无更多写端点可扩面。
+- **`monitor:admin`（兜底，拦截门定位）**：`svc/monitor/src/main.rs` protected 路由经 `modules::create_routes()` 合并，写端点覆盖 thresholds（POST/PUT/DELETE）、alerts（acknowledge/resolve/escalate/dismiss/update）、rules（create/update/delete/enable/disable/routing）、templates（create/update/delete）、settings（PUT/DELETE）、slos（create/resolve）、`performance/export`（POST）等；#99 静态 30 写候选与源码区间一致。隔离库角色授权实测：除 admin（16 个 monitor 码，含 `monitor:admin`）外，其余 16 个业务角色 `monitor:%` 授权**全 0**；现有 6 取证账号非 admin 均无 monitor 前缀码，请求在 `require_module_access` 前置门即被 403 拦截，**写门 denied 未触达**——故 #102 观察到的 tenant_admin 0/0 是访问门拦截，不能作为写门放行/拦截证据。
+- **补对照所需条件（待立项，本轮未执行）**：要采写门 denied 对照，需新增一个「授任一 monitor 读码（如 `monitor:dashboard:read`，过访问门）但不带 `monitor:admin`」的隔离库身份，再打 monitor 写端点观察写门 403；这需在隔离库建角色/授权/建号（#93/#97 同类流程，取证后回退）。当前账号集不具备该身份，本轮不自主建号写入。
+- **口径结论**：两点存疑均为静态接线与授权面问题，矩阵主分类不变——`search:admin` 维持活码（单端点证据受限），`monitor:admin` 维持兜底（业务角色零授予、仅低鉴别力 admin 放行，写门双向对照待补）。
+- **产物**（`artifacts/audit/forensics-c2/`，gitignore）：矩阵 `c2-matrix.json/.csv` 两行补 `static_review_note`；本轮无新增采集脚本，结论基于 `svc/search`、`svc/monitor` 源码与隔离库 `core_role_permissions` 只读查询。
+
 
 
 
