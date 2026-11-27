@@ -3348,3 +3348,10 @@ pending_forward_patches:
     effect: "下线未投产的岗位模板默认授权预留表 iam.position_roles / iam.position_permissions；授权权威链为 core_user_roles→core_role_permissions→core_permissions，两表不参与令牌聚合；iam.positions 主表与 iam.user_positions 用户-岗位归属线独立保留"
     destructive_scan: "DROP TABLE IF EXISTS ×2（to_regclass 守卫 + IF EXISTS；每条 DROP 前独立 destructive 标记 gate=allow、kind=DROP TABLE、owner=iam、ticket=IAM-LEGACY-20261126、rows-at-review=0；无 CASCADE；末尾 DO 断言两表 to_regclass 为空）"
     note: "L6 路径 B（2026-11-27 拍板）：两表双库 0 行，后端仅 unified-core/iam/position.rs 半截 CRUD 已随本专项清除，前端岗位页无角色/权限字段；删除前空表头快照至 backups/db-iam-position-template-tables/（gitignore）；待独立 replay 窗口破坏性放行投放，本轮不写 prod 账本"
+  # ===== 2026-11-27：public 层死存储簇（EHS / LIMS / finance 凭证 / 配置版本）清除 =====
+  - version: "20261127200000"
+    file: "database/migrations/20261127200000_drop_dead_public_storage_cluster.sql"
+    status: applied
+    effect: "删除 public 层 33 张死表（EHS 12、LIMS 18、其他 3：finance_voucher_templates/core_finance_vouchers/versions/configurations）；先摘簇内 27 条外键（含 qa_lims_method_categories 自引用）再一次性 DROP；预检逐张断言 0 行/簇外零引用/无视图依赖"
+    destructive_scan: "ALTER TABLE DROP CONSTRAINT ×27（簇内，非破坏性判定）+ 单条 DROP TABLE IF EXISTS 33 表（destructive 标记 rows-at-review=0 + backup）；生产 33 张全部不存在 → 空跑"
+    note: "判定升级为依赖闭包四条件（0 行 + 运行期 *.rs 无 public.<表> 引用 + init/migrations 无创建语句 + 引用方同在闭包）；qa_lab_instruments / qa_lab_tasks / core_doc_* / core_flow_variables / automation_rules 因运行期引用全部保留；dev public 表 213→180；结构由 rollback 按 pg_dump 原样重建；详见 docs/db/public-schema-inventory-2026-11-27.md"

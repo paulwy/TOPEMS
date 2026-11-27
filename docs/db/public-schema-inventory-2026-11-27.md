@@ -8,7 +8,7 @@
 
 | 项目 | 本机 dev (`topems`) | 生产 (`topems_prod`) |
 | --- | --- | --- |
-| `public` 表 | 217 | 86 |
+| `public` 表 | 217 → 180（两批清理后） | 86 |
 | 空表 | 170 | — |
 | 非空表 | 25 | — |
 | 序列 / 视图 | 6 / 7 | 3 / 0 |
@@ -70,3 +70,20 @@
 ```bash
 PGHOST=/tmp PGUSER=air psql -X -q "postgresql:///topems?user=air" -f scripts/migration/audit-public-schema.sql
 ```
+
+## 第二批实际清理（20261127200000）
+
+判定从「单表三条件」升级为「依赖闭包四条件」：0 行、运行期 `*.rs` 无 `public.<表>` 引用、init/migrations 无创建语句、所有入向引用方也在本批或同为死表。收敛出 33 张，簇外零引用：
+
+| 簇 | 表 | 张数 |
+| --- | --- | --- |
+| EHS | `qa_ehs_accidents/_investigations/_reviews/_treatments`、`qa_ehs_hazardous_materials/_material_stocks/_stock_records`、`qa_ehs_health_exam_plans/_records/_abnormalities`、`qa_ehs_inspection_plans/_items` | 12 |
+| LIMS | `qa_lab_reagents/_alerts/_history`、`qa_lims_method_categories/_test_methods/_validations/_versions`、`qa_lims_pt_plans/_samples/_evaluations/_results/_corrective_actions`、`qa_lims_uncertainty_projects/_sources/_components`、`qa_lims_sample_barcodes/_barcode_scan_records` | 18 |
+| 其他 | `finance_voucher_templates`+`core_finance_vouchers`、`versions`+`configurations` | 3 |
+
+执行顺序：先摘簇内 27 条外键（含 `qa_lims_method_categories` 自引用），再一次性 `DROP TABLE IF EXISTS` 33 张；预检逐张断言，收尾断言全不存在。
+
+保留（运行期有引用，0 行也不能删）：`qa_lab_instruments`、`qa_lab_tasks`、`core_doc_documents/folders/templates`、`core_flow_variables`、`automation_rules`。其中 `flow.core_doc_documents` 外键指向 `public.core_doc_folders/_templates`，要处理必须先改指向 `flow.core_doc_folders/_templates`（两者存在且 0 行），属第三批。
+
+结果：dev `public` 表 213 → 180；生产这 33 张本就不存在，纯空跑。
+
