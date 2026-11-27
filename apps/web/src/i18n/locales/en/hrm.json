@@ -3659,5 +3659,10 @@
   "hrm.setup_wizard.checklist.step.positions": "Add positions",
   "hrm.setup_wizard.checklist.step.admin_user": "Create admin account",
   "hrm.setup_wizard.checklist.step.completion": "Complete and verify initialization",
-  "hrm.setup_wizard.pos.duplicate_code": "Duplicate position code in batch: {{code}}"
+  "hrm.setup_wizard.pos.duplicate_code": "Duplicate position code in batch: {{code}}",
+  "hrm.hrm_overview_page.department_count": "Departments",
+  "hrm.hrm_overview_page.attendance_records": "Attendance records",
+  "hrm.hrm_overview_page.performance_review_count": "Performance reviews",
+  "hrm.hrm_overview_page.training_record_count": "Training records",
+  "hrm.hrm_overview_page.hire_trend": "New hires (last 12 months)"
 }

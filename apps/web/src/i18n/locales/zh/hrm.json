@@ -2665,5 +2665,10 @@
   "hrm.setup_wizard.checklist.step.positions": "录入岗位",
   "hrm.setup_wizard.checklist.step.admin_user": "创建管理员账号",
   "hrm.setup_wizard.checklist.step.completion": "完成初始化并核验",
-  "hrm.setup_wizard.pos.duplicate_code": "批次内岗位编码重复：{{code}}"
+  "hrm.setup_wizard.pos.duplicate_code": "批次内岗位编码重复：{{code}}",
+  "hrm.hrm_overview_page.department_count": "部门数",
+  "hrm.hrm_overview_page.attendance_records": "考勤记录",
+  "hrm.hrm_overview_page.performance_review_count": "绩效评审数",
+  "hrm.hrm_overview_page.training_record_count": "培训记录数",
+  "hrm.hrm_overview_page.hire_trend": "入职趋势（近 12 个月）"
 }

@@ -28,7 +28,7 @@ export { leaveApi } from './leave';
 export { payrollApi, salaryAdjustmentApi } from './payroll';
 export { performanceReviewApi } from './performance';
 export { contractApi, contractRenewalApi } from './contract';
-export { trainingCourseApi } from './training';
+export { trainingCourseApi, trainingRecordApi } from './training';
 export { hrmReportsApi } from './hrmReports';
 export { hrmAuditApi } from './hrmAudit';
 export { hrmSetupApi } from './hrmSetup';

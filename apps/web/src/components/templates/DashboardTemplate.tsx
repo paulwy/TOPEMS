@@ -520,6 +520,27 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
           )}
           {renderBody()}
         </Box>
+        {(type === 'bar' || type === 'line' || type === 'area') && data.length > 0 && (
+          <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+            {data.map((d, i) => (
+              <Typography
+                key={i}
+                variant='caption'
+                color='text.secondary'
+                sx={{
+                  flex: 1,
+                  textAlign: 'center',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+                title={String(d[xField])}
+              >
+                {String(d[xField])}
+              </Typography>
+            ))}
+          </Box>
+        )}
       </CardContent>
     </Card>
   );
