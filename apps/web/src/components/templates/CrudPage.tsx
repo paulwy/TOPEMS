@@ -109,8 +109,12 @@ export interface CrudTab {
   label: string;
   /** Tab 图标 */
   icon?: React.ReactNode;
-  /** Tab 内容（自定义渲染） */
-  content: React.ReactNode | ((active: boolean) => React.ReactNode);
+  /**
+   * Tab 内容（自定义渲染）。可选：
+   * 约定第一个 Tab 为列表本身（由 CrudPage 主列表渲染），此时无需传 content，
+   * 否则会出现「第一个 Tab 的自定义列表 + 主列表」同屏渲染两遍（A-02/A-03）。
+   */
+  content?: React.ReactNode | ((active: boolean) => React.ReactNode);
   /** 是否禁用 */
   disabled?: boolean;
 }
@@ -307,7 +311,13 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   // ── 表单字段（合并动态选项） ──
   const baseCreateFields = useMemo(() => getFormFields<T>(schema, 'create'), [schema]);
   const baseEditFields = useMemo(() => getFormFields<T>(schema, 'edit'), [schema]);
-  const viewFields = useMemo(() => getFormFields<T>(schema, 'view'), [schema]);
+  // 详情（view 模式）同样需要动态字典选项：之前只有 create/edit 合并 dynamicOptions，
+  // 详情里 category_code 等字典字段没有 options，有值也渲染成空下拉（显示“请选择”）。
+  const viewFields = useMemo(
+    () =>
+      mergeDynamicOptions(getFormFields<T>(schema, 'view'), dynamicOptions) as FormFieldConfig[],
+    [schema, dynamicOptions]
+  );
 
   const createFields = useMemo(
     () => mergeDynamicOptions(baseCreateFields, dynamicOptions) as FormFieldConfig[],
@@ -863,12 +873,12 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
         </Tabs>
       )}
 
-      {/* Tab 内容 */}
-      {hasTabs && tabsProp!.some((t) => t.id === activeTab) ? (
+      {/* Tab 内容（仅当该 Tab 有自定义 content 时渲染；第一个 Tab 约定走主列表） */}
+      {hasTabs && tabsProp!.some((t) => t.id === activeTab && t.content) ? (
         <Box sx={{ mb: 2 }}>
           {(() => {
             const tab = tabsProp!.find((t) => t.id === activeTab);
-            if (!tab) return null;
+            if (!tab || !tab.content) return null;
             const content = typeof tab.content === 'function' ? tab.content(true) : tab.content;
             return content;
           })()}

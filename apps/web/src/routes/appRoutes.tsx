@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from '../components/auth/ProtectedRoute';
 import { GlobalLayoutV3 } from '../layouts';
 import DynamicRoutes from '../components/DynamicRoutes';
@@ -11,6 +11,7 @@ import { ensureNamespacesLoaded } from '../i18n';
 import { createSafeLazy, lazyWithPreload } from '../utils/createSafeLazy';
 import { authRoutes, dashboardRoutes, commonRoutes, type RouteConfig } from './index';
 import { DASHBOARD_PATHS } from './dashboard';
+import { AUTH_PATHS } from './auth';
 
 // 懒加载页面：避免影响首屏体积
 const TemplateDemoPage = createSafeLazy(() =>
@@ -76,136 +77,170 @@ const renderRoutes = (routes: RouteConfig[]) => {
  * - 旧路径重定向
  * - 模板演示页
  */
+/**
+ * 未登录时立即重定向（A-04）：
+ * 之前匿名深链（如 /dashboard）会先等懒加载 chunk / 布局与模块初始化，
+ * 页面长时间停在 PageLoader 的 "common.loading"，冷缓存下 30s 以上才跳 /login。
+ * 这里在任何路由渲染与 chunk 下载之前完成判断：无 token 且非公开路由，直接 Navigate。
+ * - 桌面端（Tauri）token 可能先存在 Tauri 存储、异步恢复，故不在 Tauri 环境下抢先判定。
+ * - 公开路由（登录/找回密码/强制改密）放行。
+ */
+const PUBLIC_PATHS: string[] = [
+  AUTH_PATHS.login,
+  AUTH_PATHS.forgotPassword,
+  AUTH_PATHS.forceChangePassword,
+];
+
+const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const isPublic = PUBLIC_PATHS.some(
+    (path) => location.pathname === path || location.pathname.startsWith(`${path}/`)
+  );
+  if (isPublic) return <>{children}</>;
+  // 桌面端（Tauri）token 可能先存在 Tauri 存储、异步恢复，故不在 Tauri 环境下抢先判定
+  if (typeof window !== 'undefined' && '__TAURI__' in window) return <>{children}</>;
+  if (localStorage.getItem('token')) return <>{children}</>;
+  return (
+    <Navigate
+      to={AUTH_PATHS.login}
+      state={{ from: location }}
+      replace
+    />
+  );
+};
+
 const AppRoutes: React.FC = () => {
   // 启动全局状态初始化（错误追踪、模块事件、预加载、版本管理）
   useAppInit();
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route
-          path='/performance'
-          element={
-            <ProtectedRoute>
-              <PageErrorBoundary>
-                <Suspense fallback={<PageLoader />}>
-                  <PerformanceTestPage />
-                </Suspense>
-              </PageErrorBoundary>
-            </ProtectedRoute>
-          }
-        />
+      <AuthGate>
+        <Routes>
+          <Route
+            path='/performance'
+            element={
+              <ProtectedRoute>
+                <PageErrorBoundary>
+                  <Suspense fallback={<PageLoader />}>
+                    <PerformanceTestPage />
+                  </Suspense>
+                </PageErrorBoundary>
+              </ProtectedRoute>
+            }
+          />
 
-        {authRoutes.map((route) => {
-          const { element } = route;
-          const isReactElement = React.isValidElement(element);
-          const Element = element as React.ComponentType;
-          return (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={
-                <GuestRoute>
-                  <PageErrorBoundary>
-                    <Suspense fallback={<PageLoader />}>
-                      {isReactElement ? element : <Element />}
-                    </Suspense>
-                  </PageErrorBoundary>
-                </GuestRoute>
-              }
-            />
-          );
-        })}
+          {authRoutes.map((route) => {
+            const { element } = route;
+            const isReactElement = React.isValidElement(element);
+            const Element = element as React.ComponentType;
+            return (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  <GuestRoute>
+                    <PageErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        {isReactElement ? element : <Element />}
+                      </Suspense>
+                    </PageErrorBoundary>
+                  </GuestRoute>
+                }
+              />
+            );
+          })}
 
-        {renderRoutes(dashboardRoutes)}
-        {renderRoutes(commonRoutes)}
+          {renderRoutes(dashboardRoutes)}
+          {renderRoutes(commonRoutes)}
 
-        <Route
-          path='*'
-          element={<DynamicRoutes />}
-        />
+          <Route
+            path='*'
+            element={<DynamicRoutes />}
+          />
 
-        {/*
-         * D4: /core/* 统一走本地插件动态路由（DynamicRouter）。
-         * 原 IS_STATIC_MODE 分支的「Module Federation 未启用」占位页已移除——
-         * 前端回归模块化单体，业务域全部本地打包，不再区分 static / module-federation 部署模式。
-         * G9 修复：/core/users、/core/roles 平铺为顶层路由（嵌套 + 绝对子路径在 react-router v6
-         * 匹配不可靠，是 /core/* 主体空白的根因），确定性注册本地组件；
-         * 其余 /core/* 路径仍交由 DynamicRouter 处理（依赖其运行时模块注册）。
-         */}
-        <Route
-          path='/core/users'
-          element={
-            <ProtectedRoute>
-              <GlobalLayoutV3>
-                <Suspense fallback={<PageLoader />}>
-                  <CoreUsersPage />
-                </Suspense>
-              </GlobalLayoutV3>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/core/roles'
-          element={
-            <ProtectedRoute>
-              <GlobalLayoutV3>
-                <Suspense fallback={<PageLoader />}>
-                  <CoreRolesPage />
-                </Suspense>
-              </GlobalLayoutV3>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/core/*'
-          element={
-            <ProtectedRoute>
-              <GlobalLayoutV3>
-                <Suspense fallback={<PageLoader />}>
-                  <DynamicRouter />
-                </Suspense>
-              </GlobalLayoutV3>
-            </ProtectedRoute>
-          }
-        />
+          {/*
+           * D4: /core/* 统一走本地插件动态路由（DynamicRouter）。
+           * 原 IS_STATIC_MODE 分支的「Module Federation 未启用」占位页已移除——
+           * 前端回归模块化单体，业务域全部本地打包，不再区分 static / module-federation 部署模式。
+           * G9 修复：/core/users、/core/roles 平铺为顶层路由（嵌套 + 绝对子路径在 react-router v6
+           * 匹配不可靠，是 /core/* 主体空白的根因），确定性注册本地组件；
+           * 其余 /core/* 路径仍交由 DynamicRouter 处理（依赖其运行时模块注册）。
+           */}
+          <Route
+            path='/core/users'
+            element={
+              <ProtectedRoute>
+                <GlobalLayoutV3>
+                  <Suspense fallback={<PageLoader />}>
+                    <CoreUsersPage />
+                  </Suspense>
+                </GlobalLayoutV3>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/core/roles'
+            element={
+              <ProtectedRoute>
+                <GlobalLayoutV3>
+                  <Suspense fallback={<PageLoader />}>
+                    <CoreRolesPage />
+                  </Suspense>
+                </GlobalLayoutV3>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/core/*'
+            element={
+              <ProtectedRoute>
+                <GlobalLayoutV3>
+                  <Suspense fallback={<PageLoader />}>
+                    <DynamicRouter />
+                  </Suspense>
+                </GlobalLayoutV3>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path='/template-demo'
-          element={
-            <ProtectedRoute>
-              <TemplateDemoPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* G10 修复：/settings 旧路径重定向到 /system/settings（顶栏"系统设置"现指向后者） */}
-        <Route
-          path='/settings'
-          element={
-            <Navigate
-              to={DASHBOARD_PATHS.systemSettings}
-              replace
-            />
-          }
-        />
-        <Route
-          path='/redesign-demo'
-          element={
-            <ProtectedRoute>
-              <RedesignDemoPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/'
-          element={
-            <Navigate
-              to={DASHBOARD_PATHS.dashboard}
-              replace
-            />
-          }
-        />
-      </Routes>
+          <Route
+            path='/template-demo'
+            element={
+              <ProtectedRoute>
+                <TemplateDemoPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* G10 修复：/settings 旧路径重定向到 /system/settings（顶栏"系统设置"现指向后者） */}
+          <Route
+            path='/settings'
+            element={
+              <Navigate
+                to={DASHBOARD_PATHS.systemSettings}
+                replace
+              />
+            }
+          />
+          <Route
+            path='/redesign-demo'
+            element={
+              <ProtectedRoute>
+                <RedesignDemoPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/'
+            element={
+              <Navigate
+                to={DASHBOARD_PATHS.dashboard}
+                replace
+              />
+            }
+          />
+        </Routes>
+      </AuthGate>
     </BrowserRouter>
   );
 };

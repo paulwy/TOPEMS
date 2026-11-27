@@ -2154,7 +2154,8 @@ export function ListPageTemplate<
         // 表格视图（默认）
         <TableContainer
           component={Paper}
-          sx={{ borderRadius: 3 }}
+          // 窄视口下显式允许横向滚动，避免列被容器裁掉（A-16）
+          sx={{ borderRadius: 3, overflowX: 'auto' }}
         >
           <Table>
             {renderTableHead()}
