@@ -15,6 +15,8 @@
 - **关键事实**：单体路由层 `require_permission / require_any_permission / require_all_permissions` 守卫挂载高度集中在 IAM/system 模块；业务模块（mes/erp/scm/srm/pdm/…）的鉴权主要在 handler 内联判定，本轮埋点未覆盖（§6 盲区①②）。
 - 554 待复核中 **536 个三段标准 CRUD 码、18 个两段聚合伞码**；按动作拆：delete 182 / create 176 / update 175 / write 8 / admin 7 / **read 仅 5** / approve 1。写码占绝对多数，而本轮冒烟只读 GET 端点，写操作守卫未触达（§6 盲区③）。
 
+> **v2 增量（#96，内联收口补埋后复扫，见 §9）**：后端观测并集由 5 码扩至 **45** 码；581 双零候选中 **1 个改判活码 `srm:admin`**（模块写门拼接码，静态漏扫）；待复核 **553**、admin 兜底 **27** 不变。上表为 v1 首版口径，v2 数字以 §9 与 `c2-matrix.json` 为准。
+
 ## 2. 取证环境（隔离，不触 prod）
 
 - **隔离库**：`topems_replay_verify`（#88 回放至链尾，#90 属主收敛 + app 授权归一）；prod 副本 `topems_prod` 全程未连、未写。
@@ -80,7 +82,58 @@
 
 ## 8. 回退清单
 
-- 埋点代码：`cp /tmp/permission.rs.bak svc/unified-core/src/middleware/permission.rs` 后重编；删除 `artifacts/audit/guard-trace.jsonl`。
-- 隔离实例：停 pid 10674（8199）；隔离库 `DROP DATABASE topems_replay_verify` 可整体回退。
+- 埋点代码：`cp /tmp/permission.rs.bak svc/unified-core/src/middleware/permission.rs`；`cp /tmp/auth.rs.bak lib/shared-auth/src/auth.rs`（#96 收口补埋）；后重编；删除 `artifacts/audit/guard-trace.jsonl` 与 `artifacts/audit/inline-trace.jsonl`。
+- 隔离实例：停 pid 18951（8199，#96 重启后；v1 为 10674）；隔离库 `DROP DATABASE topems_replay_verify` 可整体回退。
 - 取证账号：`DELETE FROM iam.users WHERE username LIKE 'c2_%'`；清理 `/tmp/topems-c2/`。
 - 本结论文档与台账条目入库；`artifacts/audit/` 下取证产物保持 gitignore，不入库。
+
+## 9. v2 增量：内联鉴权收口补埋复扫（#96，2026-11-27）
+
+> 本节为 v1 首版之后的第二轮取证，针对盲区①（handler 内联 `claims.has_permission` 未埋）补埋收口后复扫；口径仍为隔离库单次只读冒烟，**不据此对其余 553 码判死码**。
+
+### 9.1 补埋口径
+
+- **静态甄别**：`Claims::has_permission` 内联调用 **72 处 / 25 文件**（file、notification、ai、finance、tenant_scope、wms、qms、gis、erp、rd、pm、mobile、ehs 等）；`has_role` 6 处；`has_any/all_permission`、`has_module_permission` 内联 0 处。`shared/util.rs` 位掩码版 `has_permission(mask, PermissionBit)` 10 处属旧位体系，与字符串权限码无关，未纳入。
+- **接入点**：共享 crate `lib/shared-auth/src/auth.rs` 的 `Claims::has_permission` 方法本体——一处覆盖 72 内联点与经此转发的路由守卫；独立落 `artifacts/audit/inline-trace.jsonl`，字段 `ts/user/super/roles/permission/allowed/source`；不改鉴权语义（先算 `allowed` 再记录后返回）。原文件备份 `/tmp/auth.rs.bak`，与 `permission.rs` 同属临时改动、禁止入库。
+- **编译/重启**：`topems-shared-auth` check 通过；`topems-server` release 12m34s 通过（仅 `__eh_frame` 体积警告）。隔离实例重启为 pid **18951**（8199），health 200，31 模块、降级 0、池 18/62；prod 实例 44765 未动，隔离库 app 24 连接、prod 副本 c2_ 用户 0，无串库。
+
+### 9.2 复扫观测
+
+- 复用 5 个有效令牌（403 穿守卫层，未重登），1174 个无参 GET 五角色并发；`inline-trace` **1469** 行、`guard-trace` **351** 行。
+- 后端观测并集 **45** 码（guard 5 码全部经收口转发落入 inline 集，无新增守卫层码）。
+
+### 9.3 v2 交叉矩阵（581 双零候选）
+
+| 矩阵格（581 候选） | v1 | **v2** | 判定 |
+|---|---:|---:|---|
+| 活码 —— 后端运行期观测到 | 0 | **1** | `srm:admin`（见 9.4） |
+| 活码 —— 前端静态引用 | 0 | 0 | 581 本就 FE 静态零引用 |
+| 待复核 —— 令牌携带 ∧ 两端未观测 | 554 | **553** | 扩面复核候选，非死码定论 |
+| 未进令牌集 —— 仅绑 admin 兜底 | 27 | **27** | 口径盲区，不变 |
+
+### 9.4 改判活码：`srm:admin`
+
+- 观测：`c2_tenant_admin` 令牌携带并命中 **20** 次（`allowed=true`）；绑 `admin,tenant_admin`。
+- 代码路径：srm 模块写门 `require_module_write("srm")`（`lib/shared-auth/src/middleware/permission.rs:168`）经 `format!("{module}:admin")` **拼接**生成 `srm:admin`；挂载点 `svc/srm/src/main.rs:219`、`svc/server/src/modules/srm_real_module.rs:108`。
+- 静态漏扫原因：码由模块名 + `:admin` 拼接，源码字面量中无 `srm:admin` 串，故 L4 静态 `be_refs` 为空、误入 581 双零；运行期收口真实消费，属**活码**，印证盲区②（枚举/常量/拼接间接引用静态收不全）。
+
+### 9.5 553 待复核分层（v2，供人工复核）
+
+- **段数**：三段 CRUD 536；两段聚合伞码 17（v1 为 18，`srm:admin` 移出）。
+- **动作**：delete 182 / create 176 / update 175 / write 8 / admin 6 / **read 5** / approve 1（写码 548、读码 5）。
+- **前缀 Top**：mes 50、erp 39、srm 39、scm 38、pdm 36、rd 35、hrm 34、wms 33、ehs 32、finance 32、lims 28、qms 24。
+- **5 个 read 码**（不变，优先扩面）：`erp:general_ledger:read`、`integration:read`、`master-data:read`、`notification:template:read`、`report:read`。
+
+### 9.6 v2 仍存盲区
+
+1. **收口层无路由上下文**：`Claims::has_permission` 方法本体拿不到 Request，inline-trace 未记 route/handler 来源；`srm:admin` 20 次的具体触发端点，待补 route 字段后定位。
+2. **写码守卫未触达**：写门 `require_module_write` 对 GET/HEAD/OPTIONS 直接放行；本轮只读 GET，548 个写码决策仍未观测。
+3. **前端运行期动态资源未采集**：未起隔离前端，菜单/按钮/SDK/i18n 动态资源缺运行期对账。
+4. **空库单次冒烟**：部分列表/详情/投影端点 404/500，未走到对应守卫。
+5. **admin/超管口径不可用**：27 个 admin 兜底码未进非超管令牌集；超管 `["*"]` 短路无鉴别力。
+
+### 9.7 v2 产物
+
+- `artifacts/audit/forensics-c2/c2-matrix.json/.csv`：v2 逐条四格标记，顶层含 `observed_sources`（guard/inline 拆分与行数）、`be_observed_in_orphan`。
+- v1 矩阵备份：`/tmp/topems-c2/c2-matrix.v1.bak.json/.csv`。
+- 原始日志：`guard-trace.jsonl`（守卫层）、`inline-trace.jsonl`（收口层）。
