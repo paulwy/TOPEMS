@@ -6,6 +6,8 @@ import { PageHeader, type PageHeaderProps } from '../layout';
 import { DataTable, type DataTableProps, type DataTableColumn } from '../data';
 import { EmptyState } from '../feedback';
 import { useOptionalPermission } from '@/hooks/useOptionalPermission';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { resolveDetailPathPattern } from '@/routes/detailPathMap';
 
 export interface ListPageTemplateProps<T extends object> extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -59,6 +61,24 @@ export function ListPageTemplate<T extends object>({
   // 保证存量页面零回归。
   const canWrite = !writePermission || checkPermission(writePermission);
   const visibleColumns = canWrite ? columns : columns.filter((c) => !c.writeOnly);
+  // 详情路由兜底：未显式提供 tableProps.onRowClick 时，若当前列表路径配有 `<路径>/:id`
+  // 详情路由，则行点击直接进详情页（与 templates/ListPageTemplate 的兜底规则一致）。
+  const location = useLocation();
+  const navigate = useNavigate();
+  const resolvedOnRowClick = React.useMemo<DataTableProps<T>['onRowClick']>(() => {
+    if (tableProps?.onRowClick) return tableProps.onRowClick;
+    const pattern = resolveDetailPathPattern(location.pathname);
+    if (!pattern) return undefined;
+    const basePath = pattern.replace(/\/:id$/, '');
+    return (row: T) => {
+      const id =
+        typeof rowKey === 'function'
+          ? rowKey(row)
+          : (row as Record<string, unknown>)[rowKey as string];
+      if (id === undefined || id === null || id === '') return;
+      navigate(`${basePath}/${encodeURIComponent(String(id))}`);
+    };
+  }, [tableProps?.onRowClick, location.pathname, navigate, rowKey]);
   return (
     <div
       className={cx(className, styles.il1)}
@@ -99,6 +119,7 @@ export function ListPageTemplate<T extends object>({
           emptyDescription={emptyDescription}
           emptyAction={emptyAction}
           {...tableProps}
+          onRowClick={resolvedOnRowClick}
         />
       )}
 
