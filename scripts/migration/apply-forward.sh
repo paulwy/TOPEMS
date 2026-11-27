@@ -686,6 +686,21 @@ for f in "${PENDING[@]}"; do
   v="${b%%_*}"
   desc="${b%.sql}"; desc="${desc#*_}"; desc="${desc//_/ }"
   echo "-- $b"
+  # 只允许投放「已纳入版本控制」的迁移：未提交的文件被应用后又从工作区删除，会留下
+  # 「有结构、无来源」的 orphan 迁移（2026-11-27 连续踩中两次：20261127090000 / 20261127130000），
+  # 新库 / drill / 另一个环境再也重建不出这段结构，且账本留行无法回退。
+  # 逃生门：演练库可显式 ALLOW_UNTRACKED_MIGRATION=1；生产/日常一律不带。
+  if [[ "${ALLOW_UNTRACKED_MIGRATION:-0}" != "1" ]] && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+    rel="${f#"$ROOT"/}"
+    if [[ "$f" == "$rel" ]]; then
+      rel="${MIG_DIR#"$ROOT"/}/$(basename "$f")"
+    fi
+    if ! git -C "$ROOT" ls-files --error-unmatch "$rel" >/dev/null 2>&1; then
+      echo "== 拒绝：$b 未被 git 追踪（未提交迁移一经应用又删除，即产生不可重放的 orphan 结构）" >&2
+      echo "   先 git add + commit 该文件再投放；演练库可显式 ALLOW_UNTRACKED_MIGRATION=1。" >&2
+      exit 1
+    fi
+  fi
   # 预演必须排在此前所有 pending 已应用之后：预演里的前置断言看到的是真实基线，
   # 而不是 anchor 旧状态（2026-11-20 20261119200000 依赖 flow._deprecated_* 事故）。
   if contains "$v" ${PENDING_DG[@]+"${PENDING_DG[@]}"}; then

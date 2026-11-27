@@ -3296,3 +3296,23 @@ pending_forward_patches:
     effect: "DROP CONSTRAINT IF EXISTS 删除 mes.production_lines/shifts/work_calendars/workshops 的 4 条全局 `*_code_key UNIQUE(code)`；末尾断言全局约束已消失且 (tenant_id,code) 唯一索引在位，缺一 RAISE EXCEPTION"
     destructive_scan: "仅 ALTER TABLE ... DROP CONSTRAINT IF EXISTS（pg_constraint 存在性守卫 + to_regclass 表守卫）；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN"
     note: "决策 A：canonical 20261121160000 的全局 code 唯一与 20261127110000 的租户内唯一并存时全局更严，跨租户不能复用 code；生产四表 0 行，本轮已投放（账本 success=t）。回滚 database/rollback/20261127120000_*.rollback.sql（重建全局唯一，若已有跨租户同 code 会失败，属预期）"
+
+  # ===== 2026-11-27：mes 车间外键收敛 + public.workshops 空壳清除 =====
+  - version: "20261127130000"
+    file: "(无文件：应用后在工作区被撤回，origin 与 checksums/manifest 均无登记)"
+    status: superseded
+    effect: "曾于 2026-11-27 在本机 dev 把 mes.production_lines 的车间外键改为 (workshop_id, tenant_id) 复合外键；文件未提交即撤回，_sqlx_migrations 残留 success 行（description=mes production line workshop tenant fk）"
+    destructive_scan: "无文件可扫描"
+    note: "第二条 orphan；效果由 20261127150000 以幂等 DDL 承接，schema 恢复可重放"
+  - version: "20261127140000"
+    file: "database/migrations/20261127140000_rebind_mes_workshop_fks_and_drop_public_workshops.sql"
+    status: applied
+    effect: "mes.work_stations / mes.production_orders 的车间外键若仍指向 public.workshops → DROP 后重建为 REFERENCES mes.workshops(id) ON DELETE SET NULL；随后 DROP TABLE IF EXISTS public.workshops；末尾断言空壳消失且两条外键均指向 mes"
+    destructive_scan: "DROP TABLE IF EXISTS public.workshops（0 行空壳，destructive 标记 rows-at-review=0 + backup + ticket MES-LEGACY-20261127）；ALTER TABLE ... DROP CONSTRAINT IF EXISTS（有 pg_constraint 守卫）"
+    note: "排查结论：dev 该两条外键未限定 schema，经 search_path 落到空的 public.workshops（无 tenant_id/RLS），真实车间 ID 一写入即 23503；生产无此表→纯空跑。本机/生产均已投放，账本 success=t。回滚 database/rollback/20261127140000_*.rollback.sql"
+  - version: "20261127150000"
+    file: "database/migrations/20261127150000_mes_production_lines_workshop_tenant_fk.sql"
+    status: applied
+    effect: "兜底 workshops_id_tenant_key → ADD CONSTRAINT production_lines_workshop_tenant_fkey (workshop_id, tenant_id) REFERENCES mes.workshops(id, tenant_id)；DROP 单列 production_lines_workshop_id_fkey；末尾双断言"
+    destructive_scan: "CREATE UNIQUE INDEX IF NOT EXISTS + ADD CONSTRAINT + DROP CONSTRAINT IF EXISTS（pg_constraint 守卫）；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "承接 orphan 20261127130000。本机（已有复合外键→空跑）、生产（0 行，原本只有单列外键）均已投放，账本 success=t"
