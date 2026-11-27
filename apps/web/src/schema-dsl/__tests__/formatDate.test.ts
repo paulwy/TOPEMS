@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  formatDateCell,
-  formatDateTimeCell,
-  parseDateValue,
-} from '@/schema-dsl/formatDate';
+import { formatDateCell, formatDateTimeCell, parseDateValue } from '@/schema-dsl/formatDate';
 import { toColumnDef } from '@/schema-dsl/types';
 
 /**
@@ -12,8 +8,7 @@ import { toColumnDef } from '@/schema-dsl/types';
  * 断言尽量用「动态期望」构造，避免测试依赖运行机器的 TZ 设置。
  */
 const pad = (n: number) => String(n).padStart(2, '0');
-const local = (d: Date) =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const local = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 describe('parseDateValue', () => {
   it('空值返回 null', () => {

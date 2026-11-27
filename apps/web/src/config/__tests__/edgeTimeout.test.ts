@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  EDGE_TOLERANT_TIMEOUT_MS,
-  EDGE_TOLERANT_ENDPOINTS,
-} from '@/config/edgeTimeout';
+import { EDGE_TOLERANT_TIMEOUT_MS, EDGE_TOLERANT_ENDPOINTS } from '@/config/edgeTimeout';
 
 /**
  * 边缘链路容错超时护栏（2026-11-27）
@@ -29,15 +26,14 @@ describe('EDGE_TOLERANT_TIMEOUT_MS', () => {
 describe('调用点确实带上了宽松超时', () => {
   it('DashboardPage 的 /infrastructure 调用传 timeout', () => {
     const src = readFileSync(join(root, 'components/shared/DashboardPage.tsx'), 'utf-8');
-    expect(src).toMatch(
-      /\/infrastructure'?[^\n]*timeout: EDGE_TOLERANT_TIMEOUT_MS[\s\S]{0,80}\}/,
-    );
+    expect(src).toMatch(/\/infrastructure'?[^\n]*timeout: EDGE_TOLERANT_TIMEOUT_MS[\s\S]{0,80}\}/);
   });
 
   it('BFF 的两处 /graphql 调用都传 timeout', () => {
     const src = readFileSync(join(root, 'api/bff/index.ts'), 'utf-8');
     const posts = src.match(/'\/graphql', body/g) ?? [];
-    const withTimeout = src.match(/'\/graphql', body, \{\s*timeout: EDGE_TOLERANT_TIMEOUT_MS/g) ?? [];
+    const withTimeout =
+      src.match(/'\/graphql', body, \{\s*timeout: EDGE_TOLERANT_TIMEOUT_MS/g) ?? [];
     expect(posts.length).toBe(2);
     expect(withTimeout.length).toBe(posts.length);
   });

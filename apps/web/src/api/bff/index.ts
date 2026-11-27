@@ -190,8 +190,8 @@ async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
   }
 
   const json = await portal.post<never, GraphQLResponse<T>>('/graphql', body, {
-        timeout: EDGE_TOLERANT_TIMEOUT_MS,
-      });
+    timeout: EDGE_TOLERANT_TIMEOUT_MS,
+  });
 
   if (json.errors?.length) {
     throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);
