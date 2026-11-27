@@ -199,7 +199,7 @@ fn resolve_claims(req: &mut Request<Body>, jwt_secret: &str) -> Option<Claims> {
 ///
 /// 注意：DB 行级 RLS 在池化下仅为纵深防御（业务查询可能借另一连接），主防线仍是
 /// 业务 SQL 显式 `WHERE tenant_id = $1`（以及写路径的事务级 `set_config(..., true)`）。
-#[allow(dead_code)]
+#[cfg(test)]
 fn rls_tenant_value(tenant_id: &str, is_superuser: bool) -> String {
     if is_superuser {
         String::new()

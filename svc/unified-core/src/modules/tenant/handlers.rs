@@ -428,13 +428,12 @@ async fn seed_tenant_defaults(
     // 5. Assign the admin to the global superadmin role (carries all perms).
     sqlx::query(
         r#"
-        INSERT INTO public.core_user_roles (user_id, role_id, tenant_id)
-        SELECT $1, r.id, $2 FROM public.core_roles r WHERE r.name = 'superadmin'
+        INSERT INTO public.core_user_roles (user_id, role_id)
+        SELECT $1, r.id FROM public.core_roles r WHERE r.name = 'superadmin'
         ON CONFLICT DO NOTHING
         "#,
     )
     .bind(admin_user_id)
-    .bind(tenant_id)
     .execute(&mut *tx)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to assign superadmin role: {}", e)))?;
