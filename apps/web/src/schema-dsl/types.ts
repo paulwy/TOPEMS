@@ -593,7 +593,14 @@ export function getFormFields<T = Record<string, unknown>>(
 ): FormFieldConfig[] {
   const showInDetail = mode === 'view';
   return schema.fields
-    .filter((f) => (showInDetail ? f.showInDetail !== false : true))
+    .filter((f) => {
+      if (showInDetail) return f.showInDetail !== false;
+      // create/edit：尊重 hideInForm / showInForm（此前这两个开关只声明未生效，
+      // 表单会把 schema 明确隐藏的字段也渲染出来，用户被迫填后端自动补的列）
+      if (f.hideInForm === true) return false;
+      if (f.showInForm === false) return false;
+      return true;
+    })
     .map((f) => toFormField(f, mode));
 }
 

@@ -495,6 +495,16 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
         self.l1.clear();
     }
 
+    /// 按 key 模式失效 L1 + L2（写操作后调用，如实体维度 "svc:entity:*"）。
+    ///
+    /// 与 `clear_all` 的区别只清本实体命名空间，不会误删同一 Redis 上其他服务的缓存。
+    pub async fn invalidate_pattern(&self, pattern: &str) {
+        self.l1.clear();
+        if let Some(l2) = &self.l2 {
+            l2.delete_pattern(pattern).await;
+        }
+    }
+
     /// 清空 L1 + 本实例 L2（写操作后调用，确保本实例不命中旧缓存；跨实例由缓存失效事件同步）
     pub async fn clear_all(&self) {
         self.l1.clear();

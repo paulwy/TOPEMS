@@ -43,10 +43,10 @@ WHERE NOT EXISTS (SELECT 1 FROM mes.production_orders o WHERE o.order_number = v
 INSERT INTO mes.work_stations (station_code, station_name, status, tenant_id)
 SELECT v.c1, v.c2, v.c3, '00000000-0000-0000-0000-000000000001'::uuid
 FROM (VALUES
- ('WS-01','CNC 加工工位','running'),
- ('WS-02','激光切割工位','running'),
- ('WS-03','机器人焊接工位','idle'),
- ('WS-04','总装工位','running')
+ ('WS-01','CNC 加工工位','active'),
+ ('WS-02','激光切割工位','active'),
+ ('WS-03','机器人焊接工位','available'),
+ ('WS-04','总装工位','active')
 ) AS v(c1,c2,c3)
 WHERE NOT EXISTS (SELECT 1 FROM mes.work_stations s WHERE s.station_code = v.c1);
 

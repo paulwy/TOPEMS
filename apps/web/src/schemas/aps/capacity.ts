@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { workStationApi } from '@/api/mes/workStation';
 
 export const capacitySchema: EntitySchema = {
   entity: 'capacity',
@@ -19,11 +20,32 @@ export const capacitySchema: EntitySchema = {
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'aps:capacity',
 
+  dynamicOptions: [
+    {
+      field: 'work_center_id',
+      queryKey: ['mes', 'workstations', 'forCapacity'],
+      loader: async () => {
+        const res = await workStationApi.list({ page: 1, page_size: 200 });
+        const rows = res?.data?.workstations ?? [];
+        return rows
+          .filter((w) => w.id)
+          .map((w) => ({
+            value: w.id,
+            label:
+              (w.name && w.name.trim()) ||
+              (w.code && w.code.trim()) ||
+              w.id,
+          }));
+      },
+    },
+  ],
+
   fields: [
     {
       name: 'work_center_id',
       label: i18n.t('aps.capacity_management_page.k8'),
-      type: 'text',
+      // 工作中心从 mes.workstations 下拉选择（此前是手填 UUID，填不出合法值）
+      type: 'select',
       required: true,
       showInList: false,
     },
@@ -33,6 +55,8 @@ export const capacitySchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 160,
+      // 名称由后端按 work_center_id 反查 mes.work_stations 补全，表单里不再让用户手填
+      hideInForm: true,
     },
     {
       name: 'capacity_date',

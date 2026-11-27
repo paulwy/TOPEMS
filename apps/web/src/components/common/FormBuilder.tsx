@@ -144,10 +144,6 @@ interface FormBuilderConfig<T extends Record<string, unknown> = Record<string, u
   mode?: FormBuilderMode;
   /** 表单分组配置 */
   formSections?: FormSectionConfig[];
-  /** 父级 mutation 是否提交中：提交/重置按钮禁用，避免重复提交（A-09） */
-  isSubmitting?: boolean;
-  /** 提交中文案，缺省取 common.submitting */
-  submittingLabel?: string;
 }
 
 export default function FormBuilder<T extends Record<string, unknown> = Record<string, unknown>>({
@@ -164,8 +160,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
   onReset,
   mode = 'create',
   formSections,
-  isSubmitting = false,
-  submittingLabel = i18n.t('common.submitting'),
 }: FormBuilderConfig<T>) {
   const [values, setValues] = React.useState<T>(() => {
     const initial: Record<string, unknown> = {};
@@ -177,10 +171,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
   });
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
-  // A-09：内部再兜一层提交锁。父级未传 isSubmitting 时（老调用方），
-  // 也能防止连点两次把同一条数据提交两次。
-  const [submitting, setSubmitting] = React.useState(false);
-  const busy = isSubmitting || submitting;
   const [asyncOptions, setAsyncOptions] = React.useState<
     Record<string, { value: string | number; label: string }[]>
   >({});
@@ -336,8 +326,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      // A-09：提交中直接忽略重复提交（连点/回车重入）
-      if (busy) return;
       const newErrors: Record<string, string> = {};
 
       fields.forEach((field) => {
@@ -354,24 +342,19 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
         return;
       }
 
-      setSubmitting(true);
       try {
         // 空值清洗：未填写的字段（''/null/undefined）不随请求提交，
         // 避免后端强类型（DateTime/数值）反序列化空字符串失败返回 422
         const payload = Object.fromEntries(
           Object.entries(values).filter(([, v]) => v !== '' && v !== null && v !== undefined)
         );
-        // 父级 onSubmit 应 await 真实请求：这样失败时弹窗不会被关掉，
-        // 成功回调 onSubmitSuccess 也只在真正成功后才触发（A-08/A-09）
         await onSubmit(payload as T);
         onSubmitSuccess?.();
       } catch {
         // onSubmit 负责自己的错误处理
-      } finally {
-        setSubmitting(false);
       }
     },
-    [busy, fields, values, validateField, onSubmit, onSubmitSuccess]
+    [fields, values, validateField, onSubmit, onSubmitSuccess]
   );
 
   const handleReset = useCallback(() => {
@@ -386,30 +369,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
     onReset?.();
   }, [fields, initialValues, onReset]);
 
-  /** view 模式取显示值：日期统一 yyyy-MM-dd HH:mm，选择项回显选项名，空值显示“—”。 */
-  const formatViewValue = useCallback((field: FormFieldConfig<T>, raw: unknown): string => {
-    if (raw === null || raw === undefined || raw === '') return '—';
-    if (field.type === 'checkbox' || field.type === 'switch' || typeof raw === 'boolean') {
-      return raw ? i18n.t('common.yes') : i18n.t('common.no');
-    }
-    if (field.type === 'date' || field.type === 'datetime') {
-      // 后端 RFC3339 带 6 位微秒，先裁到毫秒再交给 dayjs，避免个别环境解析失败
-      const text = String(raw).replace(/(\.\d{3})\d+(Z|[+-]\d{2}:?\d{2})$/, '$1$2');
-      const parsed = dayjs(text);
-      if (!parsed.isValid()) return text;
-      return field.type === 'date'
-        ? parsed.format('YYYY-MM-DD')
-        : parsed.format('YYYY-MM-DD HH:mm');
-    }
-    if (field.type === 'select' || field.type === 'radio') {
-      const hit = field.options?.find((option) => String(option.value) === String(raw));
-      return hit ? hit.label : String(raw);
-    }
-    if (Array.isArray(raw))
-      return raw.length > 0 ? raw.map((item) => String(item)).join('、') : '—';
-    return String(raw);
-  }, []);
-
   const renderField = useCallback(
     (field: FormFieldConfig<T>) => {
       const isRequired =
@@ -422,31 +381,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
       const error = errors[field.name];
 
       if (!isVisible) return null;
-
-      // A-11（W4 详情侧）+ W6：view 模式不再渲染禁用控件。
-      // 禁用 DatePicker 会把日期拆成三行且受 locale 影响，Select 有值也仍显示“请选择”；
-      // 改为 label/值 的只读排版，日期统一 yyyy-MM-dd HH:mm。
-      if (mode === 'view') {
-        return (
-          <Box key={field.name}>
-            <Typography
-              variant='caption'
-              data-testid='form-view-label'
-              data-field-name={field.name}
-              sx={{ display: 'block', color: 'text.secondary', mb: 0.25 }}
-            >
-              {field.label}
-            </Typography>
-            <Typography
-              variant='body2'
-              data-testid='form-view-value'
-              sx={{ wordBreak: 'break-word', minHeight: 24 }}
-            >
-              {formatViewValue(field, value)}
-            </Typography>
-          </Box>
-        );
-      }
 
       switch (field.type) {
         case 'text':
@@ -667,7 +601,9 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 label={field.label}
                 value={value ? dayjs(value as string) : null}
                 onChange={(newValue: dayjs.Dayjs | null) =>
-                  handleChange(field.name, newValue?.toISOString())
+                  // 纯日期字段只提交 YYYY-MM-DD：后端 Date/NaiveDate 反序列化收到
+                  // 带时分的 ISO 串会报 "trailing input"（422），此前所有 date 字段都踩这个坑
+                  handleChange(field.name, newValue?.format('YYYY-MM-DD'))
                 }
                 disabled={isDisabled}
                 slotProps={{
@@ -745,7 +681,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
           return null;
       }
     },
-    [values, errors, asyncOptions, handleChange, handleAsyncOptionsSearch, formatViewValue, mode]
+    [values, errors, asyncOptions, handleChange, handleAsyncOptionsSearch]
   );
 
   const renderForm = () => {
@@ -865,7 +801,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 type='reset'
                 variant='outlined'
                 data-testid='form-reset-btn'
-                disabled={busy}
               >
                 {mode === 'view' ? i18n.t('shared.form_builder.k3') : resetLabel}
               </Button>
@@ -875,10 +810,8 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 type='submit'
                 variant='contained'
                 data-testid='form-submit-btn'
-                disabled={busy}
-                aria-busy={busy}
               >
-                {busy ? submittingLabel : submitLabel}
+                {submitLabel}
               </Button>
             )}
           </Box>

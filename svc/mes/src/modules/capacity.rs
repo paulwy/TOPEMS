@@ -350,6 +350,29 @@ pub async fn create_capacity(
     let used_hours = req.used_hours.unwrap_or(0.0);
     let utilization_rate = calc_utilization(req.available_hours, Some(used_hours));
 
+    // 工作中心名称缺省时按 work_center_id 从 mes.work_stations 反查：
+    // 前端表单的工作中心是下拉选择（只能选真实工位），名称由后端补全，避免让用户手填。
+    let work_center_name = match req.work_center_name.as_deref().map(str::trim) {
+        Some(v) if !v.is_empty() => Some(v.to_string()),
+        _ => {
+            let found: Result<Option<String>, sqlx::Error> = sqlx::query_scalar(
+                "SELECT station_name FROM mes.work_stations WHERE id = $1 AND (organization_id IS NULL OR organization_id = $2)",
+            )
+            .bind(req.work_center_id)
+            .bind(tenant_id)
+            .fetch_optional(&mut scope)
+            .await;
+            match found {
+                Ok(Some(name)) if !name.trim().is_empty() => Some(name),
+                Ok(_) => return ApiResponse::bad_request("工作中心不存在，请从列表中选择"),
+                Err(e) => {
+                    tracing::error!("查询工作中心失败: {}", e);
+                    return ApiResponse::server_error("查询工作中心失败");
+                }
+            }
+        }
+    };
+
     let result = sqlx::query_as::<_, Capacity>(
         r#"
         INSERT INTO mes.capacities
@@ -363,7 +386,7 @@ pub async fn create_capacity(
     )
     .bind(id)
     .bind(req.work_center_id)
-    .bind(&req.work_center_name)
+    .bind(&work_center_name)
     .bind(req.capacity_date)
     .bind(req.available_hours)
     .bind(Some(used_hours))
@@ -377,8 +400,8 @@ pub async fn create_capacity(
 
     match result {
         Ok(cap) => {
-            // 失效列表缓存（创建后列表数据可能变化）
-            state.dict_cache.clear_l1();
+            // 失效列表缓存：只清 L1 会让 Redis 里的旧列表继续命中，用户建完看不到新行
+            state.dict_cache.invalidate_pattern("mes:capacity:*").await;
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
@@ -484,7 +507,7 @@ pub async fn update_capacity(
     match result {
         Ok(cap) => {
             // 失效列表缓存（更新后列表数据可能变化）
-            state.dict_cache.clear_l1();
+            state.dict_cache.invalidate_pattern("mes:capacity:*").await;
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
@@ -543,7 +566,7 @@ pub async fn delete_capacity(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             // 失效列表缓存（删除后列表数据可能变化）
-            state.dict_cache.clear_l1();
+            state.dict_cache.invalidate_pattern("mes:capacity:*").await;
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
