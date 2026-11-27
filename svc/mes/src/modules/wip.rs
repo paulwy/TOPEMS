@@ -225,7 +225,10 @@ pub struct ListWipResponse {
 pub struct CreateWipRequest {
     pub order_id: Option<Uuid>,
     pub product_id: Option<Uuid>,
+    /// 缺省时从关联生产订单反查（前端表单不要求填产品名）
+    #[serde(default)]
     pub product_name: String,
+    #[serde(default)]
     pub product_code: String,
     pub quantity: f64,
     pub process_id: Option<Uuid>,
@@ -517,7 +520,8 @@ pub async fn create_wip(
         }
     };
 
-    let order_no = if let Some(order_id) = req.order_id {
+    // 订单号仍走既有宏查询（离线缓存已存在，避免牵动 .sqlx 重刷）
+    let order_no_flat = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
             r#"SELECT order_number AS order_no FROM mes.production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
             order_id,
@@ -531,9 +535,41 @@ pub async fn create_wip(
     } else {
         None
     };
-
-    let order_no_flat = order_no;
     let order_no_arg = order_no_flat;
+
+    // 产品信息兜底：非宏查询，无需更新 sqlx 离线缓存
+    let order_product = if let Some(order_id) = req.order_id {
+        sqlx::query_as::<_, (String, Option<String>)>(
+            r#"SELECT product_name, product_code FROM mes.production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
+        )
+        .bind(order_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+        .ok()
+        .flatten()
+    } else {
+        None
+    };
+    let product_name = if req.product_name.trim().is_empty() {
+        order_product
+            .as_ref()
+            .map(|o| o.0.clone())
+            .unwrap_or_default()
+    } else {
+        req.product_name.clone()
+    };
+    let product_code = if req.product_code.trim().is_empty() {
+        order_product
+            .as_ref()
+            .and_then(|o| o.1.clone())
+            .unwrap_or_default()
+    } else {
+        req.product_code.clone()
+    };
+    if product_name.trim().is_empty() {
+        return ApiResponse::bad_request("产品名称不能为空：请选择生产订单，或填写产品名称");
+    }
 
     // wips 是业务表：服务身份缺租户头同样 400，写路径必须有确定租户。
     let tenant_id: Uuid = match require_tenant(&claims, &headers) {
@@ -560,8 +596,8 @@ pub async fn create_wip(
     .bind(req.order_id)
     .bind(order_no_arg.unwrap_or_default())
     .bind(req.product_id)
-    .bind(req.product_name)
-    .bind(req.product_code)
+    .bind(product_name)
+    .bind(product_code)
     .bind(BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default())
     .bind(req.process_id)
     .bind(req.work_station_id)

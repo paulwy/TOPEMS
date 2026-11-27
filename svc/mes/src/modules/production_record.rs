@@ -53,7 +53,10 @@ pub struct CreateRecordRequest {
     pub equipment_id: Option<Uuid>,
     pub operator_id: Option<Uuid>,
     pub start_time: DateTime<Utc>,
+    /// 前端表单沿用列表列名 quantity_completed/quantity_rejected
+    #[serde(default, alias = "quantity_completed")]
     pub quantity_produced: Option<f64>,
+    #[serde(default, alias = "quantity_rejected")]
     pub quantity_defective: Option<f64>,
     pub notes: Option<String>,
 }
@@ -65,7 +68,9 @@ pub struct UpdateRecordRequest {
     pub equipment_id: Option<Uuid>,
     pub operator_id: Option<Uuid>,
     pub end_time: Option<DateTime<Utc>>,
+    #[serde(default, alias = "quantity_completed")]
     pub quantity_produced: Option<f64>,
+    #[serde(default, alias = "quantity_rejected")]
     pub quantity_defective: Option<f64>,
     pub notes: Option<String>,
 }
@@ -371,8 +376,9 @@ pub async fn create_record(
             order_id, process_id, work_station_id,
             operator_id, operator, start_time, end_time,
             completed_quantity, status, notes,
-            created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10, $10, $11)
+            created_at, updated_at, tenant_id,
+            organization_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10, $10, $11, $11)
         RETURNING
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,

@@ -13,6 +13,8 @@ import { srmApi } from '@/api/srm';
 import { supplierApi } from '@/api/scm/supplier';
 import { purchaseOrderApi } from '@/api/scm/purchaseOrder';
 import { employeeApi } from '@/api/hrm';
+import { productionOrderApi } from '@/api/mes/productionOrder';
+import apiClient from '@/api/client';
 
 export interface SelectOption {
   value: string;
@@ -89,5 +91,24 @@ export async function loadHrmEmployeeOptions(): Promise<SelectOption[]> {
   return toOptions(pickRows((res as { data?: unknown })?.data, ['items', 'employees']), [
     'name',
     'employee_no',
+  ]);
+}
+
+/** MES 生产订单（mes.production_orders）：工单类外键必需 */
+export async function loadMesOrderOptions(): Promise<SelectOption[]> {
+  const res = await productionOrderApi.list({ page: 1, page_size: 200 });
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['orders', 'items']), [
+    'order_no',
+    'order_number',
+    'product_name',
+  ]);
+}
+
+/** MES 工位（mes.work_stations）：工号 + 名称 */
+export async function loadMesWorkstationOptions(): Promise<SelectOption[]> {
+  const res = await apiClient.mes.get('/workstations?page=1&page_size=200');
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['workstations', 'items']), [
+    'name',
+    'station_no',
   ]);
 }

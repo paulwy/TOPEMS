@@ -3,6 +3,7 @@ import { Chip, Stack, Box } from '@mui/material';
 import { User, Package } from 'lucide-react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadMesOrderOptions, loadMesWorkstationOptions } from '@/schemas/dynamicLoaders';
 
 export const productionRecordSchema: EntitySchema = {
   entity: 'mes_production_record',
@@ -16,12 +17,18 @@ export const productionRecordSchema: EntitySchema = {
 
   // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
   permissionResource: 'mes:production_record',
+  // 报工：订单必填、工位可选，两者此前都是手填 UUID
+  dynamicOptions: [
+    { field: 'order_id', queryKey: ['mes', 'orders', 'forRecord'], loader: loadMesOrderOptions },
+    { field: 'work_station_id', queryKey: ['mes', 'workstations', 'forRecord'], loader: loadMesWorkstationOptions },
+  ],
+
 
   fields: [
     {
       name: 'order_id',
       label: i18n.t('mes.production_record.id_2'),
-      type: 'text',
+      type: 'select',
       required: true,
       readonlyOnEdit: true,
       sortable: true,
@@ -38,7 +45,7 @@ export const productionRecordSchema: EntitySchema = {
     {
       name: 'work_station_id',
       label: i18n.t('mes.production_record.k4'),
-      type: 'text',
+      type: 'select',
       listWidth: 120,
     },
     {
@@ -81,6 +88,7 @@ export const productionRecordSchema: EntitySchema = {
       name: 'start_time',
       label: i18n.t('mes.production_record.k8'),
       type: 'datetime',
+      valueFormat: 'iso-datetime',
       required: true,
       readonlyOnEdit: true,
       listWidth: 160,
@@ -91,6 +99,7 @@ export const productionRecordSchema: EntitySchema = {
       name: 'end_time',
       label: i18n.t('mes.production_record.k9'),
       type: 'datetime',
+      valueFormat: 'iso-datetime',
       listWidth: 160,
       showInList: false,
     },

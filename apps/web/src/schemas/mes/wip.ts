@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadMesOrderOptions } from '@/schemas/dynamicLoaders';
 
 export const wipSchema: EntitySchema = {
   entity: 'mes_wip',
@@ -13,12 +14,17 @@ export const wipSchema: EntitySchema = {
 
   // 批 16：写权限资源前缀（DB 实查存在三动作码）
   permissionResource: 'mes:wip',
+  // 生产订单是必填外键，此前只能手填 UUID
+  dynamicOptions: [
+    { field: 'order_id', queryKey: ['mes', 'orders', 'forWip'], loader: loadMesOrderOptions },
+  ],
+
 
   fields: [
     {
       name: 'order_id',
       label: i18n.t('mes.wip.id_2'),
-      type: 'text',
+      type: 'select',
       required: true,
       readonlyOnEdit: true,
       sortable: true,

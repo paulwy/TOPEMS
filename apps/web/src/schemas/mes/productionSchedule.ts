@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadMesOrderOptions } from '@/schemas/dynamicLoaders';
 
 export const productionScheduleSchema: EntitySchema = {
   entity: 'mes_production_schedule',
@@ -13,12 +14,17 @@ export const productionScheduleSchema: EntitySchema = {
 
   // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
   permissionResource: 'mes:production_schedule',
+  // 排程必须挂到真实生产订单上
+  dynamicOptions: [
+    { field: 'order_id', queryKey: ['mes', 'orders', 'forSchedule'], loader: loadMesOrderOptions },
+  ],
+
 
   fields: [
     {
       name: 'order_id',
       label: i18n.t('mes.production_schedule.id_2'),
-      type: 'text',
+      type: 'select',
       required: true,
       listWidth: 120,
     },
@@ -75,6 +81,7 @@ export const productionScheduleSchema: EntitySchema = {
       name: 'planned_start_time',
       label: i18n.t('mes.production_schedule.k9'),
       type: 'datetime',
+      valueFormat: 'iso-datetime',
       required: true,
       sortable: true,
       listWidth: 180,
@@ -83,6 +90,7 @@ export const productionScheduleSchema: EntitySchema = {
       name: 'planned_end_time',
       label: i18n.t('mes.production_schedule.k10'),
       type: 'datetime',
+      valueFormat: 'iso-datetime',
       required: true,
       sortable: true,
       listWidth: 180,
@@ -91,6 +99,7 @@ export const productionScheduleSchema: EntitySchema = {
       name: 'actual_start_time',
       label: i18n.t('mes.production_schedule.k11'),
       type: 'datetime',
+      valueFormat: 'iso-datetime',
       readonlyOnEdit: true,
       showInForm: false,
       listWidth: 180,
@@ -99,6 +108,7 @@ export const productionScheduleSchema: EntitySchema = {
       name: 'actual_end_time',
       label: i18n.t('mes.production_schedule.k12'),
       type: 'datetime',
+      valueFormat: 'iso-datetime',
       readonlyOnEdit: true,
       showInForm: false,
       listWidth: 180,
@@ -107,14 +117,15 @@ export const productionScheduleSchema: EntitySchema = {
       name: 'priority',
       label: i18n.t('mes.production_schedule.k13'),
       type: 'select',
-      defaultValue: 'normal',
+      // 后端 priority 是 i32 且 SQL 直接按整数绑定，此前传 'normal' 必 422
+      defaultValue: 5,
       options: {
         type: 'static',
         options: [
-          { value: 'low', label: i18n.t('mes.production_schedule.k14') },
-          { value: 'normal', label: i18n.t('mes.production_schedule.k15') },
-          { value: 'high', label: i18n.t('mes.production_schedule.k16') },
-          { value: 'urgent', label: i18n.t('mes.production_schedule.k17') },
+          { value: 1, label: i18n.t('mes.production_schedule.k14') },
+          { value: 5, label: i18n.t('mes.production_schedule.k15') },
+          { value: 8, label: i18n.t('mes.production_schedule.k16') },
+          { value: 10, label: i18n.t('mes.production_schedule.k17') },
         ],
       },
       showInList: false,
