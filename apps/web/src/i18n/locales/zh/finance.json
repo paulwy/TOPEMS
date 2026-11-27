@@ -1910,5 +1910,10 @@
   "finance.voucher_create_page.aux_department": "部门",
   "finance.voucher_create_page.aux_employee": "员工",
   "finance.voucher_create_page.balance_alert": "{{v1}}：借方合计 = {{v2}}，贷方合计 = {{v3}}，差额 = {{v4}}",
-  "finance.voucher_create_page.balance_ok": "{{v1}}：借方合计 = 贷方合计 = "
+  "finance.voucher_create_page.balance_ok": "{{v1}}：借方合计 = 贷方合计 = ",
+  "finance.finance_expense_approval_page.reimburse_action": "报销",
+  "finance.finance_expense_approval_page.reimburse_confirm": "确认将这条已审批的费用标记为已报销？该操作只改状态，不可撤回。",
+  "finance.finance_expense_approval_page.reimburse_success": "报销登记成功",
+  "finance.finance_expense_approval_page.reimburse_failed": "报销登记失败",
+  "finance.finance_expense_approval_page.reimburse_missing_id": "缺少记录 ID，无法报销"
 }

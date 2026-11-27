@@ -106,6 +106,16 @@ export const expenseApprovalApi = {
   reject: async (id: string, reason?: string): Promise<ApiResponse<ExpenseApproval>> => {
     return apiClient.finance.post(`/expense-approvals/${id}/reject`, { reason });
   },
+
+  /**
+   * B357：报销专用动作（approved → reimbursed）。
+   *
+   * 与通用 update 的区别：只改状态，不接受金额/员工等字段改写，
+   * 服务端对非 approved 记录返回 409。前端仅在 status=approved 时展示入口。
+   */
+  reimburse: async (id: string): Promise<ApiResponse<ExpenseApproval>> => {
+    return apiClient.finance.post(`/expense-approvals/${id}/reimburse`, {});
+  },
 };
 
 export default expenseApprovalApi;

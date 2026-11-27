@@ -3335,5 +3335,10 @@
   "finance.nav.finance-consolidation-reports_desc": "Consolidation Reports",
   "finance.nav.finance-budget-detail_desc": "Budget Details",
   "finance.voucher_create_page.balance_alert": "{{v1}}: Debit Total = {{v2}}, Credit Total = {{v3}}, Difference = {{v4}}",
-  "finance.voucher_create_page.balance_ok": "{{v1}}: Debit Total = Credit Total = "
+  "finance.voucher_create_page.balance_ok": "{{v1}}: Debit Total = Credit Total = ",
+  "finance.finance_expense_approval_page.reimburse_action": "Reimburse",
+  "finance.finance_expense_approval_page.reimburse_confirm": "Mark this approved expense as reimbursed? This only changes the status and cannot be undone.",
+  "finance.finance_expense_approval_page.reimburse_success": "Reimbursement recorded",
+  "finance.finance_expense_approval_page.reimburse_failed": "Reimbursement failed",
+  "finance.finance_expense_approval_page.reimburse_missing_id": "Missing record id, cannot reimburse"
 }
