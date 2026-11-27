@@ -52,7 +52,15 @@ runs:
           case "${RUNNER_OS:-Linux}" in
             Linux) sudo apt-get update -qq && sudo apt-get install -y -qq protobuf-compiler ;;
             macOS) brew install protobuf ;;
-            Windows) choco install protoc --no-progress -y ;;
+            Windows)
+              # Chocolatey 的 protoc 包在部分 runner 源不可解析；直接从官方 release 下载，
+              # 避免 Windows Desktop Build 在 setup-rust 阶段 127。
+              curl -fsSL -o "$RUNNER_TEMP/protoc.zip" \
+                https://github.com/protocolbuffers/protobuf/releases/download/v28.3/protoc-28.3-win64.zip
+              unzip -q "$RUNNER_TEMP/protoc.zip" -d "$RUNNER_TEMP/protoc"
+              echo "$RUNNER_TEMP/protoc/bin" >> "$GITHUB_PATH"
+              export PATH="$RUNNER_TEMP/protoc/bin:$PATH"
+              ;;
           esac
         fi
         protoc --version
