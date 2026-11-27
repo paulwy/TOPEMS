@@ -140,6 +140,8 @@ interface FormBuilderConfig<T extends Record<string, unknown> = Record<string, u
   onSubmitSuccess?: () => void;
   /** 重置/取消按钮回调，默认只清空表单 */
   onReset?: () => void;
+  /** 提交中：禁用提交按钮，防重复提交 */
+  isSubmitting?: boolean;
   /** 表单模式：create=新建（默认）, edit=编辑（字段级 disabled 生效）, view=只读（全部禁用，隐藏提交按钮） */
   mode?: FormBuilderMode;
   /** 表单分组配置 */
@@ -157,6 +159,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
   colCount = 2,
   onFieldChange,
   onSubmitSuccess,
+  isSubmitting = false,
   onReset,
   mode = 'create',
   formSections,
@@ -809,6 +812,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               <Button
                 type='submit'
                 variant='contained'
+                disabled={isSubmitting}
                 data-testid='form-submit-btn'
               >
                 {submitLabel}
