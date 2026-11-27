@@ -170,14 +170,28 @@ impl FinanceService {
         })
     }
 
+    /// 单张凭证落库：**尚未实现**。
+    ///
+    /// 此前这里直接 `Ok(())`——一张凭证都不写，却让每张都计进 success_count，
+    /// 于是 `/u8-import/import` 对 100 张凭证回 `status=completed / success_count=100`，
+    /// 而 finance 凭证表里 0 行，批次记录还显示「已完成」。现在显形失败：
+    /// 批次记录会落成 failed + error_message，响应里 success_count=0。
     async fn import_single_voucher(
         &self,
         tenant_id: Uuid,
         voucher_data: &Value,
     ) -> Result<(), TopemsError> {
-        let _ = tenant_id;
-        let _ = voucher_data;
-        Ok(())
+        tracing::warn!(
+            tenant_id = %tenant_id,
+            voucher_no = voucher_data
+                .get("voucher_no")
+                .and_then(|v| v.as_str())
+                .unwrap_or("<未提供>"),
+            "U8 凭证单张落库未实现，拒绝计入导入成功"
+        );
+        Err(TopemsError::ServiceUnavailable(
+            "U8 凭证导入落库尚未实现（X-Stub）：未写入任何凭证".to_string(),
+        ))
     }
 
     pub async fn get_import_status(

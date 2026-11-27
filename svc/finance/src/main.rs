@@ -271,6 +271,7 @@ async fn main() -> anyhow::Result<()> {
     path = "/api/finance/",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(()),
 )]
 async fn home() -> &'static str {
     "TOPEMS Finance Service API\n\n\

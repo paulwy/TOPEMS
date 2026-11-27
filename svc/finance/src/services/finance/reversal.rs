@@ -242,12 +242,11 @@ pub fn validate_reverse_voucher(
     }
 
     let mut reversal_by_code: BTreeMap<String, &ReverseJournalEntry> = BTreeMap::new();
-    for (i, entry) in reversal.entries.iter().enumerate() {
+    for entry in &reversal.entries {
         if reversal_by_code.contains_key(&entry.account_code) {
             continue;
         }
         reversal_by_code.insert(entry.account_code.clone(), entry);
-        let _ = i;
     }
 
     for code in original_by_code.keys() {

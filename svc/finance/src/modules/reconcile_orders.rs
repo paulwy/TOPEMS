@@ -531,6 +531,7 @@ pub async fn create_reconcile_order(
     path = "/api/finance/reconcile/auto",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:reconcile_orders:read"])),
 )]
 pub async fn auto_reconcile(
     State(state): State<AppState>,

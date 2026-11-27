@@ -676,6 +676,7 @@ pub async fn post_voucher(
     path = "/api/finance/vouchers/{voucher_id}",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:voucher:update"])),
 )]
 async fn update_voucher(
     State(state): State<AppState>,
@@ -1061,6 +1062,7 @@ pub async fn create_aux_account(
     path = "/api/finance/aux-accounts",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:account:read"])),
 )]
 async fn list_aux_accounts(
     State(state): State<AppState>,
@@ -2698,6 +2700,7 @@ pub async fn create_voucher_template_handler(
     path = "/api/finance/voucher-templates/{template_id}",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:voucher:update"])),
 )]
 async fn update_voucher_template_handler(
     State(state): State<AppState>,
@@ -2882,6 +2885,7 @@ pub struct CopyTemplateRequest {
     path = "/api/finance/voucher-templates/{template_id}/copy",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:voucher:create"])),
 )]
 async fn copy_template_handler(
     State(state): State<AppState>,
@@ -3238,6 +3242,7 @@ pub struct AddTemplateEntryRequest {
     path = "/api/finance/voucher-templates/{template_id}/entries",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:voucher:create"])),
 )]
 async fn add_template_entry_handler(
     State(state): State<AppState>,
@@ -3347,6 +3352,7 @@ pub struct UpdateTemplateEntryRequest {
     path = "/api/finance/voucher-templates/{template_id}/entries/{entry_id}",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:voucher:update"])),
 )]
 async fn update_template_entry_handler(
     State(state): State<AppState>,
@@ -3442,6 +3448,7 @@ async fn update_template_entry_handler(
     path = "/api/finance/voucher-templates/{template_id}/entries/{entry_id}",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:voucher:delete"])),
 )]
 async fn delete_template_entry_handler(
     State(state): State<AppState>,
@@ -4224,6 +4231,15 @@ pub async fn import_vouchers_handler(
         .import_vouchers(tenant_id, req, &imported_by, txn)
         .await
     {
+        // 单张落库未实现时，批次会以 success_count=0 / status=failed 收尾：
+        // 这种情况不能再用「导入成功」的 200 交差（前端会按成功弹提示）。
+        Ok(result) if result.total_count > 0 && result.success_count == 0 => ApiResponse::error(
+            503,
+            &format!(
+                "凭证导入未写入任何数据（X-Stub）：{} 张全部失败，批次 {} 已记录为 failed",
+                result.total_count, result.import_batch_no
+            ),
+        ),
         Ok(result) => ApiResponse::success(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "导入成功",
@@ -5028,6 +5044,7 @@ pub async fn create_collection_handler(
     path = "/api/finance/collections/{collection_id}",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:receivable:read"])),
 )]
 async fn update_collection_handler(
     State(state): State<AppState>,
@@ -5065,6 +5082,7 @@ async fn update_collection_handler(
     path = "/api/finance/collections/{collection_id}",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:receivable:read"])),
 )]
 async fn delete_collection_handler(
     State(state): State<AppState>,
@@ -5427,6 +5445,7 @@ pub async fn reject_payment_record_handler(
     path = "/api/finance/payment-records/{payment_id}",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:payment:read"])),
 )]
 async fn update_payment_record_handler(
     State(state): State<AppState>,
@@ -5465,6 +5484,7 @@ async fn update_payment_record_handler(
     path = "/api/finance/payment-records/{payment_id}",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:payment:read"])),
 )]
 async fn delete_payment_record_handler(
     State(state): State<AppState>,
@@ -6296,11 +6316,12 @@ pub async fn import_vouchers_general(
         return ApiResponse::bad_request("缺少 file 字段");
     };
     // 该端点此前解析完文件就返回 {"total":0,"success":0} + 「导入完成」——一条都没写却报成功。
-    // 真正落库的导入在 /vouchers/import/{u8,legacy} 等分支，这里显形为未实现，别再假装完成。
+    // 落库分支同样未实现：/vouchers/import/u8 与 /u8-import/import 都只做到「显形失败」，
+    // 所以这里不再指向另一个假成功端点，统一指向会给出明确失败的那个。
     ApiResponse::error(
         501,
         &format!(
-            "凭证导入暂未实现（X-Stub）：已收到 {} 字节，但未写入任何凭证，请使用 /vouchers/import/u8",
+            "凭证导入暂未实现（X-Stub）：已收到 {} 字节，但未写入任何凭证；批量导入接口为 /api/finance/u8-import/import（当前亦未实现落库）",
             file_data.len()
         ),
     )
@@ -6318,18 +6339,25 @@ pub async fn import_vouchers_u8(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let import_id = Uuid::new_v4();
+    // 此端点以前只生成一个 uuid，返回 status=pending / 0/0/0 + 「导入已提交」，
+    // 既不解析 file_content 也不落库——前端会以为批次已进队列，实际什么都没发生。
+    // 现在的口径：显形为未实现。批量导入请走 /api/finance/u8-import/import
+    // （会真实校验入参、落批次记录；单张落库同样未实现，会明确回失败而不是 completed）。
     let file_name = req.get("file_name").and_then(|v| v.as_str()).unwrap_or("");
-    ApiResponse::success(
-        serde_json::json!({
-            "import_id": import_id,
-            "file_name": file_name,
-            "status": "pending",
-            "total": 0,
-            "success": 0,
-            "failed": 0,
-        }),
-        "导入已提交",
+    ApiResponse::error(
+        501,
+        &format!(
+            "凭证导入暂未实现（X-Stub）：未解析文件 {}{}，请改用 /api/finance/u8-import/import",
+            if file_name.is_empty() {
+                "<未提供>"
+            } else {
+                file_name
+            },
+            req.get("file_content")
+                .and_then(|v| v.as_str())
+                .map(|c| format!("（收到 {} 字符）", c.len()))
+                .unwrap_or_default()
+        ),
     )
 }
 

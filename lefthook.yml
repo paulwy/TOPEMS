@@ -250,6 +250,15 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-soft-delete-precedence.cjs --changed-only
 
+    # [Gate NPD] 入参丢弃型桩：`let _ = x;` + 返回成功 = 端点回 2xx 却什么都没做
+    # （2026-11-27 B368：finance 合规审查恒判通过、付款核销不动应付、U8 导入计成功不落库）
+    noop-param-discard:
+      tags: rust errors
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-noop-param-discard.cjs --changed-only
+
     # [Gate V518] 桥接网完备性（B7 收尾：新增错误类型必须有 → TopemsError 桥接）
     bridge-coverage:
       tags: rust errors

@@ -1678,6 +1678,7 @@ fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
     path = "/api/finance/reports/balance-sheet",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:report:read"])),
 )]
 pub async fn get_balance_sheet(
     State(state): State<AppState>,
@@ -1893,6 +1894,7 @@ pub async fn generate_income_statement(
     path = "/api/finance/reports/income-statement",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:report:read"])),
 )]
 pub async fn get_income_statement(
     State(state): State<AppState>,

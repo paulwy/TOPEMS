@@ -462,6 +462,7 @@ pub struct AgingQueryParams {
     path = "/api/finance/reconciliation/sessions/{session_id}/report",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:reconciliation:read"])),
 )]
 pub async fn get_report_handler(
     State(state): State<AppState>,

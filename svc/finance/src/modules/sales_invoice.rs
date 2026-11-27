@@ -881,7 +881,7 @@ pub async fn red_flush_sales_invoice(
     };
 
     // 取消原票：带来源态谓词，避免并发红冲/回款后仍覆盖状态
-    let cancelled = match sqlx::query(
+    let _cancelled = match sqlx::query(
         "UPDATE finance.sales_invoices SET status = 'cancelled', cancel_reason = $3,
                 cancelled_at = NOW(), updated_at = NOW()
          WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')
@@ -900,7 +900,6 @@ pub async fn red_flush_sales_invoice(
         }
         Err(e) => return crate::shared::err_resp(e),
     };
-    let _ = cancelled;
 
     // 生成负数发票（金额取负）
     let red_number = format!("RF-{}-{}", original.invoice_number, now.format("%Y%m%d"));
