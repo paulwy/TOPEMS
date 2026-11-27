@@ -335,7 +335,8 @@ jobs:
     name: ShellCheck 回归防线
     needs: changes
     if: needs.changes.outputs.ci == 'true'
-    runs-on: ubuntu-latest
+    # ubuntu-latest 已切 26.04，其预置 packages.microsoft.com 源 403，apt-get update 直接失败
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
 

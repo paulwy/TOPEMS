@@ -8,5 +8,9 @@
   "system_settings.log_level": "Log Level",
   "system_settings.log_retention_days": "Log Retention (Days)",
   "system_settings.password": "Password",
-  "system_settings.reset": "Reset"
+  "system_settings.reset": "Reset",
+  "system_settings.sms_provider": "SMS Provider",
+  "system_settings.system_name": "System Name",
+  "system_settings.system_settings": "System Settings",
+  "system_settings.username": "Username"
 }

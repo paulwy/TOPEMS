@@ -603,7 +603,9 @@
     "nav": {
       "crm-tags": "Customer Tags",
       "crm-tags_desc": "Customer tag management"
-    }
+    },
+    "view_count": "Count",
+    "view_weighted": "Weighted value"
   },
   "crm.contact_detail_page.k0": "Contact Detail",
   "crm.customer_detail_page.k0": "Customer Detail",
