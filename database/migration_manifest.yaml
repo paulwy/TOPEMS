@@ -3373,6 +3373,6 @@ pending_forward_patches:
   - version: "20261127240000"
     file: "database/migrations/20261127240000_rls_business_tables_tenant_backfill.sql"
     status: applied
-    effect: "18 张业务表：NULL 行快照到 archive.rls_backfill_tenant_before_20261127 → 归入默认租户 → ALTER COLUMN tenant_id SET NOT NULL → 同表策略删 OR (tenant_id IS NULL)；dev 处理 468 行、收紧 19 条策略，生产 6 张不存在其余 0 行纯空跑"
+    effect: "18 张业务表：NULL 行快照到 archive.rls_backfill_tenant_before_20261127 → 归入默认租户 → ALTER COLUMN tenant_id SET NOT NULL → 同表策略删 OR (tenant_id IS NULL)；dev 处理 417 行、收紧 19 条策略，生产 6 张不存在其余 0 行纯空跑"
     destructive_scan: "UPDATE 18 次（仅 tenant_id IS NULL 的行，最大单表 62 行，先落 jsonb 快照）；无 DELETE/DROP"
     note: "配套代码修复：search_recent、core_user_roles（iam roles/user_permission/tenant handlers 三处）写入补 tenant_id 绑定；cargo check -p topems-search -p topems-unified-core --tests 通过"

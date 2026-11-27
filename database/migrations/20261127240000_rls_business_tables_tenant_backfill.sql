@@ -73,6 +73,16 @@ BEGIN
             CONTINUE;
         END IF;
 
+        -- 生产部分表尚无 tenant_id 列（结构未收敛），缺列即跳过，不猜不补
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns c
+            WHERE c.table_schema = sch AND c.table_name = tbl AND c.column_name = 'tenant_id'
+        ) THEN
+            RAISE NOTICE 'skip 无 tenant_id 列：%', full_name;
+            n_skip := n_skip + 1;
+            CONTINUE;
+        END IF;
+
         EXECUTE format('SELECT count(*) FROM %I.%I WHERE tenant_id IS NULL', sch, tbl) INTO n_null;
 
         IF n_null > 0 THEN
@@ -139,6 +149,10 @@ BEGIN
         sch := split_part(full_name, '.', 1);
         tbl := split_part(full_name, '.', 2);
         IF to_regclass(format('%I.%I', sch, tbl)) IS NULL THEN CONTINUE; END IF;
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns c
+            WHERE c.table_schema = sch AND c.table_name = tbl AND c.column_name = 'tenant_id'
+        ) THEN CONTINUE; END IF;
 
         EXECUTE format('SELECT count(*) FROM %I.%I WHERE tenant_id IS NULL', sch, tbl) INTO n_null;
         IF n_null > 0 THEN
