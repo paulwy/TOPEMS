@@ -5,11 +5,11 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use sqlx::{postgres::PgRow, Row};
 use std::fs;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::Db;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -28,7 +28,6 @@ fn tenant_filter(claims: &Claims) -> Option<Uuid> {
             .and_then(|s| Uuid::parse_str(s).ok())
     }
 }
-
 
 /// 写路径租户上下文：直接取 claims.tenant_id（超管的 claims 也带所属租户，
 /// 之前沿用 tenant_filter 会因 is_superuser 返回 None，导致超管改资料/设置在 400 被挡）。
@@ -1056,7 +1055,10 @@ pub async fn get_user_settings(
     let tenant_id = match tenant_from_claims(&claims) {
         Some(t) => t,
         None => {
-            return (StatusCode::BAD_REQUEST, ApiResponse::<UserSettingsView>::bad_request("缺少租户上下文"))
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<UserSettingsView>::bad_request("缺少租户上下文"),
+            )
         }
     };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret)
@@ -1064,19 +1066,30 @@ pub async fn get_user_settings(
         .and_then(|raw| Uuid::parse_str(&raw).ok())
     {
         Some(id) => id,
-        None => return (StatusCode::UNAUTHORIZED, ApiResponse::unauthorized("未授权")),
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                ApiResponse::unauthorized("未授权"),
+            )
+        }
     };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("数据库作用域创建失败"));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
     };
     let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("数据库作用域创建失败"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
         }
     };
 
@@ -1098,17 +1111,36 @@ pub async fn get_user_settings(
             row.try_get::<bool, _>("auto_sync"),
             row.try_get::<i32, _>("sync_interval"),
         ) {
-            (Ok(language), Ok(theme), Ok(notification_enabled), Ok(sound_enabled), Ok(auto_sync), Ok(sync_interval)) => {
-                UserSettingsView { language, theme, notification_enabled, sound_enabled, auto_sync, sync_interval, configured: true }
-            }
+            (
+                Ok(language),
+                Ok(theme),
+                Ok(notification_enabled),
+                Ok(sound_enabled),
+                Ok(auto_sync),
+                Ok(sync_interval),
+            ) => UserSettingsView {
+                language,
+                theme,
+                notification_enabled,
+                sound_enabled,
+                auto_sync,
+                sync_interval,
+                configured: true,
+            },
             _ => {
-                return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("设置行解析失败"));
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("设置行解析失败"),
+                );
             }
         },
         Ok(None) => UserSettingsView::defaults(),
         Err(e) => {
             tracing::error!("查询用户设置失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("内部服务器错误"),
+            );
         }
     };
 
@@ -1135,7 +1167,10 @@ pub async fn update_user_settings(
     let tenant_id = match tenant_from_claims(&claims) {
         Some(t) => t,
         None => {
-            return (StatusCode::BAD_REQUEST, ApiResponse::<UserSettingsView>::bad_request("缺少租户上下文"))
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<UserSettingsView>::bad_request("缺少租户上下文"),
+            )
         }
     };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret)
@@ -1143,30 +1178,47 @@ pub async fn update_user_settings(
         .and_then(|raw| Uuid::parse_str(&raw).ok())
     {
         Some(id) => id,
-        None => return (StatusCode::UNAUTHORIZED, ApiResponse::unauthorized("未授权")),
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                ApiResponse::unauthorized("未授权"),
+            )
+        }
     };
 
     if let Some(interval) = payload.sync_interval {
         if !(1..=1440).contains(&interval) {
-            return (StatusCode::BAD_REQUEST, ApiResponse::<UserSettingsView>::bad_request("同步间隔需在 1–1440 分钟之间"));
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<UserSettingsView>::bad_request("同步间隔需在 1–1440 分钟之间"),
+            );
         }
     }
     if let Some(ref theme) = payload.theme {
         if !matches!(theme.as_str(), "light" | "dark" | "system") {
-            return (StatusCode::BAD_REQUEST, ApiResponse::<UserSettingsView>::bad_request("主题取值非法"));
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<UserSettingsView>::bad_request("主题取值非法"),
+            );
         }
     }
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("数据库作用域创建失败"));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
     };
     let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("数据库作用域创建失败"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
         }
     };
 
@@ -1182,7 +1234,10 @@ pub async fn update_user_settings(
         Ok(row) => row.map(|r| r.get::<Uuid, _>("id")),
         Err(e) => {
             tracing::error!("查询用户设置失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("内部服务器错误"),
+            );
         }
     };
 
@@ -1236,7 +1291,10 @@ pub async fn update_user_settings(
         Ok(_) => {}
         Err(e) => {
             tracing::error!("保存用户设置失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("保存用户设置失败"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("保存用户设置失败"),
+            );
         }
     }
 
@@ -1258,14 +1316,35 @@ pub async fn update_user_settings(
             row.try_get::<bool, _>("auto_sync"),
             row.try_get::<i32, _>("sync_interval"),
         ) {
-            (Ok(language), Ok(theme), Ok(notification_enabled), Ok(sound_enabled), Ok(auto_sync), Ok(sync_interval)) => {
-                UserSettingsView { language, theme, notification_enabled, sound_enabled, auto_sync, sync_interval, configured: true }
+            (
+                Ok(language),
+                Ok(theme),
+                Ok(notification_enabled),
+                Ok(sound_enabled),
+                Ok(auto_sync),
+                Ok(sync_interval),
+            ) => UserSettingsView {
+                language,
+                theme,
+                notification_enabled,
+                sound_enabled,
+                auto_sync,
+                sync_interval,
+                configured: true,
+            },
+            _ => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("设置行解析失败"),
+                )
             }
-            _ => return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("设置行解析失败")),
         },
         Err(e) => {
             tracing::error!("回读用户设置失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("内部服务器错误"),
+            );
         }
     };
 
