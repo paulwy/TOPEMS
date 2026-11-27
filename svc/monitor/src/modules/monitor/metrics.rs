@@ -230,20 +230,40 @@ pub struct ListMetricsQuery {
     ),
 )]
 pub async fn list_metrics(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(q): Query<ListMetricsQuery>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
+    // 指标定义 + 实时值：CPU/内存/磁盘/网络取 sys_sampler 最近一次快照，
+    // 请求量/错误数/活跃连接取服务自身计数器；status 按阈值实时判定。
+    let sys = super::sys_sampler::latest_snapshot();
     let now = chrono::Utc::now().to_rfc3339();
-    // 元数据兜底：仅返回指标定义（id/名称/类别/单位/阈值），不返回伪造的当前值。
-    // 真实采集由 get_system_metrics / Prometheus 提供；value=null 表示暂无采样数据。
+    let cpu = f64::from(sys.cpu_usage);
+    let memory = f64::from(sys.memory_usage);
+    let disk = f64::from(sys.disk_usage);
+    let request_count = state.metrics.get_request_count();
+    let error_count = state.metrics.get_error_count();
+    let active_connections = state.metrics.get_active_connections();
+
+    let status = |v: f64, warn: f64, crit: f64| -> &'static str {
+        if v >= crit {
+            "critical"
+        } else if v >= warn {
+            "warning"
+        } else {
+            "normal"
+        }
+    };
+
     let all: Vec<serde_json::Value> = vec![
-        serde_json::json!({"id":"cpu_usage","name":"CPU 使用率","category":"system","value":null,"unit":"%","status":"unknown","threshold_warning":70.0,"threshold_critical":90.0,"timestamp":now}),
-        serde_json::json!({"id":"memory_usage","name":"内存使用率","category":"system","value":null,"unit":"%","status":"unknown","threshold_warning":75.0,"threshold_critical":90.0,"timestamp":now}),
-        serde_json::json!({"id":"disk_usage","name":"磁盘使用率","category":"system","value":null,"unit":"%","status":"unknown","threshold_warning":80.0,"threshold_critical":95.0,"timestamp":now}),
-        serde_json::json!({"id":"request_count","name":"请求总数","category":"performance","value":0,"unit":"req","status":"normal","timestamp":now}),
-        serde_json::json!({"id":"error_count","name":"错误总数","category":"performance","value":0,"unit":"err","status":"normal","threshold_warning":100,"threshold_critical":500,"timestamp":now}),
-        serde_json::json!({"id":"active_connections","name":"活跃连接","category":"network","value":0,"unit":"conn","status":"normal","timestamp":now}),
+        serde_json::json!({"id":"cpu_usage","name":"CPU 使用率","category":"system","value":cpu,"unit":"%","status":status(cpu,70.0,90.0),"threshold_warning":70.0,"threshold_critical":90.0,"timestamp":now,"ready":sys.ready}),
+        serde_json::json!({"id":"memory_usage","name":"内存使用率","category":"system","value":memory,"unit":"%","status":status(memory,75.0,90.0),"threshold_warning":75.0,"threshold_critical":90.0,"timestamp":now,"ready":sys.ready}),
+        serde_json::json!({"id":"disk_usage","name":"磁盘使用率","category":"system","value":disk,"unit":"%","status":status(disk,80.0,95.0),"threshold_warning":80.0,"threshold_critical":95.0,"timestamp":now,"ready":sys.ready}),
+        serde_json::json!({"id":"network_in","name":"网络入流量（累计字节）","category":"network","value":sys.net_in,"unit":"B","status":"normal","timestamp":now,"ready":sys.ready}),
+        serde_json::json!({"id":"network_out","name":"网络出流量（累计字节）","category":"network","value":sys.net_out,"unit":"B","status":"normal","timestamp":now,"ready":sys.ready}),
+        serde_json::json!({"id":"request_count","name":"请求总数","category":"performance","value":request_count,"unit":"req","status":"normal","timestamp":now}),
+        serde_json::json!({"id":"error_count","name":"错误总数","category":"performance","value":error_count,"unit":"err","status":status(f64::from(u32::try_from(error_count).unwrap_or(u32::MAX)),100.0,500.0),"threshold_warning":100,"threshold_critical":500,"timestamp":now}),
+        serde_json::json!({"id":"active_connections","name":"活跃连接","category":"network","value":active_connections,"unit":"conn","status":"normal","timestamp":now}),
     ];
     let mut items: Vec<serde_json::Value> = match &q.category {
         Some(cat) => all
