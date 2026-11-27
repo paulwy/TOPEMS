@@ -252,3 +252,46 @@
 - 边界：本表不判定活码；`monitor:admin` 等静态挂载点与兜底分类并存，端点归属与真实门槛须写操作冒烟运行期确认；豁免启发式可能漏标，不得据此反向认定某端点「无门」。
 - 产物（`artifacts/audit/forensics-c2/`，gitignore）：`route-guard-map.json`（18 模块全量映射 + 豁免标注 + `scope_note`）；矩阵 `c2-matrix.json/.csv` v3.2 回填 `route_write_candidates`/`route_exempt`，顶层 `route_guard_map` 汇总；v3.1 备份 `/tmp/topems-c2/c2-matrix.v31.bak.json/.csv`；脚本 `/tmp/topems-c2/route-guard-map.py`、`refresh-matrix-v32.py`、`refresh-csv-v32.py`。
 
+## 13. v3.3 增量：写操作冒烟守卫观测（#102，2026-11-28）
+
+### 13.1 背景与口径
+
+- 承接 #95 盲区③（只读 GET 未触达写码守卫）与 #99 静态路由清单。本轮为**层 1 守卫触发观测**：对写候选端点发 POST/PUT/PATCH/DELETE，观测写门 `require_module_write` 对 `{module}:admin` 的 `has_permission` 判定；**不造业务单据样本、不求写成功**，空/最小请求体。隔离实例 8199 / `topems_replay_verify` / Redis db1，复用含埋点二进制；prod 8099 / `topems_prod` 全程未停未切。
+- 观测通道：写门内部 `claims.has_permission` 走 #96 内联埋点（`inline-trace.jsonl`，字段 `permission/allowed/source`）；写门自身无独立 guard-trace。
+
+### 13.2 采集
+
+- 目标：#99 清单 7 个写门模块（master-data/monitor/rd/search/ticket/tms/srm）共 **315** 个写候选端点；路径前缀 `/api/<module>`，`{id}` 占位 UUID。
+- 三轮取证账号（全部 `is_superuser=false`，无 `["*"]` 短路）：`c2_admin`（admin，1158 码）、`c2_tenant_admin`（tenant_admin，1087 码，业务高权）、`c2_guest`（无角色，0 权对照）。登录重新换签，令牌集与 DB 聚合逐一吻合。
+- HTTP 状态分布：admin 轮 404×170 / 422×96 / 200×33 / 400×9 / 500×4 / 405×3（无 403）；guest 轮 403×193 / 404×122；tenant_admin 轮 404×170 / 422×78 / 403×30 / 200×21 / 400×9 / 500×4 / 405×3。
+
+### 13.3 判定结果
+
+| 写门码 | tenant_admin 携带 | ta 写门命中 | admin 命中 | guest 对照 | v3.3 分类 |
+| --- | :---: | :---: | :---: | --- | --- |
+| `srm:admin` | 是 | allowed 65 | allowed 65 | — | 活码（#96 复核一致） |
+| `rd:admin` | 是 | allowed 37 | allowed 37 | **写门 denied 37** | 活码 |
+| `ticket:admin` | 是 | allowed 34 | allowed 34 | access 门前置拦截 | 活码 |
+| `tms:admin` | 是 | allowed 28 | allowed 28 | access 门前置拦截 | 活码 |
+| `master-data:admin` | 是 | allowed 13 | allowed 13 | access 门前置拦截 | 活码 |
+| `search:admin` | 是 | allowed 1 | allowed 1 | access 门前置拦截 | 活码（样本薄） |
+| `monitor:admin` | **否** | 未触达 | allowed 30 | access 门前置拦截 | **兜底（维持）** |
+
+- **改判活码 5 个**：`master-data:admin`、`rd:admin`、`search:admin`、`ticket:admin`、`tms:admin`——tenant_admin 业务角色令牌携带并在写门命中 allowed，代码路径为 `require_module_write` 拼接消费，证据形态同 #96 `srm:admin`。`rd:admin` 双向证据最完整（业务角色/admin 放行 + guest 写门 denied 37）。
+- **`monitor:admin` 维持兜底**：tenant_admin 令牌不带该码，且被前置 `require_module_access` 模块访问门拦截、写门未触达；仅低鉴别力 admin 角色放行 30 次，证据不足，不升活码。
+- 矩阵 v3.3 主分类：**活码 6 / 待复核 548 / 兜底 27**（活码 1→6，待复核 553→548，兜底 27 不变）。
+
+### 13.4 盲区与边界
+
+1. **access 门前置遮挡写门对照**：`require_module_access`（`has_module_permission`，#96 埋点未覆盖）先于写门执行；低权/无模块访问权账号被挡在写门外，故除 rd 外写门 denied 未落 inline-trace。403 响应体可区分两门：写门「需要 X 模块管理员权限（X:admin）」，访问门「需要 X 模块权限」。
+2. **未触达业务写成功路径**：空/最小请求体多在参数校验层 422/400 或路由 404；200 多为导出/统计/空响应，未造单据样本，写门放行后的业务落库与下游回传未复核。
+3. **样本薄**：`search:admin` 模块仅 1 个写候选端点（`/recent` DELETE），命中 1 次，结论待更多写端点复核。
+4. **端点级定位仍缺**：inline-trace 无 route/handler 字段（#96 盲区①延续），每条判定未映射到具体触发端点。
+5. 本轮仅做守卫观测与矩阵标注，**不自动清理权限码、不解除绑定**；活码判定基于隔离库单次冒烟，扩面后仍需对照功能清单/路由表复核规划预留与下线残留。
+
+### 13.5 产物与回退
+
+- 产物（`artifacts/audit/forensics-c2/`，gitignore）：矩阵 `c2-matrix.json/.csv` v3.3（逐行 `write_smoke` 三轮判定 + `write_smoke_note`，顶层 `write_smoke_scan`）；写冒烟请求记录 `/tmp/topems-c2/write-smoke-<role>.json`；脚本 `/tmp/topems-c2/write-smoke.py`、`login-write.py`、`refresh-matrix-v33.py`、`refresh-csv-v33.py`；v3.2 备份 `/tmp/topems-c2/c2-matrix.v32.bak.json/.csv`。
+- 回退：停隔离实例（8199）；隔离库 `DELETE FROM iam.users WHERE username LIKE 'c2_%'` 级联会话/刷新令牌/登录日志；还原两份埋点 `.rs` 备份并重编；清 `artifacts/audit/*.jsonl` 与 `/tmp/topems-c2/`；隔离库可 `DROP DATABASE topems_replay_verify`。
+
+
