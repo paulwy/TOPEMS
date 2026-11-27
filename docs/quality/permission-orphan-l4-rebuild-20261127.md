@@ -75,12 +75,26 @@
 | `iam:dictionaries_read` | 字典读取 | iam | dictionaries_read | ✓ `20261119233000`（legacy 收敛迁移保留） | `svc/erp/src/modules/dict.rs:89` | — | （无绑定） | 下划线方言；待 IAM 目录统一专项收口 |
 | `iam:dictionaries_update` | 字典更新 | iam | dictionaries_update | ✓ `20261119233000`（legacy 收敛迁移保留） | `svc/erp/src/modules/dict.rs:118,147` | — | （无绑定） | 下划线方言；待 IAM 目录统一专项收口 |
 
-## 6. 结论与静态局限
+## 6. 角色绑定交叉复核（死码候选收窄）
+
+对 581 个 FE/BE 静态零引用码再按 prod 角色绑定交叉：**全部已挂角色，未挂角色死码候选 = 0**。
+
+| 绑定角色数 | 码数 | 说明 |
+|---|---:|---|
+| 1 | 27 | 全部挂 `admin`（超管兜底的后台/系统类码，如 `iam:permission:*`、`monitor:alert:*`、`migration:service:*`） |
+| 2 | 137 | 典型 `admin, tenant_admin` |
+| 3 | 415 | 典型 `admin, <module>_manager, tenant_admin` |
+| 4 | 2 | `master-data:read/write`（admin/scm_manager/tenant_admin/wms_manager） |
+
+交叉判读：静态扫不到字面量 ≠ 死码。这些码运行期经 `core_role_permissions` 角色授权链可达，后端走枚举/常量或关联表聚合、前端从 DB 目录取渲染；目录残留、无人授权的纯死码在本批为 0。是否存在「挂了角色但运行期鉴权链路实际不消费该码」的隐性死码，静态扫描无法定论，仍需枚举/常量追踪或运行期取证专项。
+
+## 7. 结论与静态局限
 
 **结论**
 - 当前 prod 1162 码在 `core_permissions` 目录 INSERT 口径下 **0 未登记缺口**；旧台账 33 orphan 清单所列两段聚合码与 `master-data`/`lims` 三级码，经 `20260724000004` 模块种子、`20260908000014` 前端同步、`20261020000024` 网关补缺、`20261023000004` MDM、`20261102000001` batch4、`20261118125000` 伞码、`20261119233000` 方言收敛等批次补录后，均已在册并挂角色。
 - 方向维持旧定性：若后续发现真实缺口，处置方向是**补 DB 种子迁移纳入基线**，而非清理 prod 残留。
 - 唯一运行期待收口项为 §5 两个未挂角色的下划线方言码，归口 IAM 目录统一专项。
+- 581 个静态零引用码经角色绑定交叉，未挂角色死码候选 0（§6）。
 
 **静态解析局限（复跑时需知）**
 1. SQL 种子按元组首列字面量解析；动态 `DO $$`/函数内拼串、`INSERT … SELECT` 非 VALUES 写法可能漏纳，已抽样复核代表码在册。
