@@ -3370,6 +3370,12 @@ pending_forward_patches:
     destructive_scan: "无 DROP/UPDATE/DELETE；ALTER POLICY 重写判定表达式，改前快照 archive.rls_policy_before_20261127"
     note: "刻意豁免 *_public_read / rls_platform_read / rls_global_read / *_platform_maintain 四类平台共享策略；有 NULL 行的 34 张表与 fail-open 方言（current_setting(app.tenant_id,true) IS NULL）另批；rollback 从快照表原样还原"
   # ===== 2026-11-27：B 组业务表 tenant_id 回填 + NOT NULL + 旁路收紧 =====
+  - version: "20261127270000"
+    file: "database/migrations/20261127270000_rls_failclose_wave2_crm_qms_finance_hrm.sql"
+    status: prepared
+    effect: "RLS fail-closed 第二波（crm/qms/finance/hrm）：同第一波规则，克隆库演练收紧 140 条、跳过 2 条（finance 2 张表仍有 56 行 tenant_id 为空）、0 失败"
+    destructive_scan: "仅 ALTER POLICY 表达式改写；改前快照 archive.rls_failclose_before_20261127（batch=WAVE2），无 DELETE/DROP"
+    note: "与第一波同一前置条件；回滚按快照 DROP+CREATE 还原"
   - version: "20261127260000"
     file: "database/migrations/20261127260000_rls_failclose_wave1_mes_erp.sql"
     status: prepared
