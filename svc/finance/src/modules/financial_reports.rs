@@ -2416,8 +2416,7 @@ pub async fn export_report(
     )
 }
 
-// ============================================================================
-// V321: 10 个分析报表 handler
+// ============================================================================// V321: 10 个分析报表 handler
 // 查询 Finance 自有表（vouchers / core_finance_accounts / budgets 等），返回聚合数据
 // ============================================================================
 
@@ -2453,18 +2452,23 @@ pub async fn get_business_overview(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    let voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+    let voucher_count: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"
     ))
     .bind(&period)
     .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    .await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
 
     // 按科目类型聚合已过账凭证的借/贷方金额，由此派生四张统计卡
     // income → 收入；expense+cost → 费用；asset → 资产；liability → 负债
-    let type_rows: Vec<(String, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
+    let type_rows: Vec<(String, Decimal, Decimal)> = match sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT a.account_type::text,
                   COALESCE(SUM(l.debit), 0),
@@ -2478,7 +2482,13 @@ pub async fn get_business_overview(
     .bind(&period)
     .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     let mut total_revenue = Decimal::ZERO;
@@ -2536,7 +2546,7 @@ pub async fn get_project_summary(
         Err(e) => return crate::shared::err_resp(e),
     };
     let rows: Vec<(Option<Uuid>, Option<String>, Decimal, Decimal)> =
-        sqlx::query_as(only_own_schema_query!(
+        match sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT vi.project_id, NULL::text as project_name,
                   COALESCE(SUM(vi.debit), 0) as total_debit,
@@ -2550,7 +2560,13 @@ pub async fn get_project_summary(
         .bind(&period)
         .fetch_all(&mut scope)
         .await
-        .unwrap_or_default();
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("[finance] 报表分析查询失败: {}", e);
+                return crate::shared::err_resp(e);
+            }
+        };
     let _ = scope.commit().await;
 
     let projects: Vec<serde_json::Value> = rows
@@ -2601,7 +2617,7 @@ pub async fn get_monthly_trend(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    let rows: Vec<(String, Decimal, i64)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(String, Decimal, i64)> = match sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT period,
                   COALESCE(SUM(total_debit), 0) as total_amount,
@@ -2613,7 +2629,13 @@ pub async fn get_monthly_trend(
     ))
     .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     let trend: Vec<serde_json::Value> = rows
@@ -2665,7 +2687,7 @@ pub async fn get_department_summary(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    let rows: Vec<(Option<Uuid>, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(Option<Uuid>, Decimal, Decimal)> = match sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT vi.department_id,
                   COALESCE(SUM(vi.debit), 0) as total_debit,
@@ -2679,7 +2701,13 @@ pub async fn get_department_summary(
     .bind(&period)
     .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     let departments: Vec<serde_json::Value> = rows
@@ -2732,7 +2760,7 @@ pub async fn get_aging_analysis(
         Err(e) => return crate::shared::err_resp(e),
     };
     // 简化版账龄分析：按凭证日期距今天数分组
-    let rows: Vec<(i32, Decimal)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(i32, Decimal)> = match sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT
               CASE
@@ -2750,7 +2778,13 @@ pub async fn get_aging_analysis(
     ))
     .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     let buckets = ["0-30天", "31-60天", "61-90天", "91-180天", "180天以上"];
@@ -2793,7 +2827,7 @@ pub async fn get_voucher_statistics(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    let rows: Vec<(String, i64, Decimal)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(String, i64, Decimal)> = match sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT status,
                   COUNT(*) as count,
@@ -2806,7 +2840,13 @@ pub async fn get_voucher_statistics(
     .bind(&period)
     .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     let stats: Vec<serde_json::Value> = rows
@@ -2858,7 +2898,7 @@ pub async fn get_cash_flow_analysis(
     };
     // 金额聚合在 Decimal 域完成：DB 侧 SUM(numeric) 直接解码为 Decimal，
     // 不经过 f64（避免 0.1+0.2 类尾差）；总额在 JSON 序列化前由 Decimal 求和。
-    let rows: Vec<(String, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(String, Decimal, Decimal)> = match sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT vi.account_code,
                   COALESCE(SUM(vi.debit), 0) as inflow,
@@ -2874,7 +2914,13 @@ pub async fn get_cash_flow_analysis(
     .bind(&period)
     .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     let total_inflow: Decimal = rows.iter().map(|r| r.1).sum();
@@ -2922,7 +2968,7 @@ pub async fn get_expense_analysis(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    let rows: Vec<(String, Option<String>, Decimal)> = sqlx::query_as(
+    let rows: Vec<(String, Option<String>, Decimal)> = match sqlx::query_as(
         only_own_schema_query!("finance", r#"SELECT vi.account_code, vi.account_name,
                   COALESCE(SUM(vi.debit), 0) as expense_amount
            FROM finance.core_finance_voucher_lines vi
@@ -2936,8 +2982,13 @@ pub async fn get_expense_analysis(
     )
     .bind(&period)
     .fetch_all(&mut scope)
-    .await
-    .unwrap_or_default();
+    .await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     // 金额聚合在 Decimal 域完成：总额在 JSON 序列化前由 Decimal 求和，不经 f64。
@@ -2990,7 +3041,7 @@ pub async fn get_profit_analysis(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    let total_revenue: Decimal = sqlx::query_scalar(
+    let total_revenue: Decimal = match sqlx::query_scalar(
         only_own_schema_query!("finance", r#"SELECT COALESCE(SUM(vi.credit), 0)
            FROM finance.core_finance_voucher_lines vi
            JOIN finance.core_finance_vouchers v ON v.id = vi.voucher_id
@@ -3001,10 +3052,15 @@ pub async fn get_profit_analysis(
     )
     .bind(&period)
     .fetch_one(&mut scope)
-    .await
-    .unwrap_or(Decimal::ZERO);
+    .await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
 
-    let total_cost: Decimal = sqlx::query_scalar(only_own_schema_query!(
+    let total_cost: Decimal = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         r#"SELECT COALESCE(SUM(vi.debit), 0)
            FROM finance.core_finance_voucher_lines vi
@@ -3017,9 +3073,15 @@ pub async fn get_profit_analysis(
     .bind(&period)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(Decimal::ZERO);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
 
-    let total_expense: Decimal = sqlx::query_scalar(only_own_schema_query!(
+    let total_expense: Decimal = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         r#"SELECT COALESCE(SUM(vi.debit), 0)
            FROM finance.core_finance_voucher_lines vi
@@ -3032,7 +3094,13 @@ pub async fn get_profit_analysis(
     .bind(&period)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(Decimal::ZERO);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     // 金额加减在 Decimal 域完成；margin 为比率，最后一步才转 f64 用于展示。
@@ -3097,38 +3165,59 @@ pub async fn get_financial_overview(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    let voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+    let voucher_count: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE period = $1 AND deleted_at IS NULL"
     ))
     .bind(&period)
     .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    .await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
 
-    let posted_count: i64 = sqlx::query_scalar(
+    let posted_count: i64 = match sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
     .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    .await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
 
-    let total_amount: Decimal = sqlx::query_scalar(
+    let total_amount: Decimal = match sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COALESCE(SUM(total_debit), 0) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
     .fetch_one(&mut scope)
-    .await
-    .unwrap_or(Decimal::ZERO);
+    .await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
 
-    let subject_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+    let subject_count: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"
     ))
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 报表分析查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let _ = scope.commit().await;
 
     ApiResponse::success(
@@ -3566,6 +3655,34 @@ mod tests {
             };
             assert_eq!(resp.code, 400, "input={raw:?}");
             assert!(!resp.success, "input={raw:?}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod analysis_error_ratchet {
+    /// V321 的 10 个分析报表 handler 曾把每条聚合查询的失败都 `.unwrap_or_default()` / `.unwrap_or(0)` 掉，
+    /// 于是数据库出错时前端看到的是一张「全是 0」的报表而不是错误。此棘轮防止回退。
+    #[test]
+    fn analysis_handlers_do_not_swallow_query_errors() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src/modules/financial_reports.rs");
+        let src = std::fs::read_to_string(&path).expect("读取 financial_reports.rs 失败");
+        let start = src
+            .find("V321: 10 个分析报表 handler")
+            .expect("V321 段注释缺失，棘轮定位失效");
+        let body = &src[start..];
+        let bytes = body.as_bytes();
+        for (idx, _) in body.match_indices(".unwrap_or") {
+            // 源文件含中文，必须按字节切片再 lossy 转换，避免落在 UTF-8 字符中间
+            let window = String::from_utf8_lossy(&bytes[idx.saturating_sub(60)..idx]);
+            assert!(
+                !window.contains(".await"),
+                "分析报表 handler 里又出现「查询失败即取默认值」：\n{}",
+                String::from_utf8_lossy(
+                    &bytes[idx.saturating_sub(120)..(idx + 40).min(bytes.len())]
+                )
+            );
         }
     }
 }
