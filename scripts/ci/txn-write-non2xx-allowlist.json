@@ -535,6 +535,11 @@
       "file": "svc/qms/src/modules/inspection_standard.rs",
       "function": "update_inspection_plan",
       "reason": "scope.commit() 失败：事务已终结、数据未落库，返回 500 属正确；commit(mut self) 已消费 scope，无法再 rollback，非「写入后丢弃」"
+    },
+    {
+      "file": "svc/mobile/src/modules/user.rs",
+      "function": "upload_avatar",
+      "reason": "预检已确认行存在；UPDATE rows_affected()==0 仅发生在预检后行被并发删除的竞态，DB 未产生写入，且分支内先删刚落盘的文件再返回 404，属合法分支"
     }
   ]
 }
