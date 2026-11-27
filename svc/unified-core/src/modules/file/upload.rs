@@ -28,6 +28,13 @@ struct FileUploadResponse {
 
 /// 上传单个文件
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/file/upload",
+    tag = "Core-File",
+    responses((status = 200, description = "post /file/upload"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn upload_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -258,6 +265,13 @@ pub async fn upload_file(
 
 /// 上传多个文件
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/file/upload/multiple",
+    tag = "Core-File",
+    responses((status = 200, description = "post /file/upload/multiple"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn upload_multiple(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

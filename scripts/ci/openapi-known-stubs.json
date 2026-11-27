@@ -92,6 +92,170 @@
     {
       "method": "GET",
       "path": "/api/core/flow/form-instances"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/images/thumbnail"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/images/{id}/thumbnails"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/file/images/{id}/thumbnails/{tid}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/images/{id}/convert"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/images/{id}/compress"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/images/{id}/crop"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/images/{id}/resize"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/images/batch-process"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/images/formats"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/images/{id}/metadata"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/file/files/{id}/permissions/revoke/{pt}/{pid}/{perm}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/health"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/scan/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/scan/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/scan/{id}/history"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/scan/batch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/scan/rules"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/scan/rules"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/file/scan/rules/{id}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/file/scan/rules/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/scan/quarantine"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/scan/quarantine/{id}/release"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/file/scan/quarantine/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/scan/stats"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/storage/buckets"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/storage/buckets"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/storage/buckets/{id}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/file/storage/buckets/{id}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/file/storage/buckets/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/storage/buckets/{id}/files"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/storage/categories"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/storage/categories"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/file/storage/categories/{id}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/file/storage/categories/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/storage/usage"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/storage/cleanup"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/storage/retention-policies"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/file/storage/retention-policies"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/attachments/{id}"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/file/attachments/{id}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/attachments/{id}/download"
     }
   ]
 }

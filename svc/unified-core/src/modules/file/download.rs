@@ -218,6 +218,16 @@ pub async fn download_file(
 }
 
 /// 预览文件（在线查看）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/preview/{id}",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /file/preview/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn preview_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -390,6 +400,16 @@ pub async fn preview_file(
 }
 
 /// 获取文件缩略图（仅图片）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/thumbnail/{id}",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /file/thumbnail/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_thumbnail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -587,6 +607,17 @@ pub async fn get_thumbnail(
 
 /// 契约兜底：前端模板 `/thumbnail/{id}/{size}`（query 变量误解析为路径段），
 /// 兼容双段调用，忽略 size 参数复用单段逻辑。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/thumbnail/{id}/{size}",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("size" = String, Path, description = "size"),
+    ),
+    responses((status = 200, description = "get /file/thumbnail/{id}/{size}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn thumbnail_compat(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

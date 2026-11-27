@@ -494,3 +494,37 @@ apiClient.core.get(`${API_BASE}/list`)
 spec 加到 2794 后全量冒烟多跑出 1 条 FAIL：`GET /api/erp/customers` 500，日志 `error occurred while decoding column "credit_limit": unexpected null`。`Customer.credit_limit` 是非空 `Decimal`，而列表 SQL 直接选裸列，库里该列可空。12 处 customers SQL 改为 `COALESCE(credit_limit, 0)` 后 200。
 
 最终冒烟（干净 origin/main 构建，spec 2794）：`1017 条 OK=950 SOFT=67 FAIL=0 SKIP=0 DEGRADED=0`。条数从 967 涨到 1017 是 ERP 新增的 280 路径带来的，不是回归。
+
+---
+
+## 第 22 轮：file 域（51 → 1）
+
+### 现象
+
+契约里 `file` 是 51 条调用、0 条命中——全 namespace 裸挂。而代码里 `svc/unified-core/src/routes/file.rs` 明明有路由，`file::file_routes` 也已被 `.nest("/file", ...)` 挂到 `/api/core/file/*` 上。
+
+### 根因
+
+路由挂了、**注解没挂**：file 模块三个文件里只有 3 个 `#[utoipa::path]`（download、files 列表、files 搜索），剩下 15 个真实 handler 零注解、也没登记进 `svc/unified-core/src/modules/openapi.rs` 的 `paths(...)`。生成器只认注解集，于是 spec 里 file 只有 3 条，契约自然全灭。
+
+另外 41 条是"死代码子域兜底"：images / scan / storage / attachments 这些前端已调、后端既无 handler 也无表，路由层用 `stub_list` / `stub_action` 返回 200 假信封——文档里一条都没有，但它们每天都在冒充成功。
+
+### 做法
+
+1. 15 个真 handler 补注解（tag `Core-File`，path 写相对 `/file/...`，生成时统一加 `/api/core` 前缀）：upload、upload/multiple、preview、thumbnail（含 `{id}/{size}` 兼容版）、files/{id} 的 get/put/delete、move、copy、permissions 的 get/post、shared、stats、export。
+2. 全部登记进 `unified-core/src/modules/openapi.rs`。
+3. 兜底桩统一走新增 `stubbed()` 出口，响应头带 `X-Stub: true`——冒烟据此判 SOFT，不再冒充 OK；同时**刻意不进 spec**，41 条全部写进 `scripts/ci/openapi-known-stubs.json`（清单从 23 条涨到 64 条），对账里单独计为"已知桩豁免"。
+4. 前端 `fileApi.getStats` 打的是 `/files/stats`，后端既有 `/stats`，按别名克隆补一条 GET。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2794 | **2807** |
+| 契约匹配 | 3094 | **3103** |
+| file 契约 | 51 / 0 / 50 | **51 / 9 / 1** |
+| 已知桩豁免 | 26 | **66** |
+
+剩 1 条是前端 `` `/thumbnail/${id}${qs}` `` 的拼串被归一成 `/thumbnail`（路径参数被当成 query 占位剥掉的工具口径假阴性），后端 `/thumbnail/{id}` 实际可用。
+
+冒烟 `1020 条 OK=953 SOFT=67 FAIL=0`。

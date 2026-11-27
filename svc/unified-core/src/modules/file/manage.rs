@@ -258,6 +258,16 @@ fn forbidden_response(message: &str) -> Response {
 
 /// 获取文件详情
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/files/{id}",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /file/files/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -402,6 +412,16 @@ pub async fn get_file(
 }
 
 /// 更新文件信息
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/file/files/{id}",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /file/files/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -594,6 +614,16 @@ pub async fn update_file(
 }
 
 /// 删除文件（软删除）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/file/files/{id}",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /file/files/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -761,6 +791,16 @@ pub async fn delete_file(
 }
 
 /// 移动文件
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/file/files/{id}/move",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /file/files/{id}/move"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn move_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -933,6 +973,16 @@ pub async fn move_file(
 }
 
 /// 复制文件
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/file/files/{id}/copy",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /file/files/{id}/copy"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn copy_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1156,6 +1206,16 @@ pub async fn copy_file(
 /// 删除分享
 
 /// 设置文件权限
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/file/files/{id}/permissions",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /file/files/{id}/permissions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn set_file_permissions(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1176,6 +1236,16 @@ pub async fn set_file_permissions(
 }
 
 /// 获取文件权限
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/files/{id}/permissions",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /file/files/{id}/permissions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_file_permissions(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1195,6 +1265,13 @@ pub async fn get_file_permissions(
 }
 
 /// 获取我分享的文件列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/files/shared",
+    tag = "Core-File",
+    responses((status = 200, description = "get /file/files/shared"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_shared_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1214,6 +1291,13 @@ pub async fn get_shared_files(
 /// 获取分享给我的文件列表
 
 /// 获取文件统计信息
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/stats",
+    tag = "Core-File",
+    responses((status = 200, description = "get /file/stats"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_file_stats(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1238,6 +1322,13 @@ pub async fn get_file_stats(
 
 /// 导出文件（批量）
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/file/files/export",
+    tag = "Core-File",
+    responses((status = 200, description = "post /file/files/export"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,

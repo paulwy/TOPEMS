@@ -1,4 +1,6 @@
 use axum::extract::State;
+use axum::http::{header, HeaderValue};
+use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
 
@@ -10,19 +12,28 @@ use topems_shared_core::response::ApiResponse;
 /// 前端契约兜底：file 死代码子域（images 图像处理 / scan 安全扫描 / storage 存储管理 /
 /// attachments 附件）暂无上游 handler 与表。统一返回 200 成功信封——列表类空分页、
 /// 写操作成功回执，禁止裸 404。待上游支持。
-async fn stub_list(_state: State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+async fn stub_list(_state: State<AppState>) -> Response {
+    stubbed(ApiResponse::success(
         serde_json::json!({ "items": [], "total": 0, "page": 1, "page_size": 20 }),
         "待上游支持",
     ))
 }
 
 /// 写操作（POST/PUT/DELETE）兜底：成功回执。待上游支持。
-async fn stub_action(_state: State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+async fn stub_action(_state: State<AppState>) -> Response {
+    stubbed(ApiResponse::success(
         serde_json::json!({ "success": true }),
         "待上游支持",
     ))
+}
+
+/// 桩响应统一出口：带 `X-Stub: true`，冒烟据此判 SOFT 而不是 OK；
+/// spec 里刻意不登记这些路径，避免"文档有、实现是假"的幻觉。
+fn stubbed(body: ApiResponse<serde_json::Value>) -> Response {
+    let mut resp = Json(body).into_response();
+    resp.headers_mut()
+        .insert(header::HeaderName::from_static("x-stub"), HeaderValue::from_static("true"));
+    resp
 }
 
 pub fn file_routes(state: &AppState) -> Router<AppState> {
