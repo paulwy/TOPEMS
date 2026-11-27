@@ -1884,5 +1884,14 @@
   "scm.dashboard_page.k38": "Turnover Rate",
   "scm.dashboard_page.k39": "days",
   "scm.purchase_order.k53": "Remarks",
-  "scm.scm_overview_page.active_suppliers": "Active suppliers"
+  "scm.scm_overview_page.active_suppliers": "Active suppliers",
+  "scm.scm_overview_page.inventory_value": "Inventory value",
+  "scm.scm_overview_page.status_pending": "Pending",
+  "scm.scm_overview_page.status_approved": "Approved",
+  "scm.scm_overview_page.status_rejected": "Rejected",
+  "scm.scm_overview_page.status_completed": "Completed",
+  "scm.scm_overview_page.inventory_skus": "Inventory SKUs",
+  "scm.scm_overview_page.inventory_low": "Low-stock SKUs",
+  "scm.scm_overview_page.k39": "Purchase order status",
+  "scm.scm_overview_page.k40": "Inventory overview"
 }
