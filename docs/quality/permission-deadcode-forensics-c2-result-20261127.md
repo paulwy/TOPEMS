@@ -370,6 +370,16 @@
 - **边界与回退**：① 本轮仅覆盖 monitor 模块 11 个采样端点，未扩到其他模块写门；② reader 写端点全拦截于写门、未进 handler，admin 写端点未落业务库（acknowledge 空集合、其余参数校验失败），`monitor_thresholds` 等业务表无本轮新增行；③ 临时角色/用户为隔离库取证残留，收尾阶段随 `DELETE FROM iam.users WHERE username LIKE 'c2_%'` 级联，并清理 `core_roles` / `core_role_permissions` 对应临时行；④ 未造最小业务单据复核写门放行后落库/下游回传（仍属未立项扩面项）。
 - **产物**（`artifacts/audit/forensics-c2/` 与 `/tmp/topems-c2/`，gitignore）：`smoke-monitor-reader.json`（三档读/写端点状态码与响应体）；脚本 `smoke-monitor-reader.py`、建号 SQL `seed-monitor-reader.sql`；矩阵 `c2-matrix.json/.csv` 的 `monitor:admin` 行补 `c2_monitor_reader` 对照与三档注记；备份 `c2-matrix.v33-pre109.bak.json`。
 
+### 13.12 前端运行期动态菜单/按钮采集：环境搭建与产物侧交叉核验（#110，部分完成；浏览器 DOM 采集阻塞遗留）
+
+- **背景**：承接 §13.8 前端运行期对账盲区，计划登录隔离前端，按角色采集运行期动态菜单/按钮显隐与 SDK 鉴权点，与静态 `fe_refs` 对账。本轮先搭本地静态反代环境并完成不依赖浏览器登录的产物侧核验；浏览器渲染层 DOM 采集因登录阻塞未执行，记为遗留。
+- **环境搭建（隔离，不触 prod）**：零依赖 Node 脚本 `/tmp/topems-c2/fe-proxy.mjs`（PID 73444，端口 4173）托管 `apps/web/dist`，`/api` 同源反代隔离实例 `127.0.0.1:8199`；首页 200、`/api/server/health` 200，未走 8099 / `topems_prod`。前端 `VITE_API_BASE_URL=/api`（相对路径），dist 未内嵌后端绝对地址。
+- **登录阻塞（未绕过、未代填）**：前端进入 `/login` 认证拦截页。后端脚本直连 `c2_admin` / `c2_tenant_admin` 登录 200（1158 / 1087 权），后备令牌调 `/api/core/menu/menus` 200，口令与授权面有效；浏览器表单两次 `POST /api/core/iam/auth/login` 返回 401，后端日志 `invalid password for user - c2_admin`。阻塞原因：口令文件 `/tmp/topems-c2/accounts.json` 在 macOS Finder 默认隐藏（realpath `/private/tmp/...`），且易把条目内 60 位 bcrypt `hash` 误当作 24 位顶层明文 `password`。按取证纪律未代填、未在会话中转述明文口令；前端无 URL 令牌旁路，会话仅从 localStorage 恢复，故未注入令牌绕过登录。
+- **产物侧交叉核验（本地静态，已完成）**：从 `apps/web/dist/assets/*.js` 编译产物提取权限码字面量与 581 对账，交集 **7** 个：`admin:dashboard:write`、`erp:general_ledger:read`、`finance:dashboard:write`、`lims:dashboard:write`、`rd:dashboard:write`、`report:dashboard:write`、`system:center:read`。逐码对照 #106 `fe-refs-recon.json`：7 码 `consumer_layers` / `consumer_refs` 均为空，命中全部落在 `catalog_def` / `catalog_list` 目录表与清单挂名层，**无组件守卫/按钮消费点**；与 §13.8 src 源码静态对账结论一致，编译后未引入静态扫描漏掉的拼接/字面量消费码。
+- **遗留待补（不据本轮静态/产物结论下死码定论）**：① 浏览器登录隔离前端后，采集渲染态导航菜单与 `PermissionGate` 受控按钮的实际显隐及所依据权限码，与 581 对账（采集口径：只读 `permissions` / `permission_cache` 与导航/按钮 DOM，不读取 `token` / `refresh_token`）；② SDK 远端动态注入菜单/按钮鉴权点；③ 多角色菜单面裁剪对比（#107 导航端点未按角色裁剪，仅 2 项 portal/erp）。
+- **口径结论**：本轮未改变矩阵主分类 活码 6 / 待复核 548 / 兜底 27；前端运行期渲染层是否存在 581 消费点，仍待浏览器登录后采集闭环。
+- **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`fe-bundle-crosscheck.json`（dist 字面量交集 7 码分层与目录挂名判定、口径注记）；反代脚本 `/tmp/topems-c2/fe-proxy.mjs`（取证收尾随 `/tmp/topems-c2/` 清理，进程停止）。
+
 
 
 
