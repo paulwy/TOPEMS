@@ -15,7 +15,7 @@ import { useNotificationStore } from '../../store';
 import { StatsPageTemplate, type StatsStatCard } from '@/components/templates';
 import type { ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
-import { crmAnalyticsApi, type Period, type FunnelStageRow } from '@/api/crm';
+import { crmAnalyticsApi, type FunnelStageRow } from '@/api/crm';
 import i18n from '@/i18n';
 
 type FunnelViewMode = 'count' | 'weighted';
@@ -40,7 +40,6 @@ const CRMSalesFunnelPage: React.FC = () => {
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [viewMode, setViewMode] = useState<FunnelViewMode>('count');
-  const [period, setPeriod] = useState<Period>('MTD');
 
   const stageLabelMap = useMemo<Record<string, string>>(
     () => ({
@@ -59,9 +58,12 @@ const CRMSalesFunnelPage: React.FC = () => {
 
   // 真实聚合：GET /api/crm/analytics/funnel → { stages: [{stage,count,total_value,weighted_value}] }
   // 后端不返回独立 metrics envelope，指标在前端由 stages 聚合；无单阶段 probability。
+  // 口径：漏斗看的是「当前在跟的全部商机」的阶段分布，与时间范围无关；
+  // 后端 /analytics/funnel 也不吃 period（`Query(_p)` 未使用），故不再向前端暴露时间范围选择器，
+  // 避免一个点了没反应的假控件。
   const funnelQuery = useQuery({
-    queryKey: ['crm-analytics-funnel', period],
-    queryFn: () => crmAnalyticsApi.getFunnel(period),
+    queryKey: ['crm-analytics-funnel'],
+    queryFn: () => crmAnalyticsApi.getFunnel(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -187,16 +189,6 @@ const CRMSalesFunnelPage: React.FC = () => {
         charts={charts}
         loading={loading}
         onRefresh={() => funnelQuery.refetch()}
-        timeRangeOptions={[
-          { value: 'MTD', label: t('crm.period.mtd') || i18n.t('pages.crm_sales_funnel_page.k3') },
-          { value: 'QTD', label: t('crm.period.qtd') || i18n.t('pages.crm_sales_funnel_page.k4') },
-          { value: 'YTD', label: t('crm.period.ytd') || i18n.t('pages.crm_sales_funnel_page.k5') },
-          {
-            value: 'ROLLING_12M',
-            label: t('crm.period.r12') || i18n.t('pages.crm_sales_funnel_page.12_6'),
-          },
-        ]}
-        onTimeRangeChange={(v) => setPeriod(v as Period)}
       />
 
       <Box sx={{ mt: 4 }}>
@@ -281,6 +273,11 @@ const CRMSalesFunnelPage: React.FC = () => {
             );
           })}
         </Box>
+        {stages.length === 0 && !loading && (
+          <Typography color='text.secondary'>
+            {t('templates.stats_page_template.k1')}
+          </Typography>
+        )}
       </Box>
     </PageContainer>
   );
