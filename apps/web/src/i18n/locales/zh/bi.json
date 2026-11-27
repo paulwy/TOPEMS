@@ -1002,5 +1002,6 @@
   "bi.bi_module_detail_page.status_col_alt": "状态",
   "bi.data_analysis_page.order_no_col": "订单号",
   "bi.dataset_page.status_label": "状态",
-  "bi.bi_index_page.empty": "暂无数据"
+  "bi.bi_index_page.empty": "暂无数据",
+  "bi.data_analysis_page.avg_order_value": "客单价"
 }

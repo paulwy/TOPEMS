@@ -254,7 +254,7 @@ const DataAnalysisPage = () => {
                   { label: t('bi.data_analysis_page.k33'), value: String(orderCount) },
                   { label: t('bi.data_analysis_page.k34'), value: String(customerCount) },
                   {
-                    label: t('bi.data_analysis_page.sales_amount_axis'),
+                    label: t('bi.data_analysis_page.avg_order_value'),
                     value: `¥${Math.round(avgOrderAmount).toLocaleString('zh-CN')}`,
                   },
                 ].map((metric, idx) => (
