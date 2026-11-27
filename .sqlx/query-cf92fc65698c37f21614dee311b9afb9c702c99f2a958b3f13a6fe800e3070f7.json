@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE bi.report_schedules SET deleted_at = NOW()\n        WHERE id = $1\n          AND deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cf92fc65698c37f21614dee311b9afb9c702c99f2a958b3f13a6fe800e3070f7"
+}

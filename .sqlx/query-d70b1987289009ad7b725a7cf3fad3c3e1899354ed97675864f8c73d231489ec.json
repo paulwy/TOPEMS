@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE bi.report_subscriptions\n        SET email = COALESCE($1, email),\n            frequency = COALESCE($2, frequency),\n            enabled = COALESCE($3, enabled)\n        WHERE id = $4\n          AND deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Varchar",
+        "Bool",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d70b1987289009ad7b725a7cf3fad3c3e1899354ed97675864f8c73d231489ec"
+}

@@ -186,12 +186,22 @@ pub async fn list_schedules(
                s.run_count, s.error_message, s.created_at, s.updated_at
         FROM bi.report_schedules s
         LEFT JOIN bi.report_templates t ON s.template_id = t.id
+        WHERE s.deleted_at IS NULL
         ORDER BY s.created_at DESC
         "#,
     )
     .fetch_all(&mut *tx)
-    .await
-    .unwrap_or_default();
+    .await;
+
+    let schedules = match schedules {
+        Ok(rows) => rows,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list schedules: {}", e),
+            ))
+        }
+    };
 
     let result: Vec<serde_json::Value> = schedules
         .into_iter()
@@ -327,6 +337,7 @@ pub async fn get_schedule(
         FROM bi.report_schedules s
         LEFT JOIN bi.report_templates t ON s.template_id = t.id
         WHERE s.id = $1
+          AND s.deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -401,6 +412,7 @@ pub async fn update_schedule(
             status = COALESCE($5, status),
             updated_at = $6
         WHERE id = $7
+          AND deleted_at IS NULL
         "#,
     )
     .bind(req.name)
@@ -414,6 +426,10 @@ pub async fn update_schedule(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
+            404,
+            "Schedule not found or already deleted",
+        )),
         Ok(_) => match tx.commit().await {
             Ok(()) => Json(serde_json::json!({
                 "success": true,
@@ -460,6 +476,7 @@ pub async fn delete_schedule(
         r#"
         UPDATE bi.report_schedules SET deleted_at = NOW()
         WHERE id = $1
+          AND deleted_at IS NULL
         "#,
         id,
     )
@@ -467,6 +484,10 @@ pub async fn delete_schedule(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
+            404,
+            "Schedule not found or already deleted",
+        )),
         Ok(_) => match tx.commit().await {
             Ok(()) => Json(serde_json::json!({
                 "success": true,
@@ -516,6 +537,7 @@ pub async fn execute_schedule(
         UPDATE bi.report_schedules
         SET last_run_at = $1, run_count = run_count + 1, updated_at = $2
         WHERE id = $3
+          AND deleted_at IS NULL
         "#,
     )
     .bind(now)
@@ -525,6 +547,10 @@ pub async fn execute_schedule(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
+            404,
+            "Schedule not found or already deleted",
+        )),
         Ok(_) => match tx.commit().await {
             Ok(()) => Json(serde_json::json!({
                 "success": true,
@@ -579,8 +605,17 @@ pub async fn get_execution_history(
     )
     .bind(id)
     .fetch_all(&mut *tx)
-    .await
-    .unwrap_or_default();
+    .await;
+
+    let records = match records {
+        Ok(rows) => rows,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to load execution history: {}", e),
+            ))
+        }
+    };
 
     let result: Vec<serde_json::Value> = records
         .into_iter()
@@ -641,6 +676,7 @@ pub async fn toggle_schedule(
         SET status = CASE WHEN status = 'active' THEN 'paused' ELSE 'active' END,
             updated_at = $1
         WHERE id = $2
+          AND deleted_at IS NULL
         "#,
     )
     .bind(chrono::Utc::now())
@@ -649,6 +685,10 @@ pub async fn toggle_schedule(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
+            404,
+            "Schedule not found or already deleted",
+        )),
         Ok(_) => match tx.commit().await {
             Ok(()) => Json(serde_json::json!({
                 "success": true,
