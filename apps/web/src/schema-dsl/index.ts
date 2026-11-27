@@ -35,6 +35,7 @@ export type {
 } from './types';
 
 export { toFormField, toColumnDef, getColumns, getFormFields, getFilterParams } from './types';
+export { parseDateValue, formatDateCell, formatDateTimeCell } from './formatDate';
 
 // ── Adapter Factory ──
 export type {
