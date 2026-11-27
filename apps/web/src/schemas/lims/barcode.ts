@@ -4,6 +4,7 @@
 
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadLimsSampleOptions } from '@/schemas/dynamicLoaders';
 
 const statusColorMap: Record<
   string,
@@ -43,9 +44,15 @@ export const barcodeSchema: EntitySchema = {
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'lims:barcode',
 
+  // 样品下拉：sample_id 是 uuid，裸文本填任何非 UUID 都无法关联
+  dynamicOptions: [
+    { field: 'sample_id', queryKey: ['lims', 'samples', 'forBarcode'], loader: loadLimsSampleOptions },
+  ],
+
   fields: [
     {
       name: 'barcode',
+      hideInForm: true,
       label: i18n.t('lims.barcode.k10'),
       type: 'text',
       sortable: true,
@@ -54,11 +61,24 @@ export const barcodeSchema: EntitySchema = {
     {
       name: 'barcode_type',
       label: i18n.t('lims.barcode.k11'),
-      type: 'text',
+      type: 'select',
+      required: true,
+      // 后端 BARCODE_TYPES 白名单：不在枚举内直接 400「无效的条码类型」
+      options: {
+        type: 'static',
+        options: [
+          { value: 'code128', label: 'Code 128' },
+          { value: 'code39', label: 'Code 39' },
+          { value: 'qr', label: 'QR Code' },
+          { value: 'ean13', label: 'EAN-13' },
+          { value: 'upc', label: 'UPC' },
+        ],
+      },
       listWidth: 120,
     },
     {
       name: 'format',
+      hideInForm: true,
       label: i18n.t('lims.barcode.k12'),
       type: 'select',
       defaultValue: 'CODE128',
@@ -77,6 +97,7 @@ export const barcodeSchema: EntitySchema = {
     },
     {
       name: 'sample_name',
+      hideInForm: true,
       label: i18n.t('lims.barcode.k14'),
       type: 'text',
       listWidth: 140,
@@ -84,6 +105,7 @@ export const barcodeSchema: EntitySchema = {
     },
     {
       name: 'status',
+      hideInForm: true,
       label: i18n.t('lims.barcode.k15'),
       type: 'select',
       defaultValue: i18n.t('lims.barcode.k16'),
@@ -100,6 +122,7 @@ export const barcodeSchema: EntitySchema = {
     },
     {
       name: 'content',
+      hideInForm: true,
       label: i18n.t('lims.barcode.k25'),
       type: 'text',
       showInList: false,
@@ -134,6 +157,7 @@ export const barcodeSchema: EntitySchema = {
     },
     {
       name: 'created_by',
+      hideInForm: true,
       label: i18n.t('lims.barcode.k29'),
       type: 'text',
       showInList: false,
@@ -145,7 +169,8 @@ export const barcodeSchema: EntitySchema = {
       showInList: false,
     },
     {
-      name: 'quantity',
+      // 后端字段名是 count（生成条码的数量），此前叫 quantity 会被静默丢弃
+      name: 'count',
       label: i18n.t('lims.barcode.k31'),
       type: 'number',
       defaultValue: 1,
@@ -153,6 +178,7 @@ export const barcodeSchema: EntitySchema = {
     },
     {
       name: 'prefix',
+      hideInForm: true,
       label: i18n.t('lims.barcode.k32'),
       type: 'text',
       showInList: false,
@@ -160,7 +186,7 @@ export const barcodeSchema: EntitySchema = {
     {
       name: 'sample_id',
       label: i18n.t('lims.barcode.id_33'),
-      type: 'text',
+      type: 'select',
       showInList: false,
     },
   ],

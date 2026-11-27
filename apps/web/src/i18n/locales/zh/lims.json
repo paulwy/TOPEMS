@@ -688,6 +688,14 @@
     "nav": {
       "lims-method-categories": "方法分类",
       "lims-method-categories_desc": "检测方法分类管理"
+    },
+    "inspection_task": {
+      "k49": "检测项目",
+      "k50": "外观",
+      "k51": "理化",
+      "k52": "微生物",
+      "k53": "重金属",
+      "k54": "样品编号"
     }
   },
   "instrumentmaintenance": {

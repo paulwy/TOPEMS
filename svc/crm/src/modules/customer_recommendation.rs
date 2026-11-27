@@ -276,15 +276,21 @@ async fn create_recommendation(
         serde_json::to_value(&recommendations).unwrap_or(serde_json::json!([]));
     let confidence = calculate_overall_confidence(&recommendations);
 
+    // crm.customer_recommendations.tenant_id 是 NOT NULL 且有 tenant_isolation 的
+    // WITH CHECK 策略：不写 tenant_id 会 500「new row violates row-level security policy」。
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let result = sqlx::query(
         r#"
         INSERT INTO crm.customer_recommendations (
-            id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at
+            id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, customer_id, customer_name, recommendations, recommendation_type, model, confidence::float8 AS confidence, created_at
         "#,
     )
     .bind(id)
@@ -295,6 +301,7 @@ async fn create_recommendation(
     .bind("TOPEMS-AI")
     .bind(confidence)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 

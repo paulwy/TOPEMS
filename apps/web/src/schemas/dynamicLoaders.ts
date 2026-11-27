@@ -18,6 +18,8 @@ import apiClient from '@/api/client';
 import { projectApi } from '@/api/rd/project';
 import { buildApi } from '@/api/rd/build';
 import { formulaApi } from '@/api/rd/formula';
+import { sampleApi as limsSampleApi } from '@/api/lims/sample';
+import { customerApi as crmCustomerApi } from '@/api/crm/customer';
 
 export interface SelectOption {
   value: string;
@@ -140,5 +142,34 @@ export async function loadRdFormulaOptions(): Promise<SelectOption[]> {
   return toOptions(pickRows((res as { data?: unknown })?.data, ['items', 'formulas']), [
     'code',
     'name',
+  ]);
+}
+
+/** LIMS 样品（lims.samples）：检验任务必须挂一个真实样品 */
+export async function loadLimsSampleOptions(): Promise<SelectOption[]> {
+  const res = await limsSampleApi.listSamples({ page: 1, page_size: 200 });
+  // 该接口 data 是裸数组，pickRows 已能直接吃
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['samples', 'items']), [
+    'sample_no',
+    'sample_name',
+  ]);
+}
+
+/** CRM 客户（crm.customers）：退换货 / 互动 / 推荐都要挂客户 */
+export async function loadCrmCustomerOptions(): Promise<SelectOption[]> {
+  const res = await crmCustomerApi.list({ page: 1, page_size: 200 });
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['items', 'customers']), [
+    'name',
+    'name_en',
+    'code',
+  ]);
+}
+
+/** WMS 仓库（wms.warehouses）：退换货入库仓 */
+export async function loadWmsWarehouseOptions(): Promise<SelectOption[]> {
+  const res = await apiClient.wms.get('/warehouses?page=1&page_size=200');
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['warehouses', 'items']), [
+    'name',
+    'code',
   ]);
 }

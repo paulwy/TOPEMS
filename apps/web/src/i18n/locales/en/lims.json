@@ -1922,7 +1922,13 @@
       "k44": "Basic Info",
       "k45": "Assign Info",
       "k46": "New Inspection Task",
-      "k48": "Inspection Task Detail"
+      "k48": "Inspection Task Detail",
+      "k49": "Test Items",
+      "k50": "Appearance",
+      "k51": "Physicochemical",
+      "k52": "Microbiology",
+      "k53": "Heavy Metals",
+      "k54": "Sample No."
     },
     "instrument_maintenance": {
       "k19": "Remarks",

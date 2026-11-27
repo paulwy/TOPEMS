@@ -1,5 +1,9 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import {
+  loadCrmCustomerOptions,
+  loadWmsWarehouseOptions,
+} from '@/schemas/dynamicLoaders';
 
 export const returnSchema: EntitySchema = {
   entity: 'return',
@@ -12,6 +16,12 @@ export const returnSchema: EntitySchema = {
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'crm:return',
+
+  // 客户/仓库都是 uuid 外键：裸文本框填任何非 UUID 必 422 UUID parsing failed
+  dynamicOptions: [
+    { field: 'customer_id', queryKey: ['crm', 'customers', 'forReturn'], loader: loadCrmCustomerOptions },
+    { field: 'warehouse_id', queryKey: ['wms', 'warehouses', 'forReturn'], loader: loadWmsWarehouseOptions },
+  ],
 
   fields: [
     {
@@ -26,15 +36,18 @@ export const returnSchema: EntitySchema = {
     {
       name: 'customer_id',
       label: i18n.t('shared.return.id_2'),
-      type: 'text',
+      type: 'select',
       required: true,
-      listWidth: 120,
+      listWidth: 150,
     },
     {
       name: 'order_id',
       label: i18n.t('shared.return.id_3'),
       type: 'text',
       showInList: false,
+      // CRM 未暴露客户订单读取端点（crm.customer_orders 只由事件写入），
+      // 下拉无数据源；该字段本身可选，先移出新建表单，避免手填 UUID 才 422。
+      hideInForm: true,
     },
     {
       name: 'return_type',
@@ -93,7 +106,7 @@ export const returnSchema: EntitySchema = {
     {
       name: 'warehouse_id',
       label: i18n.t('shared.return.id_17'),
-      type: 'text',
+      type: 'select',
       showInList: false,
     },
     {

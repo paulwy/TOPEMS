@@ -276,6 +276,7 @@ pub async fn list_barcodes(
 pub async fn generate_barcode(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateBarcodeRequest>,
 ) -> ApiResponse<Vec<SampleBarcode>> {
     let valid_type = BARCODE_TYPES.iter().any(|(t, _)| *t == req.barcode_type);
@@ -342,8 +343,8 @@ pub async fn generate_barcode(
         let row = sqlx::query(
             r#"
             INSERT INTO lims.qa_lims_sample_barcodes (barcode, barcode_type, sample_id, sample_no, status, generated_at, tenant_id)
-            VALUES ($1, $2, $3, $4, 'active', NOW(), gen_random_uuid())
-            RETURNING id, tenant_id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status,
+            VALUES ($1, $2, $3, $4, 'active', NOW(), $5)
+            RETURNING id, tenant_id, barcode, barcode_type, sample_id::TEXT, sample_no, rfid_tag, print_count, status,
                       generated_by, generated_at, last_printed_at, created_at, updated_at
             "#
         )
@@ -351,6 +352,8 @@ pub async fn generate_barcode(
         .bind(&req.barcode_type)
         .bind(sample_uuid)
         .bind(&sample_no)
+        // 此前写 gen_random_uuid()：随机租户直接撞 RLS 的 tenant_isolation WITH CHECK
+        .bind(ctx.tenant_id)
         .fetch_one(&mut scope)
         .await;
 
