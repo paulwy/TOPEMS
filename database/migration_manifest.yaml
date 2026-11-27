@@ -3347,7 +3347,7 @@ pending_forward_patches:
     status: to_apply
     effect: "下线未投产的岗位模板默认授权预留表 iam.position_roles / iam.position_permissions；授权权威链为 core_user_roles→core_role_permissions→core_permissions，两表不参与令牌聚合；iam.positions 主表与 iam.user_positions 用户-岗位归属线独立保留"
     destructive_scan: "DROP TABLE IF EXISTS ×2（to_regclass 守卫 + IF EXISTS；每条 DROP 前独立 destructive 标记 gate=allow、kind=DROP TABLE、owner=iam、ticket=IAM-LEGACY-20261126、rows-at-review=0；无 CASCADE；末尾 DO 断言两表 to_regclass 为空）"
-    note: "L6 路径 B（2026-11-27 拍板）：两表双库 0 行，后端仅 unified-core/iam/position.rs 半截 CRUD 已随本专项清除，前端岗位页无角色/权限字段；删除前空表头快照至 backups/db-iam-position-template-tables/（gitignore）；待独立 replay 窗口破坏性放行投放，本轮不写 prod 账本"
+    note: "L6 路径 B（2026-11-27 拍板）：两表双库 0 行，后端仅 unified-core/iam/position.rs 半截 CRUD 已随本专项清除，前端岗位页无角色/权限字段；删除前空表头快照至 backups/db-iam-position-template-tables/（gitignore）；配 database/rollback/20261127210000_drop_iam_position_template_tables.rollback.sql，回滚按 pg_dump 原样重建空骨架（role_id 误指 iam.roles 的 FK 加存在性守卫）；待独立 replay 窗口破坏性放行投放，本轮不写 prod 账本"
   # ===== 2026-11-27：public 层死存储簇（EHS / LIMS / finance 凭证 / 配置版本）清除 =====
   - version: "20261127200000"
     file: "database/migrations/20261127200000_drop_dead_public_storage_cluster.sql"
