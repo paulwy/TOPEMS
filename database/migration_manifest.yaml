@@ -3370,6 +3370,12 @@ pending_forward_patches:
     destructive_scan: "无 DROP/UPDATE/DELETE；ALTER POLICY 重写判定表达式，改前快照 archive.rls_policy_before_20261127"
     note: "刻意豁免 *_public_read / rls_platform_read / rls_global_read / *_platform_maintain 四类平台共享策略；有 NULL 行的 34 张表与 fail-open 方言（current_setting(app.tenant_id,true) IS NULL）另批；rollback 从快照表原样还原"
   # ===== 2026-11-27：B 组业务表 tenant_id 回填 + NOT NULL + 旁路收紧 =====
+  - version: "20261127260000"
+    file: "database/migrations/20261127260000_rls_failclose_wave1_mes_erp.sql"
+    status: prepared
+    effect: "RLS fail-closed 第一波（mes/erp）：运行时发现带 tenant_id IS NULL 方言的策略，剥离 4 类全开分支（GUC IS NULL / 空串 / 零 UUID / tenant_id IS NULL），统一前缀 COALESCE(current_setting('app.rls_system',true),'off')='on'；跳过平台共享策略、无 tenant_id 列、有 NULL 行、非租户模板。dev 演练：收紧 39 条、跳过 5 条、0 失败"
+    destructive_scan: "仅 ALTER POLICY 表达式改写；改前全量快照 archive.rls_failclose_before_20261127（含 polcmd/permissive/roles/qual/with_check），无 DELETE/DROP"
+    note: "前置条件：新二进制已发布且 TOPEMS_RLS_CTX=1（请求级 GUC 贯通），否则收口后请求读 0 行；rollback 按快照 DROP+CREATE 还原"
   - version: "20261127240000"
     file: "database/migrations/20261127240000_rls_business_tables_tenant_backfill.sql"
     status: applied
