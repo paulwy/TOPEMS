@@ -233,7 +233,7 @@ pub async fn create_serial_number(
             production_date, expiry_date, quality_status, status,
             warranty_start_date, warranty_end_date, inbound_order_no,
             unit_price, remark, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::date, $12::date, $13, $14, $15::date, $16::date, $17, $18, $19, $20, $21, $22)
         RETURNING *
         "#),
     )
@@ -345,7 +345,7 @@ pub async fn bulk_create_serial_numbers(
                 production_date, expiry_date, quality_status, status,
                 warranty_start_date, warranty_end_date, inbound_order_no,
                 unit_price, remark, created_at, updated_at, tenant_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::date, $12::date, $13, $14, $15::date, $16::date, $17, $18, $19, $20, $21, $22)
             RETURNING *
             "#),
         )

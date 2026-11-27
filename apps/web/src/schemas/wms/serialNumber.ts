@@ -1,5 +1,10 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import {
+  loadScmSupplierOptions,
+  loadWmsLocationOptions,
+  loadWmsWarehouseOptions,
+} from '@/schemas/dynamicLoaders';
 
 export const serialNumberSchema: EntitySchema = {
   entity: 'wms_serial_number',
@@ -13,6 +18,14 @@ export const serialNumberSchema: EntitySchema = {
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'wms:serial_number',
+
+  // wms.serial_numbers 的 warehouse_id / location_id / supplier_id 都是 uuid，
+  // 裸文本必 422；warehouse_id 后端要求必填
+  dynamicOptions: [
+    { field: 'warehouse_id', queryKey: ['wms', 'warehouses', 'forSerial'], loader: loadWmsWarehouseOptions },
+    { field: 'location_id', queryKey: ['wms', 'locations', 'forSerial'], loader: loadWmsLocationOptions },
+    { field: 'supplier_id', queryKey: ['scm', 'suppliers', 'forSerial'], loader: loadScmSupplierOptions },
+  ],
 
   fields: [
     {
@@ -69,23 +82,21 @@ export const serialNumberSchema: EntitySchema = {
     {
       name: 'warehouse_id',
       label: i18n.t('wms.serial_number.k8'),
-      type: 'text',
+      type: 'select',
+      required: true,
       listWidth: 100,
-      validation: [{ type: 'maxLength', value: 36 }],
     },
     {
       name: 'location_id',
       label: i18n.t('wms.serial_number.k9'),
-      type: 'text',
+      type: 'select',
       listWidth: 100,
-      validation: [{ type: 'maxLength', value: 36 }],
     },
     {
       name: 'supplier_id',
       label: i18n.t('wms.serial_number.k10'),
-      type: 'text',
+      type: 'select',
       listWidth: 120,
-      validation: [{ type: 'maxLength', value: 36 }],
     },
     {
       name: 'production_date',

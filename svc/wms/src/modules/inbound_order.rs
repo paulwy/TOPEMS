@@ -283,9 +283,10 @@ pub async fn create_inbound_order(
         r#"
         INSERT INTO wms.inbound_orders (id, order_number, order_type, warehouse_id,
                                        supplier_id, order_date, expected_arrival_date, total_value,
-                                       status, notes, created_at, updated_at, tenant_id)
+                                       status, notes, created_at, updated_at, tenant_id,
+                                       organization_id)
         VALUES ($1, $2, 'purchase', $3, $4, $5, $6, $7,
-               $12, $8, $9, $10, $11)
+               $12, $8, $9, $10, $11, $11)
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                   supplier_id, supplier_name, supplier_code,

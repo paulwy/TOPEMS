@@ -23,6 +23,8 @@ pub struct CreateLocationRequest {
     pub warehouse_id: Option<Uuid>,
     pub code: String,
     pub name: Option<String>,
+    // 前端表单字段名是 location_type（与列表列/DB 列一致），这里兼容两种写法
+    #[serde(alias = "location_type")]
     pub r#type: Option<String>,
     pub capacity: Option<f64>,
 }

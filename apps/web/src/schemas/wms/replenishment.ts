@@ -39,11 +39,14 @@ export const replenishmentSchema: EntitySchema = {
       },
     },
     {
+      // wms.replenishment_orders 没有 supplier_id 列，后端也忽略该字段：
+      // 表单里留着输入框只会让人以为填了有效果
       name: 'supplier_id',
       label: i18n.t('wms.replenishment.id_4'),
       type: 'text',
       listWidth: 140,
       showInList: true,
+      hideInForm: true,
     },
     {
       name: 'supplier_name',

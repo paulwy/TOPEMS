@@ -967,7 +967,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 <TreeBuilder
                   config={treeConfig as TreeConfig}
                   data={treeData}
-                  fields={schema.fields as SchemaField[]}
+                  fields={createFields as unknown as SchemaField[]}
                   mode={actions.includes('edit') ? 'edit' : 'view'}
                   loading={treeLoading}
                   error={
@@ -1112,7 +1112,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
             {hasWizard && extensions.wizard ? (
               <WizardBuilder
                 config={extensions.wizard as WizardConfig}
-                fields={schema.fields as SchemaField[]}
+                // 之前传 schema.fields（原始字段）：向导里的 supplier_id 等外键
+                // 拿不到 dynamicOptions，只剩裸文本框
+                fields={createFields as unknown as SchemaField[]}
                 values={wizardValues}
                 onChange={setWizardValues}
                 onComplete={async () => {
@@ -1193,7 +1195,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
             {hasWizard && extensions.wizard ? (
               <WizardBuilder
                 config={extensions.wizard as WizardConfig}
-                fields={schema.fields as SchemaField[]}
+                fields={editFields as unknown as SchemaField[]}
                 values={{ ...(editTarget as Record<string, unknown>), ...wizardValues }}
                 onChange={setWizardValues}
                 onComplete={() => {

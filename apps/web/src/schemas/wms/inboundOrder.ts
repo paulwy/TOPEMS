@@ -7,6 +7,7 @@
 
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadScmSupplierOptions, loadWmsWarehouseOptions } from '@/schemas/dynamicLoaders';
 
 export const inboundOrderSchema: EntitySchema = {
   entity: 'inbound_order',
@@ -20,6 +21,13 @@ export const inboundOrderSchema: EntitySchema = {
 
   // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
   permissionResource: 'wms:inbound',
+
+  // wms.inbound_orders.warehouse_id / supplier_id 都是 uuid：
+  // 裸文本提交会 422 "UUID parsing failed"，改挂仓库/供应商下拉
+  dynamicOptions: [
+    { field: 'warehouse_id', queryKey: ['wms', 'warehouses', 'forInbound'], loader: loadWmsWarehouseOptions },
+    { field: 'supplier_id', queryKey: ['scm', 'suppliers', 'forInbound'], loader: loadScmSupplierOptions },
+  ],
 
   fields: [
     {
@@ -60,12 +68,12 @@ export const inboundOrderSchema: EntitySchema = {
     {
       name: 'warehouse_id',
       label: i18n.t('wms.inbound_order.k12'),
-      type: 'text',
+      type: 'select',
     },
     {
       name: 'supplier_id',
       label: i18n.t('wms.inbound_order.id_13'),
-      type: 'text',
+      type: 'select',
       showInList: false,
       showInDetail: false,
     },

@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { FormBuilder } from '@/components/common';
 import { getFormFields } from '@/schema-dsl';
 import type { EntitySchema } from '@/schema-dsl';
+// SchemaForm 之前完全忽略 schema.dynamicOptions，走这条路渲染的表单
+// （WMS 的库位/入库单/序列号、SRM 供应商明细等）下拉永远是空的
+import { mergeDynamicOptions, useDynamicOptions } from '@/hooks/useDynamicOptions';
 import i18n from '@/i18n';
 
 interface SchemaFormProps<T> {
@@ -13,9 +16,14 @@ interface SchemaFormProps<T> {
 }
 
 export function SchemaForm<T>({ schema, mode, record, onSubmit, onClose }: SchemaFormProps<T>) {
+  const dynamicOptions = useDynamicOptions(schema.dynamicOptions);
   const fields = useMemo(
-    () => getFormFields<Record<string, unknown>>(schema, mode === 'view' ? 'view' : mode),
-    [schema, mode]
+    () =>
+      mergeDynamicOptions(
+        getFormFields<Record<string, unknown>>(schema, mode === 'view' ? 'view' : mode),
+        dynamicOptions
+      ),
+    [schema, mode, dynamicOptions]
   );
 
   return (

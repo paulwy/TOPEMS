@@ -4,6 +4,7 @@
 
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadWmsWarehouseOptions } from '@/schemas/dynamicLoaders';
 
 export const locationSchema: EntitySchema = {
   entity: 'location',
@@ -17,6 +18,11 @@ export const locationSchema: EntitySchema = {
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'wms:location',
+
+  // wms.locations.warehouse_id 是 uuid，裸文本提交必 422
+  dynamicOptions: [
+    { field: 'warehouse_id', queryKey: ['wms', 'warehouses', 'forLocation'], loader: loadWmsWarehouseOptions },
+  ],
 
   fields: [
     {
@@ -39,7 +45,7 @@ export const locationSchema: EntitySchema = {
     {
       name: 'warehouse_id',
       label: i18n.t('wms.location.k4'),
-      type: 'text',
+      type: 'select',
       renderCell: (row: Record<string, unknown>, _index: number) => {
         return (row as Record<string, unknown>)._warehouse_name
           ? String((row as Record<string, unknown>)._warehouse_name)
@@ -50,6 +56,7 @@ export const locationSchema: EntitySchema = {
       name: 'zone_name',
       label: i18n.t('wms.location.k5'),
       type: 'text',
+      hideInForm: true,
     },
     {
       name: 'location_type',
@@ -114,6 +121,7 @@ export const locationSchema: EntitySchema = {
       label: i18n.t('wms.location.id_28'),
       type: 'text',
       showInList: false,
+      hideInForm: true,
     },
     {
       name: 'aisle',

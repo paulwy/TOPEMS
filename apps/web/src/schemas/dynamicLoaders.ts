@@ -174,6 +174,15 @@ export async function loadCrmCustomerOptions(): Promise<SelectOption[]> {
   ]);
 }
 
+/** WMS 库位（wms.locations）：序列号/移库等要选具体库位 */
+export async function loadWmsLocationOptions(): Promise<SelectOption[]> {
+  const res = await apiClient.wms.get('/locations?page=1&page_size=200');
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['items', 'locations']), [
+    'location_code',
+    'location_name',
+  ]);
+}
+
 /** WMS 仓库（wms.warehouses）：退换货入库仓 */
 export async function loadWmsWarehouseOptions(): Promise<SelectOption[]> {
   const res = await apiClient.wms.get('/warehouses?page=1&page_size=200');
