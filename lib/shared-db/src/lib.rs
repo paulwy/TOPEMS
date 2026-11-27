@@ -18,6 +18,7 @@ pub mod rls;
 pub mod schema;
 pub mod storage;
 pub mod tenant;
+pub mod tenant_ctx;
 
 pub use audit::{
     is_valid_audit_log_status, set_system_channel, AuditLog, AuditLogQuery, AuditLogService,
@@ -60,6 +61,7 @@ pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
 };
 pub use rls::rls_middleware;
+pub use tenant_ctx::{apply_pool_hooks, TenantScopeCtx};
 pub use schema::{
     ai_table, bi_table, crm_table, ehs_table, erp_table, gis_table, hrm_table, im_table,
     integration_table, lims_table, mail_table, mes_table, mobile_table, pdm_table, pm_table,

@@ -52,10 +52,41 @@ fail-closed（消除 `app.tenant_id` 空/空串/零 UUID/`tenant_id IS NULL` 全
 
 ## 5. 已完成的前置代码改动
 
-`svc/unified-core/src/middleware/tenant_rls.rs`：
-- 新增 `rls_system_value(is_superuser)`：超管 `on` / 普通用户 `off`。
-- `set_rls_policy_conn` 增加 `app.rls_system` 注入；请求结束同时 `RESET app.rls_system`。
-- 单测覆盖。此改动在当前策略下**不改变可见性**（空分支仍放行），仅为第 2 步收口做铺垫。
+### 5.1 中间件显式系统标记
+`svc/unified-core/src/middleware/tenant_rls.rs`：新增 `rls_system_value(is_superuser)`（超管 `on` / 普通 `off`），
+请求结束一并 `RESET`。在当前策略下不改变可见性。
+
+### 5.2 请求级租户上下文贯通（灰度）
+- 新增 `lib/shared-db/src/tenant_ctx.rs`：`TenantScopeCtx`（tenant / system）、`scope()`、`current()`、
+  `apply_pool_hooks(options, default_tenant)`。
+  - `before_acquire`：有上下文则单条查询写入 `app.tenant_id` + `app.rls_system`（一次往返）；
+    无上下文回落 `DEFAULT_TENANT_ID`（多租户部署为空）；
+  - `after_release`：归还前把两个 GUC 置空/`off`，防池化串号；
+  - 钩子内错误只记日志不阻断取连接（否则等于全站断连）。
+- 挂载点：`lib/shared-db/src/database/mod.rs`（主业务池）与 `lib/shared-bootstrap/src/lib.rs`（quick bootstrap 池）。
+- 中间件改为 `tenant_ctx::scope(ctx, next.run(req))`，不再自行 acquire 连接设 GUC（旧实现设在无人使用的连接上）。
+- 灰度开关 `TOPEMS_RLS_CTX`（1/true 开启）：未开启时 `current()` 恒返回 `None`，行为与改造前完全一致。
+  dev `.env` 已置 `TOPEMS_RLS_CTX=1`；prod 待发版后单独打开。
+
+### 5.3 实测证据（`lib/shared-db/examples/tenant_ctx_probe.rs`）
+
+以应用角色 `topems_app` 连 dev 库、`TOPEMS_RLS_CTX=1`：
+
+```
+outside scope      : ("<null>", "<null>")
+inside tenant scope: ("00000000-0000-0000-0000-000000000001", "off")
+inside system scope: ("<null>", "on")
+after scopes       : ("<null>", "off")
+```
+
+说明 task-local 确实在 `before_acquire` 可见（sqlx 在调用方任务内 await hook），
+且作用域外/归还后不留任何租户状态。
+
+### 5.4 尚未覆盖的池
+以下自建池未挂 hook（多为模块内独立连接或测试）：`ehs/event_handlers`、`ehs/integration`、
+`communication/{notification,mail,im}`、`rd/project_repository`、`analytics/bi/datasource`、
+`unified-core/routes/business_tools/database_permission_store`（后者是用户库目标，不应受本库租户上下文影响）。
+收口这些模块的策略前，需要把它们并入共享池或同样挂 hook。
 
 ## 6. 风险与回滚
 

@@ -476,11 +476,16 @@ impl ServiceBootstrap {
             // 禁用 prepared statement 客户端缓存（H1 根因修复），与 shared-db 主池对齐。
             .statement_cache_capacity(0);
 
-        let pool = PgPoolOptions::new()
-            .max_connections(max_connections)
-            .idle_timeout(std::time::Duration::from_secs(120))
-            .max_lifetime(std::time::Duration::from_secs(600))
-            .test_before_acquire(true)
+        let pool_options = topems_shared_db::tenant_ctx::apply_pool_hooks(
+            PgPoolOptions::new()
+                .max_connections(max_connections)
+                .idle_timeout(std::time::Duration::from_secs(120))
+                .max_lifetime(std::time::Duration::from_secs(600))
+                .test_before_acquire(true),
+            default_tenant.clone(),
+        );
+
+        let pool = pool_options
             .after_connect(move |conn, _meta| {
                 let sp = search_path.clone();
                 let dt = default_tenant.clone();

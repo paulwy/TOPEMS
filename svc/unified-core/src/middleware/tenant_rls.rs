@@ -199,6 +199,7 @@ fn resolve_claims(req: &mut Request<Body>, jwt_secret: &str) -> Option<Claims> {
 ///
 /// 注意：DB 行级 RLS 在池化下仅为纵深防御（业务查询可能借另一连接），主防线仍是
 /// 业务 SQL 显式 `WHERE tenant_id = $1`（以及写路径的事务级 `set_config(..., true)`）。
+#[allow(dead_code)]
 fn rls_tenant_value(tenant_id: &str, is_superuser: bool) -> String {
     if is_superuser {
         String::new()
@@ -213,53 +214,6 @@ fn rls_tenant_value(tenant_id: &str, is_superuser: bool) -> String {
 /// 策略收口（fail-closed）后该分支被移除，超管可见性只能经由显式 `app.rls_system`。
 fn rls_system_value(is_superuser: bool) -> &'static str {
     if is_superuser { "on" } else { "off" }
-}
-
-/// 在【指定的、本请求独占的连接】上设置租户上下文。
-///
-/// CORE-06 根因：旧实现 `set_config(..., false)` 直接作用于 `&PgPool`，sqlx 会随机借取
-/// 一条池连接——(a) 业务 handler 后续查询可能借到另一条连接，GUC 不生效；(b) 会话级 GUC
-/// 在该连接归还后残留，污染后续请求。
-///
-/// 修复：调用方先 `pool.acquire()` 独占一条连接贯穿本请求，在其上 set；请求结束后在
-/// 【同一连接】再次调用本函数传 `""` 显式清空，再归还连接池 → 归还连接不残留会话租户状态。
-async fn set_rls_policy_conn(
-    conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
-    tenant_id: &str,
-    is_superuser: bool,
-) -> Result<(), sqlx::Error> {
-    // is_local=false：会话级。仅作用于本请求独占连接，且请求结束后显式清空，不污染池。
-    if tenant_id.is_empty() {
-        // superuser/空租户：RESET app.tenant_id。
-        // PG18 实测：SET 过再 RESET 后 current_setting(..., true) 回落为空串 ''（非 NULL），
-        // 业务 SQL/策略中 ((current_setting(...))::uuid) 必须经 NULLIF 包裹兜底
-        // （database/migrations/20261102210000_fix_tenant_policy_nullif.sql），否则 uuid cast 空串报错。
-        // 不能 SET ''（旧实现）：部分策略 qual 对 '' 直接 ::uuid（无 NULLIF），
-        // PG 即使 OR 有 ='' 分支仍可能评估后续 cast → invalid input syntax for type uuid: ""
-        sqlx::query("RESET app.tenant_id")
-            .execute(&mut **conn)
-            .await?;
-        // fail-closed 改造配套：超管全量访问改走显式系统开关，不再依赖「GUC 为空即全开」
-        sqlx::query("SELECT set_config('app.rls_system', 'on', false)")
-            .execute(&mut **conn)
-            .await?;
-    } else {
-        sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
-            .bind(tenant_id)
-            .execute(&mut **conn)
-            .await?;
-        sqlx::query("SELECT set_config('app.rls_system', 'off', false)")
-            .execute(&mut **conn)
-            .await?;
-    }
-
-    // 系统特权标记：超管置 on，普通用户显式置 off，避免继承上一条连接的残留值。
-    sqlx::query("SELECT set_config('app.rls_system', $1, false)")
-        .bind(rls_system_value(is_superuser))
-        .execute(&mut **conn)
-        .await?;
-
-    Ok(())
 }
 
 pub async fn tenant_rls_middleware(
@@ -296,69 +250,28 @@ pub async fn tenant_rls_middleware(
 
     match tenant_id {
         Some(tenant_id) => {
-            // superuser：置空 GUC（策略空分支放行全量），避免零值误拦；
-            // 普通用户：置实际租户（SQL 层显式租户条件是主防线，RLS 作纵深防御）
+            // RLS 上下文改为「task-local + 连接池 hook」贯通：中间件只声明作用域，
+            // 请求内任意 pool.acquire() 借到的连接都会由 before_acquire 写入 app.tenant_id /
+            // app.rls_system，归还时清空（见 lib/shared-db/src/tenant_ctx.rs）。
+            // 旧实现把 GUC 设在中间件自己独占的一条连接上，handler 用的是另一条连接，GUC 从未生效。
             let is_superuser = req
                 .extensions()
                 .get::<Claims>()
                 .map(|c| c.is_superuser)
                 .unwrap_or(false);
-            let rls_tenant = rls_tenant_value(&tenant_id, is_superuser);
 
-            // CORE-06 修复：acquire 独占本请求连接，在其上设置租户上下文；请求结束后在
-            // 【同一连接】显式清空 app.tenant_id 再归还连接池。
-            // 不再对 &PgPool 随机借连接 set 会话级 GUC（旧实现：借连接不保证生效 + 归还残留污染）。
-            let mut conn = match state.pool.acquire().await {
-                Ok(c) => c,
-                Err(e) => {
-                    tracing::error!("Failed to acquire DB connection for RLS: {}", e);
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"内部服务器错误：无法获取数据库连接","code":500}"#,
-                    )
-                        .into_response();
-                }
+            let ctx = if is_superuser {
+                // 超管：不设租户 GUC，改显式置 app.rls_system='on'（策略收口后唯一的全量通道）
+                topems_shared_db::tenant_ctx::TenantScopeCtx::system()
+            } else {
+                topems_shared_db::tenant_ctx::TenantScopeCtx::tenant(tenant_id.clone())
             };
-
-            if let Err(e) = set_rls_policy_conn(&mut conn, &rls_tenant, is_superuser).await {
-                tracing::error!("Failed to set RLS policy: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    [(header::CONTENT_TYPE, "application/json")],
-                    r#"{"success":false,"message":"内部服务器错误：无法设置租户上下文","code":500}"#,
-                )
-                    .into_response();
-            }
 
             req.extensions_mut().insert(TenantId(tenant_id.clone()));
 
-            tracing::debug!(
-                "RLS policy set for tenant: {} (rls: {})",
-                tenant_id,
-                tenant_id
-            );
+            tracing::debug!("RLS scope established for tenant: {}", tenant_id);
 
-            let resp = next.run(req).await;
-
-            // 归还前显式清空：RESET 恢复「未 SET」状态（旧实现 SET '' 会把 GUC 置为空串，
-            // 而 RLS policy 恒真分支依赖未 SET 返回 nil UUID 字符串——SET '' 后 NULLIF 分支失效，
-            // 池化下后续请求借到该连接时绑租户 INSERT 会被 RLS 拒绝）
-            if let Err(e) = sqlx::query("RESET app.tenant_id").execute(&mut *conn).await {
-                tracing::error!("Failed to reset RLS policy on connection return: {}", e);
-            }
-            if let Err(e) = sqlx::query("RESET app.rls_system").execute(&mut *conn).await {
-                tracing::error!("Failed to reset RLS system flag on connection return: {}", e);
-            }
-            if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'off', false)")
-                .execute(&mut *conn)
-                .await
-            {
-                tracing::error!("Failed to reset app.rls_system on connection return: {}", e);
-            }
-            drop(conn); // 归还连接池（此时已清空会话租户状态）
-
-            resp
+            topems_shared_db::tenant_ctx::scope(ctx, next.run(req)).await
         }
         None => {
             tracing::warn!("No tenant_id found in request: {}", path);

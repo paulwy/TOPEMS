@@ -115,6 +115,10 @@ async fn create_database_pool_from_reservation(
         .and_then(|t| t.parse::<uuid::Uuid>().ok())
         .map(|u| u.to_string());
 
+    // 请求级租户上下文：每次 checkout 把 task-local 的租户写到该连接（请求内任意 pool.acquire 都生效），
+    // 归还前清空。无上下文时回落 DEFAULT_TENANT_ID（多租户部署为 None）。详见 lib/shared-db/src/tenant_ctx.rs。
+    let options = crate::tenant_ctx::apply_pool_hooks(options, default_tenant.clone());
+
     let options = options.after_connect(move |conn, _meta| {
         let search_path = search_path.clone();
         let default_tenant = default_tenant.clone();
