@@ -154,6 +154,7 @@ pub async fn list_labor_efficiency(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:read"])),
     get,
     path = "/labor/efficiency/{userId}",
     tag = "wms",

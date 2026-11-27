@@ -174,8 +174,9 @@ pub async fn trigger_qms_inspection_api(
     {
         Ok(sync) => ApiResponse::success(sync, "QMS inspection triggered successfully"),
         Err(e) => {
+            // 未接线等「服务不可用」必须显形为 503，不能统一压成 500 内部错误
             tracing::error!("Failed to trigger QMS inspection: {}", e);
-            ApiResponse::from(TopemsError::internal("Failed to trigger QMS inspection", e))
+            ApiResponse::from(e)
         }
     }
 }
@@ -220,11 +221,9 @@ pub async fn sync_quality_result_api(
     {
         Ok(sync) => ApiResponse::success(sync, "Quality result synced to MES successfully"),
         Err(e) => {
+            // 未接线等「服务不可用」必须显形为 503，不能统一压成 500 内部错误
             tracing::error!("Failed to sync quality result to MES: {}", e);
-            ApiResponse::from(TopemsError::internal(
-                "Failed to sync quality result to MES",
-                e,
-            ))
+            ApiResponse::from(e)
         }
     }
 }
@@ -269,8 +268,9 @@ pub async fn sync_trace_chain_api(
     {
         Ok(sync) => ApiResponse::success(sync, "Trace chain data synced successfully"),
         Err(e) => {
+            // 未接线等「服务不可用」必须显形为 503，不能统一压成 500 内部错误
             tracing::error!("Failed to sync trace chain data: {}", e);
-            ApiResponse::from(TopemsError::internal("Failed to sync trace chain data", e))
+            ApiResponse::from(e)
         }
     }
 }
@@ -315,11 +315,9 @@ pub async fn defect_handling_api(
     {
         Ok(sync) => ApiResponse::success(sync, "Defect handling processed successfully"),
         Err(e) => {
+            // 未接线等「服务不可用」必须显形为 503，不能统一压成 500 内部错误
             tracing::error!("Failed to process defect handling: {}", e);
-            ApiResponse::from(TopemsError::internal(
-                "Failed to process defect handling",
-                e,
-            ))
+            ApiResponse::from(e)
         }
     }
 }

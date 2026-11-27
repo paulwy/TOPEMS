@@ -31,6 +31,7 @@ where
 /// GET /audit-logs/modules —— 审计日志模块清单（前端 auditLogApi.getModules 契约）
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/audit-logs/modules",
     tag = "wms",
     responses((status = 200, description = "OK"))
