@@ -61,7 +61,6 @@ pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
 };
 pub use rls::rls_middleware;
-pub use tenant_ctx::{apply_pool_hooks, TenantScopeCtx};
 pub use schema::{
     ai_table, bi_table, crm_table, ehs_table, erp_table, gis_table, hrm_table, im_table,
     integration_table, lims_table, mail_table, mes_table, mobile_table, pdm_table, pm_table,
@@ -72,3 +71,4 @@ pub use schema::{
 };
 pub use scope::{Db, ScopedTxn, PLATFORM_TENANT_ID};
 pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};
+pub use tenant_ctx::{apply_pool_hooks, TenantScopeCtx};
