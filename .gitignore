@@ -388,3 +388,7 @@ _shots/
 
 # PgBouncer 真实口令文件（由 render-userlist.sh 生成）
 deploy/docker/pgbouncer/userlist.txt
+
+# 临时工作树的依赖软链（不能入库；带斜杠的规则不匹配 symlink）
+/node_modules
+/apps/web/node_modules
