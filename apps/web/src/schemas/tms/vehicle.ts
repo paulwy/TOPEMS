@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { carrierApi } from '@/api/tms/carrier';
 
 export const vehicleSchema: EntitySchema = {
   entity: 'vehicle',
@@ -15,6 +16,25 @@ export const vehicleSchema: EntitySchema = {
     updateMethod: 'update',
     deleteMethod: 'delete',
   },
+
+  dynamicOptions: [
+    {
+      field: 'carrier_id',
+      queryKey: ['tms', 'carriers', 'forVehicle'],
+      loader: async () => {
+        const res = await carrierApi.list({ page: 1, page_size: 200 });
+        const payload: unknown = res?.data;
+        const rows = Array.isArray(payload)
+          ? payload
+          : ((payload as { carriers?: unknown[]; items?: unknown[] })?.carriers ??
+            (payload as { items?: unknown[] })?.items ??
+            []);
+        return rows
+          .filter((c) => c.id)
+          .map((c) => ({ value: c.id, label: c.name || c.carrier_no || c.id }));
+      },
+    },
+  ],
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'tms:vehicle',
@@ -50,7 +70,8 @@ export const vehicleSchema: EntitySchema = {
     {
       name: 'carrier_id',
       label: i18n.t('tms.vehicle_management_page.id_35'),
-      type: 'text',
+      // 承运商同样从裸 UUID 文本框改为下拉（可选字段，列表为空时不阻塞创建）
+      type: 'select',
       listWidth: 140,
     },
     {

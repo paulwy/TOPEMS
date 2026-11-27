@@ -104,6 +104,12 @@ export interface SchemaField {
   readonlyOnEdit?: boolean;
   /** 始终只读 */
   readonly?: boolean;
+  /**
+   * date 字段提交给后端时的格式：
+   * - 'date'（默认）：`YYYY-MM-DD`，适合 NaiveDate / 字符串列；
+   * - 'iso-datetime'：`YYYY-MM-DDTHH:mm:ssZ`，适合 chrono `DateTime<Utc>` 列。
+   */
+  valueFormat?: 'date' | 'iso-datetime';
 
   // ── 列表行为 ──
   /** 是否在列表中显示，默认 true */
@@ -425,6 +431,8 @@ export function toFormField(field: SchemaField, mode: 'create' | 'edit' | 'view'
     colSpan: field.colSpan,
     dependsOn: field.dependsOn,
     visible: field.visibleWhen,
+    // date 字段的提交格式（默认 YYYY-MM-DD；chrono DateTime<Utc> 列需要 iso-datetime）
+    valueFormat: field.valueFormat,
   };
 }
 

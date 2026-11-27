@@ -7,15 +7,14 @@ import i18n from '@/i18n';
 
 async function loadEmployeeOptions(): Promise<{ value: string; label: string }[]> {
   try {
-    const response = await employeeApi.list({ page: 1, page_size: 100 });
-    if (response.code === 0 && response.data) {
-      const items = response.data.items || [];
-      return items.map((e: Employee) => ({ value: e.id, label: e.name }));
-    }
+    const response = await employeeApi.list({ page: 1, page_size: 200 });
+    const items = response?.data?.items ?? [];
+    return items
+      .filter((e: Employee) => e?.id)
+      .map((e: Employee) => ({ value: e.id, label: e.name || e.employee_no || e.id }));
   } catch {
-    // ignore
+    return [];
   }
-  return [];
 }
 
 export const contractSchema: EntitySchema = {
@@ -98,6 +97,8 @@ export const contractSchema: EntitySchema = {
       name: 'start_date',
       label: i18n.t('hrm.contract.k14'),
       type: 'date',
+      // hrm 的 contracts.start_date 是 chrono DateTime<Utc>，只接受带时区的 ISO 串
+      valueFormat: 'iso-datetime',
       required: true,
       sortable: true,
       listWidth: 120,
@@ -106,6 +107,7 @@ export const contractSchema: EntitySchema = {
       name: 'end_date',
       label: i18n.t('hrm.contract.k15'),
       type: 'date',
+      valueFormat: 'iso-datetime',
       sortable: true,
       listWidth: 120,
     },

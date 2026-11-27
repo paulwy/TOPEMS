@@ -2,6 +2,7 @@ import React from 'react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
+import { srmApi } from '@/api/srm';
 
 export const contractSchema: EntitySchema = {
   entity: 'supplier_contract',
@@ -12,6 +13,23 @@ export const contractSchema: EntitySchema = {
     module: 'srm',
     resource: 'contracts',
   },
+
+  dynamicOptions: [
+    {
+      field: 'supplier_id',
+      queryKey: ['srm', 'suppliers', 'forContract'],
+      loader: async () => {
+        const res = await srmApi.listSuppliers();
+        const payload: unknown = res?.data;
+        const rows = Array.isArray(payload)
+          ? payload
+          : ((payload as { suppliers?: unknown[] })?.suppliers ?? []);
+        return (rows as { id: string; name?: string; name_en?: string; supplier_no?: string }[])
+          .filter((x) => x?.id)
+          .map((x) => ({ value: x.id, label: x.name || x.name_en || x.supplier_no || x.id }));
+      },
+    },
+  ],
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'srm:contract',
@@ -39,7 +57,8 @@ export const contractSchema: EntitySchema = {
     {
       name: 'supplier_id',
       label: i18n.t('srm.contract.k4'),
-      type: 'text',
+      // 供应商此前是裸文本框，要求手填 UUID，实际填不出合法值 → 下拉选择
+      type: 'select',
       required: true,
       listWidth: 150,
       renderCell: (row, _index) => {
@@ -128,14 +147,15 @@ export const contractSchema: EntitySchema = {
       name: 'status',
       label: i18n.t('srm.contract.k24'),
       type: 'select',
-      defaultValue: 'pending',
+      // 后端 SupplierContractStatus 唯一值集：draft / active / inactive / archived
+      defaultValue: 'draft',
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: i18n.t('srm.contract.k25') },
+          { value: 'draft', label: i18n.t('srm.contract.k25') },
           { value: 'active', label: i18n.t('srm.contract.k26') },
-          { value: 'completed', label: i18n.t('srm.contract.k27') },
-          { value: 'terminated', label: i18n.t('srm.contract.k28') },
+          { value: 'inactive', label: i18n.t('srm.contract.k27') },
+          { value: 'archived', label: i18n.t('srm.contract.k28') },
         ],
       },
       listWidth: 100,
@@ -182,16 +202,16 @@ export const contractSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        pending: 'warning',
+        draft: 'warning',
         active: 'primary',
-        completed: 'success',
-        terminated: 'error',
+        inactive: 'default',
+        archived: 'success',
       },
       labelMap: {
-        pending: i18n.t('srm.contract.k32'),
+        draft: i18n.t('srm.contract.k32'),
         active: i18n.t('srm.contract.k33'),
-        completed: i18n.t('srm.contract.k34'),
-        terminated: i18n.t('srm.contract.k35'),
+        inactive: i18n.t('srm.contract.k34'),
+        archived: i18n.t('srm.contract.k35'),
       },
     },
     filters: [
@@ -201,10 +221,10 @@ export const contractSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('srm.contract.k37'), value: 'all' },
-          { label: i18n.t('srm.contract.k38'), value: 'pending' },
+          { label: i18n.t('srm.contract.k38'), value: 'draft' },
           { label: i18n.t('srm.contract.k39'), value: 'active' },
-          { label: i18n.t('srm.contract.k40'), value: 'completed' },
-          { label: i18n.t('srm.contract.k41'), value: 'terminated' },
+          { label: i18n.t('srm.contract.k40'), value: 'inactive' },
+          { label: i18n.t('srm.contract.k41'), value: 'archived' },
         ],
       },
     ],

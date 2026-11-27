@@ -60,6 +60,7 @@ import type {
 } from '@/schema-dsl/schemaExtensions';
 import { getColumns, getFormFields, getFilterParams } from '@/schema-dsl';
 import { useDynamicOptions, mergeDynamicOptions } from '@/hooks/useDynamicOptions';
+import { toApiPayload } from '@/utils/apiPayload';
 import { SubTableBuilder } from './SubTableBuilder';
 import { WizardBuilder } from './WizardBuilder';
 import { TreeBuilder, type TreeNode } from './TreeBuilder';
@@ -1148,7 +1149,8 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                     setCreateFormValues(values);
                   }}
                   onSubmit={async (values) => {
-                    const combinedValues = { ...values, ...wizardValues };
+                    // camelCase 表单键 → snake_case 请求键（Rust DTO 只认 snake_case）
+                    const combinedValues = toApiPayload({ ...values, ...wizardValues });
                     // A-08/A-09：必须 await —— 失败时异常回抛给 FormBuilder，
                     // 弹窗保持打开、已填内容不丢；同时在请求期间禁用提交按钮。
                     await createMutation.mutateAsync(combinedValues as Partial<T>);
@@ -1233,7 +1235,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   }}
                   onSubmit={async (values) => {
                     const id = String(editTarget[idField]);
-                    const combinedValues = { ...values, ...wizardValues };
+                    const combinedValues = toApiPayload({ ...values, ...wizardValues });
                     await updateMutation.mutateAsync({ id, data: combinedValues as Partial<T> });
                   }}
                 />

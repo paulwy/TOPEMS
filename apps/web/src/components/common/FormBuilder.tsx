@@ -106,6 +106,8 @@ export interface FormFieldConfig<T extends Record<string, unknown> = Record<stri
   validation?: ValidationRule<T>[];
   colSpan?: number;
   dependsOn?: string[];
+  /** date 字段提交格式：默认 YYYY-MM-DD；iso-datetime 提交 YYYY-MM-DDTHH:mm:ssZ */
+  valueFormat?: 'date' | 'iso-datetime';
   onChange?: (name: string, value: unknown, values: T) => void;
   render?: (props: {
     name: string;
@@ -146,6 +148,8 @@ interface FormBuilderConfig<T extends Record<string, unknown> = Record<string, u
   mode?: FormBuilderMode;
   /** 表单分组配置 */
   formSections?: FormSectionConfig[];
+  /** 外部提交中状态（Mutation 的 isPending）：提交按钮置灰，避免重复提交 */
+  isSubmitting?: boolean;
 }
 
 export default function FormBuilder<T extends Record<string, unknown> = Record<string, unknown>>({
@@ -154,6 +158,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
   submitLabel = i18n.t('shared.form_builder.k0'),
   resetLabel = i18n.t('shared.form_builder.k1'),
   showReset = true,
+  isSubmitting = false,
   title,
   initialValues = {},
   colCount = 2,
@@ -344,6 +349,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
         setErrors(newErrors);
         return;
       }
+      if (isSubmitting) return;
 
       try {
         // 空值清洗：未填写的字段（''/null/undefined）不随请求提交，
@@ -357,7 +363,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
         // onSubmit 负责自己的错误处理
       }
     },
-    [fields, values, validateField, onSubmit, onSubmitSuccess]
+    [fields, values, validateField, onSubmit, onSubmitSuccess, isSubmitting]
   );
 
   const handleReset = useCallback(() => {
@@ -603,11 +609,17 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               <DatePicker
                 label={field.label}
                 value={value ? dayjs(value as string) : null}
-                onChange={(newValue: dayjs.Dayjs | null) =>
-                  // 纯日期字段只提交 YYYY-MM-DD：后端 Date/NaiveDate 反序列化收到
-                  // 带时分的 ISO 串会报 "trailing input"（422），此前所有 date 字段都踩这个坑
-                  handleChange(field.name, newValue?.format('YYYY-MM-DD'))
-                }
+                onChange={(newValue: dayjs.Dayjs | null) => {
+                  // 纯日期字段默认只提交 YYYY-MM-DD：后端 NaiveDate 收到带时分的 ISO 串会报
+                  // "trailing input"（422）；但 chrono DateTime<Utc> 列又必须带时区，
+                  // 因此由字段的 valueFormat 决定（schema 里显式声明 iso-datetime 才升格）。
+                  if (!newValue) return handleChange(field.name, undefined);
+                  const iso = newValue.format('YYYY-MM-DD');
+                  return handleChange(
+                    field.name,
+                    field.valueFormat === 'iso-datetime' ? `${iso}T00:00:00Z` : iso
+                  );
+                }}
                 disabled={isDisabled}
                 slotProps={{
                   textField: {

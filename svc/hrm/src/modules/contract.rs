@@ -318,9 +318,10 @@ pub async fn create_contract(
             id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
             party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
             contract_file_path, reminder_days, status, notes, created_at, updated_at,
-            contract_name, probation_end_date, currency, salary_type, work_location, department, position
+            contract_name, probation_end_date, currency, salary_type, work_location, department, position,
+            organization_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $26, $16, $17, $18,
-                  $19, $20, $21, $22, $23, $24, $25)
+                  $19, $20, $21, $22, $23, $24, $25, $27)
         RETURNING id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                   end_date::timestamptz AS end_date, salary, probation_period_days,
@@ -354,6 +355,9 @@ pub async fn create_contract(
     .bind(&req.department)
     .bind(&req.position)
     .bind(crate::modules::contract_status::ContractStatus::DEFAULT.as_db_str())
+    // contracts.organization_id 是历史遗留的 NOT NULL 列（tenant 维度的单组织项目里就是租户 id），
+    // 此前 INSERT 漏传导致"新建合同"必然 500：null value in column "organization_id"
+    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -764,8 +768,8 @@ pub async fn create_renewal(
         r#"
         INSERT INTO hrm.contract_renewals (
             id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
-            new_start_date, new_end_date, new_salary, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, $11, $9, $10)
+            new_start_date, new_end_date, new_salary, status, created_at, updated_at, organization_id
+        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, $11, $9, $10, $12)
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -782,6 +786,7 @@ pub async fn create_renewal(
     .bind(now)
     .bind(now)
     .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Pending.as_db_str())
+    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 
