@@ -48,10 +48,6 @@ export const contraindicationSchema: EntitySchema = {
       label: i18n.t('ehs.contraindication.k5'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.diagnosed_at as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'diagnosis_hospital',

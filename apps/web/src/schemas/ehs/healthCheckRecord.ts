@@ -54,10 +54,6 @@ export const healthCheckRecordSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_record.k5'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.check_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'hospital',

@@ -108,10 +108,6 @@ export const inspectionPlanSchema: EntitySchema = {
       type: 'date',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.start_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'end_date',
@@ -119,10 +115,6 @@ export const inspectionPlanSchema: EntitySchema = {
       type: 'date',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.end_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'status',
@@ -283,10 +275,6 @@ export const inspectionRecordSchema: EntitySchema = {
       label: i18n.t('ehs.check.k65'),
       type: 'date',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.inspected_at as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'result',

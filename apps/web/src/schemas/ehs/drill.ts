@@ -36,10 +36,6 @@ export const drillSchema: EntitySchema = {
       label: i18n.t('ehs.drill.k4'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.drill_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'duration_hours',

@@ -67,10 +67,6 @@ export const healthManagementSchema: EntitySchema = {
       type: 'date',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.birthday as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'department',

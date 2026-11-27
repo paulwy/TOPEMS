@@ -77,10 +77,6 @@ export const trainingRecordSchema: EntitySchema = {
       label: i18n.t('ehs.training.k16'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.training_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'duration_hours',
@@ -269,20 +265,12 @@ export const trainingCertificateSchema: EntitySchema = {
       label: i18n.t('ehs.training.k60'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.issue_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'expiry_date',
       label: i18n.t('ehs.training.k61'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.expiry_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'issuing_authority',
@@ -467,20 +455,12 @@ export const trainingPlanSchema: EntitySchema = {
       label: i18n.t('ehs.training.k102'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.start_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'end_date',
       label: i18n.t('ehs.training.k103'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => {
-        const v = row.end_date as string | null | undefined;
-        return v || '-';
-      },
     },
     {
       name: 'duration_hours',
