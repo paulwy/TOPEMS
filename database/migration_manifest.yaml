@@ -3316,3 +3316,23 @@ pending_forward_patches:
     effect: "兜底 workshops_id_tenant_key → ADD CONSTRAINT production_lines_workshop_tenant_fkey (workshop_id, tenant_id) REFERENCES mes.workshops(id, tenant_id)；DROP 单列 production_lines_workshop_id_fkey；末尾双断言"
     destructive_scan: "CREATE UNIQUE INDEX IF NOT EXISTS + ADD CONSTRAINT + DROP CONSTRAINT IF EXISTS（pg_constraint 守卫）；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/COLUMN"
     note: "承接 orphan 20261127130000。本机（已有复合外键→空跑）、生产（0 行，原本只有单列外键）均已投放，账本 success=t"
+
+  # ===== 2026-11-27：第三条 orphan（工位/订单车间外键）承接 =====
+  - version: "20261127160000"
+    file: "(无文件：应用后在工作区被撤回；origin 与 checksums/manifest 均无登记)"
+    status: superseded
+    effect: "曾在 dev 建下 mes.work_stations.work_stations_workshop_tenant_fkey 与 mes.production_orders.production_orders_workshop_tenant_fkey（(workshop_id, tenant_id) → mes.workshops(id, tenant_id)）；_sqlx_migrations 残留 success 行（description=mes station order workshop tenant fk）"
+    destructive_scan: "无文件可扫描"
+    note: "orphan（有结构、无来源）：结构只存在于本机 dev，生产侧仍是单列外键 → 两端分叉；效果由 20261127170000 幂等承接，生产据此补齐"
+  - version: "20261127170000"
+    file: "database/migrations/20261127170000_mes_station_order_workshop_tenant_fk.sql"
+    status: applied
+    effect: "承接 orphan 20261127160000：mes.work_stations / mes.production_orders 的车间外键由单列 REFERENCES mes.workshops(id) ON DELETE SET NULL 改为 (workshop_id, tenant_id) → mes.workshops(id, tenant_id)；缺 (id,tenant_id) 唯一索引时补齐 workshops_id_tenant_key；收尾断言三张车间引用表口径一致"
+    destructive_scan: "DROP CONSTRAINT（单列表存在时才删，带指向断言）+ ADD CONSTRAINT 复合外键；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN"
+    note: "口径定死为租户内复合外键：复合外键不可用 ON DELETE SET NULL（多列 SET NULL 会连 tenant_id 置空），删除车间前须先处理其下工位/订单；两表 workshop_id 当前全 NULL，建约束零校验冲突；已知遗留：tenant_id 仍可空（production_orders 5 行 NULL），MATCH SIMPLE 下不校验"
+  - version: "20261127180000"
+    file: "database/migrations/20261127180000_drop_undocumented_public_orphan_tables.sql"
+    status: applied
+    effect: "删除 public 层四张「零来源 + 零引用 + 0 行」历史试验残骸：core_feedbacks、hrm_master_data_refs、wms_master_data_refs、qa_lab_samples_merge_backup_20260919；删除前逐张断言 0 行/无入向外键/无视图依赖"
+    destructive_scan: "DROP TABLE IF EXISTS ×4（to_regclass 守卫、destructive 标记 rows-at-review=0 + ticket）；生产无这四张表 → 纯空跑"
+    note: "public 层盘点（217 表/生产 86）证明 public 是在用权威层而非镜像层（运行期 public.* 引用 1,257 处、finance 60 条外键指向 public.core_tenants），故只清零引用孤儿；盘点方法与后续批次规则见 docs/db/public-schema-inventory-2026-11-27.md，脚本 scripts/migration/audit-public-schema.sql；结构由 rollback 按 pg_dump 原样重建"
