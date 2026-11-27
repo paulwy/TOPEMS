@@ -213,7 +213,11 @@ fn rls_tenant_value(tenant_id: &str, is_superuser: bool) -> String {
 /// 旧实现靠「`app.tenant_id` 为空 ⇒ 策略空分支放行」拿全量可见性，属 fail-open；
 /// 策略收口（fail-closed）后该分支被移除，超管可见性只能经由显式 `app.rls_system`。
 fn rls_system_value(is_superuser: bool) -> &'static str {
-    if is_superuser { "on" } else { "off" }
+    if is_superuser {
+        "on"
+    } else {
+        "off"
+    }
 }
 
 pub async fn tenant_rls_middleware(
