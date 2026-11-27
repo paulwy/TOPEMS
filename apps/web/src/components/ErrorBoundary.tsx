@@ -535,7 +535,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     alignItems: 'center',
                     padding: `${designTokens.spacing.md} 20px`,
                     backgroundColor: 'var(--accent-primary-active)',
-                    color: `${designTokens.colors.common.white}`,
+                    color: 'var(--text-on-accent)',
                     borderRadius: 'var(--radius-md)',
                     border: 'none',
                     cursor: 'pointer',
