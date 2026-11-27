@@ -723,6 +723,16 @@ pub async fn set_task_variable(
 
 // ===== global 作用域 =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/flow/variables/global/{workflow_id}",
+    tag = "Core-Flow",
+    params(
+        ("workflow_id" = String, Path, description = "workflow_id"),
+    ),
+    responses((status = 200, description = "/flow/variables/global/{workflow_id} get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_global_variables(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -31,6 +31,13 @@ const FAVORITE_COLUMNS: &str =
 // ============================================================
 
 /// GET /comments?entity_type=&entity_id= — 按实体扁平列出评论（升序）。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/comments",
+    tag = "Core-Engagement",
+    responses((status = 200, description = "/comments get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_comments(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -95,6 +102,13 @@ pub async fn list_comments(
 }
 
 /// POST /comments — 创建评论（作者取自 Claims，租户取当前请求租户）。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/comments",
+    tag = "Core-Engagement",
+    responses((status = 200, description = "/comments post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -168,6 +182,16 @@ pub async fn create_comment(
 }
 
 /// PUT /comments/{id} — 作者本人更新内容。
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/comments/{id}",
+    tag = "Core-Engagement",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "/comments/{id} put"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -245,6 +269,16 @@ pub async fn update_comment(
 }
 
 /// DELETE /comments/{id} — 作者本人软删除。
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/comments/{id}",
+    tag = "Core-Engagement",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "/comments/{id} delete"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -308,6 +342,13 @@ pub async fn delete_comment(
 // ============================================================
 
 /// GET /favorites — 当前用户的收藏列表（新在前）。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/favorites",
+    tag = "Core-Engagement",
+    responses((status = 200, description = "/favorites get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_favorites(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -367,6 +408,13 @@ pub async fn list_favorites(
 }
 
 /// POST /favorites — 幂等添加收藏（唯一键冲突不报错，返回已有记录）。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/favorites",
+    tag = "Core-Engagement",
+    responses((status = 200, description = "/favorites post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn add_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -463,6 +511,16 @@ pub async fn add_favorite(
 }
 
 /// DELETE /favorites/{id} — 当前用户删除自己的收藏。
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/favorites/{id}",
+    tag = "Core-Engagement",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "/favorites/{id} delete"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn remove_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -521,6 +579,13 @@ pub async fn remove_favorite(
 }
 
 /// GET /favorites/check?entity_type=&entity_id= — 当前用户是否已收藏。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/favorites/check",
+    tag = "Core-Engagement",
+    responses((status = 200, description = "/favorites/check get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn check_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -62,6 +62,13 @@ pub struct FilePermissionRequest {
 
 /// 列出文件列表
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/files",
+    tag = "Core-File",
+    responses((status = 200, description = "/file/files get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_files(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1249,6 +1256,13 @@ pub async fn export_files(
 }
 
 /// 搜索文件
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/files/search",
+    tag = "Core-File",
+    responses((status = 200, description = "/file/files/search get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn search_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,

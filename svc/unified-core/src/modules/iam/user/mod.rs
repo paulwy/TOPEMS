@@ -7,7 +7,7 @@ mod models;
 mod profile;
 pub(crate) mod profile_ext;
 pub(crate) mod roles;
-mod status;
+pub(crate) mod status;
 pub(crate) mod validation;
 
 pub(crate) use models::resolve_user_grants;

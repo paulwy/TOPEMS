@@ -116,15 +116,15 @@ pub fn automation_routes(_state: &AppState) -> Router<AppState> {
         )
         .route(
             "/automation/runs/{id}/steps",
-            get(crate::modules::automation::get_run_steps),
+            get(crate::modules::automation::get_run_steps).post(crate::modules::automation::get_run_steps),
         )
         .route(
             "/automation/runs/{id}/logs",
-            get(crate::modules::automation::get_run_logs),
+            get(crate::modules::automation::get_run_logs).post(crate::modules::automation::get_run_logs),
         )
         .route(
             "/automation/runs/{id}/logs/{log_id}",
-            get(crate::modules::automation::get_run_log_by_id),
+            get(crate::modules::automation::get_run_log_by_id).post(crate::modules::automation::get_run_log_by_id),
         )
         // Variables
         .route(
