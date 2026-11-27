@@ -528,3 +528,34 @@ spec 加到 2794 后全量冒烟多跑出 1 条 FAIL：`GET /api/erp/customers` 
 剩 1 条是前端 `` `/thumbnail/${id}${qs}` `` 的拼串被归一成 `/thumbnail`（路径参数被当成 query 占位剥掉的工具口径假阴性），后端 `/thumbnail/{id}` 实际可用。
 
 冒烟 `1020 条 OK=953 SOFT=67 FAIL=0`。
+
+---
+
+## 第 23 轮：iam / im（自动补注解器 + 两个结构坑）
+
+### 新增工具 `scripts/ci/openapi_backfill.py`
+
+把前几轮手工做法固化成脚本：解析 `.route(...)`（括号配对，不怕链式方法）→ 对"既有注解又有路由"的 handler 反推挂载前缀 → 给同块内缺注解的 handler 生成 `#[utoipa::path]` → 登记到该 crate 的 `paths(...)`。默认 dry-run，`--apply` 才落盘。
+
+### 坑 1：路由在 routes/ 或 server crate，handler 在别处
+
+IAM 的路由在 `svc/unified-core/src/routes/iam.rs`，handler 在 `modules/iam/*`；IM 的路由干脆写在 `svc/server/src/modules/communication_real_module.rs`，handler 在 `svc/communication/src/im.rs`。只扫一个 crate 会得出"路由 0 个"的假结论。脚本因此拆成：定义扫描（全 crate）+ 路由扫描（`--routes-filter` / `--routes-extra` 可指向别的 crate）。
+
+### 坑 2：前缀要按"路由块"推，不能按文件推
+
+`communication_real_module.rs` 一个文件里同时挂着 notification 块（前缀 `/notification`）和 im 块（前缀 `/im`）。第一版按文件投票，多数票是 `/notification`，于是 15 条 im 注解全写成 `/notification/rooms/...`——生成器照单全收，冒烟必 404。改成以 `Router::new()` 划分块、按块投票后，前缀正确取 `/im`。（这一版错误注解已整体回滚重做。）
+
+### 坑 3：私有子模块
+
+`modules/iam/user/{batch,access_log,profile}.rs` 是私有 `mod`，登记 `crate::modules::iam::user::batch::*` 直接 `E0603: module is private`，需要改 `pub(crate) mod`。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2807 | **2875** |
+| 契约匹配 | 3103 | **3157** |
+| iam 缺口 | 32 | **1**（`POST /iam/auth/sessions/revoke-all` 后端无路由） |
+| im 缺口 | 35 | **19**（均为后端确实没有的写接口） |
+
+iam 的 22 条无参 GET 全部实测非 404；`GET /api/communication/notification/channels` 实测 **404** 而 `/notification/push-config/channels` 200，说明 server crate 里那块 `/notification/channels` 路由是死挂载，注解里的 `push-config` 才是对的。

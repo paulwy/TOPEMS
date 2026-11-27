@@ -1756,6 +1756,13 @@ struct SessionInfo {
 }
 
 /// GET /iam/auth/sessions —— 当前用户活动会话列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/auth/sessions",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /iam/auth/sessions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_sessions(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1839,6 +1846,16 @@ pub async fn list_sessions(
 }
 
 /// DELETE /iam/auth/sessions/{id} —— 注销指定会话（仅本人）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/iam/auth/sessions/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /iam/auth/sessions/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_session(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1909,6 +1926,13 @@ pub async fn delete_session(
 }
 
 /// GET /iam/auth/password-policy —— 密码策略
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/auth/password-policy",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /iam/auth/password-policy"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_password_policy() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "code": 200, "success": true,
@@ -1927,6 +1951,13 @@ pub async fn get_password_policy() -> Json<serde_json::Value> {
 }
 
 /// GET /iam/auth/security-settings —— 安全设置
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/auth/security-settings",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /iam/auth/security-settings"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_security_settings() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "code": 200, "success": true,

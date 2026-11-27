@@ -401,6 +401,13 @@ async fn check_user_resource_permission(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/users/me/permissions",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /users/me/permissions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_my_permissions(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

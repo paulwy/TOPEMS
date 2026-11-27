@@ -1,10 +1,10 @@
 //! User submodule - User management handlers
 
-mod access_log;
-mod batch;
+pub(crate) mod access_log;
+pub(crate) mod batch;
 pub(crate) mod crud;
 mod models;
-mod profile;
+pub(crate) mod profile;
 pub(crate) mod profile_ext;
 pub(crate) mod roles;
 pub(crate) mod status;

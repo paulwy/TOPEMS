@@ -26,6 +26,16 @@ struct EffectivePermissionRow {
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// GET /users/{userId}/effective-permissions — 返回用户有效权限（direct + role + total）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{user_id}/effective-permissions",
+    tag = "Auto-Backfill",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+    ),
+    responses((status = 200, description = "get /iam/users/{user_id}/effective-permissions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_effective_permissions(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -164,6 +174,13 @@ pub async fn get_effective_permissions(
 }
 
 /// POST /users/batch-delete — 批量删除用户
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/batch-delete",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /iam/users/batch-delete"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_delete_users(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -297,6 +314,13 @@ pub async fn batch_delete_users(
 }
 
 /// PUT /users/batch-update — 批量更新用户
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/batch-update",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "put /iam/users/batch-update"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_update_users(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

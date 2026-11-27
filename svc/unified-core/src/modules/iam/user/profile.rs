@@ -15,6 +15,13 @@ use super::models::{
 /// 本地化后：偏好读写直读本库，**停掉 portal 不影响偏好接口**（无任何对 portal 的运行时调用）；
 /// portal 侧偏好接口改为只读代理本服务（见 svc/portal/src/modules/preferences.rs）。
 /// 表结构由迁移链权威创建（C-1 已移除运行时自建表，迁移权威唯一仲裁）。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/users/me/preferences",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /users/me/preferences"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_preferences(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -91,6 +98,13 @@ pub async fn get_preferences(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/users/me/preferences",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "put /users/me/preferences"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -174,6 +188,13 @@ pub async fn update_preferences(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/users/me",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /users/me"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_current_user(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -318,6 +318,16 @@ pub async fn get_user_permissions(
 }
 
 /// GET /users/{userId}/roles — 返回指定用户角色列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{user_id}/roles",
+    tag = "Auto-Backfill",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+    ),
+    responses((status = 200, description = "get /iam/users/{user_id}/roles"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_user_roles(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -464,6 +474,17 @@ pub async fn get_user_roles(
 }
 
 /// POST /users/{userId}/roles/{roleId} — 为用户分配角色
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{user_id}/roles/{role_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+        ("role_id" = String, Path, description = "role_id"),
+    ),
+    responses((status = 200, description = "post /iam/users/{user_id}/roles/{role_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn assign_user_role(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -653,6 +674,17 @@ pub async fn assign_user_role(
 }
 
 /// DELETE /users/{userId}/roles/{roleId} — 移除用户角色
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/users/{user_id}/roles/{role_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+        ("role_id" = String, Path, description = "role_id"),
+    ),
+    responses((status = 200, description = "delete /users/{user_id}/roles/{role_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn remove_user_role(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

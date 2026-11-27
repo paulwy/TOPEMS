@@ -194,6 +194,13 @@ pub struct UnifiedPoiResult {
     pub providers_used: Vec<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/im/locations/message",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /im/locations/message"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn send_location_message(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -490,6 +497,13 @@ pub async fn get_geofence(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/im/locations/geofences",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /im/locations/geofences"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_geofences(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -695,6 +709,13 @@ pub async fn delete_geofence(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/im/pois/search",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /im/pois/search"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn unified_search_pois(
     State(_db): State<Db>,
     Json(payload): Json<SearchPoiRequest>,

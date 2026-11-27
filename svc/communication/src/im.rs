@@ -212,6 +212,16 @@ pub async fn add_contact(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/im/online-status/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /im/online-status/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_online_status(
     State(_db): State<Db>,
     Path(user_id): Path<String>,
@@ -373,6 +383,16 @@ pub async fn list_members(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/im/messages/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /im/messages/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_message(
     State(_db): State<Db>,
     Path(id): Path<String>,
@@ -390,6 +410,16 @@ pub async fn update_message(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/im/messages/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /im/messages/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_message(
     State(_db): State<Db>,
     Path(id): Path<String>,
@@ -402,6 +432,16 @@ pub async fn delete_message(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/im/rooms/{id}/read",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /im/rooms/{id}/read"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn mark_messages_read(
     State(_db): State<Db>,
     Path(id): Path<String>,
@@ -414,6 +454,16 @@ pub async fn mark_messages_read(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/im/notifications/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /im/notifications/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_im_notifications(
     State(_db): State<Db>,
     Path(user_id): Path<String>,
@@ -426,6 +476,13 @@ pub async fn list_im_notifications(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/im/project-groups",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /im/project-groups"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_project_groups(State(_db): State<Db>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
@@ -434,6 +491,13 @@ pub async fn list_project_groups(State(_db): State<Db>) -> Json<serde_json::Valu
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/im/project-groups",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /im/project-groups"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_project_group(
     State(_db): State<Db>,
     Json(payload): Json<serde_json::Value>,
@@ -446,6 +510,13 @@ pub async fn create_project_group(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/im/contact-groups",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /im/contact-groups"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_contact_groups(State(_db): State<Db>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
@@ -495,6 +566,16 @@ pub async fn delete_contact_group(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/im/rooms/{id}/mute",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /im/rooms/{id}/mute"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn mute_room(
     State(_db): State<Db>,
     Path(id): Path<String>,
@@ -512,6 +593,16 @@ pub async fn mute_room(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/im/rooms/{id}/pin",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /im/rooms/{id}/pin"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn pin_message(
     State(_db): State<Db>,
     Path(id): Path<String>,
@@ -547,6 +638,16 @@ pub async fn search_rooms(State(_db): State<Db>) -> Json<serde_json::Value> {
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/im/rooms/{id}/messages/search",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /im/rooms/{id}/messages/search"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn search_messages(
     State(_db): State<Db>,
     Path(id): Path<String>,
@@ -559,6 +660,16 @@ pub async fn search_messages(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/im/contacts/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /im/contacts/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_contact(State(_db): State<Db>, Path(id): Path<String>) -> Json<serde_json::Value> {
     tracing::info!("IM get_contact called with id: {}", id);
     Json(serde_json::json!({

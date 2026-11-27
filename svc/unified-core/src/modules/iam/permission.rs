@@ -182,6 +182,16 @@ pub async fn list_grantable_permissions(
 
 /// PUT /permissions/{id} — P2-5 诚实 501：权限定义为系统种子数据，
 /// unified-core 无权限定义写入数据源，不再返回假成功回执。
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/iam/permissions/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /iam/permissions/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_permission(
     State(_state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -198,6 +208,16 @@ pub async fn update_permission(
 
 /// DELETE /permissions/{id} — P2-5 诚实 501：权限定义为系统种子数据，
 /// unified-core 无权限定义写入数据源，不再返回假成功回执。
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/iam/permissions/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /iam/permissions/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_permission(
     State(_state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -215,6 +235,13 @@ pub async fn delete_permission(
 /// POST /permissions — P2-5 诚实 501：权限定义为系统种子数据，
 /// unified-core 无权限定义写入数据源，不再返回假成功回执。
 /// 对齐前端 PermissionManagementPage 的 createPermission；路由保留挂载避免 405。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/permissions",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /iam/permissions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_permission(
     State(_state): State<AppState>,
     Json(_payload): Json<serde_json::Value>,
@@ -227,6 +254,13 @@ pub async fn create_permission(
 }
 
 /// GET /health — IAM 模块健康检查（前端契约 /api/core/iam/health）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/health",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /iam/health"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn health() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,

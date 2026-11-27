@@ -179,6 +179,13 @@ pub async fn list_roles(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/roles",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /iam/roles"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_role(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -457,6 +464,16 @@ pub async fn get_role(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/iam/roles/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /iam/roles/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_role(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -692,6 +709,16 @@ pub async fn update_role(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/iam/roles/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /iam/roles/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_role(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -850,6 +877,16 @@ pub async fn delete_role(
 }
 
 /// GET /roles/{id}/permissions — 列出角色已授权的权限 code 列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/roles/{id}/permissions",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /iam/roles/{id}/permissions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_role_permissions(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -922,6 +959,16 @@ pub async fn get_role_permissions(
 
 /// POST /roles/{id}/permissions — 为角色授权权限
 /// body 兼容三种形态：{permission_id}、{permission_code}、{permission_ids:[...]}
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/roles/{id}/permissions",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /iam/roles/{id}/permissions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn add_role_permission(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -1054,6 +1101,17 @@ pub async fn add_role_permission(
 }
 
 /// DELETE /roles/{id}/permissions/{permission_id} — 移除角色的权限授权
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/iam/roles/{id}/permissions/{permission_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("permission_id" = String, Path, description = "permission_id"),
+    ),
+    responses((status = 200, description = "delete /iam/roles/{id}/permissions/{permission_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn remove_role_permission(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

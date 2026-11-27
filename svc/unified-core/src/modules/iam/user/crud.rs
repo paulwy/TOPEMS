@@ -547,6 +547,16 @@ pub async fn create_user(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /iam/users/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_user(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -702,6 +712,16 @@ pub async fn get_user(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /iam/users/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_user(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -900,6 +920,16 @@ pub async fn update_user(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/users/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /users/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_user(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

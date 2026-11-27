@@ -151,6 +151,13 @@ pub async fn get_my_permissions(
 }
 
 /// POST /users/me/permissions/check — 检查当前用户是否有指定权限
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/users/me/permissions/check",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /users/me/permissions/check"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn check_my_permission(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -195,6 +202,13 @@ pub async fn check_my_permission(
 }
 
 /// PUT /users/me — 更新当前用户（full_name, email）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/users/me",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "put /users/me"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_current_user(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -390,6 +404,13 @@ pub async fn update_current_user(
 }
 
 /// POST /users/me/password — 自助改密（需校验 current_password）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/users/me/password",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /users/me/password"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn change_my_password(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -587,6 +608,13 @@ pub async fn change_my_password(
 }
 
 /// POST /users/me/avatar — 更新头像
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/users/me/avatar",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /users/me/avatar"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_my_avatar(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -37,6 +37,16 @@ struct LoginLogRow {
 }
 
 /// GET /users/{userId}/login-history?limit=10 — 返回用户登录历史
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{user_id}/login-history",
+    tag = "Auto-Backfill",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+    ),
+    responses((status = 200, description = "get /iam/users/{user_id}/login-history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_login_history(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -180,6 +190,13 @@ pub async fn get_login_history_with_tail(
 }
 
 /// GET /access-logs?limit=10&offset=0 — 返回访问日志列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/access-logs",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /iam/access-logs"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_access_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -275,6 +292,16 @@ pub async fn list_access_logs(
 }
 
 /// GET /access-logs/user/{userId}?limit=10&offset=0 — 返回指定用户访问日志
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/access-logs/user/{user_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+    ),
+    responses((status = 200, description = "get /iam/access-logs/user/{user_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_user_access_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -390,6 +417,13 @@ pub async fn get_user_access_logs(
 }
 
 /// POST /access-logs — 创建访问日志
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/access-logs",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /iam/access-logs"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_access_log(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
