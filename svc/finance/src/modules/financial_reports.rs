@@ -609,7 +609,7 @@ pub async fn get_report_period_over_period(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:report:read"])),
+    security(("BearerAuth" = ["finance:admin"])),
     path = "/reports/consolidated/generate",
     tag = "Report",
     request_body = serde_json::Value,
@@ -714,7 +714,7 @@ pub async fn get_consolidation_entities(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
+    security(("BearerAuth" = ["finance:admin"])),
     path = "/reports/consolidated/entities",
     tag = "Report",
     request_body = serde_json::Value,
@@ -1021,7 +1021,7 @@ pub async fn get_report_subscriptions(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
+    security(("BearerAuth" = ["finance:admin"])),
     path = "/reports/subscriptions",
     tag = "Report",
     request_body = serde_json::Value,
@@ -1437,7 +1437,7 @@ fn required_company_id(raw: Option<&str>) -> Result<Uuid, ApiResponse<serde_json
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:admin"])),
     path = "/reports/balance-sheet/generate",
     tag = "Report",
     request_body = GenerateReportRequest,
@@ -1679,6 +1679,18 @@ pub async fn get_balance_sheet_history(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:admin"])),
+    path = "/reports/income-statement/generate",
+    tag = "Report",
+    request_body = GenerateReportRequest,
+    responses(
+        (status = 200, description = "生成成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn generate_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1874,6 +1886,18 @@ pub async fn get_income_statement_history(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:admin"])),
+    path = "/reports/cash-flow/generate",
+    tag = "Report",
+    request_body = GenerateReportRequest,
+    responses(
+        (status = 200, description = "生成成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn generate_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2046,7 +2070,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:report:read"])),
+    security(("BearerAuth" = ["finance:admin"])),
     path = "/reports/submit-approval",
     tag = "Report",
     request_body = ApprovalRequest,
@@ -2103,6 +2127,19 @@ pub async fn submit_report_for_approval(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:admin"])),
+    path = "/reports/approve",
+    tag = "Report",
+    request_body = ApprovalRequest,
+    responses(
+        (status = 200, description = "操作成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "报表不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn approve_report(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2151,6 +2188,19 @@ pub async fn approve_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:admin"])),
+    path = "/reports/reject",
+    tag = "Report",
+    request_body = ApprovalRequest,
+    responses(
+        (status = 200, description = "操作成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "报表不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn reject_report(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2200,7 +2250,7 @@ pub async fn reject_report(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:report:read"])),
+    security(("BearerAuth" = ["finance:admin"])),
     path = "/reports/lock",
     tag = "Report",
     request_body = ApprovalRequest,
@@ -2257,6 +2307,19 @@ pub async fn lock_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:admin"])),
+    path = "/reports/unlock",
+    tag = "Report",
+    request_body = ApprovalRequest,
+    responses(
+        (status = 200, description = "操作成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "报表不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn unlock_report(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -3083,11 +3146,11 @@ pub async fn get_financial_overview(
 }
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new()
-        .route(
-            "/reports/balance-sheet/generate",
-            axum::routing::post(generate_balance_sheet),
-        )
+    // B363：报表读/写分流。此前整个报表 Router 只挂 `finance:report:read`，
+    // 生成/提交审批/审批/锁定/导出/合并/订阅这些写端点在独立部署（不经网关
+    // `require_finance_write`）时对只读角色敞开。这里把同一门槛下沉到服务内：
+    // 读 = `finance:report:read`，写 = `finance:admin`（码不变，不新增字典条目）。
+    let read_routes = Router::new()
         .route(
             "/reports/balance-sheet",
             axum::routing::get(get_balance_sheet),
@@ -3097,10 +3160,6 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_balance_sheet_history),
         )
         .route(
-            "/reports/income-statement/generate",
-            axum::routing::post(generate_income_statement),
-        )
-        .route(
             "/reports/income-statement",
             axum::routing::get(get_income_statement),
         )
@@ -3108,23 +3167,11 @@ pub fn create_routes() -> Router<AppState> {
             "/reports/income-statement/history",
             axum::routing::get(get_income_statement_history),
         )
-        .route(
-            "/reports/cash-flow/generate",
-            axum::routing::post(generate_cash_flow),
-        )
         .route("/reports/cash-flow", axum::routing::get(get_cash_flow))
         .route(
             "/reports/cash-flow/history",
             axum::routing::get(get_cash_flow_history),
         )
-        .route(
-            "/reports/submit-approval",
-            axum::routing::post(submit_report_for_approval),
-        )
-        .route("/reports/approve", axum::routing::post(approve_report))
-        .route("/reports/reject", axum::routing::post(reject_report))
-        .route("/reports/lock", axum::routing::post(lock_report))
-        .route("/reports/unlock", axum::routing::post(unlock_report))
         .route(
             "/reports/item-details",
             axum::routing::get(get_report_item_details),
@@ -3147,10 +3194,6 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_report_period_over_period),
         )
         .route(
-            "/reports/consolidated/generate",
-            axum::routing::post(generate_consolidated_report),
-        )
-        .route(
             "/reports/consolidated/{consolidation_id}",
             axum::routing::get(get_consolidated_report),
         )
@@ -3159,24 +3202,8 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_consolidation_entities),
         )
         .route(
-            "/reports/consolidated/entities",
-            axum::routing::post(create_consolidation_entity),
-        )
-        .route(
-            "/reports/consolidated/entities/{entity_id}",
-            axum::routing::put(update_consolidation_entity),
-        )
-        .route(
-            "/reports/consolidated/entities/{entity_id}",
-            axum::routing::delete(delete_consolidation_entity),
-        )
-        .route(
             "/reports/consolidated/elims",
             axum::routing::get(get_intercompany_elims),
-        )
-        .route(
-            "/reports/consolidated/elims",
-            axum::routing::post(add_intercompany_elimination),
         )
         .route(
             "/reports/consolidated/{consolidation_id}/export",
@@ -3184,34 +3211,13 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/reports/export", axum::routing::get(export_report))
         .route(
-            "/reports/export/batch",
-            axum::routing::post(batch_export_reports),
-        )
-        .route(
             "/reports/subscriptions",
             axum::routing::get(get_report_subscriptions),
-        )
-        .route(
-            "/reports/subscriptions",
-            axum::routing::post(create_report_subscription),
-        )
-        .route(
-            "/reports/subscriptions/{subscription_id}",
-            axum::routing::put(update_report_subscription),
-        )
-        .route(
-            "/reports/subscriptions/{subscription_id}",
-            axum::routing::delete(delete_report_subscription),
-        )
-        .route(
-            "/reports/subscriptions/{subscription_id}/send-now",
-            axum::routing::post(send_report_now),
         )
         .route(
             "/reports/subscriptions/{subscription_id}/history",
             axum::routing::get(get_subscription_history),
         )
-        // V321: 10 个分析报表
         .route(
             "/reports/business-overview",
             axum::routing::get(get_business_overview),
@@ -3252,15 +3258,155 @@ pub fn create_routes() -> Router<AppState> {
             "/reports/financial-overview",
             axum::routing::get(get_financial_overview),
         )
-        // 批 40：报表路由统一挂 finance:report:read 细码（纵深防御；
-        // 写端点在网关层 require_finance_write 已要求 finance:admin）
         .layer(axum::middleware::from_fn(
             topems_shared_auth::middleware::require_permission("finance:report:read"),
-        ))
+        ));
+
+    let write_routes = Router::new()
+        .route(
+            "/reports/balance-sheet/generate",
+            axum::routing::post(generate_balance_sheet),
+        )
+        .route(
+            "/reports/income-statement/generate",
+            axum::routing::post(generate_income_statement),
+        )
+        .route(
+            "/reports/cash-flow/generate",
+            axum::routing::post(generate_cash_flow),
+        )
+        .route(
+            "/reports/submit-approval",
+            axum::routing::post(submit_report_for_approval),
+        )
+        .route("/reports/approve", axum::routing::post(approve_report))
+        .route("/reports/reject", axum::routing::post(reject_report))
+        .route("/reports/lock", axum::routing::post(lock_report))
+        .route("/reports/unlock", axum::routing::post(unlock_report))
+        .route(
+            "/reports/consolidated/generate",
+            axum::routing::post(generate_consolidated_report),
+        )
+        .route(
+            "/reports/consolidated/entities",
+            axum::routing::post(create_consolidation_entity),
+        )
+        .route(
+            "/reports/consolidated/entities/{entity_id}",
+            axum::routing::put(update_consolidation_entity),
+        )
+        .route(
+            "/reports/consolidated/entities/{entity_id}",
+            axum::routing::delete(delete_consolidation_entity),
+        )
+        .route(
+            "/reports/consolidated/elims",
+            axum::routing::post(add_intercompany_elimination),
+        )
+        .route(
+            "/reports/export/batch",
+            axum::routing::post(batch_export_reports),
+        )
+        .route(
+            "/reports/subscriptions",
+            axum::routing::post(create_report_subscription),
+        )
+        .route(
+            "/reports/subscriptions/{subscription_id}",
+            axum::routing::put(update_report_subscription),
+        )
+        .route(
+            "/reports/subscriptions/{subscription_id}",
+            axum::routing::delete(delete_report_subscription),
+        )
+        .route(
+            "/reports/subscriptions/{subscription_id}/send-now",
+            axum::routing::post(send_report_now),
+        )
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_module_write("finance"),
+        ));
+
+    read_routes.merge(write_routes)
 }
 
 #[cfg(test)]
 mod tests {
+    // ===== B363：报表路由读/写分流的结构棘轮 =====
+
+    /// 解析 create_routes 里两个子 Router 各自挂的路由。
+    fn report_route_blocks(src: &str) -> (Vec<(String, String)>, Vec<(String, String)>) {
+        let start = src
+            .find("pub fn create_routes() -> Router<AppState> {")
+            .expect("create_routes 不存在");
+        let seg = &src[start..];
+        let read_start = seg
+            .find("let read_routes = Router::new()")
+            .expect("read 块缺失");
+        let read_end = seg
+            .find("require_permission(\"finance:report:read\")")
+            .expect("read 层缺失");
+        let write_start = seg
+            .find("let write_routes = Router::new()")
+            .expect("write 块缺失");
+        let write_end = seg
+            .find("require_module_write(\"finance\")")
+            .expect("write 层缺失");
+        let routes = |block: &str| -> Vec<(String, String)> {
+            let mut out = Vec::new();
+            let mut rest = block;
+            while let Some(i) = rest.find(".route(") {
+                rest = &rest[i + 7..];
+                let end = rest.find(')').unwrap_or(rest.len());
+                let chunk = &rest[..end];
+                if let (Some(m_start), Some(m_end)) = (chunk.find('"'), chunk.rfind('"')) {
+                    let path = chunk[m_start + 1..m_end].to_string();
+                    let tail = &chunk[m_end..];
+                    if let Some(v) = tail.find("routing::") {
+                        let verb: String = tail[v + "routing::".len()..]
+                            .chars()
+                            .take_while(|c| c.is_ascii_alphabetic())
+                            .collect();
+                        out.push((path, verb.to_uppercase()));
+                    }
+                }
+            }
+            out
+        };
+        (
+            routes(&seg[read_start..read_end]),
+            routes(&seg[write_start..write_end]),
+        )
+    }
+
+    #[test]
+    fn report_write_routes_are_all_behind_admin_gate() {
+        let (read, write) = report_route_blocks(include_str!("financial_reports.rs"));
+        assert!(
+            !read.is_empty() && !write.is_empty(),
+            "两个子 Router 都不应为空"
+        );
+        let leaked: Vec<_> = read
+            .iter()
+            .filter(|(_, verb)| verb != "GET")
+            .map(|(p, v)| format!("{v} {p}"))
+            .collect();
+        assert!(
+            leaked.is_empty(),
+            "写路由误挂到只读 Router（只读码可写）: {leaked:?}"
+        );
+        // 每条路由必须恰好出现在一个子 Router 里（漏挂 = 404，重复 = panic）
+        let mut all: Vec<String> = read
+            .iter()
+            .chain(write.iter())
+            .map(|(p, v)| format!("{v} {p}"))
+            .collect();
+        let total = all.len();
+        all.sort();
+        all.dedup();
+        assert_eq!(all.len(), total, "同一 method+path 被挂了两次: {all:?}");
+    }
+
     use super::*;
 
     #[test]
