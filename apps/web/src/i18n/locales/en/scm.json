@@ -1886,7 +1886,7 @@
   "scm.purchase_order.k53": "Remarks",
   "scm.scm_overview_page.active_suppliers": "Active suppliers",
   "scm.scm_overview_page.inventory_value": "Inventory value",
-  "scm.scm_overview_page.status_pending": "Pending",
+  "scm.scm_overview_page.status_pending": "Pending Approval",
   "scm.scm_overview_page.status_approved": "Approved",
   "scm.scm_overview_page.status_rejected": "Rejected",
   "scm.scm_overview_page.status_completed": "Completed",
