@@ -1,9 +1,41 @@
 import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema-dsl';
+import { columnsFromFields } from '@/schema-dsl/schemaExtensions';
+import type { NestedTableConfig, SchemaExtensions } from '@/schema-dsl/schemaExtensions';
 import i18n from '@/i18n';
+import {
+  loadHrmEmployeeOptions,
+  loadMesOrderOptions,
+  loadWmsWarehouseOptions,
+} from '@/schemas/dynamicLoaders';
 
-export const materialIssueSchema: EntitySchema = {
+// 批 9：后端 CreateIssueItemRequest 的字段，前端子表按 camelCase 定义（提交时统一转 snake_case）
+const itemFields: NestedTableConfig['fields'] = [
+  { name: 'materialCode', label: '物料编码', type: 'text', required: true, listWidth: 140 },
+  { name: 'materialName', label: '物料名称', type: 'text', required: true, listWidth: 160 },
+  { name: 'unit', label: '单位', type: 'text', required: true, defaultValue: '个', listWidth: 80 },
+  { name: 'plannedQuantity', label: '计划数量', type: 'number', required: true, listWidth: 100 },
+  { name: 'actualQuantity', label: '实发数量', type: 'number', required: true, listWidth: 100 },
+  { name: 'batchNo', label: '批次号', type: 'text', listWidth: 120 },
+  { name: 'notes', label: '备注', type: 'text', listWidth: 160 },
+
+];
+
+const itemsTable: NestedTableConfig = {
+  field: 'items',
+  title: '领料明细',
+  columns: columnsFromFields(itemFields),
+  fields: itemFields,
+  allowAdd: true,
+  allowEdit: true,
+  allowDelete: true,
+  addButtonText: '添加物料',
+  rowKeyField: 'id',
+  minRows: 1,
+};
+
+export const materialIssueSchema: EntitySchema & SchemaExtensions = {
   entity: 'mes_material_issue',
   title: i18n.t('mes.material_issue.k0'),
   description: i18n.t('mes.material_issue.k1'),
@@ -16,52 +48,74 @@ export const materialIssueSchema: EntitySchema = {
   // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
   permissionResource: 'mes:material_issue',
 
+  // 批 9：order_id / warehouse_id / operator_id 都是 uuid 外键
+  dynamicOptions: [
+    { field: 'order_id', queryKey: ['mes', 'orders', 'forIssue'], loader: loadMesOrderOptions },
+    {
+      field: 'warehouse_id',
+      queryKey: ['wms', 'warehouses', 'forIssue'],
+      loader: loadWmsWarehouseOptions,
+    },
+    {
+      field: 'operator_id',
+      queryKey: ['hrm', 'employees', 'forIssue'],
+      loader: loadHrmEmployeeOptions,
+    },
+  ],
+
   fields: [
     {
       name: 'issue_no',
       label: i18n.t('mes.material_issue.k2'),
       type: 'text',
-      required: true,
-      readonlyOnEdit: true,
+      readonly: true,
+      showInForm: false,
       sortable: true,
       listWidth: 140,
-      validation: [{ type: 'maxLength', value: 64 }],
     },
     {
-      name: 'order_number',
+      name: 'order_id',
+      label: '工单',
+      type: 'select',
+      required: true,
+      showInList: false,
+    },
+    {
+      name: 'order_no',
       label: i18n.t('mes.material_issue.k3'),
       type: 'text',
+      readonly: true,
+      showInForm: false,
       sortable: true,
       listWidth: 140,
     },
     {
-      name: 'operator',
-      label: i18n.t('mes.material_issue.k4'),
-      type: 'text',
+      name: 'warehouse_id',
+      label: '领料仓库',
+      type: 'select',
       required: true,
-      sortable: true,
-      listWidth: 120,
+      showInList: false,
+    },
+    {
+      name: 'operator_id',
+      label: i18n.t('mes.material_issue.k4'),
+      type: 'select',
+      required: true,
+      showInList: false,
     },
     {
       name: 'issue_time',
       label: i18n.t('mes.material_issue.k5'),
       type: 'datetime',
-      listWidth: 160,
-    },
-    {
-      name: 'items_count',
-      label: i18n.t('mes.material_issue.k6'),
-      type: 'number',
-      listWidth: 80,
       readonly: true,
-      renderCell: (row: Record<string, unknown>, _index: number) =>
-        (row.items as unknown[] | undefined)?.length || 0,
+      showInForm: false,
+      listWidth: 160,
     },
     {
       name: 'status',
       label: i18n.t('mes.material_issue.k7'),
       type: 'select',
-      defaultValue: 'pending',
+      showInForm: false,
       options: {
         type: 'static',
         options: [
@@ -96,7 +150,7 @@ export const materialIssueSchema: EntitySchema = {
           },
         };
         const s = statusMap[(row.status as string) || 'pending'] || {
-          label: row.status,
+          label: String(row.status ?? ''),
           bg: 'grey.100',
           color: 'text.secondary',
         };
@@ -106,19 +160,6 @@ export const materialIssueSchema: EntitySchema = {
           sx: { backgroundColor: s.bg, color: s.color, fontWeight: 500 },
         });
       },
-      validation: [{ type: 'maxLength', value: 32 }],
-    },
-    {
-      name: 'work_station_id',
-      label: i18n.t('mes.material_issue.id_16'),
-      type: 'text',
-      showInList: false,
-    },
-    {
-      name: 'remark',
-      label: i18n.t('mes.material_issue.k17'),
-      type: 'textarea',
-      showInList: false,
     },
     {
       name: 'items',
@@ -128,17 +169,24 @@ export const materialIssueSchema: EntitySchema = {
       showInForm: false,
     },
     {
+      name: 'notes',
+      label: i18n.t('mes.material_issue.k17'),
+      type: 'textarea',
+      showInList: false,
+    },
+    {
       name: 'created_at',
       label: i18n.t('mes.material_issue.k19'),
       type: 'datetime',
       readonly: true,
       showInList: false,
+      showInForm: false,
     },
   ],
 
   list: {
-    columns: ['issue_no', 'order_number', 'operator', 'issue_time', 'items_count', 'status'],
-    searchFields: ['issue_no', 'order_number', 'operator'],
+    columns: ['issue_no', 'order_no', 'issue_time', 'status'],
+    searchFields: ['issue_no', 'order_no'],
     pageSize: 10,
     selectable: true,
     filters: [
@@ -162,13 +210,15 @@ export const materialIssueSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('mes.material_issue.k26'),
-      fields: ['issue_no', 'order_number', 'operator', 'work_station_id'],
+      fields: ['order_id', 'warehouse_id', 'operator_id'],
     },
     {
       title: i18n.t('mes.material_issue.k27'),
-      fields: ['status', 'remark'],
+      fields: ['notes'],
     },
   ],
+
+  nestedTables: [itemsTable],
 
   formColCount: 2,
   createTitle: i18n.t('mes.material_issue.k28'),

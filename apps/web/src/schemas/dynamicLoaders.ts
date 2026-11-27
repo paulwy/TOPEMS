@@ -109,6 +109,16 @@ export async function loadMesOrderOptions(): Promise<SelectOption[]> {
   ]);
 }
 
+/** MES 工序（mes.production_processes）：排程/报工要挂到具体工序 */
+export async function loadMesProcessOptions(): Promise<SelectOption[]> {
+  const res = await apiClient.mes.get('/processes?page=1&page_size=200');
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['processes', 'items']), [
+    'process_code',
+    'process_no',
+    'process_name',
+  ]);
+}
+
 /** MES 工位（mes.work_stations）：工号 + 名称 */
 export async function loadMesWorkstationOptions(): Promise<SelectOption[]> {
   const res = await apiClient.mes.get('/workstations?page=1&page_size=200');

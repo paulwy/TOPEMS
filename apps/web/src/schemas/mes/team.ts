@@ -1,5 +1,9 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import {
+  loadHrmEmployeeOptions,
+  loadMesWorkstationOptions,
+} from '@/schemas/dynamicLoaders';
 
 export const teamSchema: EntitySchema = {
   entity: 'team',
@@ -11,6 +15,12 @@ export const teamSchema: EntitySchema = {
 
   // 批 16：写权限资源前缀（DB 实查存在三动作码）
   permissionResource: 'mes:team',
+
+  // mes.teams.work_station_id / leader_id 都是 uuid，裸文本无意义
+  dynamicOptions: [
+    { field: 'work_station_id', queryKey: ['mes', 'workstations', 'forTeam'], loader: loadMesWorkstationOptions },
+    { field: 'leader_id', queryKey: ['hrm', 'employees', 'forTeam'], loader: loadHrmEmployeeOptions },
+  ],
   fields: [
     {
       name: 'team_code',
@@ -47,7 +57,7 @@ export const teamSchema: EntitySchema = {
     {
       name: 'work_station_id',
       label: i18n.t('mes.team.k8'),
-      type: 'text',
+      type: 'select',
       listWidth: 140,
       showInList: false,
     },
@@ -61,7 +71,7 @@ export const teamSchema: EntitySchema = {
     {
       name: 'leader_id',
       label: i18n.t('mes.team.id_10'),
-      type: 'text',
+      type: 'select',
       showInList: false,
     },
     {

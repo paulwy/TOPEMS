@@ -52,6 +52,9 @@ pub struct CreateRecordRequest {
     pub work_station_id: Option<Uuid>,
     pub equipment_id: Option<Uuid>,
     pub operator_id: Option<Uuid>,
+    /// 表单里手填的操作员姓名；缺省时回退 operator_id 或登录用户
+    #[serde(default)]
+    pub operator: Option<String>,
     pub start_time: DateTime<Utc>,
     /// 前端表单沿用列表列名 quantity_completed/quantity_rejected
     #[serde(default, alias = "quantity_completed")]
@@ -359,8 +362,12 @@ pub async fn create_record(
     // P1 修复（第四十六轮遗留）：operator 列 NOT NULL，此前硬编码 NULL 导致创建必 500。
     // 优先用 operator_id 的字符串形式，未提供时回退当前登录用户（Claims.username）。
     let operator_name = req
-        .operator_id
-        .map(|id| id.to_string())
+        .operator
+        .as_deref()
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .map(str::to_owned)
+        .or_else(|| req.operator_id.map(|id| id.to_string()))
         .unwrap_or_else(|| claims.username.clone());
 
     let mut guard = txn_arc.lock().await;

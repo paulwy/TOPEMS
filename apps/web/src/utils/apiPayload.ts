@@ -29,17 +29,13 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 export function toApiPayload<T = unknown>(value: T): T {
   if (Array.isArray(value)) {
-    // 只处理"行数组"（嵌套表格）：逐个把它们的顶层键转成 snake_case
-    return value.map((item) => (isPlainObject(item) ? snakeObject(item) : item)) as unknown as T;
+    // 行数组（嵌套表格）：每行递归转换，行内嵌套对象/数组同样处理
+    return value.map((item) => toApiPayload(item)) as unknown as T;
   }
   if (!isPlainObject(value)) return value;
-  return snakeObject(value) as unknown as T;
-}
-
-function snakeObject(obj: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, val] of Object.entries(obj)) {
-    out[toSnakeKey(key)] = val;
+  for (const [key, val] of Object.entries(value)) {
+    out[toSnakeKey(key)] = toApiPayload(val);
   }
-  return out;
+  return out as unknown as T;
 }

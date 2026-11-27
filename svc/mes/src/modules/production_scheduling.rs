@@ -121,6 +121,32 @@ pub struct ListProductionSchedulesResponse {
     pub page_size: i64,
 }
 
+/// 前端下拉框一律提交字符串，priority 需同时吃 "5" 与 5
+fn de_opt_i32_flexible<'de, D>(d: D) -> Result<Option<i32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Raw {
+        Num(i64),
+        Text(String),
+    }
+    let raw = Option::<Raw>::deserialize(d)?;
+    match raw {
+        None => Ok(None),
+        Some(Raw::Num(n)) => Ok(Some(n as i32)),
+        Some(Raw::Text(s)) => {
+            let t = s.trim();
+            if t.is_empty() {
+                Ok(None)
+            } else {
+                t.parse::<i32>().map(Some).map_err(serde::de::Error::custom)
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateProductionScheduleRequest {
     pub order_id: Option<Uuid>,
@@ -136,6 +162,7 @@ pub struct CreateProductionScheduleRequest {
     pub process_id: Option<Uuid>,
     pub planned_start_time: Option<DateTime<Utc>>,
     pub planned_end_time: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "de_opt_i32_flexible")]
     pub priority: Option<i32>,
     pub sequence: Option<i32>,
     pub notes: Option<String>,
@@ -148,6 +175,7 @@ pub struct UpdateProductionScheduleRequest {
     pub process_id: Option<Uuid>,
     pub planned_start_time: Option<DateTime<Utc>>,
     pub planned_end_time: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "de_opt_i32_flexible")]
     pub priority: Option<i32>,
     pub sequence: Option<i32>,
     pub status: Option<String>,

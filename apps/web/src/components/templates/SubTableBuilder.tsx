@@ -189,7 +189,17 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
       return;
     }
 
-    onSubmit(values);
+    // number 字段的输入值是字符串，提交前转数值（后端 DTO 是 f64/i32）
+    const normalized: Record<string, unknown> = { ...values };
+    for (const field of fields) {
+      if (field.type !== 'number') continue;
+      const raw = normalized[field.name];
+      if (raw === '' || raw === null || raw === undefined) continue;
+      const num = Number(raw);
+      if (!Number.isNaN(num)) normalized[field.name] = num;
+    }
+
+    onSubmit(normalized);
   }, [fields, values, onSubmit]);
 
   const readOnly = mode === 'view';

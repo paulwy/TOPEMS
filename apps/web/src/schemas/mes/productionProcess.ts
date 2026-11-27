@@ -1,6 +1,7 @@
 import type React from 'react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadMesWorkstationOptions } from '@/schemas/dynamicLoaders';
 
 export const productionProcessSchema: EntitySchema = {
   entity: 'productionProcess',
@@ -14,6 +15,15 @@ export const productionProcessSchema: EntitySchema = {
 
   // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
   permissionResource: 'mes:production_process',
+
+  // 后端 INSERT 对 work_station_id 做 NULLIF($8,'')::uuid，裸文本必 500
+  dynamicOptions: [
+    {
+      field: 'work_station_id',
+      queryKey: ['mes', 'workstations', 'forProcess'],
+      loader: loadMesWorkstationOptions,
+    },
+  ],
 
   fields: [
     {
@@ -53,7 +63,7 @@ export const productionProcessSchema: EntitySchema = {
     {
       name: 'work_station_id',
       label: i18n.t('mes.production_process.k6'),
-      type: 'text',
+      type: 'select',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>, _index: number): React.ReactNode => {
         const ws = row.work_station_id as string | undefined;
