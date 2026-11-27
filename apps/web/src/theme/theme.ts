@@ -320,7 +320,9 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.primary[400],
               light: designTokens.colors.primary[300],
               dark: designTokens.colors.primary[500],
-              contrastText: '#0f172a',
+              // 悬停态底色是 X[500]（primary #4f78ed / secondary #8b5cf6），
+              // #0f172a 压在上面只有 4.46/4.22；压到 #05080f 后 ≥4.6
+              contrastText: '#05080f',
             },
             secondary: {
               ...designTokens.colors.secondary,
@@ -335,7 +337,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.secondary[400],
               light: designTokens.colors.secondary[300],
               dark: designTokens.colors.secondary[500],
-              contrastText: '#0f172a',
+              contrastText: '#05080f',
             },
             success: {
               ...designTokens.colors.success,
@@ -350,7 +352,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.success[400],
               light: designTokens.colors.success[300],
               dark: designTokens.colors.success[500],
-              contrastText: '#0f172a',
+              contrastText: '#05080f',
             },
             warning: {
               ...designTokens.colors.warning,
@@ -365,7 +367,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.warning[400],
               light: designTokens.colors.warning[300],
               dark: designTokens.colors.warning[500],
-              contrastText: '#0f172a',
+              contrastText: '#05080f',
             },
             error: {
               ...designTokens.colors.error,
@@ -380,7 +382,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.error[400],
               light: designTokens.colors.error[300],
               dark: designTokens.colors.error[500],
-              contrastText: '#0f172a',
+              contrastText: '#05080f',
             },
             info: {
               ...designTokens.colors.info,
@@ -395,7 +397,7 @@ export const createCustomTheme = (): Theme => {
               main: designTokens.colors.info[400],
               light: designTokens.colors.info[300],
               dark: designTokens.colors.info[500],
-              contrastText: '#0f172a',
+              contrastText: '#05080f',
             },
             action: {
               selected: 'rgba(148, 163, 184, 0.16)',
@@ -678,16 +680,17 @@ export const createCustomTheme = (): Theme => {
         },
         MuiTab: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               textTransform: 'none',
               fontWeight: designTokens.typography.fontWeight.medium,
               minWidth: 'auto',
               padding: `${designTokens.spacing.md} 20px`,
               transition: `color ${designTokens.motion.transition.fast}, background-color ${designTokens.motion.transition.fast}`,
               '&:hover': {
-                backgroundColor: designTokens.colors.action.hover,
+                // action.hover 必须取当前调色板：静态令牌在暗色下仍是 #f1f5f9 浅底
+                backgroundColor: theme.palette.action.hover,
               },
-            },
+            }),
           },
         },
         MuiCheckbox: {
@@ -747,11 +750,11 @@ export const createCustomTheme = (): Theme => {
               borderRadius: designTokens.borderRadius.md,
               transition: `color ${designTokens.motion.transition.fast}, background-color ${designTokens.motion.transition.fast}`,
               '&.Mui-selected': {
-                backgroundColor: designTokens.colors.action.selected,
-                borderLeft: `3px solid ${designTokens.colors.primary.main}`,
-                color: designTokens.colors.primary.main,
+                backgroundColor: theme.palette.action.selected,
+                borderLeft: `3px solid ${theme.palette.primary.main}`,
+                color: theme.palette.primary.main,
                 '&:hover': {
-                  backgroundColor: designTokens.colors.action.selected,
+                  backgroundColor: theme.palette.action.selected,
                 },
                 ...theme.applyStyles('dark', {
                   backgroundColor: designTokens.colors.brand.semantic.primarySubtle,
@@ -861,20 +864,20 @@ export const createCustomTheme = (): Theme => {
         },
         MuiDivider: {
           styleOverrides: {
-            root: {
-              borderColor: designTokens.colors.border.default,
-            },
+            root: ({ theme }) => ({
+              borderColor: theme.palette.divider,
+            }),
           },
         },
         MuiIconButton: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               borderRadius: designTokens.borderRadius.md,
               transition: 'all 150ms ease',
               '&:hover': {
-                backgroundColor: designTokens.colors.action.hover,
+                backgroundColor: theme.palette.action.hover,
               },
-            },
+            }),
             sizeSmall: {
               padding: 6,
             },
