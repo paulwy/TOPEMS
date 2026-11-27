@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
@@ -318,7 +319,10 @@ pub async fn update_item(
     let product_name = req.product_name.unwrap_or(existing.product_name);
     let specification = req.specification.or(existing.specification);
     let unit = req.unit.or(existing.unit);
-    let quantity = req.quantity.unwrap_or(existing.quantity);
+    let quantity = req
+        .quantity
+        .map(|q| Decimal::try_from(q).unwrap_or_default())
+        .unwrap_or(existing.quantity);
     let unit_price = req.unit_price.or(existing.unit_price);
     let amount = req.amount.or(existing.amount);
     let now = Utc::now();

@@ -12,7 +12,9 @@ pub struct PurchaseItem {
     pub product_name: String,
     pub specification: Option<String>,
     pub unit: Option<String>,
-    pub quantity: f64,
+    // scm.purchase_items.quantity 是 NUMERIC（f64 解码会 500），amount 是
+    // double precision（Decimal 解码同样会 500），两者必须分别取类型
+    pub quantity: Decimal,
     pub unit_price: Option<Decimal>,
     pub amount: Option<f64>,
     pub created_at: DateTime<Utc>,

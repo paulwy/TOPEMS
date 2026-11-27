@@ -118,6 +118,15 @@ export async function loadMesWorkstationOptions(): Promise<SelectOption[]> {
   ]);
 }
 
+/** PDM 工序（pdm.pdm_production_processes）：工序步骤必须挂在真实工序上 */
+export async function loadPdmProcessOptions(): Promise<SelectOption[]> {
+  const res = await apiClient.pdm.get('/production-processes?page=1&page_size=200');
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['processes', 'items']), [
+    'process_no',
+    'name',
+  ]);
+}
+
 /** RD 项目（rd.projects）：项目/工单类外键 */
 export async function loadRdProjectOptions(): Promise<SelectOption[]> {
   const res = await projectApi.listProjects({ page: 1, page_size: 200 });

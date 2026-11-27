@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadPdmProcessOptions } from '@/schemas/dynamicLoaders';
 
 export const stepSchema: EntitySchema = {
   entity: 'pdm_step',
@@ -14,11 +15,17 @@ export const stepSchema: EntitySchema = {
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'pdm:step',
 
+  // 工序下拉：process_id 是 uuid，裸文本填任何非 UUID 必 422
+  dynamicOptions: [
+    { field: 'process_id', queryKey: ['pdm', 'processes', 'forStep'], loader: loadPdmProcessOptions },
+  ],
+
   fields: [
     {
+      // 后端 step_no 是 i32，此前按文本填会 422 "invalid type: string"
       name: 'step_no',
       label: i18n.t('pdm.step.k2'),
-      type: 'text',
+      type: 'number',
       required: true,
       readonlyOnEdit: true,
       sortable: true,
@@ -35,27 +42,20 @@ export const stepSchema: EntitySchema = {
     {
       name: 'process_id',
       label: i18n.t('pdm.step.k4'),
-      type: 'text',
+      type: 'select',
       required: true,
       showInList: false,
-      placeholder: i18n.t('pdm.step.id_5'),
     },
     {
-      name: 'sort_order',
-      label: i18n.t('pdm.step.k6'),
-      type: 'number',
-      defaultValue: 1,
-      sortable: true,
-      listWidth: 100,
-    },
-    {
-      name: 'duration_hours',
+      // 后端字段名 standard_time（numeric），原先的 sort_order / duration_hours
+      // 在 pdm_production_steps 里根本没有对应列，提交后被静默丢弃
+      name: 'standard_time',
       label: i18n.t('pdm.step.k7'),
       type: 'number',
       listWidth: 120,
     },
     {
-      name: 'equipment_required',
+      name: 'equipment_requirement',
       label: i18n.t('pdm.step.k8'),
       type: 'text',
       listWidth: 160,
@@ -80,19 +80,10 @@ export const stepSchema: EntitySchema = {
       type: 'textarea',
       showInList: false,
     },
-    {
-      name: 'created_at',
-      label: i18n.t('pdm.step.k13'),
-      type: 'datetime',
-      readonly: true,
-      sortable: true,
-      listWidth: 160,
-      hideInForm: true,
-    },
   ],
 
   list: {
-    columns: ['step_no', 'name', 'sort_order', 'duration_hours', 'equipment_required', 'status'],
+    columns: ['step_no', 'name', 'standard_time', 'equipment_requirement', 'status'],
     searchFields: ['step_no', 'name'],
     pageSize: 10,
     statusBadge: {
@@ -125,11 +116,11 @@ export const stepSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('pdm.step.k20'),
-      fields: ['step_no', 'name', 'process_id', 'sort_order'],
+      fields: ['process_id', 'step_no', 'name'],
     },
     {
       title: i18n.t('pdm.step.k21'),
-      fields: ['duration_hours', 'equipment_required', 'status'],
+      fields: ['standard_time', 'equipment_requirement', 'status'],
     },
     {
       title: i18n.t('pdm.step.k22'),

@@ -103,9 +103,24 @@ export const healthManagementSchema: EntitySchema = {
     {
       name: 'blood_type',
       label: i18n.t('ehs.health_management.k12'),
-      type: 'text',
+      // ehs.health_records.blood_type 是 varchar(5)：自由文本写 "AUTO123blo"
+      // 会 500 value too long，只允许 ABO/Rh 合法组合
+      type: 'select',
       listWidth: 80,
       showInList: false,
+      options: {
+        type: 'static',
+        options: [
+          { value: 'A+', label: 'A+' },
+          { value: 'A-', label: 'A-' },
+          { value: 'B+', label: 'B+' },
+          { value: 'B-', label: 'B-' },
+          { value: 'AB+', label: 'AB+' },
+          { value: 'AB-', label: 'AB-' },
+          { value: 'O+', label: 'O+' },
+          { value: 'O-', label: 'O-' },
+        ],
+      },
       renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.blood_type as string | null | undefined;
         return v || '-';

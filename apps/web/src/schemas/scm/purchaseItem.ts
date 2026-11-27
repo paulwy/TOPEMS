@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadScmPurchaseOrderOptions } from '@/schemas/dynamicLoaders';
 
 export const purchaseItemSchema: EntitySchema = {
   entity: 'purchaseItem',
@@ -14,11 +15,16 @@ export const purchaseItemSchema: EntitySchema = {
   // 批 16：写权限资源前缀（DB 实查存在三动作码）
   permissionResource: 'scm:purchase_item',
 
+  // order_id 是 uuid 外键：裸文本必 422，改挂采购订单下拉
+  dynamicOptions: [
+    { field: 'order_id', queryKey: ['scm', 'purchaseOrders', 'forItem'], loader: loadScmPurchaseOrderOptions },
+  ],
+
   fields: [
     {
       name: 'order_id',
       label: i18n.t('scm.purchase_item.id_2'),
-      type: 'text',
+      type: 'select',
       required: true,
       sortable: true,
       listWidth: 160,
