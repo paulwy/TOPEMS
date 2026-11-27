@@ -380,6 +380,24 @@ pub async fn create_work_station(
         }
     };
 
+    // B354：车间必须同租户且未软删（不存在/跨租户一律 400）。
+    if let Some(workshop_id) = workshop_id {
+        match crate::shared::workshop_ref::workshop_exists_in_tenant(
+            &mut scope,
+            workshop_id,
+            tenant_id,
+        )
+        .await
+        {
+            Ok(true) => {}
+            Ok(false) => return ApiResponse::bad_request("车间不存在或不属于当前租户"),
+            Err(e) => {
+                tracing::error!("[mes] 工位创建前校验车间失败: {}", e);
+                return ApiResponse::server_error("创建工位失败");
+            }
+        }
+    }
+
     let result = sqlx::query(
         r#"
         INSERT INTO mes.work_stations (
@@ -538,6 +556,24 @@ pub async fn update_work_station(
             return ApiResponse::server_error("更新工位失败");
         }
     };
+
+    // B354：换绑车间同样要求同租户且未软删。
+    if let Some(workshop_id) = workshop_id {
+        match crate::shared::workshop_ref::workshop_exists_in_tenant(
+            &mut scope,
+            workshop_id,
+            tenant_id,
+        )
+        .await
+        {
+            Ok(true) => {}
+            Ok(false) => return ApiResponse::bad_request("车间不存在或不属于当前租户"),
+            Err(e) => {
+                tracing::error!("[mes] 工位更新前校验车间失败: {}", e);
+                return ApiResponse::server_error("更新工位失败");
+            }
+        }
+    }
 
     let status_value = match req.status.as_deref() {
         Some(raw) => match WorkStationStatus::from_db_str(raw) {

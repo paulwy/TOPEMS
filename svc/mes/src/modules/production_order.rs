@@ -527,6 +527,29 @@ pub async fn create_production_order(
         }
     };
 
+    // B354：车间必须同租户且未软删；服务身份无租户时不得绑定车间。
+    if let Some(workshop_id) = req.workshop_id {
+        match tenant_opt {
+            Some(tenant_id) => {
+                match crate::shared::workshop_ref::workshop_exists_in_tenant(
+                    &mut scope,
+                    workshop_id,
+                    tenant_id,
+                )
+                .await
+                {
+                    Ok(true) => {}
+                    Ok(false) => return ApiResponse::bad_request("车间不存在或不属于当前租户"),
+                    Err(e) => {
+                        tracing::error!("[mes] 生产工单创建前校验车间失败: {}", e);
+                        return ApiResponse::server_error("创建生产工单失败");
+                    }
+                }
+            }
+            None => return ApiResponse::bad_request("缺少租户上下文，无法绑定车间"),
+        }
+    }
+
     let result = sqlx::query!(
         r#"
         INSERT INTO mes.production_orders (
@@ -692,6 +715,29 @@ pub async fn create_order_from_erp(
             return ApiResponse::server_error("从ERP订单创建生产工单失败");
         }
     };
+
+    // B354：车间必须同租户且未软删；服务身份无租户时不得绑定车间。
+    if let Some(workshop_id) = req.workshop_id {
+        match tenant_opt {
+            Some(tenant_id) => {
+                match crate::shared::workshop_ref::workshop_exists_in_tenant(
+                    &mut scope,
+                    workshop_id,
+                    tenant_id,
+                )
+                .await
+                {
+                    Ok(true) => {}
+                    Ok(false) => return ApiResponse::bad_request("车间不存在或不属于当前租户"),
+                    Err(e) => {
+                        tracing::error!("[mes] 生产工单创建前校验车间失败: {}", e);
+                        return ApiResponse::server_error("从ERP订单创建生产工单失败");
+                    }
+                }
+            }
+            None => return ApiResponse::bad_request("缺少租户上下文，无法绑定车间"),
+        }
+    }
 
     let result = sqlx::query!(
         r#"
@@ -958,6 +1004,24 @@ pub async fn update_production_order(
             return ApiResponse::server_error("更新生产工单失败");
         }
     };
+
+    // B354：换绑车间同样要求同租户且未软删。
+    if let Some(workshop_id) = req.workshop_id {
+        match crate::shared::workshop_ref::workshop_exists_in_tenant(
+            &mut scope,
+            workshop_id,
+            tenant_id,
+        )
+        .await
+        {
+            Ok(true) => {}
+            Ok(false) => return ApiResponse::bad_request("车间不存在或不属于当前租户"),
+            Err(e) => {
+                tracing::error!("[mes] 生产工单更新前校验车间失败: {}", e);
+                return ApiResponse::server_error("更新生产工单失败");
+            }
+        }
+    }
 
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"

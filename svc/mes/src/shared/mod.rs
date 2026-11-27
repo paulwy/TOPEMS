@@ -1,6 +1,7 @@
 pub mod aps_fsm;
 pub mod aps_util;
 pub mod permission;
+pub mod workshop_ref;
 
 use axum::extract::FromRef;
 use sqlx::PgPool;
