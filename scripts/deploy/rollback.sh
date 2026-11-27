@@ -49,7 +49,7 @@ done
 # 数据库连接参数（支持环境变量覆盖）
 PGHOST="${PGHOST:-localhost}"
 PGPORT="${PGPORT:-5432}"
-PGUSER="${PGUSER:-topems}"
+PGUSER="${PGUSER:-$(id -un)}"
 PGDATABASE="${PGDATABASE:-topems}"
 # 口令不设默认弱值：环境变量优先；非 dry-run 下未设置即报错退出（dry-run 不连库可豁免）
 PGPASSWORD="${PGPASSWORD:-}"

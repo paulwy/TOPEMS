@@ -16,7 +16,7 @@ if [ -n "${MIGRATE_URL:-}" ]; then
   DEV_DB=$(printf '%s' "$MIGRATE_URL" | sed -E 's#postgres://[^@]*@[^/]*/(.*)#\1#')
   [ -z "$DEV_PORT" ] && DEV_PORT=5432
 fi
-DEV_USER="${DEV_USER:-topems}"
+DEV_USER="${DEV_USER:-$(id -un)}"
 DEV_PASS="${DEV_PASS:-topems}"
 
 # 第二库（验证库）：Homebrew 实例，数据目录 /opt/homebrew/var/postgres5433；psql 直连，不再走 docker
@@ -25,7 +25,7 @@ DEV_PASS="${DEV_PASS:-topems}"
 DEP_HOST="${DEP_HOST:-localhost}"
 DEP_PORT="${DEP_PORT:-5433}"
 DEP_DB="${DEP_DB:-topems}"
-DEP_USER="${DEP_USER:-topems}"
+DEP_USER="${DEP_USER:-$(id -un)}"
 
 echo "== 主库 5432 (brew) =="
 export PGPASSWORD

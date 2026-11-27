@@ -13,7 +13,7 @@ parse_database_url() {
     DB_HOST=$(echo "$db_url" | sed -n 's|.*@\([^:]*\):.*|\1|p')
     DB_PORT=$(echo "$db_url" | sed -n 's|.*@.*:\([0-9]*\)/.*|\1|p')
     DB_NAME=$(echo "$db_url" | sed -n 's|.*/\([^/]*\)$|\1|p')
-    DB_USER=${DB_USER:-topems}
+    DB_USER=${DB_USER:-$(id -un)}
     DB_HOST=${DB_HOST:-localhost}
     DB_PORT=${DB_PORT:-5432}
     DB_NAME=${DB_NAME:-topems}
