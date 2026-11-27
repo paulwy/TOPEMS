@@ -21,6 +21,45 @@ interface CspConfig {
   workerSrc: string[];
 }
 
+/**
+ * 开发态 CSP（含 localhost 白名单与 eval，供 Vite 热更新）。
+ */
+const DEV_CONTENT_SECURITY_POLICY = [
+  "default-src 'self' http://localhost:* http://127.0.0.1:*",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self' data: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
+  "object-src 'none'",
+  "frame-src 'self' https://*.amap.com",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "worker-src 'self' blob:",
+].join('; ');
+
+/**
+ * 生产态 CSP。
+ *
+ * 单独导出是为了有回归护栏：这段政策由 applySecurityHeaders 以 <meta> 在运行时注入，
+ * 入口 <script type="module"> 无 nonce/hash，一旦重新引入 'strict-dynamic'，
+ * 所有 import() 的按需 chunk（i18n / telemetry / 各页面 chunk）会被浏览器拒绝，
+ * 线上直接停在「加载中」。2026-11-27 曾因此整站不可用，故由单测锁定。
+ */
+export const PRODUCTION_CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://*.amap.com https://*.baidu.com https://*.google.com https://*.google-analytics.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self' https://*.amap.com https://api.map.baidu.com wss://*",
+  "object-src 'none'",
+  "frame-src 'self' https://*.amap.com",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "worker-src 'self' blob:",
+].join('; ');
+
 const isDev = isDevelopment();
 
 const securityConfig: SecurityConfig = {
@@ -81,33 +120,7 @@ const securityConfig: SecurityConfig = {
     workerSrc: ["'self'", 'blob:'],
   },
 
-  contentSecurityPolicy: isDev
-    ? [
-        "default-src 'self' http://localhost:* http://127.0.0.1:*",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
-        "font-src 'self' https://fonts.gstatic.com",
-        "connect-src 'self' data: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
-        "object-src 'none'",
-        "frame-src 'self' https://*.amap.com",
-        "form-action 'self'",
-        "base-uri 'self'",
-        "worker-src 'self' blob:",
-      ].join('; ')
-    : [
-        "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' https://*.amap.com https://*.baidu.com https://*.google.com https://*.google-analytics.com",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
-        "font-src 'self' https://fonts.gstatic.com",
-        "connect-src 'self' https://*.amap.com https://api.map.baidu.com wss://*",
-        "object-src 'none'",
-        "frame-src 'self' https://*.amap.com",
-        "form-action 'self'",
-        "base-uri 'self'",
-        "worker-src 'self' blob:",
-      ].join('; '),
+  contentSecurityPolicy: isDev ? DEV_CONTENT_SECURITY_POLICY : PRODUCTION_CONTENT_SECURITY_POLICY,
 };
 
 export const applySecurityHeaders = (): void => {
