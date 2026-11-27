@@ -68,6 +68,9 @@ function validTimestamp14(s) {
     M = +s.slice(10, 12),
     S = +s.slice(12, 14);
   if (y < 2020 || y > 2100) return false;
+  // ISO 8601 允许 24:00:00 表示当日终点；20261127240000 已投放生产账本，
+  // 版本号不能重命名，否则会与 SQLx 账本分叉。仅接受 M=S=0 的 24 点。
+  if (H === 24 && M === 0 && S === 0) return true;
   const dt = new Date(Date.UTC(y, m - 1, d, H, M, S));
   return (
     dt.getUTCFullYear() === y &&

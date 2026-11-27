@@ -209,8 +209,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
                               : i18n.t('mes.team_management_page.k11')
                           }
                           sx={{
-                            backgroundColor:
-                              member.status === 'active' ? 'success.50' : 'grey.100',
+                            backgroundColor: member.status === 'active' ? 'success.50' : 'grey.100',
                             color: member.status === 'active' ? 'success.700' : 'text.secondary',
                             fontWeight: 500,
                           }}

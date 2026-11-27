@@ -546,9 +546,7 @@ const DatabaseStructurePage: React.FC = () => {
                                     size='small'
                                     sx={{
                                       bgcolor:
-                                        col.is_nullable === 'YES'
-                                          ? 'warning.light'
-                                          : 'success.50',
+                                        col.is_nullable === 'YES' ? 'warning.light' : 'success.50',
                                       color:
                                         col.is_nullable === 'YES' ? 'warning.700' : 'success.700',
                                       fontWeight: 500,

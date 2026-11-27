@@ -293,7 +293,10 @@ const PerformanceTestPage: React.FC = () => {
       value: loadTime ? `${loadTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k1'),
       color:
         loadTime && loadTime < 100 ? `${theme.palette.success.dark}` : theme.palette.warning.dark,
-      bgColor: loadTime && loadTime < 100 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
+      bgColor:
+        loadTime && loadTime < 100
+          ? designTokens.colors.success[100]
+          : designTokens.colors.warning[100],
       description: t('performance.performance_test_page.k3'),
     },
     {
@@ -371,7 +374,10 @@ const PerformanceTestPage: React.FC = () => {
         firstPaint && firstPaint < 1000
           ? `${theme.palette.success.dark}`
           : theme.palette.warning.dark,
-      bgColor: firstPaint && firstPaint < 1000 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
+      bgColor:
+        firstPaint && firstPaint < 1000
+          ? designTokens.colors.success[100]
+          : designTokens.colors.warning[100],
       description: 'First Paint (FP)',
     },
     {
@@ -399,7 +405,9 @@ const PerformanceTestPage: React.FC = () => {
           ? `${theme.palette.success.dark}`
           : theme.palette.warning.dark,
       bgColor:
-        navigationTime && navigationTime < 2000 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
+        navigationTime && navigationTime < 2000
+          ? designTokens.colors.success[100]
+          : designTokens.colors.warning[100],
       description: t('performance.performance_test_page.k11'),
     },
     {
@@ -416,7 +424,10 @@ const PerformanceTestPage: React.FC = () => {
         avgRenderTime && avgRenderTime < 16
           ? `${theme.palette.success.dark}`
           : theme.palette.warning.dark,
-      bgColor: avgRenderTime && avgRenderTime < 16 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
+      bgColor:
+        avgRenderTime && avgRenderTime < 16
+          ? designTokens.colors.success[100]
+          : designTokens.colors.warning[100],
       description: t('performance.performance_test_page.k15'),
     },
     {
@@ -429,7 +440,9 @@ const PerformanceTestPage: React.FC = () => {
           ? `${theme.palette.success.dark}`
           : theme.palette.warning.dark,
       bgColor:
-        domContentLoaded && domContentLoaded < 1000 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
+        domContentLoaded && domContentLoaded < 1000
+          ? designTokens.colors.success[100]
+          : designTokens.colors.warning[100],
       description: 'DOM Content Loaded',
     },
     {

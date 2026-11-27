@@ -201,9 +201,7 @@ const AccountManagementPage: React.FC = () => {
               ? `var(--color-primary-main, ${theme.palette.primary.dark})`
               : `var(--color-error-main, ${theme.palette.error['800']})`;
           const bgColor =
-            direction === 'debit'
-              ? `var(--color-primary-lighter)`
-              : `var(--color-error-lighter)`;
+            direction === 'debit' ? `var(--color-primary-lighter)` : `var(--color-error-lighter)`;
           return (
             <span
               style={{
@@ -236,9 +234,7 @@ const AccountManagementPage: React.FC = () => {
                 fontSize: 12,
                 fontWeight: 500,
                 border: `1px solid ${isDetail ? `var(--color-primary-main, ${theme.palette.primary[700]}` : `var(--color-divider, ${theme.palette.action.selected}`}`,
-                backgroundColor: isDetail
-                  ? `var(--color-primary-lighter)`
-                  : 'transparent',
+                backgroundColor: isDetail ? `var(--color-primary-lighter)` : 'transparent',
                 color: isDetail
                   ? `var(--color-primary-main, ${theme.palette.primary.dark})`
                   : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,

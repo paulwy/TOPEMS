@@ -1000,7 +1000,11 @@ const DesignSystemTab: React.FC = () => {
                 : i18n.t('microfrontend.runtime_dashboard.k71')
             }
             icon={theme.mode === 'dark' ? <MoonIcon size={20} /> : <SunIcon size={20} />}
-            color={theme.mode === 'dark' ? designTokens.colors.grey[800] : designTokens.colors.warning.main}
+            color={
+              theme.mode === 'dark'
+                ? designTokens.colors.grey[800]
+                : designTokens.colors.warning.main
+            }
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>

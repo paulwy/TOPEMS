@@ -216,9 +216,7 @@ export const getAccountSchema = (): EntitySchema => ({
               fontSize: 12,
               fontWeight: 500,
               border: `1px solid ${isDetail ? `var(--color-primary-main, ${designTokens.colors.primary[700]}` : `var(--color-divider, ${designTokens.colors.action.selected}`}`,
-              backgroundColor: isDetail
-                ? `var(--color-primary-lighter)`
-                : 'transparent',
+              backgroundColor: isDetail ? `var(--color-primary-lighter)` : 'transparent',
               color: isDetail
                 ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
                 : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,

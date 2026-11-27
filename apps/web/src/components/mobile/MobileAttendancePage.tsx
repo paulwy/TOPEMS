@@ -520,7 +520,9 @@ const MobileAttendancePage: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      bgcolor: canPunch ? alpha(theme.palette.common.white, 0.18) : 'action.disabledBackground',
+                      bgcolor: canPunch
+                        ? alpha(theme.palette.common.white, 0.18)
+                        : 'action.disabledBackground',
                       cursor: checkingIn ? 'not-allowed' : 'pointer',
                       transition: 'transform 0.2s',
                       '&:active': {

@@ -247,9 +247,7 @@ const ObservabilityPanel: React.FC = () => {
                         sx={{
                           p: 1.5,
                           bgcolor:
-                            m.totalLoadTime > SLOW_MODULE_THRESHOLD
-                              ? 'warning.50'
-                              : 'action.hover',
+                            m.totalLoadTime > SLOW_MODULE_THRESHOLD ? 'warning.50' : 'action.hover',
                           borderRadius: 1,
                         }}
                       >

@@ -285,8 +285,14 @@ function main() {
 
   // 基线模式：检查是否有新漂移
   const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf-8'));
-  const baselineMissing = new Set(baseline.gaps?.missing_in_openapi || []);
-  const baselineExtra = new Set(baseline.gaps?.extra_in_openapi || []);
+  // 基线是历史生成物，里面可能残留 /api/core/flow|iam 旧前缀；比较前与 live/docs 同步归一，
+  // 否则同一端点会因前缀不同被误判成“新漂移”。仅归一化，不隐藏真实新增。
+  const normKey = (k) => {
+    const [m, p] = k.split(' ');
+    return `${m} ${normalizePath(p)}`;
+  };
+  const baselineMissing = new Set((baseline.gaps?.missing_in_openapi || []).map(normKey));
+  const baselineExtra = new Set((baseline.gaps?.extra_in_openapi || []).map(normKey));
 
   // 新出现的漂移 = 当前漂移 - 基线白名单
   const newMissing = missingInOpenapi.filter((k) => !baselineMissing.has(k));
