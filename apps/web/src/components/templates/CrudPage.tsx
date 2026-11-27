@@ -46,6 +46,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useTranslation } from 'react-i18next';
 
 import { ListPageTemplate } from './ListPageTemplate';
+import { hasRenderableTabContent, renderTabContent } from './crudTabContent';
 import type { ColumnDef, RowAction } from './list/types';
 import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 import { resolveCrudPermissionCodes } from './crudPermissions';
@@ -111,8 +112,13 @@ export interface CrudTab {
   icon?: React.ReactNode;
   /**
    * Tab 内容（自定义渲染）。可选：
-   * 约定第一个 Tab 为列表本身（由 CrudPage 主列表渲染），此时无需传 content，
-   * 否则会出现「第一个 Tab 的自定义列表 + 主列表」同屏渲染两遍（A-02/A-03）。
+   *
+   * - **不传 / 传 `null` / 传空 Fragment `<></>`** → 该 Tab 由 CrudPage 主列表渲染
+   *   （第一个 Tab 就是列表本身，这是推荐写法）；
+   * - **传了可渲染内容** → 该 Tab 完全由 content 接管，CrudPage 主列表**不再渲染**
+   *   （含第一个 Tab），避免「第一个 Tab 的自定义列表 + 主列表」同屏渲染两遍（A-02/A-03）。
+   *
+   * 该判定由 `hasRenderableTabContent` 统一做防御，页面无需再自行判断。
    */
   content?: React.ReactNode | ((active: boolean) => React.ReactNode);
   /** 是否禁用 */
@@ -162,8 +168,11 @@ export interface CrudPageProps<T = Record<string, unknown>> {
   /**
    * Tab 配置
    *
-   * 提供后页面渲染为多 Tab 布局，第一个 Tab 通常是主列表（通过 renderMainList 自定义），
-   * 其他 Tab 可以是自定义内容。
+   * 提供后页面渲染为多 Tab 布局。第一个 Tab 默认就是主列表（**不要给它传 content**），
+   * 其他 Tab 传 content 作为自定义内容。
+   *
+   * 防御规则：任一 Tab（含第一个）传了可渲染的 content，就由该 content 接管整屏内容，
+   * CrudPage 主列表不再渲染；`null` / 空 Fragment `<></>` 等占位值不算 content。
    *
    * @example
    * ```tsx
@@ -171,7 +180,7 @@ export interface CrudPageProps<T = Record<string, unknown>> {
    *   schema={orderSchema}
    *   apiAdapter={orderApi}
    *   tabs={[
-   *     { id: 'list', label: '订单列表', content: <CrudList /> },
+   *     { id: 'list', label: '订单列表' },              // 第一个 Tab：主列表，不传 content
    *     { id: 'items', label: '物料明细', content: <ItemsTable /> },
    *     { id: 'suppliers', label: '供应商', content: <SupplierPanel /> },
    *   ]}
@@ -239,6 +248,15 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   // ── Tab 状态 ──
   const hasTabs = !!tabsProp && tabsProp.length > 0;
   const [activeTab, setActiveTab] = useState<string>(defaultTab ?? tabsProp?.[0]?.id ?? '');
+  // 激活态与实际渲染保持一致：defaultTab 指向不存在的 Tab 时回落到第一个
+  const resolvedActiveTabId = hasTabs
+    ? tabsProp!.some((t) => t.id === activeTab)
+      ? activeTab
+      : (tabsProp![0]?.id ?? '')
+    : '';
+  const activeTabDef = hasTabs ? tabsProp!.find((t) => t.id === resolvedActiveTabId) : undefined;
+  // 当前 Tab 自带可渲染内容 → 该 Tab 的列表由 content 自行负责，主列表一律让位（A-02/A-03 防御）
+  const activeTabHasOwnContent = hasTabs && hasRenderableTabContent(activeTabDef);
 
   // ── 扩展能力检测 ──
   const extensions = schema as SchemaExtensions;
@@ -852,7 +870,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       {/* Tab 导航 */}
       {hasTabs && (
         <Tabs
-          value={tabsProp.some((t) => t.id === activeTab) ? activeTab : (tabsProp[0]?.id ?? '')}
+          value={resolvedActiveTabId}
           onChange={(_, v: string) => setActiveTab(v)}
           sx={{
             mb: 2,
@@ -873,28 +891,17 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
         </Tabs>
       )}
 
-      {/* Tab 内容（仅当该 Tab 有自定义 content 时渲染；第一个 Tab 约定走主列表） */}
-      {hasTabs && tabsProp!.some((t) => t.id === activeTab && t.content) ? (
-        <Box sx={{ mb: 2 }}>
-          {(() => {
-            const tab = tabsProp!.find((t) => t.id === activeTab);
-            if (!tab || !tab.content) return null;
-            const content = typeof tab.content === 'function' ? tab.content(true) : tab.content;
-            return content;
-          })()}
-        </Box>
+      {/* Tab 内容（仅当当前 Tab 自带可渲染内容时渲染） */}
+      {hasTabs && activeTabHasOwnContent ? (
+        <Box sx={{ mb: 2 }}>{renderTabContent(activeTabDef)}</Box>
       ) : null}
 
-      {/* 主内容区（当没有启用 Tabs 或当前 Tab 需要显示列表时） */}
+      {/* 主内容区（没有 Tabs，或当前 Tab 未自带内容时渲染） */}
       {(() => {
-        // 如果有 Tabs，且当前 Tab 有自定义内容（非列表），则跳过主列表
-        if (hasTabs) {
-          const currentTab = tabsProp!.find((t) => t.id === activeTab);
-          // 如果当前 Tab 有自定义 content，且不是第一个 Tab（约定第一个是列表）
-          // 则不渲染主列表
-          if (currentTab && currentTab.id !== tabsProp![0]?.id && currentTab.content) {
-            return null;
-          }
+        // 防御：当前 Tab（含第一个 Tab）只要自带可渲染 content，就认定列表由它自己渲染，
+        // 主列表一律不渲染 —— 避免「第一个 Tab 的自定义列表 + 主列表」同屏两遍（A-02/A-03）。
+        if (hasTabs && activeTabHasOwnContent) {
+          return null;
         }
 
         return (

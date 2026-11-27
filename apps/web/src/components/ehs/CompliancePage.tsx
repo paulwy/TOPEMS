@@ -197,8 +197,15 @@ const CompliancePage: React.FC = () => {
       headerContent={() => <StatsCards stats={stats} />}
       tabs={[
         {
+          // 第一个 Tab 就是主列表（法规清单），不传 content —— 曾有「首个 Tab 塞自定义列表
+          // + 主列表」的双渲染问题（A-02/A-03），CrudPage 现已做防御，这里也补齐默认 Tab，
+          // 否则 defaultTab='list' 指向不存在的 Tab，切成评估/许可后无法切回法规清单。
+          id: 'list',
+          label: i18n.t('ehs:compliance_page.regulation_list'),
+        },
+        {
           id: 'assessments',
-          label: i18n.t('ehs.compliance_page.k5'),
+          label: i18n.t('ehs:compliance_page.assessment_list'),
           content: (
             <CrudPage
               schema={assessmentSchema}
@@ -208,7 +215,7 @@ const CompliancePage: React.FC = () => {
         },
         {
           id: 'permits',
-          label: i18n.t('ehs.compliance_page.k6'),
+          label: i18n.t('ehs:compliance_page.permit_list'),
           content: (
             <CrudPage
               schema={permitSchema}
