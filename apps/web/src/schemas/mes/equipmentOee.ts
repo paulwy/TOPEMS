@@ -12,9 +12,9 @@ const getOEEColorHex = (value: number | undefined | null) => {
 
 const getOEEBgColor = (value: number | undefined | null) => {
   if (value == null || isNaN(value)) return 'grey.100';
-  if (value >= 85) return 'success.lighter';
+  if (value >= 85) return 'success.50';
   if (value >= 70) return 'warning.light';
-  return 'error.lighter';
+  return 'error.50';
 };
 
 const formatPercent = (value: number | undefined | null) => {

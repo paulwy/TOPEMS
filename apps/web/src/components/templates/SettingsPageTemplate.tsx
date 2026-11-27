@@ -461,7 +461,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             cursor: section.collapsible ? 'pointer' : 'default',
-            bgcolor: section.color ? `${section.color}.lighter` : 'inherit',
+            bgcolor: section.color ? `${section.color}.50` : 'inherit',
           }}
           onClick={() => section.collapsible && toggleSection(section.id)}
         >

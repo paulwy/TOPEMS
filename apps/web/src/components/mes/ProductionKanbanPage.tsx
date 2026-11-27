@@ -209,9 +209,9 @@ const ProductionKanbanPage: React.FC = () => {
                             sx={{
                               bgcolor:
                                 order.status === 'completed'
-                                  ? 'success.lighter'
+                                  ? 'success.50'
                                   : order.status === 'in_progress'
-                                    ? 'primary.lighter'
+                                    ? 'primary.50'
                                     : 'grey.100',
                               color:
                                 order.status === 'completed'
@@ -392,10 +392,10 @@ const ProductionKanbanPage: React.FC = () => {
                               sx={{
                                 bgcolor:
                                   item.pass_rate >= 95
-                                    ? 'success.lighter'
+                                    ? 'success.50'
                                     : item.pass_rate >= 90
-                                      ? 'warning.lighter'
-                                      : 'error.lighter',
+                                      ? 'warning.50'
+                                      : 'error.50',
                                 color:
                                   item.pass_rate >= 95
                                     ? 'success.dark'
@@ -475,12 +475,12 @@ const ProductionKanbanPage: React.FC = () => {
                               sx={{
                                 bgcolor:
                                   eq.status === 'running'
-                                    ? 'success.lighter'
+                                    ? 'success.50'
                                     : eq.status === 'idle'
                                       ? 'grey.100'
                                       : eq.status === 'maintenance'
-                                        ? 'warning.lighter'
-                                        : 'error.lighter',
+                                        ? 'warning.50'
+                                        : 'error.50',
                                 color:
                                   eq.status === 'running'
                                     ? 'success.dark'

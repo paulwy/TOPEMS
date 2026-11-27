@@ -107,19 +107,19 @@ const ScoringDimensionStats: React.FC = () => {
       label: i18n.t('pages.srm_scoring_dimension_page.k4'),
       value: stats.active,
       color: 'success.dark',
-      bgColor: 'success.lighter',
+      bgColor: 'success.50',
     },
     {
       label: i18n.t('pages.srm_scoring_dimension_page.k5'),
       value: `${stats.totalWeight}%`,
       color: stats.totalWeight === 100 ? 'success.dark' : 'warning.dark',
-      bgColor: stats.totalWeight === 100 ? 'success.lighter' : 'warning.lighter',
+      bgColor: stats.totalWeight === 100 ? 'success.50' : 'warning.50',
     },
     {
       label: i18n.t('pages.srm_scoring_dimension_page.k6'),
       value: stats.inactive,
       color: 'error.dark',
-      bgColor: 'error.lighter',
+      bgColor: 'error.50',
     },
   ];
 

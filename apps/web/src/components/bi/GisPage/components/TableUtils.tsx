@@ -17,14 +17,14 @@ export const getStatusStyle = (status: string) => {
   if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
   const s = status.toLowerCase();
   if (s.includes('active') || s.includes(i18n.t('bi.gis_page_components__table_utils.active')))
-    return { bgcolor: 'success.lighter', color: 'var(--success-text)' };
+    return { bgcolor: 'success.50', color: 'var(--success-text)' };
   if (s.includes('pending') || s.includes(i18n.t('bi.gis_page_components__table_utils.pending')))
     return { bgcolor: 'warning.light', color: 'var(--warning-text)' };
   if (
     s.includes('inactive') ||
     s.includes(i18n.t('bi.gis_page_components__table_utils.disabled_filter'))
   )
-    return { bgcolor: 'error.lighter', color: 'error.darker' };
+    return { bgcolor: 'error.50', color: 'error.700' };
   return { bgcolor: 'grey.100', color: 'grey.600' };
 };
 export const StatusChip: React.FC<{ status: string }> = ({ status }) => {

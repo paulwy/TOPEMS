@@ -602,7 +602,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 sx={{
                   mt: 2,
                   p: 2,
-                  backgroundColor: 'warning.lighter',
+                  backgroundColor: 'warning.50',
                   borderRadius: 1,
                   display: 'flex',
                   alignItems: 'center',

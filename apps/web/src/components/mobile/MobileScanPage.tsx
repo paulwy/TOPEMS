@@ -580,7 +580,7 @@ const MobileScanPage: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: 'primary.lighter',
+                    bgcolor: 'primary.50',
                     color: 'primary.main',
                   }}
                 >

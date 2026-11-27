@@ -70,7 +70,7 @@ export const assetSchema: EntitySchema = {
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
-              backgroundColor: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
+              backgroundColor: `var(--color-primary-lighter)`,
               color: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
             },
           },

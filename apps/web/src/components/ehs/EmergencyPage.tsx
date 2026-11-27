@@ -52,10 +52,10 @@ const drillAdapter: CrudApiAdapter<DrillRecord> = {
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
   draft: { bg: 'grey.100', color: 'text.secondary' },
-  planned: { bg: 'info.lighter', color: 'info.dark' },
-  ongoing: { bg: 'warning.lighter', color: 'warning.dark' },
-  completed: { bg: 'success.lighter', color: 'success.dark' },
-  cancelled: { bg: 'error.lighter', color: 'error.dark' },
+  planned: { bg: 'info.50', color: 'info.dark' },
+  ongoing: { bg: 'warning.50', color: 'warning.dark' },
+  completed: { bg: 'success.50', color: 'success.dark' },
+  cancelled: { bg: 'error.50', color: 'error.dark' },
 };
 
 const statusLabelMap: Record<string, string> = {
@@ -114,7 +114,7 @@ const EmergencyPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -150,7 +150,7 @@ const EmergencyPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'success.lighter',
+                bgcolor: 'success.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -186,7 +186,7 @@ const EmergencyPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'info.lighter',
+                bgcolor: 'info.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

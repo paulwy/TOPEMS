@@ -139,18 +139,18 @@ const QmsStandardDetailPage: React.FC = () => {
         size='small'
         sx={{
           backgroundColor: item.color.includes('green')
-            ? 'success.lighter'
+            ? 'success.50'
             : item.color.includes('yellow')
               ? 'warning.100'
               : item.color.includes('red')
-                ? 'error.lighter'
+                ? 'error.50'
                 : 'grey.100',
           color: item.color.includes('green')
             ? 'success.700'
             : item.color.includes('yellow')
               ? theme.palette.yellow[700]
               : item.color.includes('red')
-                ? 'error.darker'
+                ? 'error.700'
                 : 'text.secondary',
         }}
       />

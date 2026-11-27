@@ -135,7 +135,7 @@ export const materialRequirementSchema: EntitySchema = {
         const priorityMap: Record<string, { label: string; bg: string; color: string }> = {
           urgent: {
             label: i18n.t('mes.material_requirement.k19'),
-            bg: 'error.lighter',
+            bg: 'error.50',
             color: 'error.dark',
           },
           high: {
@@ -198,12 +198,12 @@ export const materialRequirementSchema: EntitySchema = {
           },
           completed: {
             label: i18n.t('mes.material_requirement.k32'),
-            bg: 'success.lighter',
+            bg: 'success.50',
             color: 'success.700',
           },
           cancelled: {
             label: i18n.t('mes.material_requirement.k33'),
-            bg: 'error.lighter',
+            bg: 'error.50',
             color: 'error.dark',
           },
         };

@@ -125,7 +125,7 @@ const EhsCheckPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'success.lighter',
+                  bgcolor: 'success.50',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',

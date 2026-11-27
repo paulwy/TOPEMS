@@ -165,8 +165,8 @@ export const bankAccountSchema: EntitySchema = {
           default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
         };
         const bgColorMap: Record<string, string> = {
-          success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-          error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
+          success: `var(--color-success-lighter)`,
+          error: `var(--color-error-lighter)`,
           default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
         };
         return React.createElement(
@@ -213,7 +213,7 @@ export const bankAccountSchema: EntitySchema = {
               borderRadius: 12,
               fontSize: 12,
               fontWeight: 500,
-              backgroundColor: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+              backgroundColor: `var(--color-warning-lighter)`,
               color: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
             },
           },

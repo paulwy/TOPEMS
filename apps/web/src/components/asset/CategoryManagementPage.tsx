@@ -110,9 +110,9 @@ const TreeItem: React.FC<{
             minHeight: 40,
             borderRadius: 1,
             '&.Mui-selected': {
-              backgroundColor: 'primary.lighter',
+              backgroundColor: 'primary.50',
               '&:hover': {
-                backgroundColor: 'primary.lighter',
+                backgroundColor: 'primary.50',
               },
             },
           }}
@@ -246,7 +246,7 @@ export const CategoryManagementPage: React.FC = () => {
             p: 1,
             borderRadius: 1,
             cursor: 'pointer',
-            bgcolor: selectedCategoryId === null ? 'primary.lighter' : 'transparent',
+            bgcolor: selectedCategoryId === null ? 'primary.50' : 'transparent',
             '&:hover': { bgcolor: 'action.hover' },
           }}
           onClick={() => setSelectedCategoryId(null)}

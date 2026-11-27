@@ -56,7 +56,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor: `${getTypeColor(approval.type)}.lighter`,
+              bgcolor: `${getTypeColor(approval.type)}.50`,
               color: `${getTypeColor(approval.type)}.main`,
             }}
           >

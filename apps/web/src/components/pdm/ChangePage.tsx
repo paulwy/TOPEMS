@@ -30,12 +30,12 @@ const changeAdapter: CrudApiAdapter<Record<string, unknown>> = {
 };
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  pending: { bg: 'warning.lighter', color: 'warning.dark' },
+  pending: { bg: 'warning.50', color: 'warning.dark' },
 
-  reviewing: { bg: 'info.lighter', color: 'info.dark' },
-  approved: { bg: 'success.lighter', color: 'success.dark' },
-  rejected: { bg: 'error.lighter', color: 'error.dark' },
-  implemented: { bg: 'primary.lighter', color: 'primary.dark' },
+  reviewing: { bg: 'info.50', color: 'info.dark' },
+  approved: { bg: 'success.50', color: 'success.dark' },
+  rejected: { bg: 'error.50', color: 'error.dark' },
+  implemented: { bg: 'primary.50', color: 'primary.dark' },
   closed: { bg: 'grey.100', color: 'text.secondary' },
 };
 
@@ -183,7 +183,7 @@ export const ChangePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -219,7 +219,7 @@ export const ChangePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -255,7 +255,7 @@ export const ChangePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'success.lighter',
+                bgcolor: 'success.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -291,7 +291,7 @@ export const ChangePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'primary.lighter',
+                bgcolor: 'primary.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

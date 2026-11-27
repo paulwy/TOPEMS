@@ -59,9 +59,9 @@ const baseAdapter = createCrudPageAdapter<Document, CreateDocumentRequest>({
 const statusColorMap: Record<string, { bg: string; color: string }> = {
   draft: { bg: 'grey.100', color: 'text.secondary' },
 
-  review: { bg: 'warning.lighter', color: 'warning.dark' },
-  approved: { bg: 'info.lighter', color: 'info.dark' },
-  published: { bg: 'success.lighter', color: 'success.dark' },
+  review: { bg: 'warning.50', color: 'warning.dark' },
+  approved: { bg: 'info.50', color: 'info.dark' },
+  published: { bg: 'success.50', color: 'success.dark' },
   archived: { bg: 'grey.100', color: 'text.secondary' },
 };
 
@@ -261,7 +261,7 @@ export const DocumentPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'primary.lighter',
+                bgcolor: 'primary.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -297,7 +297,7 @@ export const DocumentPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'success.lighter',
+                bgcolor: 'success.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -333,7 +333,7 @@ export const DocumentPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -598,7 +598,7 @@ export const DocumentPage: React.FC = () => {
                             label={t('pdm.document_page.k34')}
                             size='small'
                             sx={{
-                              backgroundColor: 'success.lighter',
+                              backgroundColor: 'success.50',
                               color: 'success.dark',
                               fontWeight: 500,
                               fontSize: designTokens.typography.fontSize.scale['0.75rem'],

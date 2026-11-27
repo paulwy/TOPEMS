@@ -207,7 +207,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
         value={stats.total}
         icon={<FlaskConical />}
         bgColor='error.light'
-        iconBgColor='error.lighter'
+        iconBgColor='error.50'
         iconColor='error.main'
       />
       <StatCard

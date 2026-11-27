@@ -558,7 +558,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
             sx={{
               px: 2,
               py: 1,
-              bgcolor: 'error.lighter',
+              bgcolor: 'error.50',
               color: 'error.dark',
               fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               borderBottom: 1,

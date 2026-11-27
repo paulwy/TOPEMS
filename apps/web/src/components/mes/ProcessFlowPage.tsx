@@ -61,7 +61,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
   const statusMap: Record<string, { label: string; bg: string; color: string }> = {
     active: {
       label: i18n.t('mes.process_flow_page.k0'),
-      bg: 'success.lighter',
+      bg: 'success.50',
       color: 'success.dark',
     },
     inactive: {

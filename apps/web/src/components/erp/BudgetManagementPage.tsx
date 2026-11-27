@@ -145,7 +145,7 @@ const BudgetManagementPage: React.FC = () => {
           label={i18n.t('erp.budget_management_page.k7')}
           value={`¥${totalAmount.toFixed(2)}`}
           icon={<Wallet size={18} />}
-          bgColor='success.lighter'
+          bgColor='success.50'
           iconColor='success.700'
         />
         <StatCard
@@ -159,7 +159,7 @@ const BudgetManagementPage: React.FC = () => {
           label={i18n.t('erp.budget_management_page.k9')}
           value={exceededCount}
           icon={<AlertTriangle size={18} />}
-          bgColor='error.lighter'
+          bgColor='error.50'
           iconColor='error.dark'
         />
       </Box>
@@ -191,7 +191,7 @@ const BudgetManagementPage: React.FC = () => {
           label={i18n.t('erp.budget_management_page.k11')}
           value={`¥${totalAmount.toFixed(2)}`}
           icon={<Receipt size={18} />}
-          bgColor='success.lighter'
+          bgColor='success.50'
           iconColor='success.700'
         />
         <StatCard
@@ -205,7 +205,7 @@ const BudgetManagementPage: React.FC = () => {
           label={i18n.t('erp.budget_management_page.k13')}
           value={completedCount}
           icon={<CheckCircle size={18} />}
-          bgColor='error.lighter'
+          bgColor='error.50'
           iconColor='error.dark'
         />
       </Box>

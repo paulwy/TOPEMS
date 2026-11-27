@@ -330,7 +330,7 @@ const LimsSampleDetailPage: React.FC = () => {
                       backgroundColor:
                         task.status === 'completed' ||
                         task.status === i18n.t('pages.lims_sample_detail_page.k39')
-                          ? 'success.lighter'
+                          ? 'success.50'
                           : task.status === 'in_progress' ||
                               task.status === i18n.t('pages.lims_sample_detail_page.k40')
                             ? 'primary.100'
@@ -509,7 +509,7 @@ const LimsSampleDetailPage: React.FC = () => {
               sx={{
                 textAlign: 'center',
                 p: 2,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
               }}
             >

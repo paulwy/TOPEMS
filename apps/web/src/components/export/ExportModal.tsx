@@ -513,7 +513,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 sx={{
                   width: 64,
                   height: 64,
-                  backgroundColor: 'success.lighter',
+                  backgroundColor: 'success.50',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -550,7 +550,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 sx={{
                   width: 64,
                   height: 64,
-                  backgroundColor: 'error.lighter',
+                  backgroundColor: 'error.50',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -578,7 +578,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   backgroundColor: 'error.dark',
                   color: 'common.white',
                   borderRadius: '0.5rem',
-                  '&:hover': { backgroundColor: 'error.darker' },
+                  '&:hover': { backgroundColor: 'error.700' },
                 }}
               >
                 {i18n.t('components.export_modal.k9')}

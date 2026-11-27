@@ -41,10 +41,10 @@ const occupationalDiseaseAdapter: CrudApiAdapter<OccupationalDiseaseCase> = {
 };
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  suspected: { bg: 'warning.lighter', color: 'warning.dark' },
-  confirmed: { bg: 'error.lighter', color: 'error.dark' },
-  recovered: { bg: 'success.lighter', color: 'success.dark' },
-  chronic: { bg: 'info.lighter', color: 'info.dark' },
+  suspected: { bg: 'warning.50', color: 'warning.dark' },
+  confirmed: { bg: 'error.50', color: 'error.dark' },
+  recovered: { bg: 'success.50', color: 'success.dark' },
+  chronic: { bg: 'info.50', color: 'info.dark' },
   deceased: { bg: 'grey.100', color: 'text.secondary' },
 };
 
@@ -57,10 +57,10 @@ const statusLabelMap: Record<string, string> = {
 };
 
 const severityColorMap: Record<string, { bg: string; color: string }> = {
-  mild: { bg: 'success.lighter', color: 'success.dark' },
-  moderate: { bg: 'warning.lighter', color: 'warning.dark' },
-  severe: { bg: 'error.lighter', color: 'error.dark' },
-  fatal: { bg: 'error.light', color: 'error.darker' },
+  mild: { bg: 'success.50', color: 'success.dark' },
+  moderate: { bg: 'warning.50', color: 'warning.dark' },
+  severe: { bg: 'error.50', color: 'error.dark' },
+  fatal: { bg: 'error.light', color: 'error.700' },
 };
 
 const severityLabelMap: Record<string, string> = {
@@ -125,7 +125,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'error.lighter',
+                bgcolor: 'error.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -233,7 +233,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'error.lighter',
+                bgcolor: 'error.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

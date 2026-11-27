@@ -165,7 +165,7 @@ const LEVEL_CONFIG = {
     bgColor: 'error.light',
     borderColor: 'error.light',
     titleColor: 'error.800',
-    messageColor: 'error.darker',
+    messageColor: 'error.700',
     alertColor: 'error' as const,
   },
   info: {

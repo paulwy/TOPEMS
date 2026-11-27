@@ -88,7 +88,7 @@ const EhsHazardPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'error.lighter',
+                bgcolor: 'error.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -124,7 +124,7 @@ const EhsHazardPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'error.lighter',
+                bgcolor: 'error.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -196,7 +196,7 @@ const EhsHazardPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'success.lighter',
+                bgcolor: 'success.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

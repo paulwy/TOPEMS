@@ -77,7 +77,7 @@ const InventoryStats: React.FC = () => {
       label: i18n.t('pages.inventory_page.k3'),
       value: stats?.total_alerts || 0,
       color: 'success.dark',
-      bgColor: 'success.lighter',
+      bgColor: 'success.50',
       icon: (
         <CheckCircle
           size={20}

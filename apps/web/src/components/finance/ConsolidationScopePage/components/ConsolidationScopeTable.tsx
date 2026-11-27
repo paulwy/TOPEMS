@@ -16,7 +16,7 @@ const styles: Record<string, CSSProperties> = {
 const getChipSx = (colorClass: string): object => {
   const colorMap: Record<string, { backgroundColor: string; color: string }> = {
     'bg-green-100 text-green-800': {
-      backgroundColor: 'success.lighter',
+      backgroundColor: 'success.50',
       color: 'success.dark',
     },
     'bg-gray-100 text-gray-800': {

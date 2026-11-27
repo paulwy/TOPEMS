@@ -186,7 +186,7 @@ const DataDetailDialog: React.FC<DataDetailDialogProps> = ({
                 </Typography>
                 <Paper
                   variant='outlined'
-                  sx={{ p: 2, bgcolor: 'error.lighter' }}
+                  sx={{ p: 2, bgcolor: 'error.50' }}
                 >
                   <Typography color='error'>{selectedData.error_msg}</Typography>
                 </Paper>

@@ -48,7 +48,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'primary.lighter',
+            backgroundColor: 'primary.50',
             color: 'primary.main',
             flexShrink: 0,
           }}

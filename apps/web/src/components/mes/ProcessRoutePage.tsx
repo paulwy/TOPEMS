@@ -77,7 +77,7 @@ const ProcessRoutePage: React.FC = () => {
     > = {
       active: {
         label: i18n.t('mes.process_route_page.active'),
-        bg: 'success.lighter',
+        bg: 'success.50',
         color: 'success.dark',
       },
       inactive: {

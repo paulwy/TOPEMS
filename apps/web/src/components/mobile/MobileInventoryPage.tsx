@@ -349,7 +349,7 @@ const MobileInventoryPage: React.FC = () => {
                           sx={{
                             width: 40,
                             height: 40,
-                            bgcolor: `${getStatusColor(item.status)}.lighter`,
+                            bgcolor: `${getStatusColor(item.status)}.50`,
                             color: `${getStatusColor(item.status)}.main`,
                           }}
                         >
@@ -605,7 +605,7 @@ const MobileInventoryPage: React.FC = () => {
                           sx={{
                             width: 40,
                             height: 40,
-                            bgcolor: 'success.lighter',
+                            bgcolor: 'success.50',
                             color: 'success.main',
                           }}
                         >
@@ -703,7 +703,7 @@ const MobileInventoryPage: React.FC = () => {
                           sx={{
                             width: 40,
                             height: 40,
-                            bgcolor: 'info.lighter',
+                            bgcolor: 'info.50',
                             color: 'info.main',
                           }}
                         >

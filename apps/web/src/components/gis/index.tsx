@@ -91,11 +91,11 @@ const GisContent: React.FC = () => {
     if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
     const s = status.toLowerCase();
     if (s.includes('active') || s.includes(t('gis.index.k7')))
-      return { bgcolor: 'success.lighter', color: 'var(--success-text)' };
+      return { bgcolor: 'success.50', color: 'var(--success-text)' };
     if (s.includes('pending') || s.includes(t('gis.index.k8')))
       return { bgcolor: 'warning.light', color: 'var(--warning-text)' };
     if (s.includes('inactive') || s.includes(t('gis.index.k9')))
-      return { bgcolor: 'error.lighter', color: 'error.darker' };
+      return { bgcolor: 'error.50', color: 'error.700' };
     return { bgcolor: 'grey.100', color: 'grey.600' };
   };
 
@@ -766,7 +766,7 @@ const GisContent: React.FC = () => {
                     width: 40,
                     height: 40,
                     borderRadius: 2,
-                    bgcolor: 'success.lighter',
+                    bgcolor: 'success.50',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

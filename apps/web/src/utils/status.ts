@@ -11,7 +11,7 @@ export type StatusColor =
   | 'grey.500'
   | 'primary.light'
   | 'secondary.light'
-  | 'success.lighter'
+  | 'success.50'
   | 'warning.light'
   | string;
 
@@ -277,9 +277,9 @@ const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {
   [i18n.t('utils.status.k1')]: 'warning.light',
   [i18n.t('utils.status.k2')]: 'primary.light',
   [i18n.t('utils.status.k3')]: 'secondary.light',
-  [i18n.t('utils.status.k4')]: 'success.lighter',
+  [i18n.t('utils.status.k4')]: 'success.50',
   [i18n.t('utils.status.k5')]: 'primary.light',
-  [i18n.t('utils.status.k6')]: 'success.lighter',
+  [i18n.t('utils.status.k6')]: 'success.50',
 };
 
 export const getStatusColor = (

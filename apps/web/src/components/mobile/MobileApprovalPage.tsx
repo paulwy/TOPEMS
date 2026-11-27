@@ -402,7 +402,7 @@ const MobileApprovalPage: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: `${getTypeColor(selectedApproval.type)}.lighter`,
+                  bgcolor: `${getTypeColor(selectedApproval.type)}.50`,
                   color: `${getTypeColor(selectedApproval.type)}.main`,
                 }}
               >
@@ -863,7 +863,7 @@ const MobileApprovalPage: React.FC = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                bgcolor: `${typeColor}.lighter`,
+                                bgcolor: `${typeColor}.50`,
                                 color: `${typeColor}.main`,
                                 flexShrink: 0,
                               }}

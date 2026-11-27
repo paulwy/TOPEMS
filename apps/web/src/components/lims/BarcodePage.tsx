@@ -163,25 +163,25 @@ const BarcodePage: React.FC = () => {
         label: i18n.t('lims.barcode_page.k20'),
         value: stats.total,
         icon: <BarcodeIcon sx={{ width: 20, height: 20, color: 'info.main' }} />,
-        bg: 'info.lighter',
+        bg: 'info.50',
       },
       {
         label: i18n.t('lims.barcode_page.k21'),
         value: stats.normal,
         icon: <BarcodeIcon sx={{ width: 20, height: 20, color: 'success.main' }} />,
-        bg: 'success.lighter',
+        bg: 'success.50',
       },
       {
         label: i18n.t('lims.barcode_page.k22'),
         value: stats.printed,
         icon: <Printer sx={{ width: 20, height: 20, color: 'info.main' }} />,
-        bg: 'info.lighter',
+        bg: 'info.50',
       },
       {
         label: i18n.t('lims.barcode_page.k23'),
         value: stats.scanned,
         icon: <ScanLine sx={{ width: 20, height: 20, color: 'primary.main' }} />,
-        bg: 'primary.lighter',
+        bg: 'primary.50',
       },
     ];
     return (
@@ -240,13 +240,13 @@ const BarcodePage: React.FC = () => {
   const detailContent = (row: Record<string, unknown>) => {
     const barcode = row as unknown as BarcodeType;
     const statusColorMap: Record<string, string> = {
-      [i18n.t('pages.barcode_page.k0')]: 'success.lighter',
-      [i18n.t('pages.barcode_page.k1')]: 'info.lighter',
-      [i18n.t('pages.barcode_page.k2')]: 'primary.lighter',
+      [i18n.t('pages.barcode_page.k0')]: 'success.50',
+      [i18n.t('pages.barcode_page.k1')]: 'info.50',
+      [i18n.t('pages.barcode_page.k2')]: 'primary.50',
       [i18n.t('pages.barcode_page.k3')]: 'grey.100',
-      normal: 'success.lighter',
-      printed: 'info.lighter',
-      scanned: 'primary.lighter',
+      normal: 'success.50',
+      printed: 'info.50',
+      scanned: 'primary.50',
       disabled: 'grey.100',
     };
     const statusLabelMap: Record<string, string> = {
@@ -261,11 +261,11 @@ const BarcodePage: React.FC = () => {
     };
     const bg = statusColorMap[barcode.status] || 'grey.100';
     const color =
-      bg === 'success.lighter'
+      bg === 'success.50'
         ? 'success.dark'
-        : bg === 'info.lighter'
+        : bg === 'info.50'
           ? 'info.dark'
-          : bg === 'primary.lighter'
+          : bg === 'primary.50'
             ? 'primary.dark'
             : 'text.secondary';
     return (

@@ -47,7 +47,7 @@ export const AttendanceRecordsTab: React.FC<AttendanceRecordsTabProps> = ({ reco
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: `${getStatusColor(record.status)}.lighter`,
+                  bgcolor: `${getStatusColor(record.status)}.50`,
                   color: `${getStatusColor(record.status)}.main`,
                 }}
               >

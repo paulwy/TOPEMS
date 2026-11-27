@@ -49,6 +49,13 @@
   --border-hover: #3f3f46;
   --border-active: #52525b;
   --divider: rgba(255, 255, 255, 0.08);
+  /* 语义色浅底（对应 palette.X.50，暗色下为深底） */
+  --color-primary-lighter: #121e3f;
+  --color-secondary-lighter: #1d1841;
+  --color-success-lighter: #0d2927;
+  --color-warning-lighter: #2c221c;
+  --color-error-lighter: #2c1521;
+  --color-info-lighter: #0a243b;
 
   /* Accent — 琥珀（能量、主行动） */
   --amber-50: #fffbeb;
@@ -262,6 +269,13 @@
   --border-hover: #d4d4d8;
   --border-active: #a1a1aa;
   --divider: rgba(0, 0, 0, 0.08);
+  /* 语义色浅底（对应 palette.X.50，暗色下为深底） */
+  --color-primary-lighter: #eef4ff;
+  --color-secondary-lighter: #f5f3ff;
+  --color-success-lighter: #f0fdf4;
+  --color-warning-lighter: #fffbeb;
+  --color-error-lighter: #fef2f2;
+  --color-info-lighter: #f0f9ff;
 
   --accent-primary-text: var(--amber-700);
   --accent-secondary-text: var(--cyan-700);
@@ -316,6 +330,13 @@
     --border-hover: #d4d4d8;
     --border-active: #a1a1aa;
     --divider: rgba(0, 0, 0, 0.08);
+    /* 语义色浅底（对应 palette.X.50，暗色下为深底） */
+    --color-primary-lighter: #eef4ff;
+    --color-secondary-lighter: #f5f3ff;
+    --color-success-lighter: #f0fdf4;
+    --color-warning-lighter: #fffbeb;
+    --color-error-lighter: #fef2f2;
+    --color-info-lighter: #f0f9ff;
 
     --accent-primary-text: var(--amber-700);
     --accent-secondary-text: var(--cyan-700);

@@ -61,7 +61,7 @@ export const materialBomSchema: EntitySchema = {
           draft: { label: i18n.t('mes.material_bom.k10'), bg: 'grey.100', color: 'text.secondary' },
           active: {
             label: i18n.t('mes.material_bom.k11'),
-            bg: 'success.lighter',
+            bg: 'success.50',
             color: 'success.700',
           },
           inactive: {
@@ -71,7 +71,7 @@ export const materialBomSchema: EntitySchema = {
           },
           obsolete: {
             label: i18n.t('mes.material_bom.k13'),
-            bg: 'error.lighter',
+            bg: 'error.50',
             color: 'error.dark',
           },
         };

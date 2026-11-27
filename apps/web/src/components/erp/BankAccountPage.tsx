@@ -37,7 +37,7 @@ const BankAccountStats: React.FC = () => {
     {
       label: i18n.t('erp.bank_account_page.k2'),
       value: `¥${totalBalance.toFixed(2)}`,
-      color: 'success.lighter',
+      color: 'success.main',
       textColor: 'success.700',
     },
     {
@@ -49,7 +49,7 @@ const BankAccountStats: React.FC = () => {
     {
       label: i18n.t('erp.bank_account_page.k4'),
       value: frozen,
-      color: 'error.lighter',
+      color: 'error.main',
       textColor: 'error.dark',
     },
   ];

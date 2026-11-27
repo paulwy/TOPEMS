@@ -119,14 +119,14 @@ const LimsProficiencyTestingPage: React.FC = () => {
           label={i18n.t('lims.lims_proficiency_testing_page.k5')}
           value={completedCount}
           icon={<CheckCircle size={18} />}
-          bgColor='success.lighter'
+          bgColor='success.50'
           iconColor='success.700'
         />
         <StatCard
           label={i18n.t('lims.lims_proficiency_testing_page.k6')}
           value={failedCount}
           icon={<XCircle size={18} />}
-          bgColor='error.lighter'
+          bgColor='error.50'
           iconColor='error.dark'
         />
       </Box>

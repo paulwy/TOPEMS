@@ -149,14 +149,14 @@ const InventoryManagementPage: React.FC = () => {
           label={i18n.t('erp.inventory_management_page.k3')}
           value={total}
           icon={<Package size={18} />}
-          bgColor='primary.lighter'
+          bgColor='primary.50'
           iconColor='primary.main'
         />
         <StatCard
           label={i18n.t('erp.inventory_management_page.k4')}
           value={`¥${totalValue.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`}
           icon={<DollarSign size={18} />}
-          bgColor='success.lighter'
+          bgColor='success.50'
           iconColor='success.main'
           gradient
         />

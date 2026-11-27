@@ -58,9 +58,9 @@ const EhsHazardAssessmentsSection: React.FC<EhsHazardAssessmentsSectionProps> = 
           const riskLevelKey =
             riskResult.score >= 6 ? 'high' : riskResult.score >= 3 ? 'medium' : 'low';
           const colorMap: Record<string, { bg: string; color: string }> = {
-            high: { bg: 'error.lighter', color: 'error.dark' },
+            high: { bg: 'error.50', color: 'error.dark' },
             medium: { bg: 'warning.100', color: theme.palette.yellow[600] },
-            low: { bg: 'success.lighter', color: 'success.dark' },
+            low: { bg: 'success.50', color: 'success.dark' },
           };
           const colors = colorMap[riskLevelKey] || {
             bg: 'grey.100',

@@ -86,12 +86,12 @@ export const materialIssueSchema: EntitySchema = {
           },
           issued: {
             label: i18n.t('mes.material_issue.k14'),
-            bg: 'success.lighter',
+            bg: 'success.50',
             color: 'success.700',
           },
           cancelled: {
             label: i18n.t('mes.material_issue.k15'),
-            bg: 'error.lighter',
+            bg: 'error.50',
             color: 'error.dark',
           },
         };

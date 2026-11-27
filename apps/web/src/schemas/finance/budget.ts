@@ -127,9 +127,9 @@ const renderStatusBadge = (row: Record<string, unknown>) => {
     default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
   };
   const bgColorMap: Record<string, string> = {
-    primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
-    warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
-    error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
+    primary: `var(--color-primary-lighter)`,
+    warning: `var(--color-warning-lighter)`,
+    error: `var(--color-error-lighter)`,
     default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
   };
   return React.createElement(

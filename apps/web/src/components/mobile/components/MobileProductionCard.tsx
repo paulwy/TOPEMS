@@ -239,7 +239,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                     sx={{
                       width: sizeTokens.inputHeightMd,
                       height: sizeTokens.inputHeightMd,
-                      bgcolor: 'primary.lighter',
+                      bgcolor: 'primary.50',
                       color: 'primary.main',
                     }}
                   >
@@ -341,7 +341,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                     sx={{
                       width: sizeTokens.inputHeightMd,
                       height: sizeTokens.inputHeightMd,
-                      bgcolor: `${getStatusColor(equipment.status)}.lighter`,
+                      bgcolor: `${getStatusColor(equipment.status)}.50`,
                       color: `${getStatusColor(equipment.status)}.main`,
                     }}
                   >

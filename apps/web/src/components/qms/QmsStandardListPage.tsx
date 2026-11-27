@@ -155,14 +155,14 @@ const QmsStandardListPage: React.FC = () => {
         label={i18n.t('qms.qms_standard_list_page.k7')}
         value={stats.totalStandards}
         icon={<FileText size={20} />}
-        iconBgColor='primary.lighter'
+        iconBgColor='primary.50'
         iconColor='primary.dark'
       />
       <StatCard
         label={i18n.t('qms.qms_standard_list_page.k8')}
         value={stats.activeStandards}
         icon={<FileCheck size={20} />}
-        iconBgColor='success.lighter'
+        iconBgColor='success.50'
         iconColor='success.dark'
       />
       <StatCard

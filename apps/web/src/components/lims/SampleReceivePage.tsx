@@ -173,7 +173,7 @@ const SampleReceivePage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'info.lighter',
+                  bgcolor: 'info.50',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
@@ -241,7 +241,7 @@ const SampleReceivePage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'success.lighter',
+                  bgcolor: 'success.50',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',

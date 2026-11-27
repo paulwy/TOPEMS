@@ -37,7 +37,7 @@ const OfficeSuppliesStats: React.FC = () => {
     {
       label: i18n.t('erp.office_supplies_page.k2'),
       value: inStock,
-      color: 'success.lighter',
+      color: 'success.main',
       textColor: 'success.700',
     },
     {
@@ -49,7 +49,7 @@ const OfficeSuppliesStats: React.FC = () => {
     {
       label: i18n.t('erp.office_supplies_page.k4'),
       value: outOfStock,
-      color: 'error.lighter',
+      color: 'error.main',
       textColor: 'error.dark',
     },
   ];

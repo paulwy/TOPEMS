@@ -84,7 +84,7 @@ const HealthManagementPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'pink.lighter',
+                  bgcolor: 'pink.50',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
@@ -120,7 +120,7 @@ const HealthManagementPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'success.lighter',
+                  bgcolor: 'success.50',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
@@ -156,7 +156,7 @@ const HealthManagementPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'warning.lighter',
+                  bgcolor: 'warning.50',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
@@ -191,9 +191,9 @@ const HealthManagementPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      active: { bg: 'success.lighter', color: 'success.dark' },
-      inactive: { bg: 'error.lighter', color: 'error.dark' },
-      suspended: { bg: 'warning.lighter', color: 'warning.dark' },
+      active: { bg: 'success.50', color: 'success.dark' },
+      inactive: { bg: 'error.50', color: 'error.dark' },
+      suspended: { bg: 'warning.50', color: 'warning.dark' },
     };
     const statusLabels: Record<string, string> = {
       active: t('ehs.health_management_page.normal'),

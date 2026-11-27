@@ -32,7 +32,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // 瓦片统一走语义软底：原先 bg 用 'success.lighter'/'indigo.light' 这类不存在的色阶，
+  // 瓦片统一走语义软底：原先 bg 用 'success.50'/'indigo.light' 这类不存在的色阶，
   // 整条背景被丢弃，图标则用旧 --success-text/--warning-text 变量，暗色下压白底不可辨。
   const cards = [
     {

@@ -37,7 +37,7 @@ function StatsCards({ stats }: { stats: QualityControlStats }) {
   const cards = [
     {
       icon: <AlertCircle sx={{ width: 20, height: 20, color: 'error.dark' }} />,
-      iconBg: 'error.lighter',
+      iconBg: 'error.50',
       label: i18n.t('qms.qms_quality_control_page.k0'),
       value: stats.totalNonconformances,
     },
@@ -49,7 +49,7 @@ function StatsCards({ stats }: { stats: QualityControlStats }) {
     },
     {
       icon: <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />,
-      iconBg: 'success.lighter',
+      iconBg: 'success.50',
       label: i18n.t('qms.qms_quality_control_page.k2'),
       value: stats.closedNonconformances,
     },
@@ -67,7 +67,7 @@ function StatsCards({ stats }: { stats: QualityControlStats }) {
     },
     {
       icon: <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />,
-      iconBg: 'success.lighter',
+      iconBg: 'success.50',
       label: i18n.t('qms.qms_quality_control_page.k5'),
       value: stats.completedAudits,
     },

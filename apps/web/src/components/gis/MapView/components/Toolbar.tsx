@@ -259,7 +259,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              backgroundColor: 'error.lighter',
+              backgroundColor: 'error.50',
               color: 'error.dark',
               '&:hover': {
                 backgroundColor: 'error.light',
@@ -282,7 +282,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              backgroundColor: 'success.lighter',
+              backgroundColor: 'success.50',
               color: 'success.dark',
               '&:hover': {
                 backgroundColor: 'success.light',
@@ -425,8 +425,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 padding: 1.5,
                 borderRadius: 1,
                 textAlign: 'left',
-                backgroundColor: heatmapMode === 'density' ? 'error.lighter' : 'transparent',
-                color: heatmapMode === 'density' ? 'error.darker' : 'text.secondary',
+                backgroundColor: heatmapMode === 'density' ? 'error.50' : 'transparent',
+                color: heatmapMode === 'density' ? 'error.700' : 'text.secondary',
                 '&:hover': {
                   backgroundColor: heatmapMode === 'density' ? 'error.light' : 'grey.100',
                 },
@@ -442,8 +442,8 @@ const Toolbar: React.FC<ToolbarProps> = ({
                 padding: 1.5,
                 borderRadius: 1,
                 textAlign: 'left',
-                backgroundColor: heatmapMode === 'status' ? 'error.lighter' : 'transparent',
-                color: heatmapMode === 'status' ? 'error.darker' : 'text.secondary',
+                backgroundColor: heatmapMode === 'status' ? 'error.50' : 'transparent',
+                color: heatmapMode === 'status' ? 'error.700' : 'text.secondary',
                 '&:hover': {
                   backgroundColor: heatmapMode === 'status' ? 'error.light' : 'grey.100',
                 },

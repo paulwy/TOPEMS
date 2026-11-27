@@ -98,7 +98,7 @@ const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ h
             <Typography sx={{ color: 'error.dark', fontSize: 12 }}>
               {t('ehs.ehshazarddetailpage.critical_level')}
             </Typography>
-            <Typography sx={{ fontWeight: 500, color: 'error.darker', mt: 0.5 }}>
+            <Typography sx={{ fontWeight: 500, color: 'error.700', mt: 0.5 }}>
               {hazard.severity === 'high'
                 ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.severity === 'medium'

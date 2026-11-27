@@ -216,7 +216,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
       {validationErrors.length > 0 && (
         <Paper
           variant='outlined'
-          sx={{ p: 1.5, mb: 2, bgcolor: 'warning.lighter' }}
+          sx={{ p: 1.5, mb: 2, bgcolor: 'warning.50' }}
         >
           <Stack
             direction='row'

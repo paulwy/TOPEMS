@@ -248,7 +248,7 @@ const ObservabilityPanel: React.FC = () => {
                           p: 1.5,
                           bgcolor:
                             m.totalLoadTime > SLOW_MODULE_THRESHOLD
-                              ? 'warning.lighter'
+                              ? 'warning.50'
                               : 'action.hover',
                           borderRadius: 1,
                         }}
@@ -359,7 +359,7 @@ const ObservabilityPanel: React.FC = () => {
                         display: 'flex',
                         justifyContent: 'space-around',
                         p: 1.5,
-                        bgcolor: 'error.lighter',
+                        bgcolor: 'error.50',
                         borderRadius: 1,
                       }}
                     >
@@ -555,7 +555,7 @@ const ObservabilityPanel: React.FC = () => {
                 sx={{
                   mt: 2,
                   p: 2,
-                  bgcolor: 'warning.lighter',
+                  bgcolor: 'warning.50',
                   border: 1,
                   borderColor: 'warning.light',
                   borderRadius: 1,

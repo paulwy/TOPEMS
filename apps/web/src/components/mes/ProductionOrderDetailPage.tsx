@@ -426,7 +426,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       >
         <Card
           variant='outlined'
-          sx={{ bgcolor: 'primary.lighter' }}
+          sx={{ bgcolor: 'primary.50' }}
         >
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -448,7 +448,7 @@ const ProductionOrderDetailPage: React.FC = () => {
         </Card>
         <Card
           variant='outlined'
-          sx={{ bgcolor: 'success.lighter' }}
+          sx={{ bgcolor: 'success.50' }}
         >
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -470,7 +470,7 @@ const ProductionOrderDetailPage: React.FC = () => {
         </Card>
         <Card
           variant='outlined'
-          sx={{ bgcolor: 'error.lighter' }}
+          sx={{ bgcolor: 'error.50' }}
         >
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -492,7 +492,7 @@ const ProductionOrderDetailPage: React.FC = () => {
         </Card>
         <Card
           variant='outlined'
-          sx={{ bgcolor: 'warning.lighter' }}
+          sx={{ bgcolor: 'warning.50' }}
         >
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>

@@ -145,7 +145,7 @@ const DetailsPanel: React.FC<{
     const s = status.toLowerCase();
     if (s.includes('active') || s.includes(i18n.t('gis.map_view.k3'))) {
       return {
-        backgroundColor: 'success.lighter',
+        backgroundColor: 'success.50',
         color: 'success.800',
       };
     }
@@ -156,7 +156,7 @@ const DetailsPanel: React.FC<{
       };
     }
     return {
-      backgroundColor: 'error.lighter',
+      backgroundColor: 'error.50',
       color: 'error.800',
     };
   };

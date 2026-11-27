@@ -123,12 +123,12 @@ export const productionRecordSchema: EntitySchema = {
           },
           completed: {
             label: i18n.t('mes.production_record.k17'),
-            bg: 'success.lighter',
+            bg: 'success.50',
             color: 'success.700',
           },
           cancelled: {
             label: i18n.t('mes.production_record.k18'),
-            bg: 'error.lighter',
+            bg: 'error.50',
             color: 'error.dark',
           },
         };

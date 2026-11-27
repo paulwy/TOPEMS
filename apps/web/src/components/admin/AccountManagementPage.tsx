@@ -157,11 +157,11 @@ const AccountManagementPage: React.FC = () => {
             cost: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
           };
           const bgColors: Record<string, string> = {
-            asset: `var(--color-primary-lighter, ${theme.palette.primary['50']})`,
-            liability: `var(--color-error-lighter, ${theme.palette.error[50]}`,
-            equity: `var(--color-success-lighter, ${theme.palette.success['50']})`,
-            revenue: `var(--color-info-lighter, ${theme.palette.info[50]}`,
-            expense: `var(--color-warning-lighter, ${theme.palette.warning[50]}`,
+            asset: `var(--color-primary-lighter)`,
+            liability: `var(--color-error-lighter)`,
+            equity: `var(--color-success-lighter)`,
+            revenue: `var(--color-info-lighter)`,
+            expense: `var(--color-warning-lighter)`,
             cost: `var(--color-action-hover, ${theme.palette.action.hover}`,
           };
           const label = labels[type] || type;
@@ -202,8 +202,8 @@ const AccountManagementPage: React.FC = () => {
               : `var(--color-error-main, ${theme.palette.error['800']})`;
           const bgColor =
             direction === 'debit'
-              ? `var(--color-primary-lighter, ${theme.palette.primary['50']})`
-              : `var(--color-error-lighter, ${theme.palette.error[50]}`;
+              ? `var(--color-primary-lighter)`
+              : `var(--color-error-lighter)`;
           return (
             <span
               style={{
@@ -237,7 +237,7 @@ const AccountManagementPage: React.FC = () => {
                 fontWeight: 500,
                 border: `1px solid ${isDetail ? `var(--color-primary-main, ${theme.palette.primary[700]}` : `var(--color-divider, ${theme.palette.action.selected}`}`,
                 backgroundColor: isDetail
-                  ? `var(--color-primary-lighter, ${theme.palette.primary['50']})`
+                  ? `var(--color-primary-lighter)`
                   : 'transparent',
                 color: isDetail
                   ? `var(--color-primary-main, ${theme.palette.primary.dark})`
@@ -261,7 +261,7 @@ const AccountManagementPage: React.FC = () => {
             ? `var(--color-success-main, ${theme.palette.success.dark})`
             : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`;
           const bgColor = isActive
-            ? `var(--color-success-lighter, ${theme.palette.success['50']})`
+            ? `var(--color-success-lighter)`
             : `var(--color-action-hover, ${theme.palette.action.hover}`;
           return (
             <span

@@ -71,7 +71,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: `${typeColor}.lighter`,
+                  bgcolor: `${typeColor}.50`,
                   color: `${typeColor}.main`,
                   flexShrink: 0,
                 }}

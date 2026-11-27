@@ -258,7 +258,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: '50%' }}>
+                  <Box sx={{ p: 2, bgcolor: 'success.50', borderRadius: '50%' }}>
                     <MapPin
                       size={16}
                       style={{ color: theme.palette.success.dark }}

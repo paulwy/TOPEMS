@@ -274,7 +274,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               textTransform: 'none',
             }}
           >
-            <Box sx={{ p: 12, bgcolor: 'success.lighter', borderRadius: 'full' }}>
+            <Box sx={{ p: 12, bgcolor: 'success.50', borderRadius: 'full' }}>
               <Mic
                 size={24}
                 style={{ color: theme.palette.success.dark }}

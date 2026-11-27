@@ -57,12 +57,12 @@ const baseAdapter = createCrudPageAdapter<Asset>({
 });
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  active: { bg: 'success.lighter', color: 'success.dark' },
-  idle: { bg: 'info.lighter', color: 'info.dark' },
-  in_use: { bg: 'primary.lighter', color: 'primary.dark' },
-  maintenance: { bg: 'warning.lighter', color: 'warning.dark' },
+  active: { bg: 'success.50', color: 'success.dark' },
+  idle: { bg: 'info.50', color: 'info.dark' },
+  in_use: { bg: 'primary.50', color: 'primary.dark' },
+  maintenance: { bg: 'warning.50', color: 'warning.dark' },
   retired: { bg: 'grey.100', color: 'text.secondary' },
-  disposed: { bg: 'error.lighter', color: 'error.dark' },
+  disposed: { bg: 'error.50', color: 'error.dark' },
 };
 
 function extractListData(response: unknown): AssetRow[] {
@@ -208,7 +208,7 @@ export const AssetListPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'primary.lighter',
+                bgcolor: 'primary.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -244,7 +244,7 @@ export const AssetListPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'success.lighter',
+                bgcolor: 'success.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -280,7 +280,7 @@ export const AssetListPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -316,7 +316,7 @@ export const AssetListPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'secondary.lighter',
+                bgcolor: 'secondary.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -363,7 +363,7 @@ export const AssetListPage: React.FC = () => {
             sx={{
               width: 64,
               height: 64,
-              bgcolor: 'primary.lighter',
+              bgcolor: 'primary.50',
               color: 'primary.dark',
             }}
           >

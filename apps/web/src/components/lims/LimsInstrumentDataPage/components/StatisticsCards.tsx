@@ -29,7 +29,7 @@ const StatCard = ({
             width: 48,
             height: 48,
             borderRadius: 3,
-            bgcolor: `${color}.lighter`,
+            bgcolor: `${color}.50`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

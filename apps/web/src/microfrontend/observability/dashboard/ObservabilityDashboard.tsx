@@ -342,7 +342,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
       </Grid>
 
       {slowModules.length > 0 && (
-        <Card sx={{ bgcolor: 'warning.lighter', border: 1, borderColor: 'warning.light' }}>
+        <Card sx={{ bgcolor: 'warning.50', border: 1, borderColor: 'warning.light' }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <AlertIcon

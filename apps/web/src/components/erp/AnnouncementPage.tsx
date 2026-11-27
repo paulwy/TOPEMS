@@ -40,7 +40,7 @@ const AnnouncementStats: React.FC = () => {
     {
       label: i18n.t('erp.announcement_page.k2'),
       value: published,
-      color: 'success.lighter',
+      color: 'success.main',
       textColor: 'success.700',
     },
     {
@@ -52,7 +52,7 @@ const AnnouncementStats: React.FC = () => {
     {
       label: i18n.t('erp.announcement_page.k4'),
       value: urgent,
-      color: 'error.lighter',
+      color: 'error.main',
       textColor: 'error.dark',
     },
   ];

@@ -76,13 +76,13 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
         row.original.likelihood || 'medium'
       );
       const colorMap: Record<string, { bg: string; color: string }> = {
-        [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
+        [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.50', color: 'error.dark' },
         [i18n.t('pages.ehs_hazard_detail_page.k1')]: {
           bg: 'warning.100',
           color: 'var(--warning-600)',
         },
         [i18n.t('pages.ehs_hazard_detail_page.k2')]: {
-          bg: 'success.lighter',
+          bg: 'success.50',
           color: 'success.dark',
         },
       };
@@ -502,7 +502,7 @@ const EhsHazardDetailPage: React.FC = () => {
             <Typography sx={{ color: 'error.dark', fontSize: 12 }}>
               {t('ehs.ehs_hazard_detail_page.k3')}
             </Typography>
-            <Typography sx={{ fontWeight: 500, color: 'error.darker', mt: 0.5 }}>
+            <Typography sx={{ fontWeight: 500, color: 'error.700', mt: 0.5 }}>
               {hazard.severity === 'high'
                 ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.severity === 'medium'

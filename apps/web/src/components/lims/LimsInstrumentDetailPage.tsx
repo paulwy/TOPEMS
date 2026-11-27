@@ -38,19 +38,19 @@ interface LimsListResponse<T> {
 function getStatusBadge(status: string) {
   const statusColorMap: Record<string, { bg: string; color: string }> = {
     [i18n.t('pages.lims_instrument_detail_page.k0')]: {
-      bg: 'success.lighter',
+      bg: 'success.50',
       color: 'success.dark',
     },
     [i18n.t('pages.lims_instrument_detail_page.k1')]: { bg: 'primary.100', color: 'primary.dark' },
     [i18n.t('pages.lims_instrument_detail_page.k2')]: {
-      bg: 'error.lighter',
+      bg: 'error.50',
       color: 'error.dark',
     },
     [i18n.t('pages.lims_instrument_detail_page.k3')]: { bg: 'grey.100', color: 'grey.600' },
     [i18n.t('pages.lims_instrument_detail_page.k4')]: { bg: 'grey.100', color: 'grey.600' },
-    normal: { bg: 'success.lighter', color: 'success.dark' },
+    normal: { bg: 'success.50', color: 'success.dark' },
     calibration: { bg: 'primary.100', color: 'primary.dark' },
-    maintenance: { bg: 'error.lighter', color: 'error.dark' },
+    maintenance: { bg: 'error.50', color: 'error.dark' },
     disabled: { bg: 'grey.100', color: 'grey.600' },
   };
   const colors = statusColorMap[status] || { bg: 'grey.100', color: 'grey.600' };
@@ -216,7 +216,7 @@ function SidebarTasks({
   const theme = useTheme();
   const taskStatusColor = (status: string) => {
     if (status === i18n.t('lims.lims_instrument_detail_page.k12') || status === 'completed')
-      return { bg: 'success.lighter', color: 'success.dark' };
+      return { bg: 'success.50', color: 'success.dark' };
     if (status === i18n.t('lims.lims_instrument_detail_page.k13') || status === 'in_progress')
       return { bg: 'primary.100', color: 'primary.dark' };
     return { bg: 'warning.100', color: theme.palette.yellow[600] };

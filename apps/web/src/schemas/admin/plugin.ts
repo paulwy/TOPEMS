@@ -104,7 +104,7 @@ export const pluginSchema: EntitySchema = {
                     padding: `${designTokens.spacing.xs} 6px`,
                     borderRadius: 12,
                     fontSize: 11,
-                    backgroundColor: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
+                    backgroundColor: `var(--color-success-lighter)`,
                     color: `var(--color-success-main, ${designTokens.colors.success.dark})`,
                     border: `1px solid var(--color-success-main, ${designTokens.colors.success.dark})`,
                   },
@@ -162,9 +162,9 @@ export const pluginSchema: EntitySchema = {
           warning: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
         };
         const bgColorMap: Record<string, string> = {
-          success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-          error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
-          warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+          success: `var(--color-success-lighter)`,
+          error: `var(--color-error-lighter)`,
+          warning: `var(--color-warning-lighter)`,
         };
         return React.createElement(
           'span',

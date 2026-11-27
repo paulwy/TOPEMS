@@ -223,21 +223,21 @@ const PerformanceStats: React.FC = () => {
       value: summary.total_suppliers,
       icon: <BarChart3 sx={{ width: 20, height: 20 }} />,
       color: 'primary.dark',
-      bgColor: 'primary.lighter',
+      bgColor: 'primary.50',
     },
     {
       label: i18n.t('pages.srm_performance_page.k10'),
       value: summary.evaluated_suppliers,
       icon: <Target sx={{ width: 20, height: 20 }} />,
       color: 'info.dark',
-      bgColor: 'info.lighter',
+      bgColor: 'info.50',
     },
     {
       label: i18n.t('pages.srm_performance_page.k11'),
       value: `${(summary.evaluation_rate * 100).toFixed(1)}%`,
       icon: <TrendingUp sx={{ width: 20, height: 20 }} />,
       color: 'success.dark',
-      bgColor: 'success.lighter',
+      bgColor: 'success.50',
     },
     {
       label: i18n.t('pages.srm_performance_page.k12'),
@@ -251,10 +251,10 @@ const PerformanceStats: React.FC = () => {
             : 'error.dark',
       bgColor:
         (summary.avg_overall_score ?? 0) >= 80
-          ? 'success.lighter'
+          ? 'success.50'
           : (summary.avg_overall_score ?? 0) >= 60
-            ? 'warning.lighter'
-            : 'error.lighter',
+            ? 'warning.50'
+            : 'error.50',
     },
   ];
 

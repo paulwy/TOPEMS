@@ -35,13 +35,13 @@ const MaterialStats: React.FC = () => {
     {
       label: i18n.t('erp.material_management_page.k1'),
       value: total,
-      color: 'primary.lighter',
+      color: 'primary.main',
       textColor: 'text.secondary',
     },
     {
       label: i18n.t('erp.material_management_page.k2'),
       value: active,
-      color: 'success.lighter',
+      color: 'success.main',
       textColor: 'success.dark',
     },
     {
@@ -53,7 +53,7 @@ const MaterialStats: React.FC = () => {
     {
       label: i18n.t('erp.material_management_page.k4'),
       value: obsolete,
-      color: 'error.lighter',
+      color: 'error.main',
       textColor: 'error.dark',
     },
   ];

@@ -168,7 +168,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
                       )}
                     </Stack>
                     {parseTestResult.error_msg && (
-                      <Paper sx={{ p: 2, bgcolor: 'error.lighter' }}>
+                      <Paper sx={{ p: 2, bgcolor: 'error.50' }}>
                         <Typography color='error'>{parseTestResult.error_msg}</Typography>
                       </Paper>
                     )}

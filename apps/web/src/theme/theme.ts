@@ -307,8 +307,14 @@ export const createCustomTheme = (): Theme => {
             // 暗色下用语义色 light 变体（400 阶），保证深色背景上可读
             primary: {
               ...designTokens.colors.primary,
-              50: '#0d1b33',
-              100: '#12274a',
+              50: '#121e3f',
+              100: '#162553',
+              200: '#1b2d6a',
+              300: '#233a8b',
+              600: '#a4c2fc',
+              700: '#c7daff',
+              800: '#e0ebff',
+              900: '#eef4ff',
               main: designTokens.colors.primary[400],
               light: designTokens.colors.primary[300],
               dark: designTokens.colors.primary[500],
@@ -316,8 +322,14 @@ export const createCustomTheme = (): Theme => {
             },
             secondary: {
               ...designTokens.colors.secondary,
-              50: '#181033',
-              100: '#22174a',
+              50: '#1d1841',
+              100: '#281c55',
+              200: '#36216e',
+              300: '#492891',
+              600: '#c4b5fd',
+              700: '#ddd6fe',
+              800: '#ede9fe',
+              900: '#f5f3ff',
               main: designTokens.colors.secondary[400],
               light: designTokens.colors.secondary[300],
               dark: designTokens.colors.secondary[500],
@@ -325,8 +337,14 @@ export const createCustomTheme = (): Theme => {
             },
             success: {
               ...designTokens.colors.success,
-              50: '#0b2216',
-              100: '#123320',
+              50: '#0d2927',
+              100: '#0e382b',
+              200: '#0f4930',
+              300: '#116237',
+              600: '#86efac',
+              700: '#bbf7d0',
+              800: '#dcfce7',
+              900: '#f0fdf4',
               main: designTokens.colors.success[400],
               light: designTokens.colors.success[300],
               dark: designTokens.colors.success[500],
@@ -334,8 +352,14 @@ export const createCustomTheme = (): Theme => {
             },
             warning: {
               ...designTokens.colors.warning,
-              50: '#2a1d07',
-              100: '#3a290b',
+              50: '#2c221c',
+              100: '#412c19',
+              200: '#593816',
+              300: '#7c4a12',
+              600: '#fcd34d',
+              700: '#fde68a',
+              800: '#fef3c7',
+              900: '#fffbeb',
               main: designTokens.colors.warning[400],
               light: designTokens.colors.warning[300],
               dark: designTokens.colors.warning[500],
@@ -343,8 +367,14 @@ export const createCustomTheme = (): Theme => {
             },
             error: {
               ...designTokens.colors.error,
-              50: '#2a1014',
-              100: '#3a171c',
+              50: '#2c1521',
+              100: '#411722',
+              200: '#5a1a22',
+              300: '#7e1d23',
+              600: '#fca5a5',
+              700: '#fecaca',
+              800: '#fee2e2',
+              900: '#fef2f2',
               main: designTokens.colors.error[400],
               light: designTokens.colors.error[300],
               dark: designTokens.colors.error[500],
@@ -352,8 +382,14 @@ export const createCustomTheme = (): Theme => {
             },
             info: {
               ...designTokens.colors.info,
-              50: '#07202e',
-              100: '#0b2c40',
+              50: '#0a243b',
+              100: '#09304b',
+              200: '#083d5f',
+              300: '#06517c',
+              600: '#7dd3fc',
+              700: '#bae6fd',
+              800: '#e0f2fe',
+              900: '#f0f9ff',
               main: designTokens.colors.info[400],
               light: designTokens.colors.info[300],
               dark: designTokens.colors.info[500],
@@ -568,9 +604,11 @@ export const createCustomTheme = (): Theme => {
             }),
             head: ({ theme }) => ({
               fontWeight: designTokens.typography.fontWeight.semibold,
-              backgroundColor: designTokens.colors.grey[50],
+              // 表头底色必须走调色板：硬编码 grey[50]/grey[800] 在暗色下会被
+              // 反相灰阶带偏（grey[800] 反相后是近白），整行变成白底压白字。
+              backgroundColor: theme.palette.grey[50],
               ...theme.applyStyles('dark', {
-                backgroundColor: designTokens.colors.grey[800],
+                backgroundColor: 'var(--surface-2)',
               }),
             }),
           },
@@ -578,9 +616,9 @@ export const createCustomTheme = (): Theme => {
         MuiTableHead: {
           styleOverrides: {
             root: ({ theme }) => ({
-              backgroundColor: designTokens.colors.grey[50],
+              backgroundColor: theme.palette.grey[50],
               ...theme.applyStyles('dark', {
-                backgroundColor: designTokens.colors.grey[800],
+                backgroundColor: 'var(--surface-2)',
               }),
             }),
           },
@@ -915,12 +953,13 @@ export const createCustomTheme = (): Theme => {
         },
         MuiInputLabel: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               fontSize: designTokens.typography.fontSize.sm,
               fontWeight: designTokens.typography.fontWeight.medium,
-              color: designTokens.colors.text.secondary,
+              // 走调色板而非令牌常量：常量是亮色取值，暗色下标签只有 3.7:1
+              color: theme.palette.text.secondary,
               '&.Mui-focused': {
-                color: designTokens.colors.primary.main,
+                color: theme.palette.primary.main,
               },
               '&.MuiInputLabel-shrink': {
                 // 2026-10-17 readability fix: MUI v7 uses MuiInputLabel-shrink
@@ -930,7 +969,7 @@ export const createCustomTheme = (): Theme => {
                 // visual, clears the audit with a negligible visual change.
                 fontSize: 16,
               },
-            },
+            }),
           },
         },
         MuiOutlinedInput: {

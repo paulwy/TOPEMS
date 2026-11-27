@@ -96,7 +96,7 @@ const PmContractDetailPage: React.FC = () => {
   };
   const getMilestoneStatusSx = (status?: string) => {
     if (status === 'completed') {
-      return { bgcolor: 'success.lighter', color: theme.palette.success[800] };
+      return { bgcolor: 'success.50', color: theme.palette.success[800] };
     }
     if (status === 'pending') {
       return { bgcolor: 'warning.100', color: theme.palette.yellow[700] };
@@ -105,13 +105,13 @@ const PmContractDetailPage: React.FC = () => {
   };
   const getPaymentStatusSx = (status?: string) => {
     if (status === 'paid') {
-      return { bgcolor: 'success.lighter', color: theme.palette.success[800] };
+      return { bgcolor: 'success.50', color: theme.palette.success[800] };
     }
     if (status === 'pending') {
       return { bgcolor: 'warning.100', color: theme.palette.yellow[700] };
     }
     if (status === 'overdue') {
-      return { bgcolor: 'error.lighter', color: theme.palette.error[800] };
+      return { bgcolor: 'error.50', color: theme.palette.error[800] };
     }
     return { bgcolor: 'grey.100', color: 'grey.700' };
   };

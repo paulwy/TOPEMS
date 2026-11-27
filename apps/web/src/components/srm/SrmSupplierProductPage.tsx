@@ -198,19 +198,19 @@ const SupplierProductStats: React.FC<{ rows: SupplierProduct[] }> = ({ rows }) =
       label: i18n.t('pages.srm_supplier_product_page.k34'),
       value: stats.active,
       color: 'success.dark',
-      bgColor: 'success.lighter',
+      bgColor: 'success.50',
     },
     {
       label: i18n.t('pages.srm_supplier_product_page.k35'),
       value: stats.pending,
       color: 'warning.dark',
-      bgColor: 'warning.lighter',
+      bgColor: 'warning.50',
     },
     {
       label: i18n.t('pages.srm_supplier_product_page.k36'),
       value: `¥${stats.totalValue.toLocaleString()}`,
       color: 'primary.dark',
-      bgColor: 'primary.lighter',
+      bgColor: 'primary.50',
     },
   ];
 

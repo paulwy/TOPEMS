@@ -51,7 +51,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
   const statusMap: Record<string, { label: string; bg: string; color: string }> = {
     active: {
       label: i18n.t('mes.team_management_page.k0'),
-      bg: 'success.lighter',
+      bg: 'success.50',
       color: 'var(--success-text)',
     },
     inactive: {
@@ -210,7 +210,7 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
                           }
                           sx={{
                             backgroundColor:
-                              member.status === 'active' ? 'success.lighter' : 'grey.100',
+                              member.status === 'active' ? 'success.50' : 'grey.100',
                             color: member.status === 'active' ? 'success.700' : 'text.secondary',
                             fontWeight: 500,
                           }}

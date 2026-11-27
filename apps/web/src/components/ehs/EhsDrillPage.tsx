@@ -51,9 +51,9 @@ const drillAdapter: CrudApiAdapter<DrillRecord> = {
 };
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  planned: { bg: 'info.lighter', color: 'info.dark' },
-  in_progress: { bg: 'warning.lighter', color: 'warning.dark' },
-  completed: { bg: 'success.lighter', color: 'success.dark' },
+  planned: { bg: 'info.50', color: 'info.dark' },
+  in_progress: { bg: 'warning.50', color: 'warning.dark' },
+  completed: { bg: 'success.50', color: 'success.dark' },
 };
 
 const statusLabelMap: Record<string, string> = {
@@ -110,7 +110,7 @@ const EhsDrillPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -146,7 +146,7 @@ const EhsDrillPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'success.lighter',
+                bgcolor: 'success.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -182,7 +182,7 @@ const EhsDrillPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'info.lighter',
+                bgcolor: 'info.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

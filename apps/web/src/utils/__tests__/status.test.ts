@@ -57,7 +57,7 @@ describe('getStatusColor', () => {
 
   it('lims 分类：按真实中文文案命中专用配色，不经归一', () => {
     expect(getStatusColor('待登记', { category: 'lims' })).toBe('grey.100');
-    expect(getStatusColor('已完成', { category: 'lims' })).toBe('success.lighter');
+    expect(getStatusColor('已完成', { category: 'lims' })).toBe('success.50');
     expect(getStatusColor('检测中', { category: 'lims' })).toBe('primary.light');
   });
 });

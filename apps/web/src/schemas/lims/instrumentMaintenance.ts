@@ -28,11 +28,11 @@ const renderBadge = (
     default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
   };
   const bgColorMap: Record<string, string> = {
-    primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
-    success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-    error: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
-    info: `var(--color-info-lighter, ${designTokens.colors.info[50]}`,
-    warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
+    primary: `var(--color-primary-lighter)`,
+    success: `var(--color-success-lighter)`,
+    error: `var(--color-error-lighter)`,
+    info: `var(--color-info-lighter)`,
+    warning: `var(--color-warning-lighter)`,
     default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
   };
   return React.createElement(

@@ -252,7 +252,7 @@ const InspectionTaskPage: React.FC = () => {
         label: i18n.t('lims.inspection_task_page.k32'),
         value: stats.completed,
         icon: <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />,
-        bg: 'success.lighter',
+        bg: 'success.50',
         color: 'success.dark',
       },
     ];

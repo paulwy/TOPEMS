@@ -124,7 +124,7 @@ const TrainingPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'primary.lighter',
+                bgcolor: 'primary.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -160,7 +160,7 @@ const TrainingPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -196,7 +196,7 @@ const TrainingPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'success.lighter',
+                bgcolor: 'success.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -232,7 +232,7 @@ const TrainingPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'info.lighter',
+                bgcolor: 'info.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

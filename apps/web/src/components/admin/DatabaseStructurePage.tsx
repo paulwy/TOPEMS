@@ -291,9 +291,9 @@ const DatabaseStructurePage: React.FC = () => {
   const getChangeTypeColor = (type: string) => {
     switch (type) {
       case 'add_column':
-        return { bgcolor: 'success.lighter', color: 'var(--success-text)' };
+        return { bgcolor: 'success.50', color: 'var(--success-text)' };
       case 'drop_column':
-        return { bgcolor: 'error.lighter', color: 'error.darker' };
+        return { bgcolor: 'error.50', color: 'error.700' };
       default:
         return { bgcolor: 'warning.light', color: 'var(--warning-text)' };
     }
@@ -548,7 +548,7 @@ const DatabaseStructurePage: React.FC = () => {
                                       bgcolor:
                                         col.is_nullable === 'YES'
                                           ? 'warning.light'
-                                          : 'success.lighter',
+                                          : 'success.50',
                                       color:
                                         col.is_nullable === 'YES' ? 'warning.700' : 'success.700',
                                       fontWeight: 500,
@@ -573,7 +573,7 @@ const DatabaseStructurePage: React.FC = () => {
                                       color='error'
                                       onClick={() => handleDropColumn(col.column_name)}
                                       sx={{
-                                        '&:hover': { bgcolor: 'error.lighter' },
+                                        '&:hover': { bgcolor: 'error.50' },
                                       }}
                                       aria-label={i18n.t(
                                         'admin.database_structure_page.delete_action'

@@ -87,12 +87,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
       normal: {
-        bg: 'success.lighter',
+        bg: 'success.50',
         color: 'success.dark',
         label: i18n.t('lims.lims_instrument_maintenance_page.k4'),
       },
       in_use: {
-        bg: 'success.lighter',
+        bg: 'success.50',
         color: 'success.dark',
         label: i18n.t('lims.lims_instrument_maintenance_page.k5'),
       },
@@ -107,7 +107,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         label: i18n.t('lims.lims_instrument_maintenance_page.k7'),
       },
       maintenance: {
-        bg: 'error.lighter',
+        bg: 'error.50',
         color: 'error.dark',
         label: i18n.t('lims.lims_instrument_maintenance_page.k8'),
       },

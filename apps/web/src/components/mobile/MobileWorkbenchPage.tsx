@@ -231,7 +231,7 @@ const MobileWorkbenchPage: React.FC = () => {
   const handleRefresh = useCallback(async () => {
     await workbenchQuery.refetch();
   }, [workbenchQuery]);
-  // 语义色软底瓦片：MUI v9 没有 .lighter 色阶，`${x}.lighter` 会被丢弃，
+  // 语义色软底瓦片：MUI v9 没有 .lighter 色阶，`${x}.50` 会被丢弃，
   // Avatar 退回默认 grey[400] 底 + 同色系前景（1.1~2.2:1，暗色灰底更浅）。
   const getTileKey = (type: string) => {
     switch (type) {

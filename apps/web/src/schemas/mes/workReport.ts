@@ -141,17 +141,17 @@ export const workReportSchema: EntitySchema = {
           },
           approved: {
             label: i18n.t('mes.work_report.k23'),
-            bg: 'success.lighter',
+            bg: 'success.50',
             color: 'success.700',
           },
           rejected: {
             label: i18n.t('mes.work_report.k24'),
-            bg: 'error.lighter',
+            bg: 'error.50',
             color: 'error.dark',
           },
           reworking: {
             label: i18n.t('mes.work_report.k45'),
-            bg: 'warning.lighter',
+            bg: 'warning.50',
             color: 'warning.dark',
           },
           archived: {

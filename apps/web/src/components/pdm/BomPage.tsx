@@ -49,9 +49,9 @@ const baseAdapter = createCrudPageAdapter<BomVersion, CreateBomVersionRequest>({
 const statusColorMap: Record<string, { bg: string; color: string }> = {
   draft: { bg: 'grey.100', color: 'text.secondary' },
 
-  active: { bg: 'success.lighter', color: 'success.dark' },
+  active: { bg: 'success.50', color: 'success.dark' },
   archived: { bg: 'grey.100', color: 'text.secondary' },
-  superseded: { bg: 'warning.lighter', color: 'warning.dark' },
+  superseded: { bg: 'warning.50', color: 'warning.dark' },
 };
 
 const statusLabelMap: Record<string, string> = {
@@ -266,7 +266,7 @@ export const BomPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'secondary.lighter',
+                bgcolor: 'secondary.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -302,7 +302,7 @@ export const BomPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'success.lighter',
+                bgcolor: 'success.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -338,7 +338,7 @@ export const BomPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.lighter',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
