@@ -100,7 +100,7 @@ pub async fn list_recommendations(
 
     let result = sqlx::query(
         r#"
-        SELECT id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at
+        SELECT id, customer_id, customer_name, recommendations, recommendation_type, model, (confidence)::float8 AS confidence, created_at
         FROM crm.customer_recommendations
         WHERE ($1::uuid IS NULL OR customer_id = $1)
           AND ($2::text IS NULL OR recommendation_type = $2)
@@ -142,7 +142,7 @@ pub async fn list_recommendations(
                         recommendations: items,
                         recommendation_type: r.get(4),
                         model: r.get(5),
-                        confidence: r.get(6),
+                        confidence: r.try_get("confidence").unwrap_or(0.0),
                         created_at: r.get(7),
                     }
                 })
@@ -196,7 +196,7 @@ pub async fn get_recommendation(
 
     let result = sqlx::query(
         r#"
-        SELECT id, customer_id, customer_name, recommendations, recommendation_type, model, confidence, created_at
+        SELECT id, customer_id, customer_name, recommendations, recommendation_type, model, (confidence)::float8 AS confidence, created_at
         FROM crm.customer_recommendations WHERE id = $1
         "#,
     )
@@ -215,7 +215,7 @@ pub async fn get_recommendation(
                     recommendations: items,
                     recommendation_type: r.get(4),
                     model: r.get(5),
-                    confidence: r.get(6),
+                    confidence: r.try_get("confidence").unwrap_or(0.0),
                     created_at: r.get(7),
                 },
                 "获取推荐成功",
@@ -322,7 +322,7 @@ async fn create_recommendation(
                     recommendations: items,
                     recommendation_type: r.get(4),
                     model: r.get(5),
-                    confidence: r.get(6),
+                    confidence: r.try_get("confidence").unwrap_or(0.0),
                     created_at: r.get(7),
                 },
                 "推荐生成成功",

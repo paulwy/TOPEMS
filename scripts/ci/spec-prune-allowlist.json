@@ -76,6 +76,10 @@
     {
       "path": "/api/finance/views/replay/{view_name}",
       "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/monitor/metrics/history",
+      "reason": "注解路径与真实挂载不符：真实为 GET /api/monitor/metrics（实测 200，/metrics/history 实测 404），属他轮遗留幻影"
     }
   ]
 }
