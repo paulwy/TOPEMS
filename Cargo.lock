@@ -6040,6 +6040,7 @@ dependencies = [
  "anyhow",
  "axum",
  "chrono",
+ "num-traits",
  "prometheus",
  "redis",
  "reqwest",

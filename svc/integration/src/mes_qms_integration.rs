@@ -734,275 +734,189 @@ pub async fn handle_defect_handling(
 // ==================== Helper Functions ====================
 
 async fn fetch_mes_production_record(
-    _mes_url: &str,
+    mes_url: &str,
     record_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
-    info!("获取MES生产记录 - ID: {}", record_id);
-
-    Ok(serde_json::json!({
-        "id": record_id.to_string(),
-        "record_no": format!("PR-{}", record_id.to_string()[..8].to_uppercase()),
-        "order_id": uuid::Uuid::new_v4().to_string(),
-        "order_no": "PO-20260625-001",
-        "product_id": uuid::Uuid::new_v4().to_string(),
-        "product_name": "示例产品A",
-        "product_code": "PRD-A-001",
-        "batch_no": format!("BATCH-{}", Utc::now().format("%Y%m%d")),
-        "process_id": uuid::Uuid::new_v4().to_string(),
-        "process_name": "组装工序",
-        "work_station_id": uuid::Uuid::new_v4().to_string(),
-        "quantity_produced": 100.0,
-        "quantity_defective": 5.0,
-        "status": "completed",
-        "operator": "张三",
-        "start_time": Utc::now().to_rfc3339(),
-        "end_time": Utc::now().to_rfc3339(),
-    }))
+    // 此前这里直接 return 一个编造的 JSON（示例产品名、随机 UUID、固定 100/5 产量与不良数），
+    // 调用方随后把同步记录写成 synced=true —— 等于把假数据当 MES 真实回执入库。
+    // 真正的 MES HTTP 调用尚未实现，这里必须显形，不能伪造。
+    error!(
+        "MES 生产记录接口未接线，拒绝伪造数据 - mes_url: {}, record_id: {}",
+        mes_url, record_id
+    );
+    Err(TopemsError::ServiceUnavailable(format!(
+        "MES 生产记录接口未接线（{mes_url}）：集成服务尚未实现 MES HTTP 调用，拒绝伪造生产记录 {record_id}"
+    )))
 }
 
 async fn create_qms_inspection_task(
-    _qms_url: &str,
+    qms_url: &str,
     inspection_type: &str,
-    production_data: &serde_json::Value,
+    _production_data: &serde_json::Value,
     quantity: f64,
     triggered_by: &str,
 ) -> Result<String, TopemsError> {
-    let inspection_id = uuid::Uuid::new_v4();
-    info!(
-        "创建QMS质检任务 - 类型: {}, 数量: {}",
-        inspection_type, quantity
+    // 此前只 new 一个 UUID 就返回，QMS 里根本没有这条质检任务，调用方却记为 synced。
+    error!(
+        "QMS 质检任务接口未接线，拒绝伪造任务号 - qms_url: {}, type: {}, quantity: {}, triggered_by: {}",
+        qms_url,
+        inspection_type,
+        quantity,
+        triggered_by
     );
-
-    let _ = production_data;
-    let _ = triggered_by;
-
-    Ok(inspection_id.to_string())
+    Err(TopemsError::ServiceUnavailable(format!(
+        "QMS 质检任务接口未接线（{qms_url}）：未创建任何质检任务，拒绝返回伪造 inspection_id（类型 {inspection_type}，数量 {quantity}，触发人 {triggered_by}）"
+    )))
 }
 
 async fn fetch_qms_inspection(
-    _qms_url: &str,
+    qms_url: &str,
     inspection_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
-    info!("获取QMS质检记录 - ID: {}", inspection_id);
-
-    Ok(serde_json::json!({
-        "id": inspection_id.to_string(),
-        "inspection_no": format!("INS-{}", inspection_id.to_string()[..8].to_uppercase()),
-        "inspection_type": "process_inspection",
-        "order_id": uuid::Uuid::new_v4().to_string(),
-        "order_no": "PO-20260625-001",
-        "product_id": uuid::Uuid::new_v4().to_string(),
-        "product_name": "示例产品A",
-        "product_code": "PRD-A-001",
-        "batch_no": format!("BATCH-{}", Utc::now().format("%Y%m%d")),
-        "quantity": 100.0,
-        "qualified_quantity": 95.0,
-        "unqualified_quantity": 5.0,
-        "qualification_rate": 95.0,
-        "status": "completed",
-        "result": "qualified",
-        "inspector": "李四",
-        "inspected_at": Utc::now().to_rfc3339(),
-        "memo": "抽检合格，少量瑕疵不影响使用",
-    }))
+    // 此前返回编造的质检结果（固定 95% 合格率、假检验员姓名），并被当作 QMS 真实数据回写 MES。
+    error!(
+        "QMS 质检记录接口未接线，拒绝伪造数据 - qms_url: {}, inspection_id: {}",
+        qms_url, inspection_id
+    );
+    Err(TopemsError::ServiceUnavailable(format!(
+        "QMS 质检记录接口未接线（{qms_url}）：未读取任何质检结果，拒绝伪造 inspection {inspection_id}"
+    )))
 }
 
 async fn update_mes_quality_record(
-    _mes_url: &str,
+    mes_url: &str,
     record_id: Uuid,
-    inspection_data: &serde_json::Value,
+    _inspection_data: &serde_json::Value,
 ) -> Result<(), TopemsError> {
-    info!("更新MES质量记录 - ID: {}", record_id);
-    let _ = inspection_data;
-    Ok(())
+    // 此前是「丢弃入参 + 直接 Ok(())」：什么都没回写 MES，却让整条同步记成 synced。
+    error!(
+        "MES 质量记录回写接口未接线，拒绝伪造成功 - mes_url: {}, record_id: {}",
+        mes_url, record_id
+    );
+    Err(TopemsError::ServiceUnavailable(format!(
+        "MES 质量记录回写接口未接线（{mes_url}）：未回写任何质检结果到 MES 记录 {record_id}"
+    )))
 }
 
 async fn fetch_mes_trace_chain(
-    _mes_url: &str,
+    mes_url: &str,
     order_id: Uuid,
     direction: &str,
 ) -> Result<serde_json::Value, TopemsError> {
-    info!("获取MES追溯链 - 工单ID: {}, 方向: {}", order_id, direction);
-
-    Ok(serde_json::json!({
-        "order_id": order_id.to_string(),
-        "order_no": "PO-20260625-001",
-        "product_name": "示例产品A",
-        "product_code": "PRD-A-001",
-        "direction": direction,
-        "nodes": [
-            {
-                "id": "order_1",
-                "node_type": "order",
-                "name": "生产工单",
-                "code": "PO-20260625-001",
-                "quantity": 100.0,
-                "status": "completed"
-            },
-            {
-                "id": "process_1",
-                "node_type": "process",
-                "name": "组装工序",
-                "code": "PROC-001",
-                "quantity": 100.0,
-                "status": "completed"
-            },
-            {
-                "id": "finished_1",
-                "node_type": "finished_product",
-                "name": "成品",
-                "code": "FIN-001",
-                "quantity": 95.0,
-                "batch_no": format!("BATCH-{}", Utc::now().format("%Y%m%d")),
-                "status": "qualified"
-            }
-        ],
-        "links": [
-            {
-                "from_id": "order_1",
-                "to_id": "process_1",
-                "link_type": "production",
-                "quantity": 100.0
-            },
-            {
-                "from_id": "process_1",
-                "to_id": "finished_1",
-                "link_type": "completion",
-                "quantity": 95.0
-            }
-        ]
-    }))
+    // 此前返回编造的追溯链（示例产品名 + 固定 3 个节点），被当作 MES 追溯数据入库。
+    error!(
+        "MES 追溯链接口未接线，拒绝伪造数据 - mes_url: {}, order_id: {}, direction: {}",
+        mes_url, order_id, direction
+    );
+    Err(TopemsError::ServiceUnavailable(format!(
+        "MES 追溯链接口未接线（{mes_url}）：未读取工单 {order_id} 的追溯链（方向 {direction}）"
+    )))
 }
 
 async fn trigger_mes_rework_process(
-    _mes_url: &str,
+    mes_url: &str,
     _production_record_id: &Option<String>,
     quantity: f64,
     reason: &str,
     operator: Option<&str>,
 ) -> Result<serde_json::Value, TopemsError> {
-    info!("触发MES返工流程 - 数量: {}, 原因: {}", quantity, reason);
-
-    Ok(serde_json::json!({
-        "rework_id": uuid::Uuid::new_v4().to_string(),
-        "rework_no": format!("RW-{}", Utc::now().format("%Y%m%d%H%M%S")),
-        "quantity": quantity,
-        "reason": reason,
-        "operator": operator.unwrap_or("system"),
-        "status": "pending",
-        "created_at": Utc::now().to_rfc3339(),
-    }))
+    // 此前返回编造的返工单号（RW-时间戳），MES 里没有这条返工单，同步记录却写 synced。
+    error!(
+        "MES 返工流程接口未接线，拒绝伪造返工单 - mes_url: {}, quantity: {}, reason: {}",
+        mes_url, quantity, reason
+    );
+    Err(TopemsError::ServiceUnavailable(format!(
+        "MES 返工流程接口未接线（{mes_url}）：未创建返工单（数量 {quantity}，原因 {reason}，操作人 {}）",
+        operator.unwrap_or("system")
+    )))
 }
 
 async fn trigger_mes_scrap_process(
-    _mes_url: &str,
+    mes_url: &str,
     _production_record_id: &Option<String>,
     quantity: f64,
     reason: &str,
     operator: Option<&str>,
 ) -> Result<serde_json::Value, TopemsError> {
-    info!("触发MES报废流程 - 数量: {}, 原因: {}", quantity, reason);
-
-    Ok(serde_json::json!({
-        "scrap_id": uuid::Uuid::new_v4().to_string(),
-        "scrap_no": format!("SC-{}", Utc::now().format("%Y%m%d%H%M%S")),
-        "quantity": quantity,
-        "reason": reason,
-        "operator": operator.unwrap_or("system"),
-        "status": "pending",
-        "created_at": Utc::now().to_rfc3339(),
-    }))
+    // 此前返回编造的报废单号（SC-时间戳），同样被记成 synced。
+    error!(
+        "MES 报废流程接口未接线，拒绝伪造报废单 - mes_url: {}, quantity: {}, reason: {}",
+        mes_url, quantity, reason
+    );
+    Err(TopemsError::ServiceUnavailable(format!(
+        "MES 报废流程接口未接线（{mes_url}）：未创建报废单（数量 {quantity}，原因 {reason}，操作人 {}）",
+        operator.unwrap_or("system")
+    )))
 }
 
 // ==================== Sync Stats ====================
 
 pub async fn get_mes_qms_sync_stats(scope: &mut ScopedTxn<'_>) -> Result<SyncStats, sqlx::Error> {
-    let mes_to_qms_result = sqlx::query(only_own_schema_query!(
+    // 此前每段查询都把错误归零成 0/0/0：SQL 出错也照旧回「同步总数 0 / 失败 0」，
+    // 运维会以为链路干净。现在查询失败直接上抛，由 handler 变成 500。
+    async fn counts(
+        scope: &mut ScopedTxn<'_>,
+        sql: &'static str,
+        synced_col: &str,
+        failed_col: Option<&str>,
+    ) -> Result<(i64, i64, i64), sqlx::Error> {
+        let row = sqlx::query(sql).fetch_one(&mut *scope).await?;
+        let total: i64 = row.try_get::<Option<i64>, _>("total")?.unwrap_or(0);
+        let synced: i64 = row.try_get::<Option<i64>, _>(synced_col)?.unwrap_or(0);
+        let failed: i64 = match failed_col {
+            Some(col) => row.try_get::<Option<i64>, _>(col)?.unwrap_or(0),
+            None => 0,
+        };
+        Ok((total, synced, failed))
+    }
+
+    let mes_to_qms_sql = only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) as total, 
+        "SELECT COUNT(*) as total,
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM integration.mes_qms_sync 
+           FROM integration.mes_qms_sync
           WHERE direction = 'mes_to_qms' AND sync_type = 'production_inspection'"
-    ))
-    .fetch_one(&mut *scope)
-    .await;
+    );
+    let (mes_to_qms_total, mes_to_qms_synced, mes_to_qms_failed) =
+        counts(scope, mes_to_qms_sql, "synced", Some("failed")).await?;
 
-    let (mes_to_qms_total, mes_to_qms_synced, mes_to_qms_failed) = match mes_to_qms_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-            row.try_get("failed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0, 0),
-    };
-
-    let qms_to_mes_result = sqlx::query(only_own_schema_query!(
+    let qms_to_mes_sql = only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) as total, 
+        "SELECT COUNT(*) as total,
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
-           FROM integration.mes_qms_sync 
+           FROM integration.mes_qms_sync
           WHERE direction = 'qms_to_mes' AND sync_type = 'quality_result'"
-    ))
-    .fetch_one(&mut *scope)
-    .await;
+    );
+    let (qms_to_mes_total, qms_to_mes_synced, qms_to_mes_failed) =
+        counts(scope, qms_to_mes_sql, "synced", Some("failed")).await?;
 
-    let (qms_to_mes_total, qms_to_mes_synced, qms_to_mes_failed) = match qms_to_mes_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-            row.try_get("failed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0, 0),
-    };
-
-    let trace_result = sqlx::query(only_own_schema_query!(
+    let trace_sql = only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) as total, 
+        "SELECT COUNT(*) as total,
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
-           FROM integration.mes_qms_sync 
+           FROM integration.mes_qms_sync
           WHERE sync_type = 'trace_chain'"
-    ))
-    .fetch_one(&mut *scope)
-    .await;
+    );
+    let (trace_total, trace_synced, _) = counts(scope, trace_sql, "synced", None).await?;
 
-    let (trace_total, trace_synced) = match trace_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("synced").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let defect_result = sqlx::query(only_own_schema_query!(
+    let defect_sql = only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) as total, 
+        "SELECT COUNT(*) as total,
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as completed
-           FROM integration.mes_qms_sync 
+           FROM integration.mes_qms_sync
           WHERE sync_type = 'defect_handling'"
-    ))
-    .fetch_one(&mut *scope)
-    .await;
+    );
+    let (defect_total, defect_completed, _) = counts(scope, defect_sql, "completed", None).await?;
 
-    let (defect_total, defect_completed) = match defect_result {
-        Ok(row) => (
-            row.try_get("total").unwrap_or(0),
-            row.try_get("completed").unwrap_or(0),
-        ),
-        Err(_) => (0, 0),
-    };
-
-    let last_sync_result = sqlx::query(only_own_schema_query!(
+    let last_sync_row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT MAX(last_synced_at) as last_sync FROM integration.mes_qms_sync"
     ))
     .fetch_one(&mut *scope)
-    .await;
-
-    let last_sync = last_sync_result
-        .ok()
-        .and_then(|row| row.try_get("last_sync").ok());
+    .await?;
+    let last_sync: Option<DateTime<Utc>> = last_sync_row.try_get("last_sync")?;
 
     Ok(SyncStats {
         mes_to_qms_total,

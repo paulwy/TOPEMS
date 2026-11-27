@@ -1071,7 +1071,7 @@ pub struct IntegrationEndpointResp {
     ),
 )]
 pub async fn list_endpoints(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> ApiResponse<Vec<IntegrationEndpointResp>> {
     let endpoints = vec![
         IntegrationEndpointResp {
@@ -1172,7 +1172,5 @@ pub async fn list_endpoints(
         },
     ];
 
-    // state 仅用于保持签名一致（供中间件链路使用）
-    let _ = state;
     ApiResponse::success(endpoints, "获取集成端点列表成功")
 }

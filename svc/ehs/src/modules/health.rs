@@ -101,6 +101,7 @@ pub struct HealthStatistics {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:read"])),
     get,
     path = "/health-monitor",
     tag = "ehs",
@@ -207,6 +208,7 @@ pub async fn list_records(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     post,
     path = "/health-monitor",
     tag = "ehs",
@@ -290,6 +292,7 @@ pub async fn create_record(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:read"])),
     get,
     path = "/health-monitor/{id}",
     tag = "ehs",
@@ -347,6 +350,7 @@ pub async fn get_record(
     ApiResponse::success(health_record_from_row(&row), "获取健康记录成功")
 }
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     put,
     path = "/health-monitor/{id}",
     tag = "ehs",
@@ -439,6 +443,7 @@ pub async fn update_record(
     ApiResponse::success(health_record_from_row(&row), "更新健康记录成功")
 }
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     delete,
     path = "/health-monitor/{id}",
     tag = "ehs",
@@ -496,6 +501,7 @@ pub async fn delete_record(
     }
 }
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:read"])),
     get,
     path = "/health-monitor/statistics",
     tag = "ehs",

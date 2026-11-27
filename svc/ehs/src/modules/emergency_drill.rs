@@ -594,6 +594,7 @@ pub async fn create_drill_plan(
     ApiResponse::success(plan, "创建演练计划成功")
 }
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     post,
     path = "/drills/records/{id}/evaluation",
     tag = "ehs",

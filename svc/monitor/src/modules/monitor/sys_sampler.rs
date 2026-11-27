@@ -18,7 +18,9 @@ use sysinfo::{Disks, Networks, System};
 /// 采样间隔（秒）
 const SAMPLE_INTERVAL_SECS: u64 = 5;
 /// 保留 24h 样本
-const MAX_SAMPLES: usize = (24 * 60 * 60 / SAMPLE_INTERVAL_SECS) as usize;
+const SAMPLE_INTERVAL_USIZE: usize = 5;
+/// 保留 24h 样本（= 86400 / 5）
+const MAX_SAMPLES: usize = 24 * 60 * 60 / SAMPLE_INTERVAL_USIZE;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SysSample {
@@ -75,12 +77,19 @@ pub fn history_minutes(minutes: i64) -> Vec<SysSample> {
         .unwrap_or_default()
 }
 
-fn collect(
-    sys: &mut System,
-    networks: &mut Networks,
-    disks: &Disks,
-    first: bool,
-) -> SysSample {
+/// 占用百分比（1 位小数即够用）。本 crate 拒绝 `as` 转换，
+/// 统一走 `num_traits::cast`（转换失败按 0 处理，不会 panic）。
+fn pct(used: u64, total: u64) -> f32 {
+    let used: f64 = num_traits::cast(used).unwrap_or(0.0);
+    let total: f64 = num_traits::cast(total).unwrap_or(0.0);
+    if total <= 0.0 {
+        return 0.0;
+    }
+    let value = (used / total * 100.0).clamp(0.0, 100.0);
+    num_traits::cast(value).unwrap_or(0.0)
+}
+
+fn collect(sys: &mut System, networks: &mut Networks, disks: &Disks, first: bool) -> SysSample {
     sys.refresh_memory();
     sys.refresh_cpu_usage();
     // 网卡必须复用同一个 Networks 实例：每次重建会把累计字节清零，
@@ -91,21 +100,24 @@ fn collect(
     let total_mem = sys.total_memory();
     let used_mem = sys.used_memory();
     let memory = if total_mem > 0 {
-        (used_mem as f64 / total_mem as f64 * 100.0) as f32
+        pct(used_mem, total_mem)
     } else {
         0.0
     };
 
     let disk_total: u64 = disks.iter().map(|d| d.total_space()).sum();
-    let disk_used: u64 = disks.iter().map(|d| d.total_space() - d.available_space()).sum();
+    let disk_used: u64 = disks
+        .iter()
+        .map(|d| d.total_space() - d.available_space())
+        .sum();
     let disk = if disk_total > 0 {
-        (disk_used as f64 / disk_total as f64 * 100.0) as f32
+        pct(disk_used, disk_total)
     } else {
         0.0
     };
 
-    let net_in: u64 = networks.iter().map(|(_, d)| d.total_received()).sum();
-    let net_out: u64 = networks.iter().map(|(_, d)| d.total_transmitted()).sum();
+    let net_in: u64 = networks.values().map(|d| d.total_received()).sum();
+    let net_out: u64 = networks.values().map(|d| d.total_transmitted()).sum();
 
     let ts = chrono::Utc::now().timestamp();
     let sample = SysSample {

@@ -310,6 +310,7 @@ pub async fn create_record(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:read"])),
     get,
     path = "/environment/monitors/{id}",
     tag = "ehs",
@@ -412,6 +413,7 @@ pub async fn get_record(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     put,
     path = "/environment/monitors/{id}",
     tag = "ehs",
@@ -565,6 +567,7 @@ pub async fn update_record(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     delete,
     path = "/environment/monitors/{id}",
     tag = "ehs",

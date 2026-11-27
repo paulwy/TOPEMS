@@ -1069,6 +1069,7 @@ pub async fn close_hazard(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     post,
     path = "/issues/{id}/rectification",
     tag = "ehs",
@@ -1195,6 +1196,7 @@ pub async fn create_rectification(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     put,
     path = "/issues/{id}/rectification",
     tag = "ehs",
@@ -1363,6 +1365,7 @@ pub async fn update_rectification(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     post,
     path = "/issues/{id}/rectification/submit",
     tag = "ehs",
@@ -1467,6 +1470,7 @@ pub async fn submit_rectification(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     post,
     path = "/issues/{id}/verification",
     tag = "ehs",

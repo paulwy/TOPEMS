@@ -1437,6 +1437,7 @@ pub async fn get_disease_statistics(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     put,
     path = "/occupational-diseases/detection-records/{id}",
     tag = "ehs",

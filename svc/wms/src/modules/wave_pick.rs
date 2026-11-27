@@ -1121,6 +1121,7 @@ pub struct PickLineRequest {
 
 /// POST /picking/tasks/{task_id}/lines/{line_id}/pick —— 完成拣货
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:write"])),
     post,
     path = "/picking/tasks/{task_id}/lines/{line_id}/pick",
     tag = "wms",
@@ -1221,6 +1222,7 @@ pub async fn pick_line(
 
 /// POST /picking/tasks/{task_id}/lines/{line_id}/short-pick —— 缺量拣货
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:write"])),
     post,
     path = "/picking/tasks/{task_id}/lines/{line_id}/short-pick",
     tag = "wms",

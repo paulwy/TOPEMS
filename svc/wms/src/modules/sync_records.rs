@@ -153,6 +153,7 @@ where
 
 /// GET /sync-records —— 同步记录列表（分页 + 过滤）
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:read"])),
     get,
     path = "/sync-records",
     tag = "wms",
@@ -251,6 +252,7 @@ pub async fn list_sync_records(
 
 /// GET /sync-records/{id} —— 同步记录详情
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:read"])),
     get,
     path = "/sync-records/{id}",
     tag = "wms",
@@ -394,6 +396,7 @@ pub async fn create_sync_record(
 
 /// GET /sync-records/{id}/items —— 同步明细（分页）
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:read"])),
     get,
     path = "/sync-records/{id}/items",
     tag = "wms",
@@ -469,6 +472,7 @@ pub async fn list_sync_items(
 
 /// POST /sync-records/{id}/retry —— 重试同步记录
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:write"])),
     post,
     path = "/sync-records/{id}/retry",
     tag = "wms",
@@ -544,6 +548,7 @@ pub async fn retry_sync_record(
 
 /// POST /sync-records/{id}/retry-items —— 重试失败明细
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:write"])),
     post,
     path = "/sync-records/{id}/retry-items",
     tag = "wms",
@@ -612,6 +617,7 @@ pub async fn retry_failed_items(
 
 /// GET /sync-records/statistics —— 同步统计
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:read"])),
     get,
     path = "/sync-records/statistics",
     tag = "wms",
@@ -736,13 +742,18 @@ async fn trigger_sync(
     let now = Utc::now();
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
 
+    // 此前这里把一条 total/success/failed 全 0 的记录写成 status=success 并回「同步完成」，
+    // 但根本没有向 SCM 推送任何数据（payload 用 `let _ = payload;` 直接丢弃）。
+    // 现在：记录触发尝试（status=failed + error_message），并显形为 503，不伪造「已完成」。
+    const NOT_WIRED: &str = "WMS→SCM 同步未接线：仅记录触发尝试，未推送任何数据";
     let result = sqlx::query_as::<_, (Uuid,)>(only_own_schema_query!(
         "wms",
         r#"
         INSERT INTO wms.sync_records
             (sync_no, source_system, target_system, sync_type, sync_direction, status,
-             started_at, completed_at, total_count, success_count, failed_count, tenant_id)
-        VALUES ($1, 'wms', 'scm', $2, 'push', $5, $3, NOW(), 0, 0, 0, $4)
+             started_at, completed_at, total_count, success_count, failed_count, tenant_id,
+             error_message)
+        VALUES ($1, 'wms', 'scm', $2, 'push', $5, $3, NOW(), 0, 0, 0, $4, $6)
         RETURNING id
         "#
     ))
@@ -750,14 +761,18 @@ async fn trigger_sync(
     .bind(&sync_type)
     .bind(now)
     .bind(tenant_id)
-    .bind(SyncRecordStatus::Success.as_db_str())
+    .bind(SyncRecordStatus::Failed.as_db_str())
+    .bind(NOT_WIRED)
     .fetch_one(&mut **txn)
     .await;
 
-    let _ = payload;
+    let payload_keys: Vec<String> = payload
+        .as_object()
+        .map(|m| m.keys().cloned().collect())
+        .unwrap_or_default();
 
     match result {
-        Ok((sync_id,)) => {
+        Ok((_sync_id,)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -766,18 +781,14 @@ async fn trigger_sync(
                     ));
                 }
             }
-            ApiResponse::success(
-                SyncResult {
-                    sync_id,
-                    status: "success".to_string(),
-                    total_count: 0,
-                    success_count: 0,
-                    failed_count: 0,
-                    message: Some(format!("{} 同步完成", sync_type)),
-                    started_at: now,
-                },
-                "同步触发成功",
-            )
+            tracing::warn!(
+                "拒绝伪造 SCM 同步完成 - sync_type: {}, payload 字段: {:?}",
+                sync_type,
+                payload_keys
+            );
+            ApiResponse::from(TopemsError::ServiceUnavailable(format!(
+                "{NOT_WIRED}（sync_type: {sync_type}）"
+            )))
         }
         Err(e) => {
             tracing::error!("触发同步失败: {}", e);
@@ -788,6 +799,7 @@ async fn trigger_sync(
 
 /// POST /sync/scm —— 触发 WMS→SCM 通用同步
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:write"])),
     post,
     path = "/sync/scm",
     tag = "wms",
@@ -816,6 +828,7 @@ pub async fn trigger_scm_sync(
 
 /// POST /sync/scm/inventory —— 触发库存同步到 SCM
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:write"])),
     post,
     path = "/sync/scm/inventory",
     tag = "wms",
@@ -839,6 +852,7 @@ pub async fn trigger_scm_inventory(
 
 /// POST /sync/scm/orders —— 触发订单同步到 SCM
 #[utoipa::path(
+    security(("BearerAuth" = ["wms:write"])),
     post,
     path = "/sync/scm/orders",
     tag = "wms",

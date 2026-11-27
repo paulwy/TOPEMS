@@ -84,6 +84,7 @@ where
 /// 均降级为 0 / 空数组，避免因单表漂移导致整个看板 500。
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/dashboard",
     tag = "wms",
     responses((status = 200, description = "OK"))
