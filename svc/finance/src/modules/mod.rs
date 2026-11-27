@@ -7304,10 +7304,11 @@ pub async fn list_expense_approvals(
         .get("search")
         .and_then(|v| v.as_str())
         .map(|s| format!("%{}%", s));
+    // B361：按状态过滤时必须带历史别名（`pending_approval` 旧数据），否则这些行列不出来。
     let status_filter: Vec<&'static str> = match params.get("status").and_then(|v| v.as_str()) {
-        None => ExpenseApprovalStatus::DB_VALUES.to_vec(),
+        None => ExpenseApprovalStatus::raw_values_for(&ExpenseApprovalStatus::DB_VALUES),
         Some(raw) => match ExpenseApprovalStatus::from_db_str(raw) {
-            Some(status) => vec![status.as_str()],
+            Some(status) => ExpenseApprovalStatus::raw_values_for(&[status.as_str()]),
             None => {
                 return ApiResponse::bad_request(
                     "status 仅支持 draft/pending/approved/rejected/reimbursed",
@@ -7701,10 +7702,14 @@ pub async fn update_expense_approval(
             return ApiResponse::conflict("当前状态不允许该操作");
         }
     }
-    let allowed_from: Vec<&'static str> = match target_status {
-        Some(target) => target.allowed_from().to_vec(),
-        None => vec![current_status.as_str()],
-    };
+    // B361：历史别名（pending_approval）也要能被命中，否则旧行会卡在「状态不允许」。
+    let allowed_from_raw: Vec<&'static str> =
+        ExpenseApprovalStatus::raw_values_for(&match target_status {
+            Some(target) => target.allowed_from().to_vec(),
+            None => vec![current_status.as_str()],
+        });
+    let current_raw: Vec<&'static str> =
+        ExpenseApprovalStatus::raw_values_for(&[current_status.as_str()]);
     let status = target_status.map(ExpenseApprovalStatus::as_str);
 
     // 此前该 handler 是纯回显桩：返回 {id,data} 但不落库（GET 复核仍为 draft）。
@@ -7725,7 +7730,7 @@ pub async fn update_expense_approval(
                approver_name = COALESCE($13, approver_name),
                updated_at = NOW()
            WHERE id = $1 AND tenant_id = $16::uuid AND deleted_at IS NULL
-             AND status = ANY($14::text[]) AND status = $15
+             AND status = ANY($14::text[]) AND status = ANY($15::text[])
            RETURNING id, expense_no, employee_id, employee_name, department, expense_date,
                      expense_type, total_amount, status, description, approver_id, approver_name,
                      approval_note, created_at, updated_at"#
@@ -7743,8 +7748,8 @@ pub async fn update_expense_approval(
     .bind(req.approval_note)
     .bind(approver_id)
     .bind(req.approver_name)
-    .bind(&allowed_from)
-    .bind(current_status.as_str())
+    .bind(&allowed_from_raw)
+    .bind(&current_raw)
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -7825,7 +7830,9 @@ pub async fn delete_expense_approval(
              AND status = ANY($2::text[])"#
     ))
     .bind(id_uuid)
-    .bind(ExpenseApprovalStatus::DELETABLE.as_slice())
+    .bind(ExpenseApprovalStatus::raw_values_for(
+        &ExpenseApprovalStatus::DELETABLE,
+    ))
     .bind(tenant_id)
     .execute(&mut scope)
     .await;
@@ -7990,11 +7997,11 @@ async fn transition_expense_approval(
                approval_note = COALESCE($5, approval_note),
                updated_at = NOW()
            WHERE id = $1 AND tenant_id = $6::uuid
-             AND status = $2::varchar AND deleted_at IS NULL
+             AND status = ANY($2::text[]) AND deleted_at IS NULL
            RETURNING status"#
     ))
     .bind(id_uuid)
-    .bind(from.as_str())
+    .bind(ExpenseApprovalStatus::raw_values_for(&[from.as_str()]))
     .bind(to.as_str())
     .bind(actor)
     .bind(note)

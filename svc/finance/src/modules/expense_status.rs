@@ -50,6 +50,31 @@ impl ExpenseApprovalStatus {
         }
     }
 
+    /// 历史别名：旧前端把待审批写成 `pending_approval`，库内可能残留。
+    /// SQL 侧按状态过滤/流转时必须同时匹配，否则这些行「列不出、也流转不动」。
+    #[must_use]
+    pub const fn legacy_aliases(self) -> &'static [&'static str] {
+        match self {
+            Self::Pending => &["pending_approval"],
+            _ => &[],
+        }
+    }
+
+    /// 列表/流转用的原始状态集合：`状态们 + 各自历史别名`。
+    #[must_use]
+    pub fn raw_values_for(statuses: &[&'static str]) -> Vec<&'static str> {
+        let mut out: Vec<&'static str> = Vec::new();
+        for raw in statuses {
+            out.push(raw);
+            if let Some(status) = Self::from_db_str(raw) {
+                out.extend(status.legacy_aliases());
+            }
+        }
+        out.sort_unstable();
+        out.dedup();
+        out
+    }
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -182,6 +207,42 @@ pub fn normalize_expense(raw: &str) -> Option<ExpenseStatus> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn approval_legacy_alias_is_listed_and_flowable() {
+        // 旧前端写 pending_approval：列表过滤/流转/软删都必须能命中。
+        assert_eq!(
+            ExpenseApprovalStatus::Pending.legacy_aliases(),
+            ["pending_approval"]
+        );
+        assert!(ExpenseApprovalStatus::Draft.legacy_aliases().is_empty());
+        assert_eq!(
+            ExpenseApprovalStatus::raw_values_for(&["pending"]),
+            ["pending", "pending_approval"]
+        );
+        // 全量列表：5 个规范值 + 1 个历史别名。
+        assert_eq!(
+            ExpenseApprovalStatus::raw_values_for(&ExpenseApprovalStatus::DB_VALUES),
+            [
+                "approved",
+                "draft",
+                "pending",
+                "pending_approval",
+                "reimbursed",
+                "rejected"
+            ]
+        );
+        // 软删集合：draft/pending(+别名)/rejected。
+        assert_eq!(
+            ExpenseApprovalStatus::raw_values_for(&ExpenseApprovalStatus::DELETABLE),
+            ["draft", "pending", "pending_approval", "rejected"]
+        );
+        // 终态不受别名影响。
+        assert_eq!(
+            ExpenseApprovalStatus::raw_values_for(&["reimbursed"]),
+            ["reimbursed"]
+        );
+    }
 
     #[test]
     fn approval_terminal_sets_are_strict() {
