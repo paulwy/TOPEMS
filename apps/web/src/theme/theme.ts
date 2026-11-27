@@ -830,10 +830,14 @@ export const createCustomTheme = (): Theme => {
         },
         MuiAvatar: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               fontSize: designTokens.typography.fontSize.base,
               fontWeight: designTokens.typography.fontWeight.medium,
-            },
+              // 默认底是 grey.400（亮色 #94a3b8），首字母白字只有 2.45:1；
+              // 统一走 text.secondary 底 + background.paper 字，明暗都 ≥6:1
+              backgroundColor: theme.palette.text.secondary,
+              color: theme.palette.background.paper,
+            }),
           },
         },
         MuiBadge: {
