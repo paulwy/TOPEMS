@@ -581,6 +581,13 @@ pub async fn deactivate_rule(
     set_rule_status(&mut scope, id, "inactive").await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/flow/rules/batch-update",
+    tag = "Core-Flow",
+    responses((status = 200, description = "/flow/rules/batch-update post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_update_rules(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

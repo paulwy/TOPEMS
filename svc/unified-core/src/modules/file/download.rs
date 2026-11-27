@@ -36,6 +36,16 @@ fn tenant_scope_or_400(
 }
 
 /// 下载文件
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/file/download/{id}",
+    tag = "Core-File",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "/file/download/{id} get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn download_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

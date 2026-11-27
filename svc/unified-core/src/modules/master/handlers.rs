@@ -1543,6 +1543,16 @@ pub async fn delete_ref_handler(
 }
 
 /// 查询主数据引用（按 ID）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/refs/{master_data_id}",
+    tag = "Core-MDM",
+    params(
+        ("master_data_id" = String, Path, description = "master_data_id"),
+    ),
+    responses((status = 200, description = "/mdm/refs/{master_data_id} get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_ref_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1581,6 +1591,17 @@ pub async fn get_ref_handler(
 }
 
 /// 按业务编码查询
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/refs/by-code/{domain}/{code}",
+    tag = "Core-MDM",
+    params(
+        ("domain" = String, Path, description = "domain"),
+        ("code" = String, Path, description = "code"),
+    ),
+    responses((status = 200, description = "/mdm/refs/by-code/{domain}/{code} get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_ref_by_code_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1619,6 +1640,13 @@ pub async fn get_ref_by_code_handler(
 }
 
 /// 列表查询
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/refs",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/refs get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_refs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1660,6 +1688,16 @@ pub async fn list_refs_handler(
 }
 
 /// 变更历史
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/refs/{master_data_id}/changes",
+    tag = "Core-MDM",
+    params(
+        ("master_data_id" = String, Path, description = "master_data_id"),
+    ),
+    responses((status = 200, description = "/mdm/refs/{master_data_id}/changes get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_changes_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1687,6 +1725,13 @@ pub async fn list_changes_handler(
 }
 
 /// 整体统计
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/refs/stats",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/refs/stats get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_overall_stats_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1715,6 +1760,13 @@ pub async fn get_overall_stats_handler(
 }
 
 /// 同步状态
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/refs/sync-status",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/refs/sync-status get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_sync_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

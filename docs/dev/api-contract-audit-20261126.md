@@ -365,3 +365,40 @@ tenant 簇从 77 → **0**（POST export 也已补齐）。core 剩余 101 条�
 新增端点实测（全部 200）：`/api/core/automation/dashboard/stats`、`/health`、`/rules`、`/designer/resources`、`/api/core/iam/positions`、`/iam/users/check-email`、`/iam/user-permissions/me`、`/api/core/menus`。
 
 core 剩余 84 条：`/api/core/*` 模板串 27（前端拼串，静态无法解析）、system 20（其中 10 条是已 `X-Stub` 显形的桩，刻意不进 spec）、comments/favorites 9、menu 6（本轮方法已并入，待重编译生效）、file 4、automation 3（前端 POST vs 后端仅 GET）、iam 3、mdm 3、flow 3 等。
+
+---
+
+## 第十八轮（2026-11-27）：engagement / MDM / file / flow / iam 状态 一次性入库
+
+上一轮修的"path × method 并集"漏法立刻见效：重跑干跑后 menu 的 6 条写操作（`POST /menu/groups`、`PUT|DELETE /menu/groups/{id}`、`POST /menu/menus`、`PUT|DELETE /menu/menus/{id}`）全部进 spec，契约里 menu 簇归零。
+
+本轮继续按"路由表反推注解"的套路，补 22 个 handler：
+
+| 簇 | 条数 | 端点 |
+| --- | --- | --- |
+| engagement | 8 | `/comments`（GET/POST）、`/comments/{id}`（PUT/DELETE）、`/favorites`（GET/POST）、`/favorites/check`、`/favorites/{id}`（DELETE） |
+| master MDM | 6 | `/mdm/refs`、`/mdm/refs/stats`、`/mdm/refs/sync-status`、`/mdm/refs/{master_data_id}`、`/mdm/refs/{master_data_id}/changes`、`/mdm/refs/by-code/{domain}/{code}` |
+| iam 状态 | 3 | `/iam/users/{id}/disable`、`/enable`、`/password`(PUT) |
+| file | 3 | `/file/files`、`/file/files/search`、`/file/download/{id}` |
+| flow | 2 | `/flow/variables/global/{workflow_id}`、`/flow/rules/batch-update`(POST) |
+
+`engagement`、`master`、`file/manage` 三个模块此前 `utoipa::path` 计数都是 **0**，与 automation 一样属于"实现完整、文档全空"。
+
+### automation 的 3 条 POST 别名
+
+前端对 `/automation/runs/{id}/steps`、`/runs/{id}/logs`、`/runs/{id}/logs/{log_id}` 用 POST 读数据，后端只挂 GET。按前几轮惯例补 `get(h).post(h)` 单条 route 合成。实测 `POST /runs/{uuid}/steps` 返回 **404（run 不存在）而不是 405**，说明路由已命中 handler。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2620 | **2639** |
+| 契约匹配 | 2784 | **2812** |
+| core 缺口 | 84 | **56** |
+| core 命中 | 152 | **180** |
+
+新增端点实测：`/comments`、`/favorites`、`/favorites/check`、`/mdm/refs`、`/mdm/refs/stats`、`/mdm/refs/sync-status`、`/file/files`、`/file/files/search` 均 200；`/flow/variables/global/x` 400（id 非 UUID，路由命中）；`POST /comments`、`POST /menu/groups` 空体 422（校验生效，非 405）。
+
+冒烟 `961 条 OK=899 SOFT=62 FAIL=0 SKIP=0 DEGRADED=0`。
+
+core 剩余 56 条：`/api/core/*` 模板串 27（前端拼串）、system 20（10 条 `X-Stub` 桩刻意不入）、flow 3、audit 3、governance 2、comments/favorites 残余（`PUT|DELETE /comments/*` 等模板化路径）少量。

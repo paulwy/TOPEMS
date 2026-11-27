@@ -13,6 +13,16 @@ use super::models::record_audit_log;
 use crate::modules::iam::auth::validate_password_strength;
 use crate::modules::iam::tenant_scope::{self, UserTarget};
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{id}/disable",
+    tag = "Core-IAM",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "/iam/users/{id}/disable post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn disable_user(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -137,6 +147,16 @@ pub async fn disable_user(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{id}/enable",
+    tag = "Core-IAM",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "/iam/users/{id}/enable post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn enable_user(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -261,6 +281,16 @@ pub async fn enable_user(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{id}/password",
+    tag = "Core-IAM",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "/iam/users/{id}/password put"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn change_password(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
