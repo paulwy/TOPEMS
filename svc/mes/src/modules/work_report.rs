@@ -190,6 +190,12 @@ pub struct TodayOutputQuery {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+#[utoipa::path(
+    get,
+    path = "/work-reports/today-output",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_today_production_output(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

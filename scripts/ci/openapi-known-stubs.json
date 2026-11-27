@@ -1141,6 +1141,11 @@
       "method": "GET",
       "path": "/api/ehs/health",
       "note": "模块健康检查：由 shared-bootstrap 内建提供（auth is_public_path ends_with /health），非业务 API，不进业务 spec"
+    },
+    {
+      "method": "GET",
+      "path": "/api/mes/health",
+      "note": "bootstrap 内建模块健康检查，非业务路由"
     }
   ]
 }

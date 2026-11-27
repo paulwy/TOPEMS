@@ -317,6 +317,12 @@ pub async fn get_capacity(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/capacities",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -429,6 +435,12 @@ pub async fn create_capacity(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/capacities/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -535,6 +547,12 @@ pub async fn update_capacity(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/capacities/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

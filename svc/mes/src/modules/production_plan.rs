@@ -265,6 +265,12 @@ pub async fn get_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/production-plans",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -324,6 +330,12 @@ pub async fn create_plan(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/production-plans/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -421,6 +433,12 @@ pub async fn update_plan(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/production-plans/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

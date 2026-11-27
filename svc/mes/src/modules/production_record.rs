@@ -334,6 +334,12 @@ pub async fn list_records(
 }
 
 #[allow(clippy::as_conversions)]
+#[utoipa::path(
+    post,
+    path = "/records",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_record(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -526,6 +532,12 @@ pub async fn get_record(
 }
 
 #[allow(clippy::as_conversions)]
+#[utoipa::path(
+    put,
+    path = "/records/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_record(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -665,6 +677,12 @@ pub async fn update_record(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/records/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_record(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

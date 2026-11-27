@@ -304,6 +304,12 @@ pub async fn list_processes(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/processes",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -496,6 +502,12 @@ pub async fn get_process(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/processes/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -618,6 +630,12 @@ pub async fn update_process(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/processes/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_process(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

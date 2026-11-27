@@ -440,6 +440,12 @@ pub async fn get_standard(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/quality/standards",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_standard(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -627,6 +633,12 @@ struct StandardUpdateRow {
     updated_at: Option<DateTime<Utc>>,
 }
 
+#[utoipa::path(
+    put,
+    path = "/quality/standards/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_standard(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -875,6 +887,12 @@ pub async fn update_standard(
     )
 }
 
+#[utoipa::path(
+    delete,
+    path = "/quality/standards/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_standard(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -300,6 +300,12 @@ pub async fn get_forecast(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/demand-forecasts",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -365,6 +371,12 @@ pub async fn create_forecast(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/demand-forecasts/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -461,6 +473,12 @@ pub async fn update_forecast(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/demand-forecasts/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

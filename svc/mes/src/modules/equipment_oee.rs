@@ -43,6 +43,12 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 /// S2：效率分析详情——按设备 ID 查 OEE 记录返回（非空）
+#[utoipa::path(
+    get,
+    path = "/equipment-oee/{equipment_id}/efficiency/{rid}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn stub_efficiency_detail(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

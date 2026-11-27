@@ -201,6 +201,12 @@ pub struct WorkCalendarResponse {
 
 // ==================== 车间 ====================
 
+#[utoipa::path(
+    get,
+    path = "/workshops",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn list_workshops(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -302,6 +308,12 @@ async fn list_workshops(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/workshops/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn get_workshop(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -358,6 +370,12 @@ async fn get_workshop(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/workshops",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn create_workshop(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -423,6 +441,12 @@ async fn create_workshop(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/workshops/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn update_workshop(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -485,6 +509,12 @@ async fn update_workshop(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/workshops/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn delete_workshop(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -539,6 +569,12 @@ async fn delete_workshop(
 
 // ==================== 产线 ====================
 
+#[utoipa::path(
+    get,
+    path = "/production-lines",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn list_production_lines(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -640,6 +676,12 @@ async fn list_production_lines(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/production-lines/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn get_production_line(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -697,6 +739,12 @@ async fn get_production_line(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/production-lines",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn create_production_line(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -781,6 +829,12 @@ async fn create_production_line(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/production-lines/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn update_production_line(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -862,6 +916,12 @@ async fn update_production_line(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/production-lines/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn delete_production_line(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -918,6 +978,12 @@ async fn delete_production_line(
 
 // ==================== 班次 ====================
 
+#[utoipa::path(
+    get,
+    path = "/shifts",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn list_shifts(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1019,6 +1085,12 @@ async fn list_shifts(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/shifts/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn get_shift(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1076,6 +1148,12 @@ async fn get_shift(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/shifts",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn create_shift(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1142,6 +1220,12 @@ async fn create_shift(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/shifts/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn update_shift(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1206,6 +1290,12 @@ async fn update_shift(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/shifts/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn delete_shift(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1260,6 +1350,12 @@ async fn delete_shift(
 
 // ==================== 工作日历 ====================
 
+#[utoipa::path(
+    get,
+    path = "/work-calendars",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn list_work_calendars(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1363,6 +1459,12 @@ async fn list_work_calendars(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/work-calendars/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn get_work_calendar(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1422,6 +1524,12 @@ async fn get_work_calendar(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/work-calendars",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn create_work_calendar(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1490,6 +1598,12 @@ async fn create_work_calendar(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/work-calendars/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn update_work_calendar(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1556,6 +1670,12 @@ async fn update_work_calendar(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/work-calendars/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn delete_work_calendar(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

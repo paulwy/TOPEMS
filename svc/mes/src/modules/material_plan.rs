@@ -280,6 +280,12 @@ pub async fn get_material_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/material-plans",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_material_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -366,6 +372,12 @@ pub async fn create_material_plan(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/material-plans/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_material_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -459,6 +471,12 @@ pub async fn update_material_plan(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/material-plans/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_material_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

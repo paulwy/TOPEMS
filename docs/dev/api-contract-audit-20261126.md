@@ -786,3 +786,27 @@ ehs 203 条调用、命中 105、缺口 98。根因有两个：
 
 - 遇到 `[...] openapi.rs` 里用裸模块名注册的 crate，`--crate-prefix` 要传 **`super`**，不是 `crate::modules`。
 - 扫路由必须做括号配对 + 多方法链解析，否则 `.route(a, get(x).post(y))` 会静默漏掉写接口——ehs 的 98 条缺口里有一多半是这个解析 bug 造成的。
+
+## 第 30 轮 · mes（2026-11-27）
+
+`mes_real_module.rs` 的 `api_prefix` 是 `/api/mes`，注册真身 `topems_mes::modules::openapi::MesApiDoc`（`svc/server/src/bin/openapi_gen.rs:158`），注册风格 `crate::modules::<mod>::<fn>`。本轮 242 调用 / 146 匹配 / 96 缺口 → **226/225/0**（1 条健康检查入桩豁免）。
+
+### 两个解析坑（都不是 mes 独有）
+
+- **路由与 handler 不在同一个文件**：`material_bom/mod.rs`、`quality_management/mod.rs` 里声明 `.route("/boms", get(bom_handlers::list_material_boms).post(bom_handlers::create_material_bom))`，handler 在同目录 `bom_handlers.rs`。只按"本文件内路由 → 本文件内 handler"匹配会整批漏掉，且 `get(...)` 里带 `::` 限定名时，正则 `[A-Za-z0-9_]+` 一个都匹配不到。正确做法是把路由表建成**全局**的，按 `fn` 名回查，只接受同目录或该目录 `mod.rs` 里的声明。
+- **判断"是否已有注解"不能用邻近窗口**：`#[utoipa::path(...)]` 是多行的，`grep -B6` 或"最后一处 `#[utoipa::path(`" 都会误判，本轮因此一度给 235 个已有注解的 handler 插了重复注解。可靠判据是"从上一个顶格 `\n}\n` 到 `fn` 之间是否出现 `utoipa::path`"，出事后用 `git show origin/main:<file>` 整体还原重做。
+
+### 顺带修掉的前端死代码
+
+`apps/web/src/api/mes/readOps.ts`、`readOps2.ts` 里 9 条调用把路径写死成 `'/analytics/oee-dashboard/{_id}'` 这类**字面量占位符**（没做模板插值，实际请求会打到 `{_id}` 这个字面段），且两个文件全仓库零引用——页面用的是 `api/mes/analytics.ts` 与 `kanban.ts` 里的正常实现。已删除这两个文件，缺口随之消失；真实接口在 spec 里都有（`/api/mes/analytics/*`、`/api/mes/kanban/*`、`/api/mes/maintenances`）。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| mes 契约 调用/匹配/缺口 | 242/146/96 | **226/225/0** |
+| mes 注解 handler | 153 | **174**（0 未登记） |
+| mes 桩豁免 | 0 | **1**（`GET /api/mes/health`，bootstrap 内建模块健康检查） |
+| spec paths | 3385 | **3411** |
+| mes 无参 GET 实测 | — | **111 条 0 404**（`/anomaly/rules/{rule_id}` 属模板路径，不参与） |
+| mes 写接口实测 | — | 6 条 POST 全 **422**（路由存在、校验拒绝） |

@@ -33,6 +33,12 @@ struct MaterialIssueRow {
     updated_at: Option<DateTime<Utc>>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/material-issues",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_material_issue(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -470,6 +476,12 @@ pub async fn get_material_issue(
     ApiResponse::success(issue_json, "获取物料领用单成功")
 }
 
+#[utoipa::path(
+    put,
+    path = "/material-issues/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_material_issue(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -580,6 +592,12 @@ pub async fn update_material_issue(
     ApiResponse::success(issue_json, "物料领用单更新成功")
 }
 
+#[utoipa::path(
+    delete,
+    path = "/material-issues/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_material_issue(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

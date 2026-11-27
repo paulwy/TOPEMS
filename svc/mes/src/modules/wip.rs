@@ -58,6 +58,12 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 /// S2：WIP 调拨单详情——按 id 查 wip_transfers 表返回（非空）
+#[utoipa::path(
+    get,
+    path = "/wips/transfers/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 async fn stub_wip_transfer_detail(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

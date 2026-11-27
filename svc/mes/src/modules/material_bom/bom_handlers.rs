@@ -205,6 +205,12 @@ pub async fn list_material_boms(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap
 )]
+#[utoipa::path(
+    post,
+    path = "/boms",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_material_bom(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -490,6 +496,12 @@ pub async fn get_material_bom(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap
 )]
+#[utoipa::path(
+    put,
+    path = "/boms/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_material_bom(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -641,6 +653,12 @@ pub async fn update_material_bom(
     .await
 }
 
+#[utoipa::path(
+    delete,
+    path = "/boms/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_material_bom(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

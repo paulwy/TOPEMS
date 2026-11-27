@@ -331,6 +331,12 @@ pub async fn list_work_stations(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/workstations",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_work_station(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -500,6 +506,12 @@ pub async fn get_work_station(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/workstations/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_work_station(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -638,6 +650,12 @@ pub async fn update_work_station(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/workstations/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_work_station(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

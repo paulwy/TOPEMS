@@ -458,6 +458,12 @@ pub async fn get_process_route(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/process-routes",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_process_route(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -565,6 +571,12 @@ struct ProcessRouteUpdateRow {
     updated_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    put,
+    path = "/process-routes/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_process_route(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -676,6 +688,12 @@ pub async fn update_process_route(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/process-routes/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_process_route(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -857,6 +875,12 @@ pub async fn get_route_steps(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/process-routes/{id}/steps",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn add_route_step(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1118,6 +1142,12 @@ pub async fn update_route_step(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/process-routes/{id}/steps/{step_id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn remove_route_step(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

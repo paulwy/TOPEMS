@@ -103,6 +103,12 @@ pub async fn get_settings(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/settings/{category}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_settings(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

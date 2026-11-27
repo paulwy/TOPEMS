@@ -476,6 +476,12 @@ pub async fn get_process_flow(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/process-flows",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_process_flow(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -590,6 +596,12 @@ struct ProcessFlowUpdateRow {
     updated_at: Option<DateTime<Utc>>,
 }
 
+#[utoipa::path(
+    put,
+    path = "/process-flows/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_process_flow(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -742,6 +754,12 @@ pub async fn update_process_flow(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/process-flows/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_process_flow(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -912,6 +930,12 @@ pub async fn get_flow_steps(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/process-flows/{id}/steps",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn add_flow_step(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1207,6 +1231,12 @@ pub async fn update_flow_step(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/process-flows/{id}/steps/{step_id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn remove_flow_step(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -436,6 +436,12 @@ pub async fn get_material_requirement(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/material-requirements",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_material_requirement(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -570,6 +576,12 @@ pub async fn create_material_requirement(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/material-requirements/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_material_requirement(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -705,6 +717,12 @@ pub async fn update_material_requirement(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/material-requirements/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_material_requirement(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

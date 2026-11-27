@@ -32,6 +32,12 @@ struct MaterialReturnRow {
     updated_at: Option<DateTime<Utc>>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/material-returns",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_material_return(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -457,6 +463,12 @@ pub async fn get_material_return(
     ApiResponse::success(return_json, "获取物料退库单成功")
 }
 
+#[utoipa::path(
+    put,
+    path = "/material-returns/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_material_return(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -554,6 +566,12 @@ pub async fn update_material_return(
     ApiResponse::success(return_json, "物料退库单更新成功")
 }
 
+#[utoipa::path(
+    delete,
+    path = "/material-returns/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_material_return(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

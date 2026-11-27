@@ -452,6 +452,12 @@ pub async fn get_team(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/teams",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_team(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -598,6 +604,12 @@ pub async fn create_team(
     ApiResponse::success(team, "班组创建成功")
 }
 
+#[utoipa::path(
+    put,
+    path = "/teams/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_team(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -717,6 +729,12 @@ pub async fn update_team(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/teams/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_team(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -870,6 +888,12 @@ pub async fn get_team_members(
     ApiResponse::success(ListTeamMembersResponse { members }, "获取班组成员成功")
 }
 
+#[utoipa::path(
+    post,
+    path = "/teams/{id}/members",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn add_team_member(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

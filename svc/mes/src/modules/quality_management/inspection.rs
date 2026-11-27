@@ -87,6 +87,12 @@ pub struct InspectionResponse {
 }
 
 #[allow(clippy::as_conversions)]
+#[utoipa::path(
+    get,
+    path = "/quality/inspections",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_inspections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -428,6 +434,12 @@ pub async fn get_inspection(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/quality/inspections",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -592,6 +604,12 @@ struct InspectionUpdateRow {
     updated_at: Option<DateTime<Utc>>,
 }
 
+#[utoipa::path(
+    put,
+    path = "/quality/inspections/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -734,6 +752,12 @@ pub async fn update_inspection(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/quality/inspections/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -362,6 +362,12 @@ pub async fn get_patrol(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/quality/patrols",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -490,6 +496,12 @@ struct PatrolUpdateRow {
     updated_at: Option<DateTime<Utc>>,
 }
 
+#[utoipa::path(
+    put,
+    path = "/quality/patrols/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -623,6 +635,12 @@ pub async fn update_patrol(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/quality/patrols/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -808,6 +826,12 @@ pub async fn list_patrol_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/quality/patrols/{patrol_id}/items",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn add_patrol_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1059,6 +1083,12 @@ pub async fn update_patrol_item(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/quality/patrol-items/{id}",
+    tag = "mes",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_patrol_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
