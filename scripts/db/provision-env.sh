@@ -74,6 +74,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BASELINE_DIR="$ROOT/database/baseline"
 
+# 过滤后的基线 SQL 临时文件（bootstrap 已预置 schema/扩展，快照裸 CREATE SCHEMA 需剔除）
+TMP_SCHEMA_SQL=""
+TMP_DATA_SQL=""
+cleanup_tmp() {
+  [[ -n "$TMP_SCHEMA_SQL" ]] && rm -f "$TMP_SCHEMA_SQL"
+  [[ -n "$TMP_DATA_SQL" ]] && rm -f "$TMP_DATA_SQL"
+}
+trap cleanup_tmp EXIT
+
 ENV_NAME="dev"
 DSN=""
 DB=""
@@ -675,9 +684,23 @@ else
   fi
 fi
 
+# ── bootstrap 预置：schema / 扩展 / public 属主（超管，幂等） ────────────────
+# 结构基线快照不含 archive/file/im 等 schema，也不含扩展；前向迁移依赖它们
+# （如 20261119100000 建 archive._drop_manifest）。在建库后、灌快照前由具备
+# 超管/库 owner 权限的连接执行 bootstrap_schemas.sql；topems_owner 角色须已由
+# setup-db 预建。脚本幂等，空库续恢复重跑无害。
+info "bootstrap 预置：schema + 扩展 + public 属主（bootstrap_schemas.sql）..."
+"${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 \
+  -f "$ROOT/database/scripts/bootstrap_schemas.sql" \
+  || die "bootstrap_schemas.sql 失败：当前连接需超管/库 owner（CREATE EXTENSION、收敛 public 属主），且角色 topems_owner 须已由 setup-db 预建"
+ok "bootstrap 预置完成"
+
 # ── 恢复基线快照 ───────────────────────────────────────────────────────────
 info "恢复基线 schema（约 ${META_TABLES} 张表）..."
-gunzip -c "$SCHEMA_FILE" | "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 \
+TMP_SCHEMA_SQL="$(mktemp -t topems_schema.XXXXXX.sql)"
+gunzip -c "$SCHEMA_FILE" | grep -v -E '^(CREATE SCHEMA |COMMENT ON EXTENSION |SET transaction_timeout)' > "$TMP_SCHEMA_SQL" \
+  || die "schema 基线解压/过滤失败（${SCHEMA_FILE}）"
+"${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -f "$TMP_SCHEMA_SQL" \
   || die "schema 恢复失败（${SCHEMA_FILE}）"
 info "恢复基线账本（${META_ROWS} 条）..."
 "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -f "$LEDGER_FILE" \
@@ -687,7 +710,10 @@ ok "基线快照恢复完成"
 # ── 恢复参考数据（结构之后、前向之前） ─────────────────────────────────────
 if (( WITH_DATA == 1 )); then
   info "恢复参考数据（${DATA_TABLES} 张表 / ${DATA_TOTAL} 行）..."
-  gunzip -c "$DATA_FILE" | "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 \
+  TMP_DATA_SQL="$(mktemp -t topems_data.XXXXXX.sql)"
+  gunzip -c "$DATA_FILE" | grep -v -E '^(CREATE SCHEMA |COMMENT ON EXTENSION |SET transaction_timeout)' > "$TMP_DATA_SQL" \
+    || die "参考数据基线解压/过滤失败（${DATA_FILE}）"
+  "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -f "$TMP_DATA_SQL" \
     || die "参考数据恢复失败（${DATA_FILE}）"
   verify_data_exact
 else
@@ -717,6 +743,10 @@ else
 fi
 if [[ "$ENV_NAME" == "prod-replica" ]]; then
   FORWARD_ARGS+=(--prod)
+else
+  # 隔离/演练环境：自动注入迁移文件声明的闸门 GUC（如 app.drop_dead_tables_gate）
+  # 与系统通道；--prod 模式禁止该参数（apply-forward 互斥守卫）。
+  FORWARD_ARGS+=(--drill-gate-guc-auto)
 fi
 PGHOST="${TARGET_HOST}" PGUSER="${PGUSER:-air}" bash "$ROOT/scripts/migration/apply-forward.sh" "${FORWARD_ARGS[@]}" \
   || die "前向迁移失败（禁止回退 sqlx migrate run）"
@@ -828,6 +858,7 @@ admin_temp_cleanup() {
     if [[ -f "$ADMIN_WRONG_FILE" ]]; then : > "$ADMIN_WRONG_FILE"; fi
     rm -rf "$ADMIN_TMP"
   fi
+  cleanup_tmp
 }
 
 admin_temp_init() {

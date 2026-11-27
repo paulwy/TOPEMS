@@ -3205,6 +3205,15 @@ pending_forward_patches:
     destructive_scan: "破坏性 DROP TABLE（CASCADE）；前置核查入向外键 0、视图/物化视图/存储过程引用 0、运行期代码零引用；三表为历史死副本（生产 0 行、本机 public.core_users 47 行旧镜像已备份至 backups/db-legacy-core-users/）；IF EXISTS 幂等，新库/已清理库自动跳过；回滚依赖备份 dump/快照"
     note: "v1.122 身份副本表物理清除；生产三表 to_regclass 已全 NULL（重放 DROP IF EXISTS 跳过、断言通过）；账本 _sqlx_migrations 尚未登记该版本；去 CASCADE 并补 DROP TABLE 豁免标记（ticket IAM-LEGACY-20261126，rows-at-review=0，backup 见 backups/db-legacy-core-users/ 与基线库全量 dump）；checksum dd0736cbc8e8172906dba9cbceca35215cbc4740eaadb2f0f6a412cc84ecefa7"
 
+  # ===== 2026-11-26：检索投影公共行可见性收口 =====
+  - version: "20261126130000"
+    file: "database/migrations/20261126130000_search_projection_public_rows.sql"
+    status: applied
+    ledger_evidence: "prod topems_prod success=true；本机 dev 账本滞后未记（L3）；版本 > anchor 20261118150000"
+    effect: "public.search_entity_projections / _v2 补租户隔离 RLS：ENABLE + FORCE RLS，DROP 旧策略后重建 tenant_isolation 策略，把零租户 UUID 视为公共行（与 erp tenant_id IS NULL 语义对齐）显式放行；租户自有行仍按 app.tenant_id 严格隔离"
+    destructive_scan: "ENABLE/FORCE RLS + DROP POLICY IF EXISTS + CREATE POLICY；to_regclass 守卫缺表跳过；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/列型变更"
+    note: "修复公共主数据（物料/客户等）在投影层被归一为零租户后搜不到；checksum 0083d8bcd169a8c53a6c2939268405f0c0578bd17694182903f13870d6619257"
+
   # ===== 2026-11-26：MES 排产单状态标准态（B347） =====
   - version: "20261126140000"
     file: "database/migrations/20261126140000_mes_production_schedules_status_standard.sql"
@@ -3232,13 +3241,22 @@ pending_forward_patches:
     destructive_scan: "仅 ALTER COLUMN SET NOT NULL 与 DO 断言；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/列型变更；preflight 失败即整笔回滚"
     note: "本机四表均为 0 行（无数据改写风险）；不提供猜测式回填，NULL 行需人工定归属；checksum c0143e98be9760dee138adefed767c60bd0e18a2f8e4fd39e53cef8dbe7ef7a0"
 
-  # ===== 2026-11-26：iam.tenant_permissions RLS fail-closed 加固 =====
+  # ===== 2026-11-26：erp 公共主数据读侧可见性收口 =====
   - version: "20261126160000"
-    file: "database/migrations/20261126160000_iam_tenant_permissions_rls_fail_closed.sql"
+    file: "database/migrations/20261126160000_erp_public_rows_read_visibility.sql"
+    status: applied
+    ledger_evidence: "prod topems_prod success=true、checksum 在位；本机 dev 账本滞后未记（L3）；版本 > anchor 20261118150000"
+    effect: "erp.materials / purchase_orders / sales_orders / customers / suppliers 五表补 FOR SELECT permissive 策略，放行 tenant_id IS NULL（历史公共行）或零租户 UUID（平台写入公共行）的读侧可见性，与检索投影公共行口径对齐；写路径不变，仍由既有 FOR ALL 策略约束为本租户"
+    destructive_scan: "ENABLE RLS + DROP POLICY IF EXISTS + CREATE POLICY FOR SELECT；to_regclass 守卫缺表跳过；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/列型变更"
+    note: "修复公共主数据“搜得到、点进去看不到”（列表查不到、详情 404）；checksum c97cbd7f9b670a6759eea05c17d7a5a84c1581c70376569357bfb27c68fa5b66"
+
+  # ===== 2026-11-26：iam.tenant_permissions RLS fail-closed 加固 =====
+  - version: "20261126160001"
+    file: "database/migrations/20261126160001_iam_tenant_permissions_rls_fail_closed.sql"
     status: to_apply
     effect: "iam.tenant_permissions 策略收紧为 app.rls_system='on' 或 tenant_id 精确匹配，补 FORCE RLS；幂等清理历史残留旧 fail-open 策略 rls_tenant_isolation；未设置 tenant 时 fail-closed"
     destructive_scan: "ALTER TABLE ENABLE/FORCE RLS + DROP POLICY IF EXISTS + ALTER/CREATE POLICY；无 DELETE/UPDATE/TRUNCATE/DROP TABLE"
-    note: "remediation：20261125160000 建表策略含 NULLIF(...) IS NULL / 空串 / 零租户豁免，且缺 FORCE；本迁移按 20261124200000 同形加固，旧文件加入 RLS_SHAPE_REMEDIATED 静态豁免；DROP POLICY IF EXISTS 清理本机 dev 历史残留旧策略（prod 无此策略）；checksum cb377945b6a388abed792e52d4b8debfa714f40f9a7c6f03da4c74fe3b563211"
+    note: "remediation：20261125160000 建表策略含 NULLIF(...) IS NULL / 空串 / 零租户豁免，且缺 FORCE；本迁移按 20261124200000 同形加固，旧文件加入 RLS_SHAPE_REMEDIATED 静态豁免；DROP POLICY IF EXISTS 清理本机 dev 历史残留旧策略（prod 无此策略）；版本号由 20261126160000 改分配为 20261126160001，避免与已在 prod 记账的 erp_public_rows_read_visibility 撞号；文件内容未变，checksum cb377945b6a388abed792e52d4b8debfa714f40f9a7c6f03da4c74fe3b563211"
 
   # ===== 2026-11-26：iam.users 反范式冗余列与旧单角色列删除（IAM-3） =====
   - version: "20261126170000"

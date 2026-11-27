@@ -204,11 +204,11 @@
       "id": "B20261126-iam-rls-assert",
       "date": "2026-11-26",
       "committer": "paulwy",
-      "reason": "20261126160000 为当日新增、尚未在任何环境应用（账本无记录）的 remediation 迁移；其 fail-closed 断言用 LIKE '%''''%' 检查空串字面量，误命中安全表达式 NULLIF(..., '')，导致 baseline+前向迁移在断言处失败。改为只匹配已知 fail-open 形态（tenant_id IS NULL / current_setting…IS NULL / 全零 UUID），策略本身不变。属未应用迁移的输入修正，非改写已执行历史。",
+      "reason": "20261126160001（原 20261126160000，与已在 prod 记账的 erp_public_rows_read_visibility 撞号，纯改号内容未变）为当日新增、尚未在任何环境应用（账本无记录）的 remediation 迁移；其 fail-closed 断言用 LIKE '%''''%' 检查空串字面量，误命中安全表达式 NULLIF(..., '')，导致 baseline+前向迁移在断言处失败。改为只匹配已知 fail-open 形态（tenant_id IS NULL / current_setting…IS NULL / 全零 UUID），策略本身不变。属未应用迁移的输入修正，非改写已执行历史。",
       "files": [
-        "20261126160000_iam_tenant_permissions_rls_fail_closed.sql"
+        "20261126160001_iam_tenant_permissions_rls_fail_closed.sql"
       ],
-      "evidence": "CI run 45790510809 Migration job 在 baseline 恢复+前向迁移执行到该文件第 61 行触发 fail-closed 误报；本地 check-rls-policy-shape.sh PASS；新文件 checksum 已同步；库账本无 20261126160000 记录。[2026-11-26 二次修正 D2] 本机 dev 历史线残留旧 fail-open 策略 rls_tenant_isolation（prod 无），多条策略 OR 会旁路新 fail-closed 策略；补幂等 DROP POLICY IF EXISTS 清理，并加后置断言排除该旧策略残留；本机事务 ROLLBACK dry-run EXIT=0，策略集合仅剩新策略、RLS/FORCE=t；validate.sh Errors=0、Checksum errors=0；新 checksum cb377945…3b563211 已同步 checksums.txt/manifest。",
+      "evidence": "CI run 45790510809 Migration job 在 baseline 恢复+前向迁移执行到该文件第 61 行触发 fail-closed 误报；本地 check-rls-policy-shape.sh PASS；新文件 checksum 已同步；库账本无 20261126160001 记录。[2026-11-26 二次修正 D2] 本机 dev 历史线残留旧 fail-open 策略 rls_tenant_isolation（prod 无），多条策略 OR 会旁路新 fail-closed 策略；补幂等 DROP POLICY IF EXISTS 清理，并加后置断言排除该旧策略残留；本机事务 ROLLBACK dry-run EXIT=0，策略集合仅剩新策略、RLS/FORCE=t；validate.sh Errors=0、Checksum errors=0；新 checksum cb377945…3b563211 已同步 checksums.txt/manifest。",
       "approved": true
     },
     {
