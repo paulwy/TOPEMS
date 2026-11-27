@@ -47,20 +47,21 @@ vi.mock('@/schemas/finance', () => ({
 
 vi.mock('@/api/finance', () => ({
   financeApi: {
-    account: {
+    expense: {
       list: vi.fn().mockResolvedValue({
         success: true,
-        data: { items: [{ id: 'acc-1', name: '差旅费' }], total: 1 },
+        data: { items: [{ id: 'exp-1', title: '差旅费' }], total: 1 },
       }),
       create: vi.fn().mockResolvedValue({
         success: true,
-        data: { id: 'acc-2', name: '市场费用' },
+        data: { id: 'exp-2', title: '市场费用' },
       }),
       update: vi.fn().mockResolvedValue({
         success: true,
-        data: { id: 'acc-1', name: '差旅费-改' },
+        data: { id: 'exp-1', title: '差旅费-改' },
       }),
       delete: vi.fn().mockResolvedValue({ success: true }),
+      pay: vi.fn().mockResolvedValue({ success: true }),
     },
   },
 }));
@@ -96,49 +97,71 @@ describe('FinanceExpensePage', () => {
       status: 'active',
     });
 
-    expect(financeApi.account.list).toHaveBeenCalledWith({
+    expect(financeApi.expense.list).toHaveBeenCalledWith({
       page: 2,
       page_size: 20,
       search: '差旅',
       status: 'active',
     });
     expect(result).toEqual({
-      data: [{ id: 'acc-1', name: '差旅费' }],
+      data: [{ id: 'exp-1', title: '差旅费' }],
       total: 1,
     });
   });
 
-  it('delegates create, update and delete to account API', async () => {
+  it('delegates create, update and delete to expense API', async () => {
     render(<FinanceExpensePage />);
     const props = mockCrudPage.mock.calls[0][0];
 
-    await expect(props.apiAdapter.create({ name: '市场费用' })).resolves.toEqual({
-      id: 'acc-2',
-      name: '市场费用',
+    await expect(props.apiAdapter.create({ title: '市场费用' })).resolves.toEqual({
+      id: 'exp-2',
+      title: '市场费用',
     });
-    await expect(props.apiAdapter.update('acc-1', { name: '差旅费-改' })).resolves.toEqual({
-      id: 'acc-1',
-      name: '差旅费-改',
+    await expect(props.apiAdapter.update('exp-1', { title: '差旅费-改' })).resolves.toEqual({
+      id: 'exp-1',
+      title: '差旅费-改',
     });
-    await expect(props.apiAdapter.delete('acc-1')).resolves.toBeUndefined();
+    await expect(props.apiAdapter.delete('exp-1')).resolves.toBeUndefined();
 
-    expect(financeApi.account.create).toHaveBeenCalledWith({ name: '市场费用' });
-    expect(financeApi.account.update).toHaveBeenCalledWith('acc-1', { name: '差旅费-改' });
-    expect(financeApi.account.delete).toHaveBeenCalledWith('acc-1');
+    expect(financeApi.expense.create).toHaveBeenCalledWith({ title: '市场费用' });
+    expect(financeApi.expense.update).toHaveBeenCalledWith('exp-1', { title: '差旅费-改' });
+    expect(financeApi.expense.delete).toHaveBeenCalledWith('exp-1');
   });
 
-  it('throws translated errors when account API operations fail', async () => {
-    vi.mocked(financeApi.account.list).mockResolvedValueOnce({ success: false, data: null });
-    vi.mocked(financeApi.account.create).mockResolvedValueOnce({ success: false });
-    vi.mocked(financeApi.account.update).mockResolvedValueOnce({ success: false });
-    vi.mocked(financeApi.account.delete).mockResolvedValueOnce({ success: false });
+  it('throws translated errors when expense API operations fail', async () => {
+    vi.mocked(financeApi.expense.list).mockResolvedValueOnce({ success: false, data: null });
+    vi.mocked(financeApi.expense.create).mockResolvedValueOnce({ success: false });
+    vi.mocked(financeApi.expense.update).mockResolvedValueOnce({ success: false });
+    vi.mocked(financeApi.expense.delete).mockResolvedValueOnce({ success: false });
 
     render(<FinanceExpensePage />);
     const props = mockCrudPage.mock.calls[0][0];
 
     await expect(props.apiAdapter.list({})).rejects.toThrow('加载列表失败');
     await expect(props.apiAdapter.create({})).rejects.toThrow('创建失败');
-    await expect(props.apiAdapter.update('acc-1', {})).rejects.toThrow('更新失败');
-    await expect(props.apiAdapter.delete('acc-1')).rejects.toThrow('删除失败');
+    await expect(props.apiAdapter.update('exp-1', {})).rejects.toThrow('更新失败');
+    await expect(props.apiAdapter.delete('exp-1')).rejects.toThrow('删除失败');
+  });
+
+  it('exposes 支付 row action only for approved expenses and calls pay API', async () => {
+    render(<FinanceExpensePage />);
+    const props = mockCrudPage.mock.calls[0][0];
+    const payAction = (props.customRowActions as Array<Record<string, unknown>>).find(
+      (a) => a.key === 'pay'
+    );
+    expect(payAction).toBeTruthy();
+    const show = payAction?.show as (row: Record<string, unknown>) => boolean;
+    expect(show({ status: 'approved' })).toBe(true);
+    expect(show({ status: 'paid' })).toBe(false);
+    expect(show({ status: 'submitted' })).toBe(false);
+    expect(payAction?.confirm).toBe(true);
+
+    (payAction?.onClick as (row: Record<string, unknown>) => void)({
+      id: 'exp-1',
+      status: 'approved',
+    });
+    await vi.waitFor(() => {
+      expect(financeApi.expense.pay).toHaveBeenCalledWith('exp-1');
+    });
   });
 });

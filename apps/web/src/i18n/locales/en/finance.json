@@ -3340,5 +3340,10 @@
   "finance.finance_expense_approval_page.reimburse_confirm": "Mark this approved expense as reimbursed? This only changes the status and cannot be undone.",
   "finance.finance_expense_approval_page.reimburse_success": "Reimbursement recorded",
   "finance.finance_expense_approval_page.reimburse_failed": "Reimbursement failed",
-  "finance.finance_expense_approval_page.reimburse_missing_id": "Missing record id, cannot reimburse"
+  "finance.finance_expense_approval_page.reimburse_missing_id": "Missing record id, cannot reimburse",
+  "finance.finance_expense_page.pay_action": "Pay",
+  "finance.finance_expense_page.pay_confirm": "Mark this approved expense as paid? This only changes the status and cannot be undone.",
+  "finance.finance_expense_page.pay_success": "Payment recorded",
+  "finance.finance_expense_page.pay_failed": "Payment failed",
+  "finance.finance_expense_page.pay_missing_id": "Missing record id, cannot pay"
 }
