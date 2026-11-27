@@ -13,7 +13,14 @@ vi.mock('@/api/aps', () => ({
       success: true,
       code: 0,
       message: '',
-      data: { items: [{ id: 'PP001' }], total: 5 },
+      data: {
+        items: [{ id: 'PP001' }],
+        plans: [
+          { id: 'PP001', target_quantity: '100', start_date: '2026-11-01' },
+          { id: 'PP002', target_quantity: '200', start_date: '2026-12-01' },
+        ],
+        total: 5,
+      },
     }),
   },
   scheduleApi: {
@@ -21,7 +28,7 @@ vi.mock('@/api/aps', () => ({
       success: true,
       code: 0,
       message: '',
-      data: { items: [{ id: 'SC001' }], total: 3 },
+      data: { items: [{ id: 'SC001' }], schedules: [{ id: 'SC001' }], total: 3 },
     }),
   },
 }));
@@ -49,16 +56,12 @@ describe('ApsDashboardPage', () => {
     });
   });
 
-  it('renders static utilization & accuracy stat cards', async () => {
+  it('derives target quantity and plan periods from plan rows', async () => {
     renderWithProviders(<ApsDashboardPage />);
 
     await waitFor(() => {
-      const util = screen.getByTestId('stat-card-utilization');
-      expect(util).toHaveTextContent('产能利用率');
-      expect(util).toHaveTextContent('78.5%');
-      const acc = screen.getByTestId('stat-card-accuracy');
-      expect(acc).toHaveTextContent('预测准确率');
-      expect(acc).toHaveTextContent('92.3%');
+      expect(screen.getByTestId('stat-card-target-qty')).toHaveTextContent('300');
     });
+    expect(screen.getByTestId('stat-card-plan-periods')).toHaveTextContent('2');
   });
 });

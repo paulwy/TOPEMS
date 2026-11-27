@@ -188,7 +188,12 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'suppliers',
         title: i18n.t('scm.dashboard_page.k10'),
-        value: ((overview as unknown as { suppliers?: { active_count?: number } })?.suppliers?.active_count ?? overview?.active_suppliers ?? 0).toString(),
+        value: (
+          (overview as unknown as { suppliers?: { active_count?: number } })?.suppliers
+            ?.active_count ??
+          overview?.active_suppliers ??
+          0
+        ).toString(),
         icon: <Users size={24} />,
         color: 'primary',
       },
