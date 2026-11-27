@@ -310,7 +310,8 @@ const PRESET_COMPONENTS: ComponentDefinition[] = [
     icon: 'rectangle-horizontal',
     default_props: { title: i18n.t('microfrontend.builder.k34'), bordered: true },
     default_style: {
-      background: 'common.white',
+      // 'common.white' 不是合法 CSS，低代码渲染端会整条丢弃；卡片底改走令牌
+      background: 'var(--surface-1)',
       borderRadius: 'md',
       padding: 4,
       boxShadow: designTokens.shadows.sm,

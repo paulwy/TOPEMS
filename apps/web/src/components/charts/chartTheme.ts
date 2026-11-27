@@ -29,22 +29,6 @@ export const BIChartColors = {
     designTokens.colors.pink.main, // Pink
     designTokens.colors.neon.lime[500], // Lime
   ],
-  dark: {
-    series: [
-      designTokens.colors.primary[400], // Blue (lighter for dark bg)
-      'var(--color-success-400)', // Emerald
-      designTokens.colors.warning[400], // Amber
-      'var(--color-error-400)', // Red
-      designTokens.colors.secondary.light, // Violet
-      designTokens.colors.cyan[400], // Cyan
-      designTokens.colors.pink[400], // Pink
-      designTokens.colors.neon.lime[400], // Lime
-    ],
-    grid: designTokens.colors.grey[700],
-    text: designTokens.colors.grey['400'],
-    background: 'common.white',
-    border: designTokens.colors.grey[600],
-  },
   // 赛博朋克霓虹色板 — 高饱和度发光色，适配深空背景
   cyberpunk: {
     series: [
@@ -59,16 +43,8 @@ export const BIChartColors = {
     ],
     grid: alpha(designTokens.colors.cyan[500], 0.1),
     text: 'var(--cyber-color-text-muted, var(--cyber-color-text-muted))',
-    background: 'common.white',
+    background: 'var(--surface-1)',
     border: alpha(designTokens.colors.cyan[500], 0.3),
-  },
-  neutral: {
-    grid: designTokens.colors.border.default,
-    gridDark: designTokens.colors.grey[700],
-    text: designTokens.colors.grey[500],
-    textDark: designTokens.colors.grey['400'],
-    background: 'common.white',
-    backgroundDark: 'common.white',
   },
   // Primary palette (kept for backward-compatible reference)
   primary: {
