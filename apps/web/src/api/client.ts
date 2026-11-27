@@ -687,6 +687,20 @@ const createAxiosClient = ({
         apiLogger.warn(`[API 422] ${fullUrl} validation failed: ${detail || error.message}`);
       }
 
+      // 404 / 403 可读化：详情页等直接把 error.message 渲染给用户，此前会露出
+      // axios 原文 "Request failed with status code 404"。优先后端 message
+      //（如「记录不存在」），缺失时给中文兜底。
+      const httpStatus = error.response?.status;
+      if (httpStatus === 404 || httpStatus === 403) {
+        const body = error.response?.data as { message?: string; error?: string } | undefined;
+        const backendMsg = String(body?.message || body?.error || '').trim();
+        const fallbackMsg = httpStatus === 404 ? '记录不存在或已被删除' : '无权访问该记录';
+        (error as unknown as { originalMessage?: string }).originalMessage =
+          (error as unknown as { originalMessage?: string }).originalMessage || error.message;
+        error.message = backendMsg || fallbackMsg;
+        apiLogger.warn(`[API ${httpStatus}] ${fullUrl} → ${error.message}`);
+      }
+
       const startTime = Number(error.config?.headers?.['X-Request-Start']) || Date.now();
 
       if (shouldRetry(error, retries, startTime)) {
