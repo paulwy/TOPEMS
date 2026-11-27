@@ -167,3 +167,53 @@
 - 分类数量不变：活码 1 / 待复核 553 / admin 兜底 27。
 - 逐行新增 `in_admin_token`、`in_nonadmin_token` 标记；顶层 `admin_scan` 记录账号、角色、权限数、携带数、GET 观测数与读/写分层。
 - v2 矩阵备份：`/tmp/topems-c2/c2-matrix.v2.bak.json/.csv`。
+
+## 11. v3.1 增量：静态间接引用补盲普查（#98，2026-11-28）
+
+> 针对盲区②（守卫经枚举/常量/拼接/注册表间接引用，静态字面量 `be_refs` 收不全）做第二遍**静态只读**复核；不重启实例、不写隔离库、不改鉴权逻辑、不据此判死码。主矩阵分类不变（活码 1 / 待复核 553 / 兜底 27），仅逐行补 `static_indirect` 来源标记。
+
+### 11.1 复核口径：区分「守卫消费点」与「权限集组装点」
+
+- **守卫消费点**：运行期在 `claims.has_permission(...)` 校验权限码，码是否被实际挂载决定后端是否有引用。
+- **权限集组装点**：把码加入默认/套餐权限集（授予侧），不校验；若路径未落地写库，则不构成实际授权或消费。
+- 静态拼接按代码形态分四类核查：中间件写门拼接、模块权限枚举拼接、套餐/tier 权限集组装、未接线预留函数。
+
+### 11.2 生产接线：中间件写门拼接 `{module}:admin`（A 类，7 码命中 581）
+
+- 规则：`require_module_write(module)`（`lib/shared-auth/src/middleware/permission.rs:168`）对非 GET/HEAD/OPTIONS 方法 `format!("{module}:admin")` 校验；是生产守卫链上**唯一**的动态拼接消费点。
+- 扫描到 18 个写门模块挂载：crm、ehs、finance、gis、hrm、integration、lims、master-data、mes、monitor、pdm、pm、qms、rd、search、srm、ticket、tms。
+- 落入 581 双零集共 **7** 码（静态字面量漏扫，同类 `srm:admin`）：
+
+| 码 | v3 主分类 | 写门挂载点 |
+|---|---|---|
+| `srm:admin` | 活码-后端运行期观测（#96 已命中 20 次） | `svc/srm/src/main.rs:219`、`svc/server/src/modules/srm_real_module.rs:108` |
+| `master-data:admin` | 待复核 | `svc/master-data/src/main.rs:63`、`svc/server/src/modules/master_data_real_module.rs` |
+| `monitor:admin` | 仅 admin 兜底 | `svc/monitor/src/main.rs:63`、`svc/server/src/modules/monitor_real_module.rs` |
+| `rd:admin` | 待复核 | `svc/rd/src/main.rs:117`、`svc/server/src/modules/rd_real_module.rs:73` |
+| `search:admin` | 待复核 | `svc/search/src/main.rs:78,98`、`svc/server/src/modules/search_real_module.rs:137` |
+| `ticket:admin` | 待复核 | `svc/ticket/src/main.rs:61`、`svc/server/src/modules/ticket_real_module.rs:72` |
+| `tms:admin` | 待复核 | `svc/tms/src/main.rs:160`、`svc/server/src/modules/tms_real_module.rs:87` |
+
+- **结论边界**：这 6 个新标注码在后端确有写门挂载点，但写门仅非 GET 校验；本轮只读 GET 冒烟未触达，运行期 trace 0 观测与静态挂载点并存。**有挂载点 ≠ 活码定论**，待写操作冒烟（造最小单据样本）运行期确认 `allowed`。
+
+### 11.3 框架预留：套餐矩阵组装（B 类，10 码命中 581，非消费点）
+
+- 规则：`default_permissions_for_tier`（`svc/unified-core/src/modules/subscription/mod.rs:626-631`）按套餐矩阵拼 `{module}:read/write/admin`；`sync_permissions_for_tenant` 自述为**框架版本**，创建/升级租户时仅 `tracing::info!` 记录权限计数，**未写库** `core_role_permissions`/用户绑定。
+- 命中 581 共 **10** 码：`integration:read`、`master-data:read/write/admin`、`monitor:admin`、`rd:admin`、`search:admin`、`srm:admin`、`ticket:admin`、`tms:admin`（其中 7 个同时属 A 类写门挂载）。
+- 定性：授予侧框架路径，未落地授权；不构成守卫消费点，标记为 `plan-tier-assemble` 供后续套餐权限落地时复核。
+
+### 11.4 已接线但 0 命中：模块权限枚举拼接（D 类）
+
+- `check_module_permission_claims`（`lib/shared-auth/src/permission.rs:242`）经各模块 Permission 枚举（`ModuleCode`×`PermissionAction`）拼两段码；crm/hrm/scm/erp 封装 `check_permission` 生产接线（调用面 crm 195 / scm 129 / erp 78 / hrm 28）。资源维度在枚举层压平到模块级，不产生三段码。
+- 拼出两段码：`crm/hrm:read/write/admin`、`scm/erp:read/write/admin/approve`，**均不在 581 双零集**（`be_refs` 静态已覆盖或非双零），本轮无新增漏扫码。
+
+### 11.5 未接线预留（生产零调用，不计引用）
+
+- `require_module_active` / `require_module_permission`（`lib/shared-auth/src/middleware/module.rs`）：生产零调用，仅测试桩；枚举 `ModuleCode`(39)×`PermissionAction`(5) 理论可拼两段码，但不在守卫链消费。
+- `check_module_action`（`svc/unified-core/src/middleware/permission.rs:573`）：生产零调用，仅文档示例与测试。
+- `tier_permissions`（`lib/shared-auth/src/tier.rs:91`）：生产零调用，仅测试。
+
+### 11.6 v3.1 产物与边界
+
+- 矩阵 `artifacts/audit/forensics-c2/c2-matrix.json/.csv`：逐行新增 `static_indirect`（`guard-write-join` / `plan-tier-assemble`）与 `static_indirect_note`；顶层 `static_indirect_scan` 记录四类规则、模块清单、命中码与未接线备注。v3 备份 `/tmp/topems-c2/c2-matrix.v3.bak.json/.csv`。
+- 本轮为静态侧补盲：A 类挂载点待写操作冒烟运行期确认；B 类待套餐权限落地后复核；D 类与未接线项不改变 581 既有分类。仍**不得**据静态引用或单次取证自动清理权限码/解除绑定。
