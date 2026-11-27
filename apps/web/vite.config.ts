@@ -1337,6 +1337,20 @@ export default defineConfig(({ mode }) => {
       'stylis',
       'clsx',
       'react-is',
+      // @mui：packages/shared-components、packages/tokens 自带 @mui/material 9.1.1，
+      // 应用侧是 9.4.0 → 运行时两份实例、两套 ThemeContext。
+      // 表现：来自共享包的 Chip/Button 取到 MUI 默认调色板（primary #1976d2、正文 rgba(0,0,0,0.87)），
+      // 暗色页上就是「默认蓝按钮 + 黑字/黑图标」。
+      // 统一到应用侧单实例（同 9.x，API 兼容）。
+      '@mui/material',
+      '@mui/system',
+      '@mui/utils',
+      '@mui/private-theming',
+      '@mui/styled-engine',
+      '@mui/icons-material',
+      '@mui/lab',
+      '@mui/x-date-pickers',
+      '@mui/x-tree-view',
     ],
   },
   build: {

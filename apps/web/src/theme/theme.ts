@@ -177,13 +177,82 @@ const customShadowsDark = {
  * palette.mode 只决定 MUI 组件内置的深色样式规则切换（.Mui-selected 背景色等）
  * —— 自定义组件通过 theme.applyStyles('dark', {...}) 实现多态
  */
+/**
+ * 亮色方案调色板（显式定义，不依赖 MUI 默认值）
+ *
+ * 只 spread 令牌色阶（50~900）而不给 main/light/dark 时，MUI 会与默认调色板合并，
+ * main 落回默认 #1976d2、light 落回 #42a5f5、warning 落回 #ff9800 ——
+ * 表现就是「主题看起来生效了，但按钮/标签是 MUI 默认蓝、默认橙」。
+ * 同一份对象同时用于顶层 palette（MuiThemeProvider 的默认/亮色解析）
+ * 与 colorSchemes.light，避免两处再次漂移。
+ */
+const LIGHT_PALETTE = {
+  // 必须显式给出 main / light / dark：只 spread 色阶（50~900）时 MUI 会与默认
+  // 调色板合并，main 落回默认 #1976d2、light 落回 #42a5f5、warning 落回 #ff9800，
+  // 于是「主题已生效但颜色是 MUI 默认蓝/默认橙」。暗色方案早已显式定义，亮色此前漏了。
+  primary: {
+    ...designTokens.colors.primary,
+    main: designTokens.colors.primary[600],
+    light: designTokens.colors.primary[400],
+    dark: designTokens.colors.primary[700],
+    contrastText: designTokens.colors.common.white,
+  },
+  secondary: {
+    ...designTokens.colors.secondary,
+    main: designTokens.colors.secondary[600],
+    light: designTokens.colors.secondary[400],
+    dark: designTokens.colors.secondary[700],
+    contrastText: designTokens.colors.common.white,
+  },
+  success: {
+    ...designTokens.colors.success,
+    main: designTokens.colors.success[500],
+    light: designTokens.colors.success[300],
+    dark: designTokens.colors.success[700],
+    contrastText: designTokens.colors.grey[900],
+  },
+  warning: {
+    ...designTokens.colors.warning,
+    main: designTokens.colors.warning[500],
+    light: designTokens.colors.warning[300],
+    dark: designTokens.colors.warning[700],
+    contrastText: designTokens.colors.grey[900],
+  },
+  error: {
+    ...designTokens.colors.error,
+    main: designTokens.colors.error[600],
+    light: designTokens.colors.error[400],
+    dark: designTokens.colors.error[700],
+    contrastText: designTokens.colors.common.white,
+  },
+  info: {
+    ...designTokens.colors.info,
+    main: designTokens.colors.info[600],
+    light: designTokens.colors.info[400],
+    dark: designTokens.colors.info[700],
+    contrastText: designTokens.colors.common.white,
+  },
+  grey: designTokens.colors.grey,
+  background: {
+    default: designTokens.colors.background.default,
+    paper: designTokens.colors.background.paper,
+  },
+  text: {
+    primary: designTokens.colors.text.primary,
+    secondary: designTokens.colors.text.secondary,
+    muted: designTokens.colors.text.muted,
+  },
+  divider: designTokens.colors.border.default,
+};
+
 export const createCustomTheme = (): Theme => {
   // MUI 组件默认文案（TablePagination/DatePicker 等）跟随应用语言
   const muiLocale = i18n.language === 'en' ? enUS : zhCN;
   return createTheme(
     {
-      // 顶层 palette 只放共享配置（mode-agnostic），light/dark 专属色移到 colorSchemes
+      // 顶层 palette：亮色语义色 + 共享扩展色组（暗色专属值在 colorSchemes.dark）
       palette: {
+        ...LIGHT_PALETTE,
         // 设计令牌扩展色组 — 供 sx prop 通过 token path 引用（light/dark 共用同一组）
         teal: designTokens.colors.teal,
         orange: designTokens.colors.orange,
@@ -203,39 +272,7 @@ export const createCustomTheme = (): Theme => {
         light: {
           palette: {
             mode: 'light',
-            primary: {
-              ...designTokens.colors.primary,
-            },
-            secondary: {
-              ...designTokens.colors.secondary,
-            },
-            success: {
-              ...designTokens.colors.success,
-              contrastText: '#18181b',
-            },
-            warning: {
-              ...designTokens.colors.warning,
-              contrastText: '#18181b',
-            },
-            error: {
-              ...designTokens.colors.error,
-              contrastText: '#18181b',
-            },
-            info: {
-              ...designTokens.colors.info,
-              contrastText: '#18181b',
-            },
-            grey: designTokens.colors.grey,
-            background: {
-              default: designTokens.colors.background.default,
-              paper: designTokens.colors.background.paper,
-            },
-            text: {
-              primary: designTokens.colors.text.primary,
-              secondary: designTokens.colors.text.secondary,
-              muted: designTokens.colors.text.muted,
-            },
-            divider: designTokens.colors.border.default,
+            ...LIGHT_PALETTE,
           },
         },
         dark: {
