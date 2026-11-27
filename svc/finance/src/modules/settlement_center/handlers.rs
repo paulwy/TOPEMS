@@ -38,6 +38,12 @@ fn current_user_id(claims: &Claims) -> Option<Uuid> {
 // ============================================================
 
 /// GET /api/core/settlement-center/reconciliations
+#[utoipa::path(
+    get,
+    path = "/api/finance/api/core/settlement-center/reconciliations",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_reconciliations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -71,6 +77,12 @@ pub async fn list_reconciliations(
 }
 
 /// POST /api/core/settlement-center/reconciliations
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/reconciliations",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn create_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -207,6 +219,12 @@ pub async fn reconcile(
 }
 
 /// POST /api/core/settlement-center/auto-reconcile
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/auto-reconcile",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn auto_reconcile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -240,6 +258,12 @@ pub async fn auto_reconcile(
 // ============================================================
 
 /// GET /api/core/settlement-center/settlements
+#[utoipa::path(
+    get,
+    path = "/api/finance/api/core/settlement-center/settlements",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_settlements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -273,6 +297,12 @@ pub async fn list_settlements(
 }
 
 /// POST /api/core/settlement-center/settlements
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/settlements",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn create_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -358,6 +388,12 @@ pub async fn get_settlement(
 }
 
 /// POST /api/core/settlement-center/reconciliations/{id}/approve
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/reconciliations/{id}/approve",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn approve_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -397,6 +433,12 @@ pub async fn approve_reconciliation(
 }
 
 /// POST /api/core/settlement-center/settlements/{id}/approve
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/settlements/{id}/approve",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn approve_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -440,6 +482,12 @@ pub async fn approve_settlement(
 // ============================================================
 
 /// POST /api/core/settlement-center/links
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/links",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn create_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -512,6 +560,12 @@ pub async fn delete_link(
 }
 
 /// GET /api/core/settlement-center/links
+#[utoipa::path(
+    get,
+    path = "/api/finance/api/core/settlement-center/links",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_links(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -549,6 +603,12 @@ pub async fn list_links(
 // ============================================================
 
 /// GET /api/core/settlement-center/differences
+#[utoipa::path(
+    get,
+    path = "/api/finance/api/core/settlement-center/differences",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_differences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -583,6 +643,12 @@ pub async fn list_differences(
 }
 
 /// POST /api/core/settlement-center/differences
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/differences",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn create_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -630,6 +696,12 @@ pub async fn create_difference(
 }
 
 /// POST /api/core/settlement-center/differences/{id}/approve
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/differences/{id}/approve",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn approve_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -663,6 +735,12 @@ pub async fn approve_difference(
 }
 
 /// POST /api/core/settlement-center/differences/{id}/reject
+#[utoipa::path(
+    post,
+    path = "/api/finance/api/core/settlement-center/differences/{id}/reject",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn reject_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -732,6 +810,12 @@ pub async fn get_dashboard(
 }
 
 /// GET /api/core/settlement-center/statistics
+#[utoipa::path(
+    get,
+    path = "/api/finance/api/core/settlement-center/statistics",
+    tag = "Settlement-Center",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

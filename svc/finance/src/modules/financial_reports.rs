@@ -1672,6 +1672,12 @@ fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
     data
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/finance/reports/balance-sheet",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1880,6 +1886,12 @@ pub async fn generate_income_statement(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/finance/reports/income-statement",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

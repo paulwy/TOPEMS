@@ -1559,7 +1559,7 @@ async fn list_scenarios_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v58/forecast/compare",
+    path = "/finance/finance-v58/forecast/compare",
     responses(
         (status = 200, description = "成功"),
         (status = 201, description = "创建成功"),

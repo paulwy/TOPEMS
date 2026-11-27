@@ -456,6 +456,12 @@ pub struct AgingQueryParams {
     pub direction: String,
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/finance/reconciliation/sessions/{session_id}/report",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

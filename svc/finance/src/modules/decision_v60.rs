@@ -1777,7 +1777,7 @@ pub async fn sensitivity_analysis_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v60/alert/rule",
+    path = "/finance/finance-v60/alert/rule",
     responses(
         (status = 200, description = "成功"),
         (status = 201, description = "创建成功"),
@@ -1881,7 +1881,7 @@ pub async fn get_active_alerts_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/alert/{id}/acknowledge",
+    path = "/finance/finance-v60/alert/{id}/acknowledge",
     responses(
         (status = 200, description = "成功"),
         (status = 201, description = "创建成功"),
@@ -1914,6 +1914,12 @@ async fn acknowledge_alert_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/finance/finance-v60/alert/{id}/resolve",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

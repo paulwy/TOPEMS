@@ -1630,6 +1630,12 @@ pub async fn get_variance_report_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/finance/audit-v52/anomaly/detect",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

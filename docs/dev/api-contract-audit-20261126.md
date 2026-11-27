@@ -596,3 +596,40 @@ finance 起于 285 条前端调用、命中 95、缺口 190。结构结论全部
 ### 提交口径
 
 本机工作区 HEAD 落后 origin/main 较多，`git diff origin/main -- svc/finance/src` 里 `mod.rs`、`financial_reports.rs`、`openapi.rs`、`expense_status.rs` 存在大段"删除"，实为 main 已合入的 W5-B 租户谓词加固（`try_tenant_id_from_claims` + 显式 `tenant_id` 谓词）等新版内容。整目录拷贝会把这些回退掉，因此本轮不拷源码，改为在 `origin/main` 的干净 worktree 内重跑 `openapi_backfill.py`，只拷 spec 与本文档。
+
+## 第 25 轮：finance 收口（注解三件套一致性）
+
+第 24 轮把 190 条缺口压到 37，但压不下去的部分不是"没注解"，而是三类一致性缺陷：**注解写了没登记**、**注解 path 不是真实挂载路径**、**注解方法写错**。这一轮把三者做成脚本，逐个消掉。
+
+### 三个新脚本
+
+| 脚本 | 解决的问题 |
+| --- | --- |
+| `scripts/ci/annotate_missing_routes.py` | spec 里没有的 (method, path) 反查 handler，插最小注解。默认 dry-run，`--apply` 落盘 |
+| `scripts/ci/register_annotated_handlers.py` | 有注解但没进 `openapi.rs` 的 `paths(...)` 的 handler 补登记。gen 只输出登记过的 handler，**注解写了不登记等于白写** |
+| `scripts/ci/check_route_annotations.py` | 路由真实路径 vs 注解 path 对账，报告幻影路径（`--fix` 反向改写注解） |
+
+### 踩到的四个真实缺陷
+
+1. **注解 path 指向别人的路径**：`list_collections_handler` / `create_collection_handler` 写成 `/api/finance/collections`，真实挂载是 `/api/finance/ar/collections`；`create_payment_record_handler` 写成 `/api/finance/payment-records`，真实是 `/api/finance/ap/payments`。前端调的一直是真路径，所以 spec 里查不到、实测却 200。
+2. **方法写错**：`generate_compliance_report_handler` 的路由是 `get("/finance-v54/compliance/report")`，注解写成了 `post`，spec 里就只有 POST，GET 永远对不上。同一 handler 还挂着一条早已废弃的 `/api/finance/compliance-v51/reports/generate` 注解。
+3. **`normalize_path` 的前缀匹配没有边界**：注解写 `/finance-v54/...` 时，它按"`/finance` 域前缀"替换，产出 `/api/finance-v54/...`（实测 404）。必须写 `/finance/finance-v54/...`。这一轮把 finance 里 7 处 `path = "/finance-v` 全部改成 `/finance/finance-v`。
+4. **登记脚本的子串判重会漏**：`"crate::modules::financial_reports::get_balance_sheet"` 是 `...get_balance_sheet_history` 的子串，被判为"已登记"，实际漏了。改成按行精确匹配后补上 2 条。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 3162 | **3190** |
+| finance 契约 调用/匹配/缺口 | 285/248/37 | **285/281/4** |
+| finance 无参 GET 实测 | 150 条 0 404 | **161 条 0 404** |
+| spec 超集（vs origin/main） | 缺失 0 | 新增 path 28 / method 12 / **缺失 0** |
+
+### 剩下 4 条的性质（不是文档问题，是代码问题）
+
+- `POST /api/finance/finance-v56/tax/comparison`：后端无此路由（tax_v56 只有 `tax/plans` 等）。
+- `PUT /api/finance/reconciliation/items/diff/batch`：后端无批量接口，只有单条 `PUT .../items/{id}`。
+- `POST /api/finance/forecasting/alerts/rules`：后端只有 `rules/{rule_id}` 的读写与 `alerts/summary`。
+- `POST /api/finance/voucher-templates/{template_id}/export`：后端 `export` 是 **GET**，前端按 POST 调，方法不一致。
+
+这 4 条要么补后端路由，要么改前端调用，属于功能口径决策，不在"补文档"范围内，先如实留缺口，不用别名糊过去。

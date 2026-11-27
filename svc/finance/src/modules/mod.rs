@@ -670,6 +670,12 @@ pub async fn post_voucher(
 }
 
 /// V39.0 Phase 7: 更新凭证
+#[utoipa::path(
+    put,
+    path = "/api/finance/vouchers/{voucher_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn update_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1048,6 +1054,12 @@ pub async fn create_aux_account(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/finance/aux-accounts",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn list_aux_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2678,6 +2690,12 @@ pub async fn create_voucher_template_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/finance/voucher-templates/{template_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn update_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2855,6 +2873,12 @@ pub struct CopyTemplateRequest {
     pub new_name: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/finance/voucher-templates/{template_id}/copy",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn copy_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3204,6 +3228,12 @@ pub struct AddTemplateEntryRequest {
     pub sort_order: Option<i32>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/finance/voucher-templates/{template_id}/entries",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn add_template_entry_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3306,6 +3336,12 @@ pub struct UpdateTemplateEntryRequest {
     pub sort_order: Option<i32>,
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/finance/voucher-templates/{template_id}/entries/{entry_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn update_template_entry_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3394,6 +3430,12 @@ async fn update_template_entry_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/finance/voucher-templates/{template_id}/entries/{entry_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn delete_template_entry_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4781,7 +4823,7 @@ pub struct CollectionQueryParams {
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/api/finance/collections",
+    path = "/ar/collections",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/collections"), (status = 500, description = "服务内部错误")),
 )]
@@ -4866,7 +4908,7 @@ pub async fn get_collection_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/api/finance/collections",
+    path = "/ar/collections",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/collections"), (status = 500, description = "服务内部错误")),
 )]
@@ -4973,6 +5015,12 @@ pub async fn create_collection_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/finance/collections/{collection_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn update_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5003,6 +5051,12 @@ async fn update_collection_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/finance/collections/{collection_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn delete_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5232,7 +5286,7 @@ pub async fn get_payment_record_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/api/finance/payment-records",
+    path = "/ap/payments",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/payment-records"), (status = 500, description = "服务内部错误")),
 )]
@@ -5358,6 +5412,12 @@ pub async fn reject_payment_record_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    put,
+    path = "/api/finance/payment-records/{payment_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn update_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5389,6 +5449,12 @@ async fn update_payment_record_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    delete,
+    path = "/api/finance/payment-records/{payment_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn delete_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -1370,6 +1370,13 @@ pub async fn get_risk_alerts_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/finance/finance-v54/risk/alerts/{id}/acknowledge",
+    tag = "Finance",
+    params(("id" = Uuid, Path, description = "预警 ID")),
+    responses((status = 200, description = "确认预警成功")),
+)]
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1391,7 +1398,7 @@ async fn acknowledge_alert_handler(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v54/risk/alerts/{id}/resolve",
+    path = "/finance/finance-v54/risk/alerts/{id}/resolve",
     responses(
         (status = 200, description = "成功"),
         (status = 400, description = "请求参数错误"),
@@ -1730,6 +1737,12 @@ pub struct ComplianceReportQueryParams {
     pub entity_id: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/finance/finance-v54/compliance/report",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn generate_compliance_report_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

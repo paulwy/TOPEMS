@@ -265,6 +265,12 @@ async fn main() -> anyhow::Result<()> {
     run(app).await
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/finance/",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 async fn home() -> &'static str {
     "TOPEMS Finance Service API\n\n\
      Contains: Accounts, Vouchers, Ledger, Reports\n\n\
