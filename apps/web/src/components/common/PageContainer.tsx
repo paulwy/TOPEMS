@@ -102,7 +102,10 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     ...(backButtonConfig && { backButton: backButtonConfig }),
   };
 
-  const hasHeader = Boolean(title || Object.keys(mergedHeaderProps).length > 0);
+  const hasMeaningfulHeaderProp = Object.keys(mergedHeaderProps).some(
+    (k) => k !== 'title' && (mergedHeaderProps as unknown as Record<string, unknown>)[k] !== undefined
+  );
+  const hasHeader = Boolean(title || headerTitle || hasMeaningfulHeaderProp);
 
   const ContentWrapper = paper ? Paper : Box;
   const contentWrapperProps = paper

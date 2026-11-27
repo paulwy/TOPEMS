@@ -786,12 +786,16 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       subtitle={subtitle}
       autoTitle={autoTitle}
       autoBreadcrumbs={!breadcrumbs}
-      headerProps={{
-        breadcrumbs: breadcrumbs?.map((b) => ({
-          label: b.label,
-          href: b.path,
-        })),
-      }}
+      headerProps={
+        breadcrumbs && breadcrumbs.length > 0
+          ? {
+              breadcrumbs: breadcrumbs.map((b) => ({
+                label: b.label,
+                href: b.path,
+              })),
+            }
+          : undefined
+      }
       actions={headerActions}
     >
       {emptyState?.show ? (
