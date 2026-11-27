@@ -80,7 +80,7 @@ mod tests {
             product_name: "螺丝".to_string(),
             specification: Some("M6x20".to_string()),
             unit: Some("个".to_string()),
-            quantity: 100.0,
+            quantity: d(100.0).unwrap(),
             unit_price: d(0.25),
             amount: Some(25.0),
             created_at: fixed_dt(),
@@ -98,7 +98,7 @@ mod tests {
             product_name: "Bare".to_string(),
             specification: None,
             unit: None,
-            quantity: 0.0,
+            quantity: d(0.0).unwrap(),
             unit_price: None,
             amount: None,
             created_at: fixed_dt(),
@@ -124,7 +124,7 @@ mod tests {
         }"#;
         let item: PurchaseItem = serde_json::from_str(raw).unwrap();
         assert_eq!(item.product_name, "螺母");
-        assert_eq!(item.quantity, 50.0);
+        assert_eq!(item.quantity, d(50.0).unwrap());
         assert_eq!(item.unit_price, d(0.5));
     }
 
@@ -195,7 +195,7 @@ mod tests {
             product_name: "Clonable".to_string(),
             specification: None,
             unit: None,
-            quantity: 7.0,
+            quantity: d(7.0).unwrap(),
             unit_price: d(3.5),
             amount: Some(24.5),
             created_at: fixed_dt(),
