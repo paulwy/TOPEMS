@@ -152,6 +152,12 @@ where
 }
 
 /// GET /sync-records —— 同步记录列表（分页 + 过滤）
+#[utoipa::path(
+    get,
+    path = "/sync-records",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_sync_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -244,6 +250,12 @@ pub async fn list_sync_records(
 }
 
 /// GET /sync-records/{id} —— 同步记录详情
+#[utoipa::path(
+    get,
+    path = "/sync-records/{id}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -381,6 +393,12 @@ pub async fn create_sync_record(
 }
 
 /// GET /sync-records/{id}/items —— 同步明细（分页）
+#[utoipa::path(
+    get,
+    path = "/sync-records/{id}/items",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_sync_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -450,6 +468,12 @@ pub async fn list_sync_items(
 }
 
 /// POST /sync-records/{id}/retry —— 重试同步记录
+#[utoipa::path(
+    post,
+    path = "/sync-records/{id}/retry",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn retry_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -519,6 +543,12 @@ pub async fn retry_sync_record(
 }
 
 /// POST /sync-records/{id}/retry-items —— 重试失败明细
+#[utoipa::path(
+    post,
+    path = "/sync-records/{id}/retry-items",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn retry_failed_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -581,6 +611,12 @@ pub async fn retry_failed_items(
 }
 
 /// GET /sync-records/statistics —— 同步统计
+#[utoipa::path(
+    get,
+    path = "/sync-records/statistics",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_sync_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -751,6 +787,12 @@ async fn trigger_sync(
 }
 
 /// POST /sync/scm —— 触发 WMS→SCM 通用同步
+#[utoipa::path(
+    post,
+    path = "/sync/scm",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn trigger_scm_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -773,6 +815,12 @@ pub async fn trigger_scm_sync(
 }
 
 /// POST /sync/scm/inventory —— 触发库存同步到 SCM
+#[utoipa::path(
+    post,
+    path = "/sync/scm/inventory",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn trigger_scm_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -790,6 +838,12 @@ pub async fn trigger_scm_inventory(
 }
 
 /// POST /sync/scm/orders —— 触发订单同步到 SCM
+#[utoipa::path(
+    post,
+    path = "/sync/scm/orders",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn trigger_scm_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -708,3 +708,34 @@ notification 命名空间 166 条调用、命中 44、缺口 122。这一轮最�
 ### 结论与遗留
 
 notification 命名空间契约缺口清零，但清零的构成要看清：166 条里 **57 条真实命中 + 109 条桩豁免**。真桩覆盖的 `webhooks/groups/digests/topics/scheduled/providers` 目前只有 `comm_stub` 空壳，是继续走桩还是补真实实现，需产品口径决策——这是缺口，不是已完成。
+
+## 第 28 轮：wms（注解缺失 14 + 登记缺失 81 + 前端/后端路径漂移）
+
+wms 262 条调用、命中 159、缺口 103。这一轮是"纯机械缺口"最大的一次：**路由都在，只是没注解、没登记**。
+
+### 做法
+
+1. **按路由反查注解**：解析 `svc/wms/src/modules/*.rs` 里的 `.route(...)`，14 个 handler 完全没有任何 `#[utoipa::path]`（`list_sync_records`/`get_wms_dashboard`/`list_audit_modules`/`pick_line` 等），插最小注解（method + path + `tag = "wms"`）。
+2. **补登记**：`register_annotated_handlers.py --crate-root svc/wms/src/modules --crate-prefix crate::modules --openapi svc/wms/src/modules/openapi.rs --apply`，一次补 81 条（另有 138 条本就在册）。wms 的 `openapi.rs` 是自己 crate 内的真身（`svc/server/src/bin/openapi_gen.rs` 直接引用 `topems_wms::modules::openapi::WmsApiDoc`），不存在第 26 轮那种"往死文件补登记"的坑。
+3. **路径漂移**：`list_alerts`/`get_alert`/`get_alert_statistics`/`acknowledge_alert` 注解写的是 `/api/wms/inventory-alerts*`，前端调的是 `/api/wms/alerts*`——两套挂载都真实存在（`inventory_alert.rs` 的 `create_routes` 里双写），所以 4 条走别名克隆而不是改注解，避免动到已经在用的老路径。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| wms 契约 调用/匹配/缺口 | 262/159/103 | **262/257/5** |
+| wms 注解 handler | 206 | **220**（0 未登记） |
+| spec paths | 3265 | **3339** |
+| wms 无参 GET 实测 | — | **63 条 0 404** |
+
+### 剩下 5 条（后端真缺，不是文档问题）
+
+- `POST /api/wms/cycle-counts`、`PUT|DELETE /api/wms/cycle-counts/{id}`：`cycle_count.rs` 只有 `GET` 列表、`GET {id}`、`POST {id}/generate`、`POST generate-all`，**没有配置的增改删**。
+- `POST /api/wms/discrepancies`：只有 `GET` 列表与 `{id}/approve|adjust`、`process-stock-take`，没有创建差异单的入口。
+- `POST /api/wms/labor/shifts`：`labor.rs` 的 `/labor/shifts` 只挂了 `GET`。
+
+这 5 条要补后端路由或改前端调用，属功能口径，按第 26 轮同口径如实留缺口。
+
+### 复用到其他命名空间的顺序
+
+`annotate_missing_routes.py`（补注解）→ `register_annotated_handlers.py`（补登记，注意选对真身 openapi.rs）→ `clone_route_aliases.py`（别名克隆）→ 桩分流到 `openapi-known-stubs.json` → HTTP 实测无参 GET。

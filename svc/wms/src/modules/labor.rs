@@ -153,6 +153,12 @@ pub async fn list_labor_efficiency(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/labor/efficiency/{userId}",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn user_labor_efficiency(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

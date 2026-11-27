@@ -82,6 +82,12 @@ where
 ///
 /// 前端 wms/dashboard.ts 真实消费。采用防御式逐指标查询：任一子查询失败
 /// 均降级为 0 / 空数组，避免因单表漂移导致整个看板 500。
+#[utoipa::path(
+    get,
+    path = "/dashboard",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_wms_dashboard(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

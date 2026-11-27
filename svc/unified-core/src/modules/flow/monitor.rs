@@ -474,7 +474,7 @@ pub async fn get_monitor_statistics(
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/api/core/flow/monitor/analysis",
+    path = "/api/core/flow/monitor/analysis/{id}",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/core/flow/monitor/analysis"), (status = 500, description = "服务内部错误")),
 )]
@@ -592,7 +592,7 @@ pub async fn get_workflow_analysis(
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/api/core/flow/monitor/analysis/nodes",
+    path = "/api/core/flow/monitor/analysis/{id}/nodes",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/core/flow/monitor/analysis/nodes"), (status = 500, description = "服务内部错误")),
 )]
@@ -635,7 +635,7 @@ pub async fn get_node_statistics(
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/api/core/flow/monitor/analysis/bottleneck",
+    path = "/api/core/flow/monitor/analysis/{id}/bottlenecks",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/core/flow/monitor/analysis/bottleneck"), (status = 500, description = "服务内部错误")),
 )]

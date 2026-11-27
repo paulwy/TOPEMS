@@ -1120,6 +1120,12 @@ pub struct PickLineRequest {
 }
 
 /// POST /picking/tasks/{task_id}/lines/{line_id}/pick —— 完成拣货
+#[utoipa::path(
+    post,
+    path = "/picking/tasks/{task_id}/lines/{line_id}/pick",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn pick_line(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1214,6 +1220,12 @@ pub async fn pick_line(
 }
 
 /// POST /picking/tasks/{task_id}/lines/{line_id}/short-pick —— 缺量拣货
+#[utoipa::path(
+    post,
+    path = "/picking/tasks/{task_id}/lines/{line_id}/short-pick",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn short_pick_line(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

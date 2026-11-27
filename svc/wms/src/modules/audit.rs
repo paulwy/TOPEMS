@@ -29,6 +29,12 @@ where
 }
 
 /// GET /audit-logs/modules —— 审计日志模块清单（前端 auditLogApi.getModules 契约）
+#[utoipa::path(
+    get,
+    path = "/audit-logs/modules",
+    tag = "wms",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_audit_modules() -> ApiResponse<serde_json::Value> {
     let modules = serde_json::json!({
         "modules": [
