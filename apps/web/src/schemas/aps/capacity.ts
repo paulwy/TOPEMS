@@ -31,10 +31,7 @@ export const capacitySchema: EntitySchema = {
           .filter((w) => w.id)
           .map((w) => ({
             value: w.id,
-            label:
-              (w.name && w.name.trim()) ||
-              (w.code && w.code.trim()) ||
-              w.id,
+            label: (w.name && w.name.trim()) || (w.code && w.code.trim()) || w.id,
           }));
       },
     },

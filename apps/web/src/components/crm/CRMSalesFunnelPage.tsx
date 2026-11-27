@@ -24,7 +24,8 @@ type FunnelViewMode = 'count' | 'weighted';
 const formatMoney = (value: number): string => {
   const v = Number(value);
   if (!Number.isFinite(v)) return '¥0';
-  if (Math.abs(v) >= 1_000_000) return `¥${(v / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 })}万`;
+  if (Math.abs(v) >= 1_000_000)
+    return `¥${(v / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 })}万`;
   return `¥${Math.round(v).toLocaleString()}`;
 };
 
@@ -150,10 +151,7 @@ const CRMSalesFunnelPage: React.FC = () => {
       // 图表标题已说明口径，类目名不再重复拼「-商机数」，否则窄卡片里 x 轴标签互相压字
       data: stages.map((stage) => ({
         name: stageLabelMap[stage.stage] || stage.stage,
-        value:
-          viewMode === 'count'
-            ? stage.count
-            : Math.round(Number(stage.weightedValue) / 10000),
+        value: viewMode === 'count' ? stage.count : Math.round(Number(stage.weightedValue) / 10000),
       })),
     },
   ];
@@ -274,9 +272,7 @@ const CRMSalesFunnelPage: React.FC = () => {
           })}
         </Box>
         {stages.length === 0 && !loading && (
-          <Typography color='text.secondary'>
-            {t('templates.stats_page_template.k1')}
-          </Typography>
+          <Typography color='text.secondary'>{t('templates.stats_page_template.k1')}</Typography>
         )}
       </Box>
     </PageContainer>

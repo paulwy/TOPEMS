@@ -224,9 +224,7 @@ export function ListTableBody<T>({
           <EmptyState
             icon={emptyIcon}
             title={emptyMessage}
-            description={
-              emptyActionButton ? i18n.t('templates.list_page_template.k21') : undefined
-            }
+            description={emptyActionButton ? i18n.t('templates.list_page_template.k21') : undefined}
             action={
               emptyActionButton
                 ? { label: emptyActionButton.label, onClick: emptyActionButton.onClick }

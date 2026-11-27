@@ -1106,9 +1106,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           maxWidth={hasWizard ? 'lg' : 'md'}
           fullWidth
         >
-          <DialogTitle>
-            {createDialogTitle}
-          </DialogTitle>
+          <DialogTitle>{createDialogTitle}</DialogTitle>
           <DialogContent>
             {hasWizard && extensions.wizard ? (
               <WizardBuilder
