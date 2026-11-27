@@ -201,9 +201,7 @@ export async function getAllRoutes(): Promise<RouteConfigV2[]> {
     const activePlugins = pluginManager.getActivePlugins();
 
     // 并行加载：原串行 for-await 是首屏十几秒的主因（每模块 ~2 次往返叠加）
-    const loaded = await loadModuleConfigsInParallel(
-      activePlugins.map((plugin) => plugin.code)
-    );
+    const loaded = await loadModuleConfigsInParallel(activePlugins.map((plugin) => plugin.code));
     for (const item of loaded) {
       if (item.error) {
         apiLogger.warn(`Failed to load routes for active plugin: ${item.code}`, item.error);
@@ -248,9 +246,7 @@ export async function getActiveModuleConfigs(): Promise<RouteModuleConfig[]> {
     await pluginManager.initialize();
     const activePlugins = pluginManager.getActivePlugins();
 
-    const loaded = await loadModuleConfigsInParallel(
-      activePlugins.map((plugin) => plugin.code)
-    );
+    const loaded = await loadModuleConfigsInParallel(activePlugins.map((plugin) => plugin.code));
     for (const item of loaded) {
       if (item.error) {
         apiLogger.warn(`Failed to load config for active plugin: ${item.code}`, item.error);

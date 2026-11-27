@@ -112,7 +112,7 @@ export const formatCompactMoney = (amount: number | string): string => {
   const value = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (!Number.isFinite(value)) return '¥0';
   if (Math.abs(value) >= 1_000_000) {
-    return `¥${(value / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 })}万`;
+    return `¥${(value / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 })}${i18n.t('common.unit_wan')}`;
   }
   return `¥${Math.round(value).toLocaleString('zh-CN')}`;
 };
