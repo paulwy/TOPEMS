@@ -874,6 +874,18 @@ export function ListPageTemplate<
     };
     return actions ? [...actions, createAction] : [createAction];
   }, [crud, actions, openCreateForm, hasForm]);
+  // 空态 CTA：页面没显式给 emptyActionButton 时，若 crud 有新建表单入口就复用它。
+  // 这样空表页不再只是一行灰色「暂无数据，点击添加按钮创建新记录」——那句话里的
+  // 「添加按钮」其实只存在于工具栏，空态本身点不动，属于引导失效。
+  const resolvedEmptyActionButton = useMemo(() => {
+    if (emptyActionButton) return emptyActionButton;
+    if (!hasForm || !crud || crud.showCreateButton === false) return undefined;
+    return {
+      label: crud.createButtonText || i18n.t('templates.list_page_template.k13'),
+      icon: <Plus size={18} />,
+      onClick: openCreateForm,
+    };
+  }, [emptyActionButton, hasForm, crud, openCreateForm]);
   // 兼容旧版扁平化分页属性；启用 internalListState 时用内部状态补全
   const resolvedPagination =
     pagination ||
@@ -1563,7 +1575,7 @@ export function ListPageTemplate<
       treeTableData={treeTableData}
       emptyMessage={emptyMessage}
       emptyIcon={emptyIcon}
-      emptyActionButton={emptyActionButton}
+      emptyActionButton={resolvedEmptyActionButton}
       visibleColumns={visibleColumns}
       selectable={selectable}
       isBatchSelectionEnabled={isBatchSelectionEnabled}

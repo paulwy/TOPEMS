@@ -219,10 +219,14 @@ export function ListTableBody<T>({
           align='center'
           sx={{ py: 8 }}
         >
+          {/* 只有真的给了可点的空态 CTA 时才提示「点击添加按钮」，否则那句引导
+              指向空态里并不存在的按钮（工具栏上的新建离这一行太远）。 */}
           <EmptyState
             icon={emptyIcon}
             title={emptyMessage}
-            description={i18n.t('templates.list_page_template.k21')}
+            description={
+              emptyActionButton ? i18n.t('templates.list_page_template.k21') : undefined
+            }
             action={
               emptyActionButton
                 ? { label: emptyActionButton.label, onClick: emptyActionButton.onClick }
