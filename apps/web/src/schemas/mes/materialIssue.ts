@@ -12,24 +12,55 @@ import {
 
 // 批 9：后端 CreateIssueItemRequest 的字段，前端子表按 camelCase 定义（提交时统一转 snake_case）
 const itemFields: NestedTableConfig['fields'] = [
-  { name: 'materialCode', label: '物料编码', type: 'text', required: true, listWidth: 140 },
-  { name: 'materialName', label: '物料名称', type: 'text', required: true, listWidth: 160 },
-  { name: 'unit', label: '单位', type: 'text', required: true, defaultValue: '个', listWidth: 80 },
-  { name: 'plannedQuantity', label: '计划数量', type: 'number', required: true, listWidth: 100 },
-  { name: 'actualQuantity', label: '实发数量', type: 'number', required: true, listWidth: 100 },
-  { name: 'batchNo', label: '批次号', type: 'text', listWidth: 120 },
-  { name: 'notes', label: '备注', type: 'text', listWidth: 160 },
+  {
+    name: 'materialCode',
+    label: i18n.t('mes.material_issue.k30'),
+    type: 'text',
+    required: true,
+    listWidth: 140,
+  },
+  {
+    name: 'materialName',
+    label: i18n.t('mes.material_issue.k31'),
+    type: 'text',
+    required: true,
+    listWidth: 160,
+  },
+  {
+    name: 'unit',
+    label: i18n.t('mes.material_issue.k32'),
+    type: 'text',
+    required: true,
+    defaultValue: i18n.t('mes.material_issue.k33'),
+    listWidth: 80,
+  },
+  {
+    name: 'plannedQuantity',
+    label: i18n.t('mes.material_issue.k34'),
+    type: 'number',
+    required: true,
+    listWidth: 100,
+  },
+  {
+    name: 'actualQuantity',
+    label: i18n.t('mes.material_issue.k35'),
+    type: 'number',
+    required: true,
+    listWidth: 100,
+  },
+  { name: 'batchNo', label: i18n.t('mes.material_issue.k36'), type: 'text', listWidth: 120 },
+  { name: 'notes', label: i18n.t('mes.material_issue.k37'), type: 'text', listWidth: 160 },
 ];
 
 const itemsTable: NestedTableConfig = {
   field: 'items',
-  title: '领料明细',
+  title: i18n.t('mes.material_issue.k38'),
   columns: columnsFromFields(itemFields),
   fields: itemFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加物料',
+  addButtonText: i18n.t('mes.material_issue.k39'),
   rowKeyField: 'id',
   minRows: 1,
 };
@@ -74,7 +105,7 @@ export const materialIssueSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'order_id',
-      label: '工单',
+      label: i18n.t('mes.material_issue.k40'),
       type: 'select',
       required: true,
       showInList: false,
@@ -90,7 +121,7 @@ export const materialIssueSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'warehouse_id',
-      label: '领料仓库',
+      label: i18n.t('mes.material_issue.k41'),
       type: 'select',
       required: true,
       showInList: false,

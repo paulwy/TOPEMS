@@ -12,24 +12,49 @@ import {
 
 // 批 9：后端 CreateReturnItemRequest 的字段
 const itemFields: NestedTableConfig['fields'] = [
-  { name: 'materialCode', label: '物料编码', type: 'text', required: true, listWidth: 140 },
-  { name: 'materialName', label: '物料名称', type: 'text', required: true, listWidth: 160 },
-  { name: 'unit', label: '单位', type: 'text', required: true, defaultValue: '个', listWidth: 80 },
-  { name: 'quantity', label: '退回数量', type: 'number', required: true, listWidth: 100 },
-  { name: 'reason', label: '退回原因', type: 'text', listWidth: 140 },
-  { name: 'batchNo', label: '批次号', type: 'text', listWidth: 120 },
-  { name: 'notes', label: '备注', type: 'text', listWidth: 160 },
+  {
+    name: 'materialCode',
+    label: i18n.t('mes.material_return.k30'),
+    type: 'text',
+    required: true,
+    listWidth: 140,
+  },
+  {
+    name: 'materialName',
+    label: i18n.t('mes.material_return.k31'),
+    type: 'text',
+    required: true,
+    listWidth: 160,
+  },
+  {
+    name: 'unit',
+    label: i18n.t('mes.material_return.k32'),
+    type: 'text',
+    required: true,
+    defaultValue: i18n.t('mes.material_return.k33'),
+    listWidth: 80,
+  },
+  {
+    name: 'quantity',
+    label: i18n.t('mes.material_return.k34'),
+    type: 'number',
+    required: true,
+    listWidth: 100,
+  },
+  { name: 'reason', label: i18n.t('mes.material_return.k35'), type: 'text', listWidth: 140 },
+  { name: 'batchNo', label: i18n.t('mes.material_return.k36'), type: 'text', listWidth: 120 },
+  { name: 'notes', label: i18n.t('mes.material_return.k37'), type: 'text', listWidth: 160 },
 ];
 
 const itemsTable: NestedTableConfig = {
   field: 'items',
-  title: '退料明细',
+  title: i18n.t('mes.material_return.k38'),
   columns: columnsFromFields(itemFields),
   fields: itemFields,
   allowAdd: true,
   allowEdit: true,
   allowDelete: true,
-  addButtonText: '添加物料',
+  addButtonText: i18n.t('mes.material_return.k39'),
   rowKeyField: 'id',
   minRows: 1,
 };
@@ -74,7 +99,7 @@ export const materialReturnSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'order_id',
-      label: '工单',
+      label: i18n.t('mes.material_return.k40'),
       type: 'select',
       required: true,
       showInList: false,
@@ -90,7 +115,7 @@ export const materialReturnSchema: EntitySchema & SchemaExtensions = {
     },
     {
       name: 'warehouse_id',
-      label: '退料仓库',
+      label: i18n.t('mes.material_return.k41'),
       type: 'select',
       required: true,
       showInList: false,

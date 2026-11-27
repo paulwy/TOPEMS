@@ -135,7 +135,9 @@ where
     let raw = Option::<Raw>::deserialize(d)?;
     match raw {
         None => Ok(None),
-        Some(Raw::Num(n)) => Ok(Some(n as i32)),
+        Some(Raw::Num(n)) => i32::try_from(n)
+            .map(Some)
+            .map_err(|_| serde::de::Error::custom("quantity out of range")),
         Some(Raw::Text(s)) => {
             let t = s.trim();
             if t.is_empty() {
