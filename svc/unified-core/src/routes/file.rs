@@ -31,8 +31,10 @@ async fn stub_action(_state: State<AppState>) -> Response {
 /// spec 里刻意不登记这些路径，避免"文档有、实现是假"的幻觉。
 fn stubbed(body: ApiResponse<serde_json::Value>) -> Response {
     let mut resp = Json(body).into_response();
-    resp.headers_mut()
-        .insert(header::HeaderName::from_static("x-stub"), HeaderValue::from_static("true"));
+    resp.headers_mut().insert(
+        header::HeaderName::from_static("x-stub"),
+        HeaderValue::from_static("true"),
+    );
     resp
 }
 
