@@ -215,7 +215,6 @@ export const templateApi = {
   getTopTemplates: templateAssignmentApi.getTopTemplates,
   clone: templateAssignmentApi.cloneTemplate,
   export: templateAssignmentApi.exportTemplate,
-  import: templateAssignmentApi.importTemplate,
 };
 
 // ==================== 类型导出 ====================
