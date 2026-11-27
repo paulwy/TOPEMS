@@ -11,8 +11,10 @@ import { MobileProductionFilters } from './components/MobileProductionFilters';
 import { MobileProductionCard } from './components/MobileProductionCard';
 import { MobileProductionReportDialog } from './components/MobileProductionReportDialog';
 import i18n from '@/i18n';
+import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 const MobileProductionPage: React.FC = () => {
+  const unreadNotificationCount = useUnreadNotificationCount();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const {
@@ -114,7 +116,7 @@ const MobileProductionPage: React.FC = () => {
         showBack: true,
         onBackClick: () => navigate(MOBILE_PATHS.workbench),
         showNotifications: true,
-        notificationCount: 5,
+        notificationCount: unreadNotificationCount,
       }}
     >
       <MobileProductionFilters

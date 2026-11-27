@@ -52,8 +52,10 @@ import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 const MobileInventoryPage: React.FC = () => {
+  const unreadNotificationCount = useUnreadNotificationCount();
   const theme = useTheme();
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
@@ -266,7 +268,7 @@ const MobileInventoryPage: React.FC = () => {
         showBack: true,
         onBackClick: () => navigate(MOBILE_PATHS.workbench),
         showNotifications: true,
-        notificationCount: 5,
+        notificationCount: unreadNotificationCount,
       }}
     >
       <Tabs

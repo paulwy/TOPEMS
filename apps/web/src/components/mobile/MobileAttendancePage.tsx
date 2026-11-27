@@ -50,6 +50,7 @@ import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 /**
  * 识别 503（上游考勤服务未接入）。
@@ -66,6 +67,7 @@ const isAttendanceServiceUnavailableError = (err: unknown): boolean => {
 };
 
 const MobileAttendancePage: React.FC = () => {
+  const unreadNotificationCount = useUnreadNotificationCount();
   const theme = useTheme();
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
@@ -447,7 +449,7 @@ const MobileAttendancePage: React.FC = () => {
         showBack: true,
         onBackClick: () => navigate(MOBILE_PATHS.workbench),
         showNotifications: true,
-        notificationCount: 5,
+        notificationCount: unreadNotificationCount,
       }}
     >
       <Tabs

@@ -25,6 +25,7 @@ import { BottomTabBar, MobileCard } from '@/components/mobile';
 import { MobilePageTemplate } from '@/components/templates';
 import { useAuthStore } from '@/store';
 import { MOBILE_PATHS } from '@/module-configs/mobile/config';
+import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 interface SettingGroup {
   title: string;
@@ -42,6 +43,7 @@ interface SettingItem {
   badge?: React.ReactNode;
 }
 const MobileSettingsPage: React.FC = () => {
+  const unreadNotificationCount = useUnreadNotificationCount();
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -233,7 +235,7 @@ const MobileSettingsPage: React.FC = () => {
         showBack: false,
         showMenu: false,
         showNotifications: true,
-        notificationCount: 5,
+        notificationCount: unreadNotificationCount,
       }}
     >
       <Box sx={{ p: 2, pb: 3 }}>

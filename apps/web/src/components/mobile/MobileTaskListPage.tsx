@@ -41,6 +41,7 @@ import { mobileApi } from '@/api/mobile';
 import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 interface Task {
   id: string;
@@ -102,6 +103,7 @@ const mapApiTaskToTask = (apiTask: ApiTask): Task => {
 };
 const pageSize = 10;
 const MobileTaskListPage: React.FC = () => {
+  const unreadNotificationCount = useUnreadNotificationCount();
   const theme = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
@@ -299,7 +301,7 @@ const MobileTaskListPage: React.FC = () => {
         showMenu: false,
         showSearch: true,
         showNotifications: true,
-        notificationCount: 5,
+        notificationCount: unreadNotificationCount,
       }}
     >
       <Box sx={{ px: 2, pt: 2 }}>

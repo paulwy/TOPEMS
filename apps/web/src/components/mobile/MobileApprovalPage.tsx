@@ -48,6 +48,7 @@ import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 interface ApprovalItem {
   id: string;
@@ -143,6 +144,7 @@ const mapApiApprovalToApprovalItem = (apiApproval: ApiApproval): ApprovalItem =>
   };
 };
 const MobileApprovalPage: React.FC = () => {
+  const unreadNotificationCount = useUnreadNotificationCount();
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -720,7 +722,7 @@ const MobileApprovalPage: React.FC = () => {
         showBack: false,
         showMenu: false,
         showNotifications: true,
-        notificationCount: 5,
+        notificationCount: unreadNotificationCount,
       }}
     >
       <Box sx={{ px: 2, pt: 2 }}>
@@ -768,16 +770,18 @@ const MobileApprovalPage: React.FC = () => {
               index === 0 ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {tab}
-                  <Chip
-                    label={approvals.length}
-                    size='small'
-                    color='error'
-                    sx={{
-                      height: 18,
-                      fontSize: designTokens.typography.fontSize.scale['0.65rem'],
-                      minWidth: 18,
-                    }}
-                  />
+                  {approvals.length > 0 && (
+                    <Chip
+                      label={approvals.length}
+                      size='small'
+                      color='error'
+                      sx={{
+                        height: 18,
+                        fontSize: designTokens.typography.fontSize.scale['0.65rem'],
+                        minWidth: 18,
+                      }}
+                    />
+                  )}
                 </Box>
               ) : (
                 tab

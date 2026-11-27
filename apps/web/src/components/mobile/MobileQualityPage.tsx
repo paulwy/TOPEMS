@@ -43,8 +43,10 @@ import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 const MobileQualityPage: React.FC = () => {
+  const unreadNotificationCount = useUnreadNotificationCount();
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -313,7 +315,7 @@ const MobileQualityPage: React.FC = () => {
         showBack: true,
         onBackClick: () => navigate(MOBILE_PATHS.workbench),
         showNotifications: true,
-        notificationCount: 5,
+        notificationCount: unreadNotificationCount,
       }}
     >
       <Tabs
