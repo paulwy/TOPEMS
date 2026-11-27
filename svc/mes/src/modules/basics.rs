@@ -727,6 +727,24 @@ async fn create_production_line(
             return ApiResponse::server_error("产线创建失败");
         }
     };
+
+    // B356：产线挂车间必须同租户且未软删（不存在/跨租户一律 400，不再把 23503 抛成 500）。
+    if let Some(workshop_id) = req.workshop_id {
+        match crate::shared::workshop_ref::workshop_exists_in_tenant(
+            &mut scope,
+            workshop_id,
+            tenant_id,
+        )
+        .await
+        {
+            Ok(true) => {}
+            Ok(false) => return ApiResponse::bad_request("车间不存在或不属于当前租户"),
+            Err(e) => {
+                tracing::error!("[mes] 产线创建前校验车间失败: {}", e);
+                return ApiResponse::server_error("产线创建失败");
+            }
+        }
+    }
     let result = sqlx::query(
         "INSERT INTO mes.production_lines (code, name, workshop_id, description, status, tenant_id) \
          VALUES ($1, $2, $3, $4, COALESCE($5, 'active'), $6) RETURNING id",
@@ -793,6 +811,24 @@ async fn update_production_line(
         Ok(t) => t,
         Err(resp) => return resp,
     };
+
+    // B356：更新时改挂车间同样要求同租户且未软删。
+    if let Some(workshop_id) = req.workshop_id {
+        match crate::shared::workshop_ref::workshop_exists_in_tenant(
+            &mut scope,
+            workshop_id,
+            tenant_id,
+        )
+        .await
+        {
+            Ok(true) => {}
+            Ok(false) => return ApiResponse::bad_request("车间不存在或不属于当前租户"),
+            Err(e) => {
+                tracing::error!("[mes] 产线更新前校验车间失败: {}", e);
+                return ApiResponse::server_error("产线更新失败");
+            }
+        }
+    }
     let result = sqlx::query(
         "UPDATE mes.production_lines SET \
          name = COALESCE($2, name), workshop_id = COALESCE($3, workshop_id), \
