@@ -499,6 +499,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           cache-prefix: "db-tests-2026-11-19"
+          install-protoc: "true"
       - name: Create non-superuser DB test role
         # 权限回填测试要验证 FORCE RLS 对普通角色生效；postgres 超级用户会绕过 RLS。
         run: |
