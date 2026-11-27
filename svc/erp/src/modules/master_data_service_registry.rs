@@ -139,7 +139,7 @@ pub async fn mdm_service_register(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
-    path = "/erp/master-data/services/{serviceId}/deregister",
+    path = "/master-data/services/{service_id}/deregister",
     tag = "Master Data",
     params(("serviceId" = String, Path, description = "服务ID")),
     responses((status = 200, description = "注销 MDM 服务成功", body = ApiResponse<serde_json::Value>))

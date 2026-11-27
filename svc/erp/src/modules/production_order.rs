@@ -99,7 +99,7 @@ pub fn create_routes() -> Router<ApiState> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/production-order/list-production-orders",
+    path = "/production-orders",
     tag = "ProductionOrder",
     operation_id = "list_production_orders",
     responses(
@@ -287,7 +287,7 @@ pub async fn create_production_order(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/production-order/get-production-order",
+    path = "/production-orders/{id}",
     tag = "ProductionOrder",
     operation_id = "get_production_order",
     responses(
@@ -478,7 +478,7 @@ pub async fn delete_production_order(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
-    path = "/erp/production-order/update-production-progress",
+    path = "/production-orders/{id}/progress",
     tag = "ProductionOrder",
     operation_id = "update_production_progress",
     responses(
@@ -555,7 +555,7 @@ pub struct UpdateStatusRequest {
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
-    path = "/erp/production-order/update-production-status",
+    path = "/production-orders/{id}/status",
     tag = "ProductionOrder",
     operation_id = "update_production_status",
     responses(
@@ -690,7 +690,7 @@ pub struct MesProgressUpdate {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/production-order/receive-mes-progress",
+    path = "/production-orders/sync/mes-progress",
     tag = "ProductionOrder",
     operation_id = "receive_mes_progress",
     responses(

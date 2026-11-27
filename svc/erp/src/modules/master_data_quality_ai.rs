@@ -872,7 +872,7 @@ pub async fn quality_ai_batch_score(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/quality-ai-get-anomalies",
+    path = "/master-data/quality-ai/anomalies",
     tag = "MasterDataRefs",
     operation_id = "quality_ai_get_anomalies",
     responses(
@@ -944,7 +944,7 @@ pub async fn quality_ai_get_anomalies(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/master-data/quality-ai/predict/{id}",
+    path = "/master-data/quality-ai/predict/{id}",
     tag = "Master Data",
     params(("id" = String, Path, description = "实体ID")),
     responses((status = 200, description = "质量预测成功", body = ApiResponse<serde_json::Value>))

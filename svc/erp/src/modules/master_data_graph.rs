@@ -1430,7 +1430,7 @@ pub async fn get_concept(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data/knowledge/concepts",
+    path = "/master-data/knowledge/concepts",
     tag = "Master Data",
     responses((status = 200, description = "获取概念列表成功", body = ApiResponse<serde_json::Value>))
 )]
@@ -1496,7 +1496,7 @@ pub async fn list_concepts(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data/knowledge/triples",
+    path = "/master-data/knowledge/triples",
     tag = "Master Data",
     responses((status = 200, description = "获取知识三元组成功", body = ApiResponse<serde_json::Value>))
 )]

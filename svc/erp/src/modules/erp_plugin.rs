@@ -240,7 +240,7 @@ pub async fn plugin_health_check(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/erp-plugin/register-to-core",
+    path = "/erp-plugin/register-to-core",
     tag = "ErpPlugin",
     operation_id = "register_to_core",
     responses(
@@ -381,7 +381,7 @@ pub async fn auto_register_to_core_internal(_core_url: Option<&str>) -> Result<(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/erp-plugin/auto-register-to-core",
+    path = "/erp-plugin/auto-register-to-core",
     tag = "ErpPlugin",
     operation_id = "auto_register_to_core",
     responses(

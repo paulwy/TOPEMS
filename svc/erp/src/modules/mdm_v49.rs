@@ -15,13 +15,13 @@
 use super::ApiState;
 
 #[path = "mdm_v49_archive.rs"]
-mod mdm_v49_archive;
+pub(crate) mod mdm_v49_archive;
 #[path = "mdm_v49_lifecycle.rs"]
-mod mdm_v49_lifecycle;
+pub(crate) mod mdm_v49_lifecycle;
 #[path = "mdm_v49_retirement.rs"]
-mod mdm_v49_retirement;
+pub(crate) mod mdm_v49_retirement;
 #[path = "mdm_v49_stats.rs"]
-mod mdm_v49_stats;
+pub(crate) mod mdm_v49_stats;
 #[path = "mdm_v49_types.rs"]
 mod mdm_v49_types;
 

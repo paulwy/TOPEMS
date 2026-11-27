@@ -188,7 +188,7 @@ pub async fn get_table_detail(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/db-structure/preview-add-column",
+    path = "/db/columns/preview",
     tag = "DbStructure",
     operation_id = "preview_add_column",
     responses(
@@ -251,7 +251,7 @@ fn build_data_type(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/db-structure/execute-add-column",
+    path = "/db/columns",
     tag = "DbStructure",
     operation_id = "execute_add_column",
     responses(
@@ -267,7 +267,7 @@ pub async fn execute_add_column(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
-    path = "/erp/db-structure/execute-modify-column",
+    path = "/db/columns/{table}/{column}",
     tag = "DbStructure",
     operation_id = "execute_modify_column",
     responses(

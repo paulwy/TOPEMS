@@ -87,7 +87,7 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/asset-categories",
+    path = "/asset-categories",
     responses(
         (status = 200, description = "list_asset_categories OK")
     ),
@@ -169,7 +169,7 @@ pub async fn list_asset_categories(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/asset-categories/{id}",
+    path = "/asset-categories/{id}",
     params(
         ("id" = Uuid, Path, description = "id")
     ),

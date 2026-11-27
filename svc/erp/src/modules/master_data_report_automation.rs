@@ -744,7 +744,7 @@ async fn get_report_automation_stats() -> ReportAutomationStats {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/list-report-templates-handler",
+    path = "/master-data-refs/reports/templates",
     tag = "MasterDataRefs",
     operation_id = "list_report_templates_handler",
     responses(
@@ -822,7 +822,7 @@ pub async fn generate_report_handler(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/list-generated-reports-handler",
+    path = "/master-data-refs/reports/generated",
     tag = "MasterDataRefs",
     operation_id = "list_generated_reports_handler",
     responses(

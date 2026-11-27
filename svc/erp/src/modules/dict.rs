@@ -261,6 +261,13 @@ fn dict_cache_invalidation_keys(claims: &Claims) -> Vec<String> {
     clippy::cast_sign_loss,
     clippy::cast_possible_truncation
 )]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/system/dict-types",
+    tag = "ERP-dict",
+    responses((status = 200, description = "/api/erp/system/dict-types GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_dict_types(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

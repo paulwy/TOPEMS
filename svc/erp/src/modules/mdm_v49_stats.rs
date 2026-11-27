@@ -10,7 +10,7 @@ use super::mdm_v49_types::*;
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:mdm:read"])),
-    path = "/erp/mdm-v49/get-lifecycle-stats",
+    path = "/mdm-v49/stats/lifecycle",
     tag = "MdmV49",
     operation_id = "get_lifecycle_stats",
     responses(
@@ -68,7 +68,7 @@ pub async fn get_lifecycle_stats(State(_state): State<ApiState>) -> ApiResponse<
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/mdm-v49/get-archive-stats",
+    path = "/mdm-v49/stats/archive",
     tag = "MdmV49",
     operation_id = "get_archive_stats",
     responses(
@@ -136,7 +136,7 @@ pub async fn get_archive_stats(State(_state): State<ApiState>) -> ApiResponse<Ar
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/mdm-v49/get-retirement-stats",
+    path = "/mdm-v49/stats/retirement",
     tag = "MdmV49",
     operation_id = "get_retirement_stats",
     responses(
@@ -189,7 +189,7 @@ pub async fn get_retirement_stats(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/mdm-v49/run-sla-check",
+    path = "/mdm-v49/sla/check",
     tag = "MdmV49",
     operation_id = "run_sla_check",
     responses(
@@ -233,7 +233,7 @@ pub async fn run_sla_check(State(_state): State<ApiState>) -> ApiResponse<serde_
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:mdm:read"])),
-    path = "/erp/mdm-v49/get-lifecycle-dashboard",
+    path = "/mdm-v49/dashboard",
     tag = "MdmV49",
     operation_id = "get_lifecycle_dashboard",
     responses(
@@ -270,6 +270,13 @@ pub async fn get_lifecycle_dashboard(
 // lifecycle/archive/retirement/sla_compliance）与兄弟端点既有字段。
 
 /// POST /mdm-v49/run-sla-check
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/run-sla-check",
+    tag = "ERP-mdm_v49_stats",
+    responses((status = 200, description = "/api/erp/mdm-v49/run-sla-check POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn run_sla_check_verb(
     State(_state): State<ApiState>,
     Json(_payload): Json<serde_json::Value>,
@@ -321,6 +328,13 @@ pub async fn run_sla_check_verb(
     clippy::cast_possible_wrap,
     clippy::cast_sign_loss,
     clippy::cast_precision_loss
+)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/get-lifecycle-dashboard",
+    tag = "ERP-mdm_v49_stats",
+    responses((status = 200, description = "/api/erp/mdm-v49/get-lifecycle-dashboard GET"), (status = 500, description = "服务内部错误")),
 )]
 pub async fn get_lifecycle_dashboard_verb(
     State(_state): State<ApiState>,

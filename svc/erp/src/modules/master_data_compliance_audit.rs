@@ -864,7 +864,7 @@ async fn get_compliance_audit_stats() -> ComplianceAuditStats {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/list-compliance-rules-handler",
+    path = "/master-data-refs/audit/rules",
     tag = "MasterDataRefs",
     operation_id = "list_compliance_rules_handler",
     responses(
@@ -961,7 +961,7 @@ pub async fn resolve_finding_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/master-data-refs/generate-audit-report-handler",
+    path = "/master-data-refs/audit/report",
     tag = "MasterDataRefs",
     operation_id = "generate_audit_report_handler",
     responses(

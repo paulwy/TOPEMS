@@ -11,7 +11,7 @@ use super::mdm_v49_types::*;
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/mdm-v49/list-archive-policies",
+    path = "/mdm-v49/archive/policies",
     tag = "MdmV49",
     operation_id = "list_archive_policies",
     responses(
@@ -141,7 +141,7 @@ pub async fn create_archive_policy(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/mdm-v49/get-archive-policy",
+    path = "/mdm-v49/archive/policies/{policy_id}",
     tag = "MdmV49",
     operation_id = "get_archive_policy",
     responses(
@@ -243,7 +243,7 @@ pub async fn delete_archive_policy(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/mdm-v49/run-archive",
+    path = "/mdm-v49/archive/run",
     tag = "MdmV49",
     operation_id = "run_archive",
     responses(
@@ -372,7 +372,7 @@ pub async fn run_archive(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/mdm-v49/list-archive-records",
+    path = "/mdm-v49/archive/records",
     tag = "MdmV49",
     operation_id = "list_archive_records",
     responses(
@@ -457,7 +457,7 @@ pub async fn list_archive_records(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/mdm-v49/get-archive-record",
+    path = "/mdm-v49/archive/records/{record_id}",
     tag = "MdmV49",
     operation_id = "get_archive_record",
     responses(
@@ -480,7 +480,7 @@ pub async fn get_archive_record(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
-    path = "/erp/mdm-v49/restore-archive-record",
+    path = "/mdm-v49/archive/records/{record_id}/restore",
     tag = "MdmV49",
     operation_id = "restore_archive_record",
     responses(
@@ -594,6 +594,13 @@ pub struct ArchiveRecordVerbQuery {
 }
 
 /// GET /mdm-v49/get-archive-policy
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/get-archive-policy",
+    tag = "ERP-mdm_v49_archive",
+    responses((status = 200, description = "/api/erp/mdm-v49/get-archive-policy GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_archive_policy_verb(
     State(_state): State<ApiState>,
     Query(params): Query<ArchivePolicyVerbQuery>,
@@ -618,6 +625,13 @@ pub async fn get_archive_policy_verb(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap,
     clippy::cast_sign_loss
+)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/create-archive-policy",
+    tag = "ERP-mdm_v49_archive",
+    responses((status = 200, description = "/api/erp/mdm-v49/create-archive-policy POST"), (status = 500, description = "服务内部错误")),
 )]
 pub async fn create_archive_policy_verb(
     State(_state): State<ApiState>,
@@ -672,6 +686,13 @@ pub async fn create_archive_policy_verb(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap,
     clippy::cast_sign_loss
+)]
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/update-archive-policy",
+    tag = "ERP-mdm_v49_archive",
+    responses((status = 200, description = "/api/erp/mdm-v49/update-archive-policy PUT"), (status = 500, description = "服务内部错误")),
 )]
 pub async fn update_archive_policy_verb(
     State(_state): State<ApiState>,
@@ -740,6 +761,13 @@ pub async fn update_archive_policy_verb(
 }
 
 /// DELETE /mdm-v49/delete-archive-policy
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/delete-archive-policy",
+    tag = "ERP-mdm_v49_archive",
+    responses((status = 200, description = "/api/erp/mdm-v49/delete-archive-policy DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_archive_policy_verb(
     State(_state): State<ApiState>,
     Query(params): Query<ArchivePolicyVerbQuery>,
@@ -771,6 +799,13 @@ pub async fn delete_archive_policy_verb(
 }
 
 /// POST /mdm-v49/restore-archive-record
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/restore-archive-record",
+    tag = "ERP-mdm_v49_archive",
+    responses((status = 200, description = "/api/erp/mdm-v49/restore-archive-record POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn restore_archive_record_verb(
     State(_state): State<ApiState>,
     Query(params): Query<ArchiveRecordVerbQuery>,

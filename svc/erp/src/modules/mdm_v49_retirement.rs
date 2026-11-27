@@ -84,7 +84,7 @@ pub async fn create_retirement_plan(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/mdm-v49/list-retirement-plans",
+    path = "/mdm-v49/retirement/plans",
     tag = "MdmV49",
     operation_id = "list_retirement_plans",
     responses(
@@ -319,7 +319,7 @@ pub async fn confirm_retirement_plan(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/mdm-v49/execute-retirement-plan",
+    path = "/mdm-v49/retirement/plans/{plan_id}/execute",
     tag = "MdmV49",
     operation_id = "execute_retirement_plan",
     responses(
@@ -369,7 +369,7 @@ pub async fn execute_retirement_plan(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
-    path = "/erp/mdm-v49/rollback-retirement-plan",
+    path = "/mdm-v49/retirement/plans/{plan_id}/rollback",
     tag = "MdmV49",
     operation_id = "rollback_retirement_plan",
     responses(
@@ -421,7 +421,7 @@ pub async fn rollback_retirement_plan(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
-    path = "/erp/mdm-v49/cancel-retirement-plan",
+    path = "/mdm-v49/retirement/plans/{plan_id}/cancel",
     tag = "MdmV49",
     operation_id = "cancel_retirement_plan",
     responses(
@@ -467,6 +467,13 @@ fn payload_first_str(v: &serde_json::Value, keys: &[&str]) -> Option<String> {
 }
 
 /// GET /mdm-v49/cancel-retirement-plan
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/cancel-retirement-plan",
+    tag = "ERP-mdm_v49_retirement",
+    responses((status = 200, description = "/api/erp/mdm-v49/cancel-retirement-plan GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn cancel_retirement_plan_verb(
     State(_state): State<ApiState>,
     Query(params): Query<RetirementPlanVerbQuery>,
@@ -491,6 +498,13 @@ pub async fn cancel_retirement_plan_verb(
 }
 
 /// POST /mdm-v49/rollback-retirement-plan
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/erp/mdm-v49/rollback-retirement-plan",
+    tag = "ERP-mdm_v49_retirement",
+    responses((status = 200, description = "/api/erp/mdm-v49/rollback-retirement-plan POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn rollback_retirement_plan_verb(
     State(_state): State<ApiState>,
     Query(params): Query<RetirementPlanVerbQuery>,

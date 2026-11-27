@@ -304,7 +304,7 @@ async fn reject_if_platform_locked(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/system/settings",
+    path = "/system/settings",
     responses(
         (status = 200, description = "list_settings OK")
     ),
@@ -345,7 +345,7 @@ pub async fn list_settings(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/system/settings/{key}",
+    path = "/system/settings/{key}",
     params(
         ("key" = String, Path, description = "key")
     ),

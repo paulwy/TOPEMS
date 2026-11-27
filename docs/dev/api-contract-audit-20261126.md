@@ -454,3 +454,37 @@ apiClient.core.get(`${API_BASE}/list`)
 冒烟 `970 条 OK=908 SOFT=62 FAIL=0 SKIP=0 DEGRADED=0`。
 
 `core` 由 236 条前端调用、211 条命中、0 条缺口收口；剩余 26 条桩单独计数。
+
+---
+
+## 第 20/21 轮：ERP 域（169 → 34）
+
+### 结构：单体 spec 与 ERP 自带 spec 双轨
+
+`svc/server/src/modules/erp_real_module.rs` 以 lib 形态内嵌 `topems-erp`（`api_prefix=/api/erp`），但单体 `/api/openapi.json` 由 `svc/unified-core` 的 `OpenApi` 产出；ERP 自己的 `ErpApiDoc`（`svc/erp/src/modules/openapi.rs`，手写 `paths(...)` 清单）由 `svc/server/src/bin/openapi_gen.rs` 合并进来。于是 ERP 大量 handler 既无 `#[utoipa::path]`、也未登记到 `paths(...)`，共 169 条缺口。`/api/erp/openapi.json` 之类 per-service 端点一律 404，拿不到分域 spec，只能靠 route 表反推。
+
+### 做法
+
+1. 解析 `svc/erp/src/modules/*.rs` 的 `.route(path, method(handler))`，把前端 missing 路径归一 `{x}`→`*` 后匹配，得 130 唯一路径、122 条有真实路由（8 条是前端拼串 artifact，如 `/master-data-refs/query-records-handler`）。
+2. 两轮脚本给 handler 插 `#[utoipa::path]`（第二轮全局搜 `pub async fn`，解决跨文件）；登记 `crate::modules::<file>::<fn>`。
+3. `mdm_v49_{archive,lifecycle,retirement,stats}` 是 `#[path]` 私有子模块，需先 `pub(crate) mod`，登记路径写 `crate::modules::mdm_v49::mdm_v49_xxx::<fn>`。
+4. 42 处既有注解的 path 写的是**前端名**（如 `list_archive_records` 注解 `/api/erp/mdm-v49/list-archive-records`，真实 route 是 `/mdm-v49/archive/records`），按 route 表批量纠正。
+
+### 五个坑（都踩过）
+
+- **注解 path 必须是真实挂载路径**：拿前端路径当注解，生成器照样产出，但一测就是 404。ERP 侧真实前缀是 `/api/erp`，模块内 route 不带前缀。
+- **幻影路径会让缺口数假性变小**：先前的 spec 里塞过一批前端名字的幻影路径，ERP 缺口只有 70；重建时按真实 route 收口，缺口反而显示 206。缺口小不等于对，冒烟 404 才是判据。
+- **本地 HEAD 的 spec 会污染重建**：本机工作区落后 `origin/main`，重建基底里带着 8 条 `/api/core/v1/audit/*`、`/api/core/auth/*` 漂移路径，被并回后冒烟立刻 FAIL，需手动剔除并补回 `iam/v1/audit`、`iam/auth`。
+- **链式方法别名要按括号配对解析**：`\.route("/x", get(h).post(h2))` 用正则只抓第一个方法，漏掉 POST/PUT/DELETE。改用括号配对取 `.route(...)` 全部实参后，按「path × method」并集克隆，ERP 别名从 19 条补到 30 条，缺口 45 → 34。
+- 克隆别名会把其他命名空间的 `operationId` 带进来造成重复，统一改名 `erp_<slug>_<method>`、tag 改 `ERP-Alias`（本轮重命名 126 处）。
+
+### 数字（ERP）
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2657 | **2789** |
+| spec 中 erp 段 | 151（含幻影） | **280（gen 真源）** |
+| 契约 erp | 400 / 231 / 169 | **400 / 366 / 34** |
+| 冒烟 | 970 条 FAIL=0 | 967 条 **FAIL=0** |
+
+剩余 34 条是**后端确实没有对应路由**的写接口（如 `POST /api/erp/asset-categories`、`POST /api/erp/leave-requests`、`POST /api/erp/production-orders` 的集合级写），属功能缺口，不用 spec 造假补平。

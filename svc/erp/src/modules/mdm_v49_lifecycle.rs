@@ -10,7 +10,7 @@ use super::mdm_v49_types::*;
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:mdm:read"])),
-    path = "/erp/mdm-v49/list-lifecycle-entities",
+    path = "/mdm-v49/lifecycle/entities",
     tag = "MdmV49",
     operation_id = "list_lifecycle_entities",
     responses(
