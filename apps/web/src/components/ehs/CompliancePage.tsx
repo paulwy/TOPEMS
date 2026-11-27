@@ -44,28 +44,28 @@ function StatsCards({ stats }: { stats: ComplianceStats }) {
     {
       icon: <FileCheck sx={{ width: 20, height: 20, color: theme.palette.success.dark }} />,
       iconBg: 'success.lighter',
-      label: i18n.t('ehs.compliance_page.k0'),
+      label: i18n.t('ehs:compliance_page.regulation_total'),
       value: stats.totalRegulations,
       accentColor: 'success',
     },
     {
       icon: <Shield sx={{ width: 20, height: 20, color: theme.palette.primary.dark }} />,
       iconBg: 'primary.lighter',
-      label: i18n.t('ehs.compliance_page.k1'),
+      label: i18n.t('ehs:compliance_page.regulation_effective'),
       value: stats.effectiveRegulations,
       accentColor: 'primary',
     },
     {
       icon: <ClipboardCheck sx={{ width: 20, height: 20, color: theme.palette.warning.dark }} />,
       iconBg: 'warning.lighter',
-      label: i18n.t('ehs.compliance_page.k2'),
+      label: i18n.t('ehs:compliance_page.assessment_completed'),
       value: stats.completedAssessments,
       accentColor: 'warning',
     },
     {
       icon: <AlertTriangle sx={{ width: 20, height: 20, color: theme.palette.info.dark }} />,
       iconBg: 'info.lighter',
-      label: i18n.t('ehs.compliance_page.k3'),
+      label: i18n.t('ehs:compliance_page.permit_valid'),
       value: stats.validPermits,
       accentColor: 'info',
     },
@@ -192,7 +192,10 @@ const CompliancePage: React.FC = () => {
     <CrudPage
       schema={regulationSchema}
       apiAdapter={regulationAdapter}
-      breadcrumbs={[{ label: 'EHS' }, { label: i18n.t('ehs.compliance_page.k4') }]}
+      breadcrumbs={[
+        { label: 'EHS' },
+        { label: i18n.t('ehs:compliance_page.compliance_management') },
+      ]}
       defaultTab='list'
       headerContent={() => <StatsCards stats={stats} />}
       tabs={[
