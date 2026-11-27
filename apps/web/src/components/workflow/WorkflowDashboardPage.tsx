@@ -155,9 +155,7 @@ export const WorkflowDashboardPage: React.FC = () => {
       (instancesQuery.data ?? []).map((inst) => ({
         id: inst.id,
         title: inst.name || inst.workflow_name || inst.id,
-        description: inst.currentnode
-          ? `${inst.currentnode}`
-          : (inst.start_user_name ?? ''),
+        description: inst.currentnode ? `${inst.currentnode}` : (inst.start_user_name ?? ''),
         time: inst.started_at
           ? new Date(inst.started_at).toLocaleString('zh-CN', { hour12: false })
           : '',
@@ -176,18 +174,18 @@ export const WorkflowDashboardPage: React.FC = () => {
 
   return (
     <DashboardTemplate
-        title={i18n.t('workflow.nav.workflow-dashboard')}
-        loading={loading}
-        stats={stats}
-        charts={charts}
-        quickActions={quickActions}
-        recentItems={recentItems}
-        recentTitle={i18n.t('workflow.workflow_dashboard_page.k24')}
-        onRefresh={() => {
-          void statisticsQuery.refetch();
-          void instancesQuery.refetch();
-        }}
-      />
+      title={i18n.t('workflow.nav.workflow-dashboard')}
+      loading={loading}
+      stats={stats}
+      charts={charts}
+      quickActions={quickActions}
+      recentItems={recentItems}
+      recentTitle={i18n.t('workflow.workflow_dashboard_page.k24')}
+      onRefresh={() => {
+        void statisticsQuery.refetch();
+        void instancesQuery.refetch();
+      }}
+    />
   );
 };
 
