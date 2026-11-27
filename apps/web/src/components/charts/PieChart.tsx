@@ -52,13 +52,11 @@ export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {
             cx='50%'
             cy='50%'
             innerRadius={40}
-            outerRadius={80}
+            outerRadius='68%'
             paddingAngle={2}
             dataKey='value'
-            label={({ name, percent }: { name?: string; percent?: number }) =>
-              `${name ?? ''} ${((percent || 0) * 100).toFixed(0)}%`
-            }
-            labelLine={{ stroke: chartTheme.gridColor }}
+            label={false}
+            labelLine={false}
           >
             {data.map((entry, index) => (
               <Cell
@@ -77,6 +75,44 @@ export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {
           />
         </PieChart>
       </ResponsiveContainer>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 12,
+          justifyContent: 'center',
+          marginTop: 8,
+        }}
+      >
+        {data.map((entry, index) => {
+          const total = data.reduce((sum, d) => sum + (d.value || 0), 0);
+          const percent = total > 0 ? Math.round(((entry.value || 0) / total) * 100) : 0;
+          return (
+            <span
+              key={`legend-${entry.name}-${index}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: designTokens.typography.fontSize.scale['0.8rem'],
+                color: theme.palette.text.secondary,
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: entry.color || COLORS[index % COLORS.length],
+                  display: 'inline-block',
+                }}
+              />
+              {entry.name} {entry.value}
+              {` (${percent}%)`}
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 };

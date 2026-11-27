@@ -435,7 +435,6 @@
   "pages.index.k39": "Detect",
   "pages.index.k40": "Qualified",
   "pages.index.k41": "Quality Score Report",
-  "pages.index.k42": "Product Quality Data Analysis",
   "pages.index.k43": "Defect Rate",
   "pages.index.k44": "Pass Rate",
   "pages.index.k45": "Batch",
@@ -8658,5 +8657,10 @@
   "pages.force_change_password_page.k12": "Password updated. Please sign in with your new password.",
   "pages.force_change_password_page.k13": "Password Change Failed",
   "pages.force_change_password_page.k14": "Change Password",
-  "pages.force_change_password_page.k15": "New password must be at least 6 characters"
+  "pages.force_change_password_page.k15": "New password must be at least 6 characters",
+  "pages.equipment_status_panel.k3": "Equipment Status",
+  "pages.equipment_status_panel.k4": "Total",
+  "pages.equipment_status_panel.k5": "units",
+  "pages.index.mes_footer_every": "Every",
+  "pages.index.mes_footer_suffix": "s auto refresh ·"
 }

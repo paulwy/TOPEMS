@@ -435,7 +435,6 @@
   "pages.index.k39": "纯度检测",
   "pages.index.k40": "合格",
   "pages.index.k41": "质量分析报表",
-  "pages.index.k42": "产品质量数据分析",
   "pages.index.k43": "缺陷率",
   "pages.index.k44": "合格率",
   "pages.index.k45": "批次",
@@ -4057,5 +4056,10 @@
   "pages.force_change_password_page.k12": "密码已修改，请使用新密码重新登录",
   "pages.force_change_password_page.k13": "修改密码失败",
   "pages.force_change_password_page.k14": "修改密码",
-  "pages.force_change_password_page.k15": "新密码长度不能少于6位"
+  "pages.force_change_password_page.k15": "新密码长度不能少于6位",
+  "pages.equipment_status_panel.k3": "设备状态",
+  "pages.equipment_status_panel.k4": "共",
+  "pages.equipment_status_panel.k5": "台设备",
+  "pages.index.mes_footer_every": "数据每",
+  "pages.index.mes_footer_suffix": "秒自动刷新 ·"
 }

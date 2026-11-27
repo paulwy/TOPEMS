@@ -42,15 +42,15 @@ const EquipmentStatusPanel: React.FC<{
             variant='subtitle1'
             sx={{ fontWeight: 600 }}
           >
-            {i18n.t('pages.equipment_status_panel.k0')}
+            {i18n.t('pages.equipment_status_panel.k3')}
           </Typography>
         </Stack>
         <Typography
           variant='caption'
           sx={{ color: 'text.secondary' }}
         >
-          {i18n.t('pages.equipment_status_panel.k0')} {total}{' '}
-          {i18n.t('pages.equipment_status_panel.k1')}
+          {i18n.t('pages.equipment_status_panel.k4')} {total}{' '}
+          {i18n.t('pages.equipment_status_panel.k5')}
         </Typography>
       </Stack>
       <Divider sx={{ mb: 2 }} />
@@ -88,9 +88,7 @@ const EquipmentStatusPanel: React.FC<{
             />
           </Stack>
           <Box sx={{ height: 220 }}>
-            <PieChart
-              data={buckets.map((b) => ({ name: b.label, value: b.count, color: b.color }))}
-            />
+            <PieChart data={buckets.map((b) => ({ name: b.label, value: b.count }))} />
           </Box>
         </>
       )}

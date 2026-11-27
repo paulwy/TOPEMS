@@ -10,14 +10,13 @@ import {
   Factory,
   Gauge,
   Package,
-  Settings2,
   TrendingUp,
   Wifi,
   WifiOff,
   XCircle,
   Zap,
 } from 'lucide-react';
-import { BarChart, LineChart, PieChart } from '@/components/charts';
+import { LineChart, PieChart } from '@/components/charts';
 import {
   productionOrderApi,
   productionRecordApi,
@@ -583,16 +582,30 @@ export const ProductionDashboardPage: React.FC = () => {
             </Stack>
             <Divider sx={{ mb: 1.5 }} />
             <Box sx={{ height: 280 }}>
-              <LineChart
-                data={trendData}
-                xKey='name'
-                yKey='value'
-                yKeys={[
-                  { key: 'value', name: i18n.t('mes.index.k35'), color: 'primary.main' },
-                  { key: 'target', name: i18n.t('mes.index.k36'), color: 'grey.400' },
-                ]}
-                height={280}
-              />
+              {trendData.some((d) => d.value > 0) ? (
+                <LineChart
+                  data={trendData}
+                  xKey='name'
+                  yKey='value'
+                  yKeys={[
+                    { key: 'value', name: i18n.t('mes.index.k35'), color: 'primary.main' },
+                    { key: 'target', name: i18n.t('mes.index.k36'), color: 'grey.400' },
+                  ]}
+                  height={280}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    height: 280,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'text.secondary',
+                  }}
+                >
+                  <Typography variant='body2'>{i18n.t('mes.index.k37')}</Typography>
+                </Box>
+              )}
             </Box>
           </Paper>
           <Paper
@@ -681,56 +694,6 @@ export const ProductionDashboardPage: React.FC = () => {
             loading={loading}
           />
         </Box>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.5,
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Stack
-            direction='row'
-            sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
-          >
-            <Stack
-              direction='row'
-              spacing={1}
-              sx={{ alignItems: 'center' }}
-            >
-              <Settings2
-                size={18}
-                color={ct.secondary[400]}
-              />
-              <Typography
-                variant='subtitle1'
-                sx={{ fontWeight: 600 }}
-              >
-                {i18n.t('pages.index.k3')}
-              </Typography>
-            </Stack>
-            <Typography
-              variant='caption'
-              sx={{ color: 'text.secondary' }}
-            >
-              {i18n.t('pages.index.k4')}
-            </Typography>
-          </Stack>
-          <Divider sx={{ mb: 1.5 }} />
-          <Box sx={{ height: 280 }}>
-            <BarChart
-              data={workStationUtilization.map((w) => ({
-                name: w.workStation.name,
-                value: w.todayOutput,
-                utilization: Math.round(w.utilization * 100),
-              }))}
-              xKey='name'
-              yKey='value'
-              height={280}
-            />
-          </Box>
-        </Paper>
         <Box sx={{ mt: 3, textAlign: 'center' }}>
           <Stack
             direction='row'
@@ -745,7 +708,7 @@ export const ProductionDashboardPage: React.FC = () => {
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('pages.index.k3')} {REFRESH_INTERVAL_MS / 1000} {i18n.t('pages.index.k4')}
+              {i18n.t('pages.index.mes_footer_every')} {REFRESH_INTERVAL_MS / 1000} {i18n.t('pages.index.mes_footer_suffix')}
               {wsConnected ? i18n.t('pages.index.websocket_18') : i18n.t('pages.index.k17')}
             </Typography>
           </Stack>
