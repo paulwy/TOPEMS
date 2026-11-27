@@ -11,7 +11,6 @@ import React, { useMemo, useEffect } from 'react';
 import { PlaySquare, CheckSquare, Clock, AlertTriangle, FileCode, Zap } from 'lucide-react';
 import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
-import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
 import {
   DashboardTemplate,
@@ -176,15 +175,8 @@ export const WorkflowDashboardPage: React.FC = () => {
   );
 
   return (
-    <PageContainer
-      headerProps={{
-        pageIcon: <PlaySquare size={20} />,
-      }}
-    >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
+    <DashboardTemplate
+        title={i18n.t('workflow.nav.workflow-dashboard')}
         loading={loading}
         stats={stats}
         charts={charts}
@@ -196,7 +188,6 @@ export const WorkflowDashboardPage: React.FC = () => {
           void instancesQuery.refetch();
         }}
       />
-    </PageContainer>
   );
 };
 
