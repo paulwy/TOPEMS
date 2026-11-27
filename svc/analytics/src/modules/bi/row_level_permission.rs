@@ -673,7 +673,7 @@ pub async fn delete_permission_rule(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:acl:admin"])),
-    path = "/permission/validate",
+    path = "/permissions/row-level/{id}/test",
     tag = "Permission",
     operation_id = "validate_permission",
     responses(

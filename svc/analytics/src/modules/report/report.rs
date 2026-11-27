@@ -540,6 +540,12 @@ pub async fn export_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/reports/{id}/exports",
+    tag = "bi",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_export_jobs(
     State(_state): State<AppState>,
     Path(_report_id): Path<Uuid>,
@@ -552,6 +558,12 @@ pub async fn list_export_jobs(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/reports/exports/{job_id}",
+    tag = "bi",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_export_job(
     State(_state): State<AppState>,
     Path(_job_id): Path<Uuid>,

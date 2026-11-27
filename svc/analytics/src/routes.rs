@@ -788,7 +788,7 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:read"])),
-    path = "/api/bi/health/detailed",
+    path = "/health/detailed",
     tag = "Health",
     operation_id = "detailed_health",
     responses((status = 200, description = "OK")),
@@ -892,7 +892,7 @@ fn activity_display_name(action: &str) -> String {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:report:read"])),
-    path = "/api/bi/reports-center/stats",
+    path = "/reports-center/stats",
     tag = "BI-Reports-Center",
     operation_id = "reports_center_stats",
     responses((status = 200, description = "Reports center dashboard statistics"))
@@ -1147,7 +1147,7 @@ pub async fn reports_center_stats(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:report:read"])),
-    path = "/api/bi/reports-center/export/{report_type}",
+    path = "/reports-center/export/{report_type}",
     tag = "BI-Reports-Center",
     operation_id = "reports_center_export",
     params(("report_type" = String, Path, description = "users | permissions | activities")),

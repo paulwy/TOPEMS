@@ -1146,6 +1146,11 @@
       "method": "GET",
       "path": "/api/mes/health",
       "note": "bootstrap 内建模块健康检查，非业务路由"
+    },
+    {
+      "method": "GET",
+      "path": "/api/bi/health",
+      "note": "模块内建健康检查，非业务路由"
     }
   ]
 }

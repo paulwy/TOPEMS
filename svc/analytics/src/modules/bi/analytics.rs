@@ -29,7 +29,7 @@ fn degraded_analytics(domain: &str) -> Json<Value> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:bi:read"])),
-    path = "/analytics/{module_id}",
+    path = "/{module_id}",
     tag = "Analytics",
     params(
         ("module_id" = String, Path, description = "Module ID")
@@ -64,7 +64,7 @@ pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> 
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:bi:read"])),
-    path = "/analytics/summary",
+    path = "/summary",
     tag = "Analytics",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
@@ -82,7 +82,7 @@ pub async fn get_summary_analytics() -> Json<Value> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:bi:read"])),
-    path = "/analytics/development",
+    path = "/development",
     tag = "Analytics",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
@@ -100,7 +100,7 @@ pub async fn get_development_analytics() -> Json<Value> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:bi:read"])),
-    path = "/analytics/quality",
+    path = "/quality",
     tag = "Analytics",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
@@ -118,7 +118,7 @@ pub async fn get_quality_analytics() -> Json<Value> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:bi:read"])),
-    path = "/analytics/production",
+    path = "/production",
     tag = "Analytics",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
@@ -136,7 +136,7 @@ pub async fn get_production_analytics() -> Json<Value> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:bi:read"])),
-    path = "/analytics/laboratory",
+    path = "/laboratory",
     tag = "Analytics",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
@@ -154,7 +154,7 @@ pub async fn get_laboratory_analytics() -> Json<Value> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:read"])),
-    path = "/analytics/overview",
+    path = "/overview",
     tag = "Analytics",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),

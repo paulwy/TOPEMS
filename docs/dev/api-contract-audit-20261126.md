@@ -824,3 +824,23 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 ### 一条容易踩的豁免语义
 
 `spec-prune-allowlist.json` 里**带 `method` 的条目只豁免"方法丢失"，不豁免整条 path 丢失**。整条 path 被删必须写不带 `method` 的条目，否则超集检查照样报 `LOST PATH`。
+
+## 第 31 轮 · bi（2026-11-28）
+
+注册真身 `topems_analytics::openapi::ApiDoc`（`svc/analytics/src/openapi.rs`），路由全量集中在 `svc/analytics/src/routes.rs`（`merge` 成一张平表，`api_prefix=/api/bi`），handler 分布在 `modules/bi/*.rs` 与 `modules/report/*.rs`。契约 **150 调用 / 82 缺口 → 150/0**。
+
+### 四个坑
+
+- **注册脚本的前缀语义**：`openapi.rs` 在 crate 根，`paths(...)` 里写的是 `modules::bi::xxx`（相对根）。用 `--crate-prefix modules` 会生成 `modules::modules::bi::...`，编译报 `cannot find`。这类 crate 应传**空前缀**（`--crate-prefix ''`），并顺手把 `modules::main::*`、`modules::routes::*` 纠正为 `crate::routes::*`（`routes.rs` 里的 handler 不在 `modules` 下）。
+- **一个 handler 挂多个路径**：`list_permission_rules` 同时挂在 `/permissions/row-level`、`/permissions/data`、`/permission/rule`；`get_summary_analytics` 同时挂 `/summary` 与 `/analytics/summary`（注释写着"兼容遗留路径 v7.7 前"）。utoipa 一个 handler 只能声明一个 path，所以必须**选前端真正调用的那条做 canonical**，其余用 spec 级 `x-alias-of` 克隆补上。选错（选了遗留路径）会反过来把前端路径打成缺口。
+- **占位绑定文件**：`apps/web/src/api/analytics/{readOps,readOps2,readOps3,writeOps}.ts` 是 v74「端点绑定」占位，注释自己写着"页面未接入"，全仓库零引用，路径里还是字面量 `{id}`。这四份文件贡献了 82 条缺口里的 60 多条，直接删除；真实能力在 `src/api/bi/*` 与 `src/api/report/index.ts` 里。
+- **catch-all 会吞缺口**：`bi` 路由里有 `/{module_id}` 兜底，spec 归一成 `/api/bi/{module_id}` 后能匹配任何单段路径，于是前端调 `/api/bi/report-types`（实际返回 400 `Unknown module: report-types`）、`/api/bi/health` 这种请求在契约工具里"命中"了，不会被判缺口。这类只能靠实测定性：`report-types` 无后端实现（`listReportTypes` 已删，构建页那段查询本来就只取 `isLoading`，数据从未被使用）；`/api/bi/health` 是真实健康检查，入 known-stubs。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| bi 契约 调用/匹配/缺口 | 150/68/82 | **150/150/0** |
+| analytics 注解 handler 登记 | 78 | **188**（0 未登记） |
+| spec paths | 3408 | **3482**（+74：新登记 + 9 条 alias） |
+| 桩豁免 | 242 | **243**（`GET /api/bi/health`） |

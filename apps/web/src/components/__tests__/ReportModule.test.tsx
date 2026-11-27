@@ -25,7 +25,6 @@ vi.mock('@/api/report', () => ({
     createTemplate: vi.fn(),
     updateTemplate: vi.fn(),
     deleteTemplate: vi.fn(),
-    listReportTypes: vi.fn().mockResolvedValue({ data: [] }),
     listSchedules: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
     getSchedule: vi.fn(),
     createSchedule: vi.fn(),
@@ -154,7 +153,6 @@ describe('ReportBuilder', () => {
   it('should have report API methods defined', () => {
     expect(reportApi.createReport).toBeDefined();
     expect(reportApi.createReportFromTemplate).toBeDefined();
-    expect(reportApi.listReportTypes).toBeDefined();
   });
 });
 
