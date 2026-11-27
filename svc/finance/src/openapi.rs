@@ -152,7 +152,10 @@ use crate::modules::*;
         crate::modules::get_ap_aging,
         // RC4a 补齐: operational 模块 utoipa 注册
         crate::modules::operational::list_expenses,
+        crate::modules::operational::create_expense,
         crate::modules::operational::get_expense,
+        crate::modules::operational::update_expense,
+        crate::modules::operational::pay_expense,
         crate::modules::operational::delete_expense,
         crate::modules::operational::list_budgets,
         crate::modules::operational::get_budget,
@@ -162,7 +165,14 @@ use crate::modules::*;
         // RC4a 补齐: 科目扩展
         // RC4a 补齐: 交易对手财务信息
         // RC4a 补齐: 费用审批
+        crate::modules::list_expense_approvals,
+        crate::modules::get_expense_approval,
         crate::modules::create_expense_approval,
+        crate::modules::update_expense_approval,
+        crate::modules::delete_expense_approval,
+        crate::modules::submit_expense_approval,
+        crate::modules::approve_expense_approval,
+        crate::modules::reimburse_expense_approval,
         crate::modules::reject_expense_approval,
         // RC4a 补齐: 报表基础
         crate::modules::export_income_statement_report,
@@ -301,3 +311,120 @@ use crate::modules::*;
     )
 )]
 pub struct ApiDoc;
+
+#[cfg(test)]
+mod openapi_ratchet_tests {
+    use super::*;
+    use utoipa::OpenApi;
+
+    /// B362：费用/费用审批域 OpenAPI 契约棘轮。
+    ///
+    /// 此前 12 个费用相关端点中只有 4 个出现在 spec 里，且 3 条注解挂的是真实码之外的
+    /// 粗码（`finance:read` / `finance:delete`），路由层实际校验的是
+    /// `finance:expense:{read,create,update,delete}` 与
+    /// `finance:expense_approval:{read,create,update,delete}`。
+    /// 该测试走「注解 → 注册 → 序列化输出」整条链路：漏注册或改粗码即失败。
+    const EXPECTED: &[(&str, &str, &str)] = &[
+        ("/expenses", "get", "finance:expense:read"),
+        ("/expenses", "post", "finance:expense:create"),
+        ("/expenses/{id}", "get", "finance:expense:read"),
+        ("/expenses/{id}", "put", "finance:expense:update"),
+        ("/expenses/{id}", "delete", "finance:expense:delete"),
+        ("/expenses/{id}/pay", "post", "finance:expense:update"),
+        ("/expense-approvals", "get", "finance:expense_approval:read"),
+        (
+            "/expense-approvals",
+            "post",
+            "finance:expense_approval:create",
+        ),
+        (
+            "/expense-approvals/{id}",
+            "get",
+            "finance:expense_approval:read",
+        ),
+        (
+            "/expense-approvals/{id}",
+            "put",
+            "finance:expense_approval:update",
+        ),
+        (
+            "/expense-approvals/{id}",
+            "delete",
+            "finance:expense_approval:delete",
+        ),
+        (
+            "/expense-approvals/{id}/submit",
+            "post",
+            "finance:expense_approval:update",
+        ),
+        (
+            "/expense-approvals/{id}/approve",
+            "post",
+            "finance:expense_approval:update",
+        ),
+        (
+            "/expense-approvals/{id}/reimburse",
+            "post",
+            "finance:expense_approval:update",
+        ),
+        (
+            "/expense-approvals/{id}/reject",
+            "post",
+            "finance:expense_approval:update",
+        ),
+    ];
+
+    fn operation_codes(spec: &serde_json::Value, path: &str, method: &str) -> Option<Vec<String>> {
+        let op = spec.get("paths")?.get(path)?.get(method)?;
+        let codes = op
+            .get("security")?
+            .as_array()?
+            .iter()
+            .flat_map(|req| req.as_object().into_iter().flat_map(|o| o.values()))
+            .flat_map(|v| v.as_array().into_iter().flat_map(|a| a.iter()))
+            .filter_map(|c| c.as_str().map(str::to_owned))
+            .collect();
+        Some(codes)
+    }
+
+    #[test]
+    fn expense_paths_are_documented_with_enforced_codes() {
+        let spec = serde_json::to_value(ApiDoc::openapi()).expect("spec 序列化");
+        let mut missing = Vec::new();
+        let mut wrong = Vec::new();
+        for (path, method, code) in EXPECTED {
+            match operation_codes(&spec, path, method) {
+                None => missing.push(format!("{method} {path}")),
+                Some(codes) if !codes.iter().any(|c| c == code) => {
+                    wrong.push(format!("{method} {path} => {codes:?}（期望 {code}）"));
+                }
+                Some(_) => {}
+            }
+        }
+        assert!(missing.is_empty(), "spec 缺少路径/方法: {missing:?}");
+        assert!(wrong.is_empty(), "spec 权限码与路由不一致: {wrong:?}");
+    }
+
+    /// 幽灵码 `finance:approval:admin` 不得再出现在任何 operation 的 security 里。
+    #[test]
+    fn retired_approval_code_is_gone() {
+        let spec = serde_json::to_value(ApiDoc::openapi()).expect("spec 序列化");
+        let mut hits = Vec::new();
+        if let Some(paths) = spec.get("paths").and_then(|p| p.as_object()) {
+            for path in paths.keys() {
+                for method in ["get", "post", "put", "delete", "patch"] {
+                    let Some(codes) = operation_codes(&spec, path, method) else {
+                        continue;
+                    };
+                    if codes.iter().any(|c| c == "finance:approval:admin") {
+                        hits.push(format!("{method} {path}"));
+                    }
+                }
+            }
+        }
+        assert!(
+            hits.is_empty(),
+            "幽灵码 finance:approval:admin 仍在: {hits:?}"
+        );
+    }
+}

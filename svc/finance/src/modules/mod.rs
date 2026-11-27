@@ -7276,6 +7276,22 @@ fn parse_expense_date(raw: &str) -> Option<DateTime<Utc>> {
         .map(|d| d.and_utc())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:expense_approval:read"])),
+    path = "/expense-approvals",
+    tag = "Expense Approval",
+    params(
+        ("page" = Option<i64>, Query, description = "页码"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
+        ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态"),
+    ),
+    responses(
+        (status = 200, description = "获取费用审批列表成功", body = ApiResponse<serde_json::Value>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn list_expense_approvals(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -7509,6 +7525,18 @@ pub async fn create_expense_approval(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:expense_approval:read"])),
+    path = "/expense-approvals/{id}",
+    tag = "Expense Approval",
+    params(("id" = String, Path, description = "费用审批ID")),
+    responses(
+        (status = 200, description = "获取费用审批成功", body = ApiResponse<serde_json::Value>),
+        (status = 404, description = "费用审批不存在"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn get_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -7592,6 +7620,19 @@ pub async fn get_expense_approval(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["finance:expense_approval:update"])),
+    path = "/expense-approvals/{id}",
+    tag = "Expense Approval",
+    params(("id" = String, Path, description = "费用审批ID")),
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "更新费用审批成功", body = ApiResponse<serde_json::Value>),
+        (status = 409, description = "当前状态不允许该操作"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn update_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -7789,6 +7830,18 @@ pub async fn update_expense_approval(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["finance:expense_approval:delete"])),
+    path = "/expense-approvals/{id}",
+    tag = "Expense Approval",
+    params(("id" = String, Path, description = "费用审批ID")),
+    responses(
+        (status = 200, description = "删除费用审批成功", body = ApiResponse<String>),
+        (status = 409, description = "费用审批不存在、已删除或状态不允许删除"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn delete_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -7847,6 +7900,18 @@ pub async fn delete_expense_approval(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:expense_approval:update"])),
+    path = "/expense-approvals/{id}/submit",
+    tag = "Expense Approval",
+    params(("id" = String, Path, description = "费用审批ID")),
+    responses(
+        (status = 200, description = "提交成功", body = ApiResponse<serde_json::Value>),
+        (status = 409, description = "当前状态不允许提交"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn submit_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -7868,6 +7933,18 @@ pub async fn submit_expense_approval(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:expense_approval:update"])),
+    path = "/expense-approvals/{id}/approve",
+    tag = "Expense Approval",
+    params(("id" = String, Path, description = "费用审批ID")),
+    responses(
+        (status = 200, description = "审批通过", body = ApiResponse<serde_json::Value>),
+        (status = 409, description = "当前状态不允许审批"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 pub async fn approve_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
