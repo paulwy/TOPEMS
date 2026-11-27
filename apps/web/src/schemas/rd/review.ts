@@ -3,6 +3,7 @@ import { Box, Chip, Typography } from '@mui/material';
 import { FileText, User, Clock } from 'lucide-react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadRdProjectOptions } from '@/schemas/dynamicLoaders';
 
 /**
  * 批 38：评审页数据源从 rd.builds 切换为 rs.formulas。
@@ -43,6 +44,12 @@ export const reviewSchema: EntitySchema = {
   // 批 38：评审页读 rs.formulas，权限落在 rd:formula
   permissionResource: 'rd:formula',
 
+  // 外键改为真实下拉（此前是手填 UUID）
+  dynamicOptions: [
+    { field: 'project_id', queryKey: ['rd', 'projects', 'forReview'], loader: loadRdProjectOptions },
+  ],
+
+
   fields: [
     {
       name: 'name',
@@ -69,6 +76,8 @@ export const reviewSchema: EntitySchema = {
       name: 'code',
       label: i18n.t('rd.review.k35'),
       type: 'text',
+      // 后端 CreateFormulaRequest 的 code 是必填 String，留空必 422 missing field
+      required: true,
       listWidth: 140,
       renderCell: (row: Record<string, unknown>, _index: number) => String(row.code ?? '-'),
     },
@@ -128,7 +137,7 @@ export const reviewSchema: EntitySchema = {
     {
       name: 'project_id',
       label: i18n.t('rd.review.id_17'),
-      type: 'text',
+      type: 'select',
       required: true,
       showInList: false,
     },
@@ -178,5 +187,7 @@ export const reviewSchema: EntitySchema = {
   editTitle: i18n.t('rd.review.k33'),
   detailTitle: i18n.t('rd.review.k34'),
 
-  actions: ['create', 'detail'],
+  // 评审页是只读评审视图：adapter 的 create/update/delete 一律抛错（批 38 设计），
+  // 此前仍渲染“新建”按钮等于给用户一个必失败入口；新建配方走 /rd/formula。
+  actions: ['detail'],
 };

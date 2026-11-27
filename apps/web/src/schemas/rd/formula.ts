@@ -3,6 +3,7 @@ import { Chip, Box, Typography } from '@mui/material';
 import { FlaskConical } from 'lucide-react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadRdProjectOptions } from '@/schemas/dynamicLoaders';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   draft: 'default',
@@ -28,6 +29,10 @@ export const formulaSchema: EntitySchema = {
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'rd:formula',
+
+  dynamicOptions: [
+    { field: 'project_id', queryKey: ['rd', 'projects', 'forFormula'], loader: loadRdProjectOptions },
+  ],
 
   fields: [
     {
@@ -74,7 +79,7 @@ export const formulaSchema: EntitySchema = {
     {
       name: 'project_id',
       label: i18n.t('rd.formula.k8'),
-      type: 'text',
+      type: 'select',
       listWidth: 150,
       renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.project_id ?? '');

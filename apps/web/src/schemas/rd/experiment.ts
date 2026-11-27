@@ -2,6 +2,7 @@ import React from 'react';
 import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadRdProjectOptions } from '@/schemas/dynamicLoaders';
 
 const PHASE_LABEL_MAP: Record<string, string> = {
   lab: i18n.t('rd.rs_experiment_create_page.k9'),
@@ -38,6 +39,10 @@ export const experimentSchema: EntitySchema = {
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'rd:experiment',
 
+  dynamicOptions: [
+    { field: 'project_id', queryKey: ['rd', 'projects', 'forExperiment'], loader: loadRdProjectOptions },
+  ],
+
   fields: [
     {
       name: 'code',
@@ -59,7 +64,7 @@ export const experimentSchema: EntitySchema = {
     {
       name: 'project_id',
       label: i18n.t('rd.experiment.k4'),
-      type: 'text',
+      type: 'select',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.project_name || row.project_id;
@@ -114,6 +119,8 @@ export const experimentSchema: EntitySchema = {
       name: 'experimenter',
       label: i18n.t('rd.experiment.k23'),
       type: 'text',
+      // 后端 CreateExperimentRequest.experimenter 为必填 String，留空必 422 missing field
+      required: true,
       listWidth: 100,
     },
     {
@@ -136,18 +143,24 @@ export const experimentSchema: EntitySchema = {
       name: 'experiment_type',
       label: i18n.t('rd.experiment.k26'),
       type: 'text',
+      // 后端 experiment_type 必填（无默认值）
+      required: true,
       showInList: false,
     },
     {
       name: 'objective',
       label: i18n.t('rd.experiment.k27'),
       type: 'textarea',
+      // 后端 objective 必填 String
+      required: true,
       showInList: false,
     },
     {
       name: 'method',
       label: i18n.t('rd.experiment.k28'),
       type: 'textarea',
+      // 后端 method 必填 String
+      required: true,
       showInList: false,
     },
     {

@@ -3,6 +3,7 @@ import { Chip, Box, Button, Typography } from '@mui/material';
 import { Rocket, CheckCircle, XCircle, Clock, Globe } from 'lucide-react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadRdBuildOptions, loadRdProjectOptions } from '@/schemas/dynamicLoaders';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'> = {
   success: 'success',
@@ -51,6 +52,13 @@ export const deploySchema: EntitySchema = {
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'rd:deploy',
+
+  // 外键改为真实下拉（此前是手填 UUID）
+  dynamicOptions: [
+    { field: 'project_id', queryKey: ['rd', 'projects', 'forDeploy'], loader: loadRdProjectOptions },
+    { field: 'build_id', queryKey: ['rd', 'builds', 'forDeploy'], loader: loadRdBuildOptions },
+  ],
+
 
   fields: [
     {
@@ -198,14 +206,14 @@ export const deploySchema: EntitySchema = {
     {
       name: 'project_id',
       label: i18n.t('rd.deploy.id_35'),
-      type: 'text',
+      type: 'select',
       required: true,
       showInList: false,
     },
     {
       name: 'build_id',
       label: i18n.t('rd.deploy.id_36'),
-      type: 'text',
+      type: 'select',
       required: true,
       showInList: false,
     },

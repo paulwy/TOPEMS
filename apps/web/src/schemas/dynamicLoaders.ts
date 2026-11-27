@@ -15,6 +15,9 @@ import { purchaseOrderApi } from '@/api/scm/purchaseOrder';
 import { employeeApi } from '@/api/hrm';
 import { productionOrderApi } from '@/api/mes/productionOrder';
 import apiClient from '@/api/client';
+import { projectApi } from '@/api/rd/project';
+import { buildApi } from '@/api/rd/build';
+import { formulaApi } from '@/api/rd/formula';
 
 export interface SelectOption {
   value: string;
@@ -110,5 +113,32 @@ export async function loadMesWorkstationOptions(): Promise<SelectOption[]> {
   return toOptions(pickRows((res as { data?: unknown })?.data, ['workstations', 'items']), [
     'name',
     'station_no',
+  ]);
+}
+
+/** RD 项目（rd.projects）：项目/工单类外键 */
+export async function loadRdProjectOptions(): Promise<SelectOption[]> {
+  const res = await projectApi.listProjects({ page: 1, page_size: 200 });
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['projects', 'items']), [
+    'code',
+    'name',
+  ]);
+}
+
+/** RD 构建（rd.builds）：部署/发布要挂到具体构建上 */
+export async function loadRdBuildOptions(): Promise<SelectOption[]> {
+  const res = await buildApi.listBuilds({ page: 1, page_size: 200 });
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['items', 'builds']), [
+    'build_no',
+    'branch',
+  ]);
+}
+
+/** RD 配方（rd.formulas）：发布/评审要选具体配方 */
+export async function loadRdFormulaOptions(): Promise<SelectOption[]> {
+  const res = await formulaApi.listFormulas({ page: 1, page_size: 200 });
+  return toOptions(pickRows((res as { data?: unknown })?.data, ['items', 'formulas']), [
+    'code',
+    'name',
   ]);
 }

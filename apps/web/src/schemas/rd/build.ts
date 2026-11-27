@@ -4,6 +4,7 @@ import { Box, Chip, Typography } from '@mui/material';
 import { GitBranch, CheckCircle, XCircle, Clock } from 'lucide-react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadRdProjectOptions } from '@/schemas/dynamicLoaders';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'> = {
   success: 'success',
@@ -38,6 +39,12 @@ export const buildSchema: EntitySchema = {
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'rd:build',
 
+  // 构建必须挂到真实 RD 项目上（此前只能手填 UUID）
+  dynamicOptions: [
+    { field: 'project_id', queryKey: ['rd', 'projects', 'forBuild'], loader: loadRdProjectOptions },
+  ],
+
+
   fields: [
     {
       name: 'build_no',
@@ -66,7 +73,7 @@ export const buildSchema: EntitySchema = {
     {
       name: 'project_id',
       label: i18n.t('rd.build.id_10'),
-      type: 'text',
+      type: 'select',
       required: true,
       showInList: false,
       showInDetail: false,

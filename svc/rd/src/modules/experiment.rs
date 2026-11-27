@@ -134,7 +134,7 @@ pub async fn list_experiments(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.experiments
           WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -252,11 +252,11 @@ pub async fn create_experiment(
             objective, method, results, conclusions, experimenter,
             batch_number, scale, scale_unit, started_at, completed_at,
             created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20::uuid, $21, $22)
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
-                  created_by, created_at, updated_at
+                  created_by::text AS created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -278,7 +278,10 @@ pub async fn create_experiment(
     .bind(&req.scale_unit)
     .bind(now)
     .bind::<Option<chrono::DateTime<chrono::Utc>>>(None)
-    .bind(&req.experimenter)
+    // created_by 是 uuid 列：此前误绑 experimenter（人名/编码），
+    // 必然 500 "column created_by is of type uuid but expression is of type text"。
+    // 与 formula.rs 一致：绑当前用户 sub，SQL 侧 $20::uuid 转换。
+    .bind(&claims.sub)
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -363,7 +366,7 @@ pub async fn get_experiment(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.experiments WHERE id = $1
         "#,
     )
@@ -395,7 +398,7 @@ pub async fn update_experiment(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by::text AS created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -463,7 +466,7 @@ pub async fn update_experiment(
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
-                  created_by, created_at, updated_at
+                  created_by::text AS created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -679,7 +682,7 @@ pub async fn list_experiments_by_project(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.experiments
         WHERE deleted_at IS NULL AND project_id = $1
         ORDER BY created_at DESC
@@ -786,7 +789,7 @@ pub async fn list_lab_experiments(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.experiments
           WHERE phase = 'lab'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -871,7 +874,7 @@ pub async fn list_pilot_experiments(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.experiments
           WHERE phase = 'pilot'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -956,7 +959,7 @@ pub async fn list_scaleup_experiments(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by, created_at, updated_at
+               created_by::text AS created_by, created_at, updated_at
         FROM rs.experiments
           WHERE phase = 'scaleup'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -1087,7 +1090,7 @@ pub async fn advance_phase(
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
-                  created_by, created_at, updated_at
+                  created_by::text AS created_by, created_at, updated_at
         "#,
     )
     .bind(id)

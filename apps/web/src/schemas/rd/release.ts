@@ -3,6 +3,7 @@ import { Chip, Box, Typography, Button } from '@mui/material';
 import { Tag, Calendar, User, Globe, FlaskConical } from 'lucide-react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadRdBuildOptions, loadRdFormulaOptions, loadRdProjectOptions } from '@/schemas/dynamicLoaders';
 
 /**
  * 批 38：发布页保留 rd.deploys 作为数据源。
@@ -55,6 +56,14 @@ export const releaseSchema: EntitySchema = {
 
   // 批 24：按真实数据源接入（/api/rd/deploys → rd.deploys），不造 rd:release 码
   permissionResource: 'rd:deploy',
+
+  // 外键改为真实下拉（此前是手填 UUID）
+  dynamicOptions: [
+    { field: 'project_id', queryKey: ['rd', 'projects', 'forRelease'], loader: loadRdProjectOptions },
+    { field: 'build_id', queryKey: ['rd', 'builds', 'forRelease'], loader: loadRdBuildOptions },
+    { field: 'formula_id', queryKey: ['rd', 'formulas', 'forRelease'], loader: loadRdFormulaOptions },
+  ],
+
 
   fields: [
     {
@@ -171,21 +180,21 @@ export const releaseSchema: EntitySchema = {
     {
       name: 'project_id',
       label: i18n.t('rd.release.id_20'),
-      type: 'text',
+      type: 'select',
       required: true,
       showInList: false,
     },
     {
       name: 'build_id',
       label: i18n.t('rd.release.id_21'),
-      type: 'text',
+      type: 'select',
       required: true,
       showInList: false,
     },
     {
       name: 'formula_id',
       label: i18n.t('rd.release.k43'),
-      type: 'text',
+      type: 'select',
       showInList: false,
     },
     {
