@@ -531,7 +531,8 @@ export const MonitorDashboardPage: React.FC = () => {
       {
         id: 'api-response-time',
         title: i18n.t('pages.monitor_dashboard_page.api_4'),
-        value: apiResponseTime,
+        // /performance/api 接入 Prometheus 前返回空集，此时显示「--」而不是 0ms
+        value: apiPerf.length > 0 ? apiResponseTime : '--',
         unit: 'ms',
         icon: <Clock size={20} />,
         color: 'success',
@@ -591,6 +592,8 @@ export const MonitorDashboardPage: React.FC = () => {
             apiPerf.reduce((sum, p) => sum + (p.p99_response_time ?? 0), 0) / apiPerf.length
           )
         : 0;
+    // 无真实样本时返回空图表（渲染「暂无数据」），不再把单值复制成三条平线冒充走势
+    if (apiPerf.length === 0) return { avg: [], p95: [], p99: [] };
     return {
       avg: createFlatTrend(timeLabels.length, avg),
       p95: createFlatTrend(timeLabels.length, p95),

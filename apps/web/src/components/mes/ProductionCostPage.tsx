@@ -49,6 +49,8 @@ const ProductionCostPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
+  // 后端 get_cost_trend 的 PeriodQuery 只被 `_params` 吃掉（固定 90 天按周），
+  // get_period_cost_report 同样不读 period_type；页面 月/季/年 下拉已撤，这里固定 month。
   const costTrend = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.COSTTREND_BASE,
     queryFn: () => productionCostApi.getCostTrend({ period_type: 'month' }),
@@ -172,14 +174,7 @@ const ProductionCostPage: React.FC = () => {
     []
   );
 
-  const timeRangeOptions: TimeRangeOption[] = useMemo(
-    () => [
-      { label: i18n.t('mes.production_cost_page.k47'), value: 'month' },
-      { label: i18n.t('mes.production_cost_page.k48'), value: 'quarter' },
-      { label: i18n.t('mes.production_cost_page.k49'), value: 'year' },
-    ],
-    []
-  );
+  // 月/季/年 下拉已撤：后端两个端点都不消费 period_type，控件只是摆设
 
   const statCards = useMemo<StatCard[]>(() => {
     switch (activeTab) {
@@ -563,9 +558,6 @@ const ProductionCostPage: React.FC = () => {
       tables={tables}
       loading={loading}
       onRefresh={handleRefresh}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={periodType}
-      onTimeRangeChange={(value) => setPeriodType(value as 'month' | 'quarter' | 'year')}
       showSearch={false}
       showExport={false}
     >

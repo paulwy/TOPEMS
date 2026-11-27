@@ -740,6 +740,8 @@ pub async fn get_period_cost_report(
 
     let mut product_costs: HashMap<String, (f64, f64)> = HashMap::new();
     let mut workshop_costs: HashMap<String, (Uuid, f64)> = HashMap::new();
+    // 月度成本按工单实际开工月份归集（原先把总额除 6 摊到 6 个月，是编造出来的平滑曲线）
+    let mut month_costs: HashMap<(i32, u32), (f64, f64, f64)> = HashMap::new();
 
     if let Ok(rows) = work_orders {
         for row in rows {
@@ -752,6 +754,7 @@ pub async fn get_period_cost_report(
                     .flatten(),
             );
             let ws_id: Option<Uuid> = row.try_get("work_station_id").ok().flatten();
+            let start_at: Option<DateTime<Utc>> = row.try_get("actual_start_date").ok().flatten();
 
             if let Ok((cost, _)) =
                 calculate_work_order_cost_detail_db(&mut scope, wo_id, tenant_id).await
@@ -759,6 +762,15 @@ pub async fn get_period_cost_report(
                 total_material += cost.material_cost;
                 total_labor += cost.labor_cost;
                 total_overhead += cost.overhead_cost;
+
+                if let Some(dt) = start_at {
+                    use chrono::Datelike;
+                    let key = (dt.year(), dt.month());
+                    let entry = month_costs.entry(key).or_insert((0.0, 0.0, 0.0));
+                    entry.0 += cost.material_cost;
+                    entry.1 += cost.labor_cost;
+                    entry.2 += cost.overhead_cost;
+                }
 
                 let entry = product_costs
                     .entry(product_code.clone())
@@ -808,16 +820,28 @@ pub async fn get_period_cost_report(
         })
         .collect();
 
+    // 近 6 个自然月：只填真实有工单的月份，其余月份如实为 0
     let mut monthly_costs = Vec::new();
-    for i in (0..6).rev() {
-        let month_start = end_date - Duration::days(i * 30);
-        let _month_end = month_start + Duration::days(30);
+    let mut cursor = end_date;
+    let mut keys: Vec<(i32, u32)> = Vec::new();
+    for _ in 0..6 {
+        keys.push((cursor.year(), cursor.month()));
+        let first = cursor.date_naive().with_day(1).unwrap_or(cursor.date_naive());
+        let prev_last = first - Duration::days(1);
+        cursor = DateTime::<Utc>::from_naive_utc_and_offset(
+            prev_last.and_hms_opt(12, 0, 0).unwrap_or_default(),
+            Utc,
+        );
+    }
+    keys.reverse();
+    for (y, m) in keys {
+        let (material, labor, overhead) = month_costs.get(&(y, m)).copied().unwrap_or((0.0, 0.0, 0.0));
         monthly_costs.push(MonthlyCostItem {
-            month: format!("{}-{:02}", month_start.year(), month_start.month()),
-            total_cost: total_cost / 6.0,
-            material_cost: total_material / 6.0,
-            labor_cost: total_labor / 6.0,
-            overhead_cost: total_overhead / 6.0,
+            month: format!("{y}-{m:02}"),
+            total_cost: material + labor + overhead,
+            material_cost: material,
+            labor_cost: labor,
+            overhead_cost: overhead,
         });
     }
 
