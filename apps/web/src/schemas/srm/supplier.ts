@@ -11,7 +11,8 @@ export const supplierSchema: EntitySchema = {
   description: i18n.t('srm.supplier.k1'),
 
   api: {
-    module: 'mdm',
+    // 供应主数据实际挂在 /api/master-data/suppliers（不是 /api/mdm，后者 404）
+    module: 'master-data',
     resource: 'suppliers',
   },
 
