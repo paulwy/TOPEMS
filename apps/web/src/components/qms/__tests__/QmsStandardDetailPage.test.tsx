@@ -38,10 +38,16 @@ vi.mock('@/lib/reactQuery', () => ({
   CACHE_DURATIONS: { SHORT: 5000, MEDIUM: 30000, LONG: 60000 },
 }));
 
-vi.mock('react-router-dom', () => ({
-  useParams: () => ({ id: 'test-id' }),
-  useNavigate: () => vi.fn(),
-}));
+// 部分 mock：保留真实导出（Navigate 等），只替换页面用到的 hook。
+// 全量替换会导致 report/config.ts 里的 createElement(Navigate, ...) 取不到组件。
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useParams: () => ({ id: 'test-id' }),
+    useNavigate: () => vi.fn(),
+  };
+});
 
 vi.mock('@/store', () => ({ useNotificationStore: () => ({ addNotification: vi.fn() }) }));
 vi.mock('@/i18n', () => ({ default: { t: (k: string) => k, exists: () => true } }));
