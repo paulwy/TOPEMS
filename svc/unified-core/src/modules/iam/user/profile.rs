@@ -18,7 +18,7 @@ use super::models::{
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/users/me/preferences",
+    path = "/iam/users/me/preferences",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /users/me/preferences"), (status = 500, description = "服务内部错误")),
 )]
@@ -101,7 +101,7 @@ pub async fn get_preferences(
 #[utoipa::path(
     put,
     security(("BearerAuth" = [])),
-    path = "/users/me/preferences",
+    path = "/iam/users/me/preferences",
     tag = "Auto-Backfill",
     responses((status = 200, description = "put /users/me/preferences"), (status = 500, description = "服务内部错误")),
 )]
@@ -191,7 +191,7 @@ pub async fn update_preferences(
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/users/me",
+    path = "/iam/users/me",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /users/me"), (status = 500, description = "服务内部错误")),
 )]

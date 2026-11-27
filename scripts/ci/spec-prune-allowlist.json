@@ -20,6 +20,62 @@
     {
       "path": "/api/ehs/occupational-health/exam-records",
       "reason": "实测 404：同上，exam-records 从未挂载"
+    },
+    {
+      "path": "/api/core/users/me",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/core/users/me/avatar",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/core/users/me/password",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/core/users/me/permissions",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/core/users/me/permissions/check",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/core/users/me/preferences",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/finance/stats",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/finance/events",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/finance/views/receivable-aging",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/finance/commands/post-voucher/{id}",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/finance/commands/reverse-voucher/{id}",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/finance/views/voucher-summary/{id}",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/finance/views/rebuild",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
+    },
+    {
+      "path": "/api/finance/views/replay/{view_name}",
+      "reason": "注解 path 与实际挂载不一致（core: iam 挂在 /api/core/iam 下；finance: cqrs 挂在 /api/finance/cqrs 下），实测原路径 404、真实路径 200，已删幻影只留真身"
     }
   ]
 }

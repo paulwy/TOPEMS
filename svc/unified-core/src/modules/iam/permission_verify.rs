@@ -404,7 +404,7 @@ async fn check_user_resource_permission(
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/users/me/permissions",
+    path = "/iam/users/me/permissions",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /users/me/permissions"), (status = 500, description = "服务内部错误")),
 )]

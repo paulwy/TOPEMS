@@ -88,7 +88,7 @@ pub async fn handle_create_voucher(
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/api/finance/commands/post-voucher/{id}",
+    path = "/finance/cqrs/commands/post-voucher/{id}",
     tag = "Auto-Backfill",
     params(
         ("id" = String, Path, description = "id"),
@@ -118,7 +118,7 @@ pub async fn handle_post_voucher(
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/api/finance/commands/reverse-voucher/{id}",
+    path = "/finance/cqrs/commands/reverse-voucher/{id}",
     tag = "Auto-Backfill",
     params(
         ("id" = String, Path, description = "id"),
@@ -185,7 +185,7 @@ pub async fn list_voucher_summary(
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/api/finance/views/voucher-summary/{id}",
+    path = "/finance/cqrs/views/voucher-summary/{id}",
     tag = "Auto-Backfill",
     params(
         ("id" = String, Path, description = "id"),
@@ -205,7 +205,7 @@ pub async fn get_voucher_summary_by_id(
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/api/finance/views/receivable-aging",
+    path = "/finance/cqrs/views/receivable-aging",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/views/receivable-aging"), (status = 500, description = "服务内部错误")),
 )]
@@ -261,7 +261,7 @@ pub async fn get_events(Path(aggregate_id): Path<String>) -> ApiResponse<Vec<Eve
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/api/finance/views/rebuild",
+    path = "/finance/cqrs/views/rebuild",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/views/rebuild"), (status = 500, description = "服务内部错误")),
 )]
@@ -276,7 +276,7 @@ pub async fn rebuild_views() -> ApiResponse<()> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/api/finance/stats",
+    path = "/finance/cqrs/stats",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/stats"), (status = 500, description = "服务内部错误")),
 )]
@@ -343,7 +343,7 @@ pub async fn get_projection_progress(
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
-    path = "/api/finance/events",
+    path = "/finance/cqrs/events",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/events"), (status = 500, description = "服务内部错误")),
 )]
@@ -380,7 +380,7 @@ pub async fn list_events_paginated(
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/api/finance/views/replay/{view_name}",
+    path = "/finance/cqrs/views/replay/{view_name}",
     tag = "Auto-Backfill",
     params(
         ("view_name" = String, Path, description = "view_name"),

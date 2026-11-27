@@ -154,7 +154,7 @@ pub async fn get_my_permissions(
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/users/me/permissions/check",
+    path = "/iam/users/me/permissions/check",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /users/me/permissions/check"), (status = 500, description = "服务内部错误")),
 )]
@@ -205,7 +205,7 @@ pub async fn check_my_permission(
 #[utoipa::path(
     put,
     security(("BearerAuth" = [])),
-    path = "/users/me",
+    path = "/iam/users/me",
     tag = "Auto-Backfill",
     responses((status = 200, description = "put /users/me"), (status = 500, description = "服务内部错误")),
 )]
@@ -407,7 +407,7 @@ pub async fn update_current_user(
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/users/me/password",
+    path = "/iam/users/me/password",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /users/me/password"), (status = 500, description = "服务内部错误")),
 )]
@@ -611,7 +611,7 @@ pub async fn change_my_password(
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
-    path = "/users/me/avatar",
+    path = "/iam/users/me/avatar",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /users/me/avatar"), (status = 500, description = "服务内部错误")),
 )]

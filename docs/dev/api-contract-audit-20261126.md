@@ -810,3 +810,17 @@ ehs 203 条调用、命中 105、缺口 98。根因有两个：
 | spec paths | 3385 | **3411** |
 | mes 无参 GET 实测 | — | **111 条 0 404**（`/anomaly/rules/{rule_id}` 属模板路径，不参与） |
 | mes 写接口实测 | — | 6 条 POST 全 **422**（路由存在、校验拒绝） |
+
+## 第 30.5 轮 · 幻影路径归位 + 本机漏跑迁移（2026-11-28）
+
+mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），冒出 8 条 FAIL。逐条定性后不是本轮代码问题，但都属于"闸门该绿"的存量缺陷：
+
+- **rd 2 条 500**：`rs.experiments.created_by` 仍是 `uuid`，代码按 `Option<String>` 解码。仓库里早有迁移 `database/migrations/20261020000010_rd_experiments_created_by_varchar_results_jsonb.sql`，**只是本机库没跑过**。用 `MIGRATE_URL`（`topems_owner`）执行后 `created_by` 变 `varchar`、`results` 变 `jsonb`；注意 `topems_app` 没有表属主权限，必须用 owner 跑。改列型后要重启进程，否则 sqlx 预编译计划报 `cached plan must not change result type`。
+- **core 3 条 404**：iam 的用户自助接口挂在 `/api/core/iam` 下，但注解 `path` 写的是裸 `/users/me*`，规范化后成了 `/api/core/users/me*` 幻影。实测 `/api/core/iam/users/me`、`/permissions`、`/preferences` 均 200。
+- **finance 3 条 404**：`cqrs_routes` 的 router 是 `.nest("/cqrs")`，注解却写成 `/api/finance/...`。实测 `/api/finance/cqrs/{stats,events,views/receivable-aging}` 全 200，根路径全 404；顺带把该文件里另外 5 条同源幻影（`commands/post-voucher`、`reverse-voucher`、`views/voucher-summary`、`views/rebuild`、`views/replay`）一并归位。
+
+做法：注解改真身路径 → 重新生成 spec → 把 14 条幻影从 spec 删掉 → 进 `spec-prune-allowlist.json` 留痕（现 19 条），`spec-superset-check --allow-file` 判定无回退。
+
+### 一条容易踩的豁免语义
+
+`spec-prune-allowlist.json` 里**带 `method` 的条目只豁免"方法丢失"，不豁免整条 path 丢失**。整条 path 被删必须写不带 `method` 的条目，否则超集检查照样报 `LOST PATH`。
