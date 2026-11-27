@@ -59,7 +59,11 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 vi.mock('@/store', () => ({ useNotificationStore: () => ({ addNotification: vi.fn() }) }));
-vi.mock('@/utils/logger', () => ({ apiLogger: { error: vi.fn(), info: vi.fn() } }));
+vi.mock('@/utils/logger', () => ({
+  default: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
+  apiLogger: { error: vi.fn(), info: vi.fn() },
+}));
 vi.mock('@/i18n', () => ({ default: { t: (k: string) => k, exists: () => true } }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 

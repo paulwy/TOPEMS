@@ -492,6 +492,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
           return (
             <Paper
               key={stat.id}
+              data-testid={`stat-card-${stat.id}`}
               onClick={stat.onClick}
               sx={{
                 flex: statCardDirection === 'row' ? 1 : undefined,
@@ -1018,6 +1019,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
             {tabs.map((tab) => (
               <Tab
                 key={tab.value}
+                data-testid={`stat-tab-${tab.value}`}
                 value={tab.value}
                 label={tab.label}
                 icon={tab.icon as React.ReactElement<unknown> | undefined}

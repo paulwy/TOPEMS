@@ -66,8 +66,16 @@ vi.mock('@tanstack/react-query', () => ({
   QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
   useQuery: vi.fn((opts: { queryKey: unknown[]; enabled?: boolean }) => {
     const key = String((opts.queryKey ?? []).join('/'));
-    if (!opts.enabled) {
+    if (opts.enabled === false) {
       return { data: undefined, isLoading: false, isError: false, isFetching: false };
+    }
+    if (key.includes('companies')) {
+      return {
+        data: [{ id: 'c1', name: '测试公司' }],
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+      };
     }
     if (key.includes('balance')) {
       return { data: balanceSheetData, isLoading: false, isError: false, isFetching: false };
@@ -94,7 +102,13 @@ vi.mock('@/store', () => ({
 }));
 
 vi.mock('@/utils/logger', () => ({
+  default: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
+  createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
   apiLogger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+}));
+
+vi.mock('@/api/hrm', () => ({
+  companyApi: { list: vi.fn(async () => ({ data: { items: [{ id: 'c1', name: '测试公司' }] } })) },
 }));
 
 vi.mock('@/api/finance', () => ({
@@ -110,11 +124,11 @@ describe('FinancialReportPage（死测试删除后的区域补测）', () => {
     mockAddNotification.mockClear();
   });
 
-  it('默认渲染资产负债 tab 的三张统计卡（资产/负债/权益）', () => {
+  it('默认渲染资产负债 tab 的三张统计卡（资产/负债/权益）', async () => {
     render(<FinancialReportPage />);
     expect(screen.getByText('erp.financial_report_page.k19')).toBeInTheDocument();
 
-    const assets = screen.getByTestId('stat-card-total-assets');
+    const assets = await screen.findByTestId('stat-card-total-assets');
     expect(assets.textContent).toContain('pages.financial_report_page.k13');
     expect(assets.textContent).toContain('¥1,000,000.00');
 
@@ -127,11 +141,11 @@ describe('FinancialReportPage（死测试删除后的区域补测）', () => {
     expect(equity.textContent).toContain('¥600,000.00');
   });
 
-  it('切换利润表 tab 后渲染收入/成本/净利润统计卡', () => {
+  it('切换利润表 tab 后渲染收入/成本/净利润统计卡', async () => {
     render(<FinancialReportPage />);
     fireEvent.click(screen.getByTestId('stat-tab-income-statement'));
 
-    const revenue = screen.getByTestId('stat-card-revenue');
+    const revenue = await screen.findByTestId('stat-card-revenue');
     expect(revenue.textContent).toContain('pages.financial_report_page.k3');
     // 800_000 + 20_000 = 820_000
     expect(revenue.textContent).toContain('¥820,000.00');
@@ -146,11 +160,11 @@ describe('FinancialReportPage（死测试删除后的区域补测）', () => {
     expect(netProfit.textContent).toContain('¥220,000.00');
   });
 
-  it('切换现金流量 tab 后渲染流入/流出统计卡', () => {
+  it('切换现金流量 tab 后渲染流入/流出统计卡', async () => {
     render(<FinancialReportPage />);
     fireEvent.click(screen.getByTestId('stat-tab-cash-flow'));
 
-    const inflow = screen.getByTestId('stat-card-total-inflow');
+    const inflow = await screen.findByTestId('stat-card-total-inflow');
     expect(inflow.textContent).toContain('erp.financial_report.label.total_inflow');
     expect(inflow.textContent).toContain('¥900,000.00');
 
