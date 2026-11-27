@@ -106,48 +106,6 @@ const WIDGET_TYPES = [
 
 const generateId = () => `widget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-const sampleChartData: ChartDataPoint[] = [
-  { name: i18n.t('components.dashboard_editor.1_0'), value: 400, sales: 300, profit: 100 },
-  { name: i18n.t('components.dashboard_editor.2_1'), value: 300, sales: 250, profit: 50 },
-  { name: i18n.t('components.dashboard_editor.3_2'), value: 500, sales: 420, profit: 80 },
-  { name: i18n.t('components.dashboard_editor.4_3'), value: 600, sales: 500, profit: 100 },
-  { name: i18n.t('components.dashboard_editor.5_4'), value: 450, sales: 380, profit: 70 },
-  { name: i18n.t('components.dashboard_editor.6_5'), value: 700, sales: 580, profit: 120 },
-];
-
-const samplePivotData = [
-  {
-    region: i18n.t('components.dashboard_editor.k12'),
-    category: i18n.t('components.dashboard_editor.k11'),
-    sales: 12000,
-  },
-  {
-    region: i18n.t('components.dashboard_editor.k14'),
-    category: i18n.t('components.dashboard_editor.k13'),
-    sales: 8000,
-  },
-  {
-    region: i18n.t('components.dashboard_editor.k16'),
-    category: i18n.t('components.dashboard_editor.k15'),
-    sales: 15000,
-  },
-  {
-    region: i18n.t('components.dashboard_editor.k18'),
-    category: i18n.t('components.dashboard_editor.k17'),
-    sales: 10000,
-  },
-  {
-    region: i18n.t('components.dashboard_editor.k20'),
-    category: i18n.t('components.dashboard_editor.k19'),
-    sales: 18000,
-  },
-  {
-    region: i18n.t('components.dashboard_editor.k22'),
-    category: i18n.t('components.dashboard_editor.k21'),
-    sales: 9000,
-  },
-];
-
 const GRID_COLS = 12;
 const GRID_ROWS = 10;
 const CELL_WIDTH = 60;
@@ -354,9 +312,9 @@ export const DashboardEditor: React.FC<{
       h: 2,
       config:
         newWidgetType === 'chart'
-          ? { chartType: newWidgetChartType, data: sampleChartData, xKey: 'name', yKey: 'value' }
+          ? { chartType: newWidgetChartType, data: [], xKey: 'name', yKey: 'value' }
           : newWidgetType === 'pivot'
-            ? { rows: ['region'], cols: ['category'], values: ['sales'], data: samplePivotData }
+            ? { rows: ['region'], cols: ['category'], values: ['sales'], data: [] }
             : { metricValue: 0, metricLabel: i18n.t('components.dashboard_editor.k27') },
     };
 

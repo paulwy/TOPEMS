@@ -192,7 +192,6 @@ const PdmStatsPage: React.FC = () => {
       icon: <Factory sx={{ width: 24, height: 24 }} />,
       gradient: [theme.palette.teal.main, theme.palette.teal.dark] as [string, string],
       description: t('pdm.pdm_stats_page.e1', { v1: stats.activeProcesses }),
-      trend: { value: 0, direction: 'neutral' as const },
     },
     {
       id: 'total-steps',
@@ -200,7 +199,6 @@ const PdmStatsPage: React.FC = () => {
       value: stats.totalSteps,
       icon: <ClipboardList sx={{ width: 24, height: 24 }} />,
       gradient: [theme.palette.secondary.main, theme.palette.secondary.dark] as [string, string],
-      trend: { value: 0, direction: 'neutral' as const },
     },
     {
       id: 'total-formulas',
@@ -209,7 +207,6 @@ const PdmStatsPage: React.FC = () => {
       icon: <Package sx={{ width: 24, height: 24 }} />,
       gradient: [theme.palette.warning.main, theme.palette.warning.dark] as [string, string],
       description: t('pdm.pdm_stats_page.e2', { v1: stats.activeFormulas }),
-      trend: { value: 0, direction: 'neutral' as const },
     },
     {
       id: 'total-batches',
@@ -218,7 +215,6 @@ const PdmStatsPage: React.FC = () => {
       icon: <Activity sx={{ width: 24, height: 24 }} />,
       gradient: [theme.palette.secondary.light, theme.palette.secondary.dark] as [string, string],
       description: t('pdm.pdm_stats_page.e3', { v1: stats.inProgressBatches }),
-      trend: { value: 0, direction: 'neutral' as const },
     },
     {
       id: 'completed-batches',
@@ -226,7 +222,6 @@ const PdmStatsPage: React.FC = () => {
       value: stats.completedBatches,
       icon: <CheckCircle sx={{ width: 24, height: 24 }} />,
       gradient: [theme.palette.success.main, theme.palette.success.dark] as [string, string],
-      trend: { value: 0, direction: 'up' as const },
     },
     {
       id: 'planning-batches',
@@ -234,7 +229,6 @@ const PdmStatsPage: React.FC = () => {
       value: stats.planningBatches,
       icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
       gradient: [theme.palette.pink[500], theme.palette.pink[600]] as [string, string],
-      trend: { value: 0, direction: 'neutral' as const },
     },
   ];
 

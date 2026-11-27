@@ -53,7 +53,6 @@ const FinanceDashboardPage: React.FC = () => {
         value: statsData.total_vouchers.toLocaleString(),
         icon: <FileText size={24} />,
         color: 'primary' as const,
-        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
         loading,
       },
       {
@@ -61,7 +60,6 @@ const FinanceDashboardPage: React.FC = () => {
         value: statsData.draft_vouchers.toLocaleString(),
         icon: <FileText size={24} />,
         color: 'info' as const,
-        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
         loading,
       },
       {
@@ -69,7 +67,6 @@ const FinanceDashboardPage: React.FC = () => {
         value: `¥${statsData.total_receivables.toLocaleString()}`,
         icon: <TrendingUp size={24} />,
         color: 'success' as const,
-        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
         loading,
       },
       {
@@ -77,7 +74,6 @@ const FinanceDashboardPage: React.FC = () => {
         value: `¥${statsData.total_payables.toLocaleString()}`,
         icon: <TrendingDown size={24} />,
         color: 'warning' as const,
-        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
         loading,
       },
       {
@@ -85,7 +81,6 @@ const FinanceDashboardPage: React.FC = () => {
         value: statsData.pending_approvals.toLocaleString(),
         icon: <DollarSign size={24} />,
         color: 'success' as const,
-        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
         loading,
       },
       {
@@ -93,7 +88,6 @@ const FinanceDashboardPage: React.FC = () => {
         value: statsData.pending_payments.toLocaleString(),
         icon: <BarChart3 size={24} />,
         color: 'primary' as const,
-        trend: { value: 0, label: t('finance.finance_dashboard_page.last_month') },
         loading,
       },
     ];

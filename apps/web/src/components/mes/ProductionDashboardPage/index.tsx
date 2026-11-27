@@ -337,7 +337,6 @@ export const ProductionDashboardPage: React.FC = () => {
         value: todayOutput.toLocaleString(),
         icon: <Package size={22} />,
         color: 'primary',
-        trend: { value: 8.2 },
         loading,
       },
       {
@@ -345,7 +344,6 @@ export const ProductionDashboardPage: React.FC = () => {
         value: todayDefects.toLocaleString(),
         icon: <XCircle size={22} />,
         color: 'error',
-        trend: { value: -3.1 },
         loading,
       },
       {
@@ -353,7 +351,6 @@ export const ProductionDashboardPage: React.FC = () => {
         value: activeOrderCount,
         icon: <Factory size={22} />,
         color: 'warning',
-        trend: { value: 2.4 },
         loading,
       },
       {
@@ -361,7 +358,6 @@ export const ProductionDashboardPage: React.FC = () => {
         value: formatPercent(overallUtilization),
         icon: <Gauge size={22} />,
         color: 'success',
-        trend: { value: overallUtilization > 0.6 ? 1.8 : -0.6 },
         loading,
       },
     ],
@@ -632,13 +628,21 @@ export const ProductionDashboardPage: React.FC = () => {
             </Stack>
             <Divider sx={{ mb: 1.5 }} />
             <Box sx={{ height: 280 }}>
-              <PieChart
-                data={
-                  orderStatusDistribution.length > 0
-                    ? orderStatusDistribution
-                    : [{ name: i18n.t('mes.index.k37'), value: 1, color: 'grey.300' }]
-                }
-              />
+              {orderStatusDistribution.length > 0 ? (
+                <PieChart data={orderStatusDistribution} />
+              ) : (
+                <Box
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'text.secondary',
+                  }}
+                >
+                  <Typography variant='body2'>{i18n.t('mes.index.k37')}</Typography>
+                </Box>
+              )}
             </Box>
           </Paper>
         </Box>
