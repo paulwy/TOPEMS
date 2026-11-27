@@ -358,6 +358,18 @@
 - **口径结论**：两点存疑均为静态接线与授权面问题，矩阵主分类不变——`search:admin` 维持活码（单端点证据受限），`monitor:admin` 维持兜底（业务角色零授予、仅低鉴别力 admin 放行，写门双向对照待补）。
 - **产物**（`artifacts/audit/forensics-c2/`，gitignore）：矩阵 `c2-matrix.json/.csv` 两行补 `static_review_note`；本轮无新增采集脚本，结论基于 `svc/search`、`svc/monitor` 源码与隔离库 `core_role_permissions` 只读查询。
 
+### 13.11 monitor 写门 denied 对照身份实测（#109，隔离库临时身份，取证后回退）
+
+- **背景**：承接 §13.10 待立项项——补一个「授 monitor 读码、过访问门但不带 `monitor:admin`」的隔离库身份，把 `monitor:admin` 写门 denied 对照采到。全程在隔离库 `topems_replay_verify` / 隔离实例 8199 进行，不触 prod（8099 / `topems_prod` 未停未切），不改鉴权与令牌签发源码，不据本轮观测清理权限码；临时身份取证后随 `c2_%` 统一级联回退。
+- **对照身份构造（隔离库）**：新建角色 `c2_monitor_reader`（固定 UUID `0c000000-0000-4000-8000-000000000009`），仅授 5 个 monitor 读码 `monitor:alert:read / dashboard:read / log:read / metric:read / rule:read`，**刻意不授** `monitor:admin` 及任何 `create/update/delete` 写码；新建用户 `c2_monitor_reader`（UUID `99a552b5-2e1b-4eff-a090-7c5941948120`）绑定该角色。登录后令牌携带 5 个 monitor 读码、`perm_cnt=5`，授权集与 DB 角色绑定一致。
+- **三档实测（端点前缀 `/api/monitor`；读 5 例：alerts/rules/metrics/settings/slos；写 6 例：alerts/acknowledge、rules POST、settings PUT、settings DELETE、performance/export POST、slos POST）**：
+  - **`c2_monitor_reader`（5 读码，无 admin/写码）**：读端点 **5/5 200**（过 `require_module_access` 前缀门、读方法放行）；写端点 **6/6 403**，响应体「权限不足：需要 monitor 模块管理员权限（monitor:admin）」——**写门 denied 已触达并采到**，读码身份不能越过写门。
+  - **`c2_admin`（16 个 monitor 码，含 `monitor:admin`）**：读端点 5/5 200；写端点过写门进入 handler——`alerts/acknowledge` 200（空集合 `acknowledged_count=0`），其余 5 例 422/400 为 handler 内反序列化/公司上下文校验（已过鉴权门，非 403）。
+  - **`c2_tenant_admin`（无任何 monitor 前缀码）**：读/写全部 403「权限不足：需要 monitor 模块权限」，卡在前置 `require_module_access` 访问门，**写门未触达**——印证 §13.10 判断：#102 观察到的 tenant_admin 0/0 是访问门拦截，不是写门证据。
+- **口径结论**：monitor 模块两门分离经运行期闭环证实——访问门认 `<monitor>:` 前缀任一码，写门（`require_module_write`）以 `monitor:admin` 为必需码，仅有读码在写端点被明确 403 拒绝。`monitor:admin` 分类**维持兜底**：业务角色零授予，仅低鉴别力 admin 角色携带放行；本轮补全了写门双向对照（读码身份 denied / admin 身份放行），未改变矩阵主分类 活码 6 / 待复核 548 / 兜底 27。
+- **边界与回退**：① 本轮仅覆盖 monitor 模块 11 个采样端点，未扩到其他模块写门；② reader 写端点全拦截于写门、未进 handler，admin 写端点未落业务库（acknowledge 空集合、其余参数校验失败），`monitor_thresholds` 等业务表无本轮新增行；③ 临时角色/用户为隔离库取证残留，收尾阶段随 `DELETE FROM iam.users WHERE username LIKE 'c2_%'` 级联，并清理 `core_roles` / `core_role_permissions` 对应临时行；④ 未造最小业务单据复核写门放行后落库/下游回传（仍属未立项扩面项）。
+- **产物**（`artifacts/audit/forensics-c2/` 与 `/tmp/topems-c2/`，gitignore）：`smoke-monitor-reader.json`（三档读/写端点状态码与响应体）；脚本 `smoke-monitor-reader.py`、建号 SQL `seed-monitor-reader.sql`；矩阵 `c2-matrix.json/.csv` 的 `monitor:admin` 行补 `c2_monitor_reader` 对照与三档注记；备份 `c2-matrix.v33-pre109.bak.json`。
+
 
 
 
