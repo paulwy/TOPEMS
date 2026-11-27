@@ -305,5 +305,16 @@
   2. 其余 26 码（`iam:delete`、`iam:permission:*`、`migration:service:*`、`monitor:alert/log/rule:*`、`plugin:plugin:*`、`system:*`、`admin:dashboard:write`、`tenant:member:delete`）无写门/守卫静态挂载点，属目录/seed 残留候选；是否下线目录登记待业务拍板，不据本轮静态复核自动清理或解绑。
 - **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`fallback-27-reference-scan.json`（逐码分层命中文件/计数 + 口径注记）；脚本 `/tmp/topems-c2/scan-fallback-refs.py`。矩阵主分类不变：活码 6 / 待复核 548 / 兜底 27。
 
+### 13.7 待复核 548 码静态画像分层（#105，静态只读）
+
+- **背景**：承接 §13.4 盲区，对待复核分类全量 548 码做静态画像分层，定位下一轮运行期采集靶心；全程静态只读，不起实例、不写隔离库、不改鉴权、不下死码定论。
+- **层级与绑定画像**：536 个三段资源码（`module:resource:action`）+ 12 个两段模块码；覆盖 25 个业务模块（mes 50 / erp 39 / srm 39 / scm 38 / pdm 36 / hrm 34 / rd 34 / wms 33 / ehs 32 / finance 32 …）；绑定形态为 `admin + 业务经理角色 + tenant_admin`（如 `admin,mes_manager,tenant_admin`）；后端运行期观测 0、前端静态引用 0。
+- **后端三段码守卫交叉**：收集 `svc/**/*.rs`（排除 tests）三段冒号码字面量共 610 种，与 581 orphan 集 **0 命中**——待复核资源码未出现在后端守卫字面量中，无 #104 之外的漏扫后端消费点。
+- **资源名文本对照（参考分层，口径受限）**：335 个资源名出现于后端代码文本、213 个未出现。须注意：资源名命中可能来自表名/结构名/注释/通用词（如 `return`、`check`），**不等于守卫消费**；未出现者更接近纯预留，出现者仍须运行期/前端对账确认。未出现占比偏高的模块：hrm 30/34、srm 30/39、scm 27/38、qms 21/24、crm 18/23；rd/integration/aps/workflow/tms/notification/bi 等资源名全部出现。
+- **12 个两段码**：`crm:delete`、`doc:delete`、`gis:delete`、`integration:delete`、`integration:read`、`master-data:read`、`master-data:write`、`notification:delete`、`report:read`、`workflow:admin`、`workflow:approve`、`workflow:delete`；多为 `delete/approve` 粗粒度动作，未被枚举两段守卫（`read/write/admin`）覆盖。
+- **定性边界**：待复核子集多为 seed 批量登记的资源级权限；是规划预留、下线残留还是真死码，须经前端菜单/按钮/SDK 运行期对账与后端细粒度守卫观测后再分，本轮静态复核不自动清理或解绑。
+- **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`pending-548-profile.json`（逐码层级/模块/角色/令牌/字面量命中/资源名分层 + 口径注记）；脚本 `/tmp/topems-c2/scan-pending-profile.py`。矩阵主分类不变：活码 6 / 待复核 548 / 兜底 27。
+
+
 
 
