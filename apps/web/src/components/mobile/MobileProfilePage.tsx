@@ -94,12 +94,10 @@ const MobileSettingsPage: React.FC = () => {
     (value: boolean) => {
       const previous = pushEnabled;
       setPushEnabled(value);
-      void userApi
-        .updateSettings({ notification_enabled: value })
-        .catch(async () => {
-          setPushEnabled(previous);
-          await settingsQuery.refetch();
-        });
+      void userApi.updateSettings({ notification_enabled: value }).catch(async () => {
+        setPushEnabled(previous);
+        await settingsQuery.refetch();
+      });
     },
     [pushEnabled, settingsQuery]
   );
