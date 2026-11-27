@@ -434,7 +434,7 @@ const FinanceTaxPage: React.FC = () => {
               <MuiBox
                 sx={{
                   p: 2,
-                  bgcolor: 'primary.light',
+                  bgcolor: 'primary.50',
                   borderRadius: 1,
                   textAlign: 'center',
                 }}
@@ -566,7 +566,7 @@ const FinanceTaxPage: React.FC = () => {
               <MuiBox
                 sx={{
                   p: 2,
-                  bgcolor: 'warning.light',
+                  bgcolor: 'warning.50',
                   borderRadius: 1,
                   textAlign: 'center',
                 }}

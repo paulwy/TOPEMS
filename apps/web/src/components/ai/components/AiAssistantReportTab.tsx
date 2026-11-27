@@ -42,7 +42,7 @@ import { designTokens } from '@topems/tokens';
 
 const DEFAULT_PIE_COLORS = [
   ...BIChartColors.series,
-  'colors.cyan.500',
+  designTokens.colors.cyan[500],
   designTokens.colors.pink.main,
 ];
 

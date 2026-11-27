@@ -81,7 +81,7 @@ const EhsHazardPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: 'error.light' }}>
+      <Card sx={{ bgcolor: 'error.50' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -160,7 +160,7 @@ const EhsHazardPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.light',
+                bgcolor: 'warning.50',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

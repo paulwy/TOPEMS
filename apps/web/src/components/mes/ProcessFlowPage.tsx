@@ -71,7 +71,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
     },
     draft: {
       label: i18n.t('mes.process_flow_page.k2'),
-      bg: 'warning.light',
+      bg: 'warning.50',
       color: 'warning.dark',
     },
   };

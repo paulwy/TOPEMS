@@ -39,35 +39,35 @@ export const BasicContainer: Story = {
       <Grid
         item
         xs={6}
-        sx={{ bgcolor: 'primary.light', p: 2, borderRadius: 1 }}
+        sx={{ bgcolor: 'primary.50', p: 2, borderRadius: 1 }}
       >
         xs=6
       </Grid>
       <Grid
         item
         xs={6}
-        sx={{ bgcolor: 'secondary.light', p: 2, borderRadius: 1 }}
+        sx={{ bgcolor: 'secondary.50', p: 2, borderRadius: 1 }}
       >
         xs=6
       </Grid>
       <Grid
         item
         xs={4}
-        sx={{ bgcolor: 'success.light', p: 2, borderRadius: 1 }}
+        sx={{ bgcolor: 'success.50', p: 2, borderRadius: 1 }}
       >
         xs=4
       </Grid>
       <Grid
         item
         xs={4}
-        sx={{ bgcolor: 'warning.light', p: 2, borderRadius: 1 }}
+        sx={{ bgcolor: 'warning.50', p: 2, borderRadius: 1 }}
       >
         xs=4
       </Grid>
       <Grid
         item
         xs={4}
-        sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}
+        sx={{ bgcolor: 'info.50', p: 2, borderRadius: 1 }}
       >
         xs=4
       </Grid>
@@ -88,7 +88,7 @@ export const ResponsiveBreakpoints: Story = {
         xs={12}
         md={6}
         lg={4}
-        sx={{ bgcolor: 'primary.light', p: 2, borderRadius: 1 }}
+        sx={{ bgcolor: 'primary.50', p: 2, borderRadius: 1 }}
       >
         xs=12 / md=6 / lg=4
       </Grid>
@@ -97,7 +97,7 @@ export const ResponsiveBreakpoints: Story = {
         xs={12}
         md={6}
         lg={8}
-        sx={{ bgcolor: 'secondary.light', p: 2, borderRadius: 1 }}
+        sx={{ bgcolor: 'secondary.50', p: 2, borderRadius: 1 }}
       >
         xs=12 / md=6 / lg=8
       </Grid>

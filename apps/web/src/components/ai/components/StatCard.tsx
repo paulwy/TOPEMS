@@ -14,11 +14,11 @@ export const StatCard: React.FC<StatCardData> = ({
   const isPositive = change >= 0;
 
   const colorMap = {
-    primary: { bg: 'primary.light', text: 'primary.main', border: 'primary.main' },
-    info: { bg: 'info.light', text: 'info.main', border: 'info.main' },
-    success: { bg: 'success.light', text: 'success.main', border: 'success.main' },
-    warning: { bg: 'warning.light', text: 'warning.main', border: 'warning.main' },
-    secondary: { bg: 'secondary.light', text: 'secondary.main', border: 'secondary.main' },
+    primary: { bg: 'primary.50', text: 'primary.main', border: 'primary.main' },
+    info: { bg: 'info.50', text: 'info.main', border: 'info.main' },
+    success: { bg: 'success.50', text: 'success.main', border: 'success.main' },
+    warning: { bg: 'warning.50', text: 'warning.main', border: 'warning.main' },
+    secondary: { bg: 'secondary.50', text: 'secondary.main', border: 'secondary.main' },
   };
 
   const colors = colorMap[color];

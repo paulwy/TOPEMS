@@ -320,7 +320,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       case 'high':
         return 'var(--color-warning-hover)';
       case 'medium':
-        return 'colors.orange.700';
+        return designTokens.colors.orange[700];
       case 'low':
         return designTokens.colors.primary.dark;
       default:
@@ -333,7 +333,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
       case 'firing':
         return designTokens.colors.error.dark;
       case 'acknowledged':
-        return 'colors.orange.700';
+        return designTokens.colors.orange[700];
       case 'resolved':
         return designTokens.colors.success.dark;
       case 'suppressed':
@@ -1040,7 +1040,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label={i18n.t('microfrontend.ai_ops_panel.k44')}
           value={alertStats?.last24h || 0}
           icon={<ClockIcon size={24} />}
-          color='colors.orange.700'
+          color={designTokens.colors.orange[700]}
         />
         <StatCard
           label={i18n.t('microfrontend.ai_ops_panel.k45')}
@@ -1815,7 +1815,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
           label={i18n.t('microfrontend.ai_ops_panel.k99')}
           value={scalingHistory.filter((e) => e.direction === 'up').length}
           icon={<ArrowUpIcon size={24} />}
-          color='colors.orange.700'
+          color={designTokens.colors.orange[700]}
         />
         <StatCard
           label={i18n.t('microfrontend.ai_ops_panel.k100')}

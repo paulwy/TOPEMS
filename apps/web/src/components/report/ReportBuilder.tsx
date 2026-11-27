@@ -555,7 +555,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 size='small'
                 sx={{
                   color: 'primary.main',
-                  '&:hover': { bgcolor: 'primary.light' },
+                  '&:hover': { bgcolor: 'primary.50' },
                 }}
               >
                 {i18n.t('pages.report_builder.k7')}

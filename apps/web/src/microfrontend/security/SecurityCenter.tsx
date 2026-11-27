@@ -68,7 +68,7 @@ interface SecurityCenterProps {
 }
 
 const severityColors: Record<SecurityIssueSeverity, string> = {
-  info: 'colors.grey.500',
+  info: designTokens.colors.grey[500],
   low: designTokens.colors.success.dark,
   medium: designTokens.colors.warning.main,
   high: designTokens.colors.error.main,

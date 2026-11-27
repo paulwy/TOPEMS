@@ -151,7 +151,7 @@ const DetailsPanel: React.FC<{
     }
     if (s.includes('pending') || s.includes(i18n.t('gis.map_view.k4'))) {
       return {
-        backgroundColor: 'warning.light',
+        backgroundColor: 'warning.50',
         color: 'warning.800',
       };
     }

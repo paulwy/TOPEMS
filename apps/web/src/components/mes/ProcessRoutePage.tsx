@@ -87,7 +87,7 @@ const ProcessRoutePage: React.FC = () => {
       },
       draft: {
         label: i18n.t('mes.process_route_page.status_draft'),
-        bg: 'warning.light',
+        bg: 'warning.50',
         color: 'warning.dark',
       },
     };

@@ -140,7 +140,7 @@ export const materialRequirementSchema: EntitySchema = {
           },
           high: {
             label: i18n.t('mes.material_requirement.k20'),
-            bg: 'warning.light',
+            bg: 'warning.50',
             color: 'warning.700',
           },
           normal: {
@@ -193,7 +193,7 @@ export const materialRequirementSchema: EntitySchema = {
           },
           released: {
             label: i18n.t('mes.material_requirement.k31'),
-            bg: 'warning.light',
+            bg: 'warning.50',
             color: 'warning.700',
           },
           completed: {

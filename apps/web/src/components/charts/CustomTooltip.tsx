@@ -22,18 +22,16 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
   formatter,
 }) => {
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
   if (!active || !payload || payload.length === 0) return null;
 
-  const bgColor = isDark
-    ? alpha(theme.palette.grey[900], 0.95)
-    : alpha(theme.palette.common.white, 0.95);
-  const borderColor = isDark ? 'colors.grey.600' : designTokens.colors.border.default;
-  const labelColor = isDark ? designTokens.colors.grey['400'] : 'colors.grey.500';
-  const labelBorder = isDark ? designTokens.colors.grey[700] : designTokens.colors.border.default;
-  const nameColor = isDark ? designTokens.colors.grey['300'] : 'colors.grey.600';
-  const valueColor = isDark ? 'colors.grey.100' : 'colors.grey.800';
+  // 全部改走 palette：图表浮层在暗色下要与页面底色一致，
+  // 原先 isDark 分支写死亮色灰阶常量，暗色里浮层和文字几乎同色。
+  const bgColor = alpha(theme.palette.background.paper, 0.95);
+  const borderColor = theme.palette.divider;
+  const labelColor = theme.palette.text.secondary;
+  const labelBorder = theme.palette.divider;
+  const nameColor = theme.palette.text.secondary;
+  const valueColor = theme.palette.text.primary;
 
   return (
     <Box

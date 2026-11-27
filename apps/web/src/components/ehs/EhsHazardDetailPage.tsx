@@ -410,7 +410,7 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='text'
             size='small'
             onClick={() => handleDeleteControl(row.original.id)}
-            sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.light' } }}
+            sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.50' } }}
             startIcon={
               <Box
                 component={Trash2}

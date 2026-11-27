@@ -112,7 +112,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         label: i18n.t('lims.lims_instrument_maintenance_page.k8'),
       },
       under_maintenance: {
-        bg: 'warning.light',
+        bg: 'warning.50',
         color: 'warning.dark',
         label: i18n.t('lims.lims_instrument_maintenance_page.k9'),
       },
@@ -338,7 +338,7 @@ const MaintenanceStatsCard: React.FC = () => {
             sx={{
               textAlign: 'center',
               p: 2,
-              bgcolor: 'success.light',
+              bgcolor: 'success.50',
               borderRadius: 1,
             }}
           >

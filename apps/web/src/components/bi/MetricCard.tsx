@@ -472,10 +472,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 justifyContent: 'center',
                 backgroundColor:
                   computedTrend === 'up'
-                    ? 'colors.success.100'
+                    ? designTokens.colors.success[100]
                     : computedTrend === 'down'
                       ? 'error.100'
-                      : 'colors.grey.100',
+                      : designTokens.colors.grey[100],
                 transition: 'all 0.3s',
                 transform: isHovered ? 'scale(1.1)' : 'scale(1)',
               }}

@@ -95,7 +95,7 @@ const highlightText = (text: string, keyword: string): React.ReactNode => {
       {text.slice(0, index)}
       <Box
         component='span'
-        sx={{ bgcolor: 'warning.light', px: 0.25, borderRadius: 0.5 }}
+        sx={{ bgcolor: 'warning.50', px: 0.25, borderRadius: 0.5 }}
       >
         {text.slice(index, index + keyword.length)}
       </Box>
@@ -153,7 +153,7 @@ const getLogFields = (): SchemaField[] => [
             width: 24,
             height: 24,
             borderRadius: '50%',
-            bgcolor: 'primary.light',
+            bgcolor: 'primary.50',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -448,7 +448,7 @@ export const getLogSchema = (): EntitySchema => {
                           width: 20,
                           height: 20,
                           borderRadius: '50%',
-                          bgcolor: 'primary.light',
+                          bgcolor: 'primary.50',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',

@@ -108,7 +108,7 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
 
     const chartColors = [
       designTokens.colors.secondary.dark,
-      'colors.orange.500',
+      designTokens.colors.orange[500],
       designTokens.colors.success.dark,
       designTokens.colors.error.main,
       designTokens.colors.secondary.main,

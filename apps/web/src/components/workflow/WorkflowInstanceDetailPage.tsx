@@ -282,7 +282,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                           sx={{
                             width: 24,
                             height: 24,
-                            bgcolor: 'primary.light',
+                            bgcolor: 'primary.50',
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',

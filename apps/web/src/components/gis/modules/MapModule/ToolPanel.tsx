@@ -269,7 +269,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               gap: 2,
               bgcolor: 'error.50',
               color: 'error.dark',
-              '&:hover': { bgcolor: 'error.light' },
+              '&:hover': { bgcolor: 'error.50' },
               textTransform: 'none',
               mt: 1,
             }}
@@ -291,7 +291,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               gap: 2,
               bgcolor: 'success.50',
               color: 'success.dark',
-              '&:hover': { bgcolor: 'success.light' },
+              '&:hover': { bgcolor: 'success.50' },
               textTransform: 'none',
               mt: 1,
             }}
@@ -330,7 +330,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            bgcolor: 'primary.light',
+            bgcolor: 'primary.50',
             color: 'primary.dark',
             '&:hover': { bgcolor: 'primary.100' },
             textTransform: 'none',
@@ -351,7 +351,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             gap: 2,
             bgcolor: 'indigo.light',
             color: 'primary.light',
-            '&:hover': { bgcolor: 'secondary.light' },
+            '&:hover': { bgcolor: 'secondary.50' },
             textTransform: 'none',
             mt: 1,
           }}

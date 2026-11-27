@@ -68,7 +68,7 @@ const EnvironmentPage: React.FC = () => {
           mb: 4,
         }}
       >
-        <Card sx={{ bgcolor: 'success.light' }}>
+        <Card sx={{ bgcolor: 'success.50' }}>
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box

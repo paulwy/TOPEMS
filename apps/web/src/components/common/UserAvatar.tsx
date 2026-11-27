@@ -53,9 +53,9 @@ const getInitialsFromEmail = (email: string): string => {
 };
 
 const fallbackColors = [
-  { bg: 'colors.primary.50', fg: 'colors.primary.dark' },
+  { bg: designTokens.colors.primary[50], fg: designTokens.colors.primary.dark },
   { bg: 'var(--color-grey-100)', fg: designTokens.colors.purple['700'] },
-  { bg: 'colors.success.50', fg: designTokens.colors.success.dark },
+  { bg: designTokens.colors.success[50], fg: designTokens.colors.success.dark },
   { bg: designTokens.colors.warning['50'], fg: 'var(--color-warning-hover)' },
   { bg: 'var(--color-error-100)', fg: 'var(--color-error-700)' },
   { bg: 'var(--color-info-100)', fg: designTokens.colors.teal['700'] },
@@ -104,7 +104,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
 
   const palette = colorKey
     ? getColorForKey(colorKey)
-    : { bg: 'colors.grey.300', fg: designTokens.colors.grey['600'] };
+    : { bg: designTokens.colors.grey[300], fg: designTokens.colors.grey['600'] };
   const tooltipText = alt || name || email || '';
   const fontSize = getFontSize(size);
 

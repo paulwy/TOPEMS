@@ -113,7 +113,7 @@ export const productionRecordSchema: EntitySchema = {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           pending: {
             label: i18n.t('mes.production_record.k15'),
-            bg: 'warning.light',
+            bg: 'warning.50',
             color: 'warning.700',
           },
           in_progress: {

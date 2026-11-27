@@ -249,7 +249,7 @@ const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({
             </Grid>
             {currentLog.error_message && (
               <Grid size={{ xs: 12 }}>
-                <Paper sx={{ p: 3, bgcolor: 'error.light' }}>
+                <Paper sx={{ p: 3, bgcolor: 'error.50' }}>
                   <Typography
                     variant='subtitle2'
                     color='error.main'

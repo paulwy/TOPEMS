@@ -261,7 +261,7 @@ const DesktopMonitorPage = () => {
       )}
 
       {error && (
-        <Paper sx={{ p: 2, mb: 3, bgcolor: 'error.light', color: 'error.contrastText' }}>
+        <Paper sx={{ p: 2, mb: 3, bgcolor: 'error.50', color: 'error.contrastText' }}>
           <Box sx={{ ...row, ...center, ...gap(1) }}>
             <XCircle size={20} />
             <Typography variant='body2'>{error}</Typography>

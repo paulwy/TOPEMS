@@ -262,7 +262,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               backgroundColor: 'error.50',
               color: 'error.dark',
               '&:hover': {
-                backgroundColor: 'error.light',
+                backgroundColor: 'error.50',
               },
               fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             }}
@@ -285,7 +285,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               backgroundColor: 'success.50',
               color: 'success.dark',
               '&:hover': {
-                backgroundColor: 'success.light',
+                backgroundColor: 'success.50',
               },
               fontSize: designTokens.typography.fontSize.scale['0.75rem'],
             }}
@@ -332,7 +332,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             backgroundColor: 'primary.100',
             color: 'primary.dark',
             '&:hover': {
-              backgroundColor: 'primary.light',
+              backgroundColor: 'primary.50',
             },
             fontSize: designTokens.typography.fontSize.scale['0.75rem'],
           }}
@@ -350,7 +350,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            backgroundColor: 'secondary.light',
+            backgroundColor: 'secondary.50',
             color: 'primary.main',
             '&:hover': {
               backgroundColor: 'secondary.main',

@@ -390,7 +390,7 @@ const FinanceAssetPage: React.FC = () => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: 'success.light',
+                  bgcolor: 'success.50',
                   borderRadius: 1,
                   textAlign: 'center',
                 }}

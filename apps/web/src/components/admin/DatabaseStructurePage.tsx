@@ -295,7 +295,7 @@ const DatabaseStructurePage: React.FC = () => {
       case 'drop_column':
         return { bgcolor: 'error.50', color: 'error.700' };
       default:
-        return { bgcolor: 'warning.light', color: 'var(--warning-text)' };
+        return { bgcolor: 'warning.50', color: 'var(--warning-text)' };
     }
   };
   return (

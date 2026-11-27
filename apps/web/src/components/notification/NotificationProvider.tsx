@@ -72,14 +72,14 @@ const Toast = ({ id, title, message, type, duration, removeNotification }: Toast
     switch (type) {
       case 'success':
         return {
-          backgroundColor: 'success.light',
+          backgroundColor: 'success.50',
           borderColor: 'success.light',
           titleColor: 'success.800',
           messageColor: 'success.700',
         };
       case 'error':
         return {
-          backgroundColor: 'error.light',
+          backgroundColor: 'error.50',
           borderColor: 'error.light',
           titleColor: 'error.800',
           messageColor: 'error.700',

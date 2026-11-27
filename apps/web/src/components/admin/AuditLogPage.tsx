@@ -261,7 +261,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
       </Grid>
       {row.error_message ? (
         <Grid size={{ xs: 12 }}>
-          <Paper sx={{ p: 3, bgcolor: 'error.light' }}>
+          <Paper sx={{ p: 3, bgcolor: 'error.50' }}>
             <Typography
               variant='subtitle2'
               color='error.main'
@@ -528,7 +528,7 @@ const AuditLogPage: React.FC = () => {
                   width: 32,
                   height: 32,
                   borderRadius: '50%',
-                  bgcolor: 'primary.light',
+                  bgcolor: 'primary.50',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

@@ -237,7 +237,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               border: 1,
               borderColor: 'divider',
               borderRadius: 8,
-              '&:hover': { bgcolor: 'primary.light', borderColor: 'primary.light' },
+              '&:hover': { bgcolor: 'primary.50', borderColor: 'primary.light' },
               textTransform: 'none',
             }}
           >
@@ -270,7 +270,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               border: 1,
               borderColor: 'divider',
               borderRadius: 8,
-              '&:hover': { bgcolor: 'success.light', borderColor: 'success.light' },
+              '&:hover': { bgcolor: 'success.50', borderColor: 'success.light' },
               textTransform: 'none',
             }}
           >
@@ -303,7 +303,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               border: 1,
               borderColor: 'divider',
               borderRadius: 8,
-              '&:hover': { bgcolor: 'secondary.light', borderColor: 'secondary.light' },
+              '&:hover': { bgcolor: 'secondary.50', borderColor: 'secondary.light' },
               textTransform: 'none',
             }}
           >

@@ -488,7 +488,7 @@ export const DifyChatPage: React.FC = () => {
                   width: 24,
                   height: 24,
                   borderRadius: 0.5,
-                  bgcolor: 'primary.light',
+                  bgcolor: 'primary.50',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

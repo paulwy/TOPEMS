@@ -103,7 +103,7 @@ const EhsDrillPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: 'warning.light' }}>
+      <Card sx={{ bgcolor: 'warning.50' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box

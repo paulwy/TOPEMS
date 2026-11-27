@@ -693,7 +693,7 @@ export function GisMapTemplate({
     const colors: Record<string, string> = {
       device: designTokens.colors.primary.dark,
       storage: designTokens.colors.success.main,
-      warning: 'colors.error.main',
+      warning: designTokens.colors.error.main,
       custom: designTokens.colors.warning.main,
     };
     const color = colors[type] || colors.custom;
@@ -752,8 +752,8 @@ export function GisMapTemplate({
                 <LeafletCircle
                   center={fence.position}
                   radius={fence.radius}
-                  color={fence.color || 'colors.error.main'}
-                  fillColor={fence.color || 'colors.error.main'}
+                  color={fence.color || designTokens.colors.error.main}
+                  fillColor={fence.color || designTokens.colors.error.main}
                   fillOpacity={0.2}
                   eventHandlers={{ click: () => onFenceClick?.(fence) }}
                 />
@@ -761,8 +761,8 @@ export function GisMapTemplate({
               {(fence.type === 'polygon' || fence.type === 'rectangle') && fence.coordinates && (
                 <Polygon
                   positions={fence.coordinates as L.LatLngExpression[]}
-                  color={fence.color || 'colors.error.main'}
-                  fillColor={fence.color || 'colors.error.main'}
+                  color={fence.color || designTokens.colors.error.main}
+                  fillColor={fence.color || designTokens.colors.error.main}
                   fillOpacity={0.2}
                   eventHandlers={{ click: () => onFenceClick?.(fence) }}
                 />

@@ -60,7 +60,7 @@ const severityColorMap: Record<string, { bg: string; color: string }> = {
   mild: { bg: 'success.50', color: 'success.dark' },
   moderate: { bg: 'warning.50', color: 'warning.dark' },
   severe: { bg: 'error.50', color: 'error.dark' },
-  fatal: { bg: 'error.light', color: 'error.700' },
+  fatal: { bg: 'error.50', color: 'error.700' },
 };
 
 const severityLabelMap: Record<string, string> = {
@@ -118,7 +118,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: 'error.light' }}>
+      <Card sx={{ bgcolor: 'error.50' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box

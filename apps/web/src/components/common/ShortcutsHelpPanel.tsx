@@ -35,7 +35,7 @@ const ShortcutsHelpPanel = ({ isOpen, onClose }: ShortcutsHelpPanelProps) => {
               width: 40,
               height: 40,
               borderRadius: 1,
-              bgcolor: 'primary.light',
+              bgcolor: 'primary.50',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

@@ -88,7 +88,7 @@ const SrmSupplierDetailPage: React.FC = () => {
         >
           {supplier.contact_person && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+              <Avatar sx={{ bgcolor: 'primary.50', width: 32, height: 32 }}>
                 <Building2 sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
@@ -101,7 +101,7 @@ const SrmSupplierDetailPage: React.FC = () => {
           )}
           {supplier.phone && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+              <Avatar sx={{ bgcolor: 'primary.50', width: 32, height: 32 }}>
                 <Phone sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
@@ -114,7 +114,7 @@ const SrmSupplierDetailPage: React.FC = () => {
           )}
           {supplier.email && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+              <Avatar sx={{ bgcolor: 'primary.50', width: 32, height: 32 }}>
                 <Mail sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
@@ -127,7 +127,7 @@ const SrmSupplierDetailPage: React.FC = () => {
           )}
           {supplier.address && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+              <Avatar sx={{ bgcolor: 'primary.50', width: 32, height: 32 }}>
                 <MapPin sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
@@ -140,7 +140,7 @@ const SrmSupplierDetailPage: React.FC = () => {
           )}
           {supplier.website && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+              <Avatar sx={{ bgcolor: 'primary.50', width: 32, height: 32 }}>
                 <Building2 sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>

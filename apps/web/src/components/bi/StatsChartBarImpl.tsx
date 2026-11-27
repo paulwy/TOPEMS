@@ -30,7 +30,7 @@ interface StatsChartBarProps {
 const defaultColors = [
   'primary.light',
   'secondary.main',
-  'colors.purple.500',
+  designTokens.colors.purple[500],
   designTokens.colors.pink[500],
   designTokens.colors.pink.main,
   designTokens.colors.error[500],

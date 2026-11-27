@@ -140,7 +140,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
     const colors = [
       designTokens.colors.primary.dark,
       designTokens.colors.success[600],
-      'colors.orange.700',
+      designTokens.colors.orange[700],
       'var(--color-error-700)',
       designTokens.colors.purple['700'],
     ];

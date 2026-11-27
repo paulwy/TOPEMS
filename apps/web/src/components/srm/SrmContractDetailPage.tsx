@@ -83,7 +83,7 @@ const SrmContractDetailPage: React.FC = () => {
         >
           {contract.sign_date && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+              <Avatar sx={{ bgcolor: 'primary.50', width: 32, height: 32 }}>
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
@@ -98,7 +98,7 @@ const SrmContractDetailPage: React.FC = () => {
           )}
           {contract.start_date && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+              <Avatar sx={{ bgcolor: 'primary.50', width: 32, height: 32 }}>
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>
@@ -113,7 +113,7 @@ const SrmContractDetailPage: React.FC = () => {
           )}
           {contract.end_date && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
+              <Avatar sx={{ bgcolor: 'primary.50', width: 32, height: 32 }}>
                 <Calendar sx={{ width: 16, height: 16, color: 'primary.main' }} />
               </Avatar>
               <Box>

@@ -372,7 +372,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                           height: 12,
                           borderRadius: '50%',
                           border: '2px solid var(--warning-text)',
-                          backgroundColor: 'warning.light',
+                          backgroundColor: 'warning.50',
                           left: `${48 + getDayOffset(milestone.date) * (zoom / 100) * 20 - 6}px`,
                         }}
                         title={milestone.name}
@@ -439,7 +439,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               height: 12,
               borderRadius: '50%',
               border: '2px solid var(--warning-text)',
-              backgroundColor: 'warning.light',
+              backgroundColor: 'warning.50',
             }}
           />
           <Typography

@@ -165,7 +165,7 @@ const ReportList: React.FC<ReportListProps> = ({
                     startIcon={<Eye sx={{ width: 16, height: 16 }} />}
                     sx={{
                       color: 'info.main',
-                      '&:hover': { bgcolor: 'info.light' },
+                      '&:hover': { bgcolor: 'info.50' },
                       borderRadius: 3,
                     }}
                   >
@@ -177,7 +177,7 @@ const ReportList: React.FC<ReportListProps> = ({
                     startIcon={<Download sx={{ width: 16, height: 16 }} />}
                     sx={{
                       color: 'success.main',
-                      '&:hover': { bgcolor: 'success.light' },
+                      '&:hover': { bgcolor: 'success.50' },
                       borderRadius: 3,
                     }}
                   >
@@ -188,7 +188,7 @@ const ReportList: React.FC<ReportListProps> = ({
                     size='small'
                     sx={{
                       color: 'error.main',
-                      '&:hover': { bgcolor: 'error.light' },
+                      '&:hover': { bgcolor: 'error.50' },
                       borderRadius: 3,
                       p: 1,
                       minWidth: 'auto',

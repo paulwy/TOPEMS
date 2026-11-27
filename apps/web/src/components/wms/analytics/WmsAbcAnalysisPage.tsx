@@ -122,7 +122,7 @@ export default function WmsAbcAnalysisPage() {
                   {abc.map((entry, i) => (
                     <Cell
                       key={i}
-                      fill={ABC_COLORS[entry.category] ?? 'colors.grey.500'}
+                      fill={ABC_COLORS[entry.category] ?? designTokens.colors.grey[500]}
                     />
                   ))}
                 </Pie>

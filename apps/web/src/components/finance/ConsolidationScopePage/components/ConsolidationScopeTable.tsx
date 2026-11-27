@@ -32,15 +32,15 @@ const getChipSx = (colorClass: string): object => {
       color: 'primary.dark',
     },
     'bg-purple-100 text-purple-800': {
-      backgroundColor: 'secondary.light',
+      backgroundColor: 'secondary.50',
       color: 'secondary.dark',
     },
     'bg-teal-100 text-teal-800': {
-      backgroundColor: 'info.light',
+      backgroundColor: 'info.50',
       color: 'info.dark',
     },
     'bg-orange-100 text-orange-800': {
-      backgroundColor: 'warning.light',
+      backgroundColor: 'warning.50',
       color: 'warning.dark',
     },
   };

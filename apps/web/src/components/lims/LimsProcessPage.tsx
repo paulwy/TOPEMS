@@ -196,7 +196,7 @@ const LimsProcessPage: React.FC = () => {
               height: 64,
               mx: 'auto',
               mb: 3,
-              bgcolor: 'info.light',
+              bgcolor: 'info.50',
             }}
           >
             <ClipboardList

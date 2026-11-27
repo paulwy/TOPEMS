@@ -293,7 +293,7 @@ const PerformanceTestPage: React.FC = () => {
       value: loadTime ? `${loadTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k1'),
       color:
         loadTime && loadTime < 100 ? `${theme.palette.success.dark}` : theme.palette.warning.dark,
-      bgColor: loadTime && loadTime < 100 ? 'colors.success.100' : 'colors.warning.100',
+      bgColor: loadTime && loadTime < 100 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
       description: t('performance.performance_test_page.k3'),
     },
     {
@@ -307,10 +307,10 @@ const PerformanceTestPage: React.FC = () => {
             : theme.palette.error.dark,
       bgColor:
         lcpTime && lcpTime < 2500
-          ? 'colors.success.100'
+          ? designTokens.colors.success[100]
           : lcpTime && lcpTime < 4000
-            ? 'colors.warning.100'
-            : 'colors.error.100',
+            ? designTokens.colors.warning[100]
+            : designTokens.colors.error[100],
       description: 'Largest Contentful Paint (LCP)',
     },
     {
@@ -324,10 +324,10 @@ const PerformanceTestPage: React.FC = () => {
             : theme.palette.error.dark,
       bgColor:
         ttiTime && ttiTime < 3800
-          ? 'colors.success.100'
+          ? designTokens.colors.success[100]
           : ttiTime && ttiTime < 7300
-            ? 'colors.warning.100'
-            : 'colors.error.100',
+            ? designTokens.colors.warning[100]
+            : designTokens.colors.error[100],
       description: 'Time to Interactive (TTI)',
     },
     {
@@ -341,10 +341,10 @@ const PerformanceTestPage: React.FC = () => {
             : theme.palette.error.dark,
       bgColor:
         fidTime && fidTime < 100
-          ? 'colors.success.100'
+          ? designTokens.colors.success[100]
           : fidTime && fidTime < 300
-            ? 'colors.warning.100'
-            : 'colors.error.100',
+            ? designTokens.colors.warning[100]
+            : designTokens.colors.error[100],
       description: 'First Input Delay (FID)',
     },
     {
@@ -358,10 +358,10 @@ const PerformanceTestPage: React.FC = () => {
             : theme.palette.error.dark,
       bgColor:
         clsScore !== null && clsScore < 0.1
-          ? 'colors.success.100'
+          ? designTokens.colors.success[100]
           : clsScore !== null && clsScore < 0.25
-            ? 'colors.warning.100'
-            : 'colors.error.100',
+            ? designTokens.colors.warning[100]
+            : designTokens.colors.error[100],
       description: 'Cumulative Layout Shift (CLS)',
     },
     {
@@ -371,7 +371,7 @@ const PerformanceTestPage: React.FC = () => {
         firstPaint && firstPaint < 1000
           ? `${theme.palette.success.dark}`
           : theme.palette.warning.dark,
-      bgColor: firstPaint && firstPaint < 1000 ? 'colors.success.100' : 'colors.warning.100',
+      bgColor: firstPaint && firstPaint < 1000 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
       description: 'First Paint (FP)',
     },
     {
@@ -385,8 +385,8 @@ const PerformanceTestPage: React.FC = () => {
           : theme.palette.warning.dark,
       bgColor:
         firstContentfulPaint && firstContentfulPaint < 1500
-          ? 'colors.success.100'
-          : 'colors.warning.100',
+          ? designTokens.colors.success[100]
+          : designTokens.colors.warning[100],
       description: 'First Contentful Paint (FCP)',
     },
     {
@@ -399,7 +399,7 @@ const PerformanceTestPage: React.FC = () => {
           ? `${theme.palette.success.dark}`
           : theme.palette.warning.dark,
       bgColor:
-        navigationTime && navigationTime < 2000 ? 'colors.success.100' : 'colors.warning.100',
+        navigationTime && navigationTime < 2000 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
       description: t('performance.performance_test_page.k11'),
     },
     {
@@ -416,7 +416,7 @@ const PerformanceTestPage: React.FC = () => {
         avgRenderTime && avgRenderTime < 16
           ? `${theme.palette.success.dark}`
           : theme.palette.warning.dark,
-      bgColor: avgRenderTime && avgRenderTime < 16 ? 'colors.success.100' : 'colors.warning.100',
+      bgColor: avgRenderTime && avgRenderTime < 16 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
       description: t('performance.performance_test_page.k15'),
     },
     {
@@ -429,7 +429,7 @@ const PerformanceTestPage: React.FC = () => {
           ? `${theme.palette.success.dark}`
           : theme.palette.warning.dark,
       bgColor:
-        domContentLoaded && domContentLoaded < 1000 ? 'colors.success.100' : 'colors.warning.100',
+        domContentLoaded && domContentLoaded < 1000 ? designTokens.colors.success[100] : designTokens.colors.warning[100],
       description: 'DOM Content Loaded',
     },
     {
@@ -499,8 +499,8 @@ const PerformanceTestPage: React.FC = () => {
                 width='40'
                 height='40'
                 viewBox='0 0 24 24'
-                fill='colors.warning.400'
-                stroke='colors.warning.400'
+                fill={designTokens.colors.warning[400]}
+                stroke={designTokens.colors.warning[400]}
                 strokeWidth='2'
                 strokeLinecap='round'
                 strokeLinejoin='round'

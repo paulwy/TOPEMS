@@ -461,7 +461,7 @@ const LimsSampleDetailPage: React.FC = () => {
               sx={{
                 textAlign: 'center',
                 p: 2,
-                bgcolor: 'success.light',
+                bgcolor: 'success.50',
                 borderRadius: 3,
               }}
             >
@@ -485,7 +485,7 @@ const LimsSampleDetailPage: React.FC = () => {
               sx={{
                 textAlign: 'center',
                 p: 2,
-                bgcolor: 'error.light',
+                bgcolor: 'error.50',
                 borderRadius: 3,
               }}
             >

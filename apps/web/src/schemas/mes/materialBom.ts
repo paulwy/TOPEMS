@@ -66,7 +66,7 @@ export const materialBomSchema: EntitySchema = {
           },
           inactive: {
             label: i18n.t('mes.material_bom.k12'),
-            bg: 'warning.light',
+            bg: 'warning.50',
             color: 'warning.700',
           },
           obsolete: {

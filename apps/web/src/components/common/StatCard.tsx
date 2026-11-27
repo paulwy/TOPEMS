@@ -986,7 +986,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 width: 48,
                 height: 48,
                 borderRadius: '50%',
-                bgcolor: 'error.light',
+                bgcolor: 'error.50',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

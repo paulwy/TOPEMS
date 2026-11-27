@@ -6,7 +6,7 @@ import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 const ct = {
-  primary: { dark: 'colors.primary.dark', light: 'colors.primary.50' },
+  primary: { dark: designTokens.colors.primary.dark, light: designTokens.colors.primary[50] },
   grey: {
     400: designTokens.colors.grey['400'],
     600: designTokens.colors.grey['600'],
@@ -83,7 +83,7 @@ const auditLogFields: SchemaField[] = [
               width: 32,
               height: 32,
               borderRadius: '50%',
-              bgcolor: 'primary.light',
+              bgcolor: 'primary.50',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

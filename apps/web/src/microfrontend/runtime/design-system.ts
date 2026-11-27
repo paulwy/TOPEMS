@@ -119,7 +119,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'secondary-light',
-    value: 'colors.cyan.300',
+    value: designTokens.colors.cyan[300],
     type: TokenType.COLOR,
     category: 'color',
     description: i18n.t('microfrontend.design-system.k4'),
@@ -172,7 +172,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'gray-100',
-    value: 'colors.grey.100',
+    value: designTokens.colors.grey[100],
     type: TokenType.COLOR,
     category: 'color',
     description: i18n.t('microfrontend.design-system.100_11'),
@@ -200,28 +200,28 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'gray-500',
-    value: 'colors.grey.500',
+    value: designTokens.colors.grey[500],
     type: TokenType.COLOR,
     category: 'color',
     description: i18n.t('microfrontend.design-system.500_15'),
   },
   {
     name: 'gray-600',
-    value: 'colors.grey.600',
+    value: designTokens.colors.grey[600],
     type: TokenType.COLOR,
     category: 'color',
     description: i18n.t('microfrontend.design-system.600_16'),
   },
   {
     name: 'gray-700',
-    value: 'colors.grey.700',
+    value: designTokens.colors.grey[700],
     type: TokenType.COLOR,
     category: 'color',
     description: i18n.t('microfrontend.design-system.700_17'),
   },
   {
     name: 'gray-800',
-    value: 'colors.grey.800',
+    value: designTokens.colors.grey[800],
     type: TokenType.COLOR,
     category: 'color',
     description: i18n.t('microfrontend.design-system.800_18'),
@@ -265,7 +265,7 @@ export const PRESET_TOKENS: DesignToken[] = [
   },
   {
     name: 'text-secondary',
-    value: 'colors.grey.500',
+    value: designTokens.colors.grey[500],
     type: TokenType.COLOR,
     category: 'color',
     description: i18n.t('microfrontend.design-system.k24'),
@@ -604,7 +604,7 @@ export const LIGHT_THEME: ThemeConfig = {
   background: 'primary.contrastText',
   text_colors: {
     primary: designTokens.colors.grey[900],
-    secondary: 'colors.grey.500',
+    secondary: designTokens.colors.grey[500],
     disabled: `${designTokens.colors.grey['400']}`,
   },
   component_overrides: {},
@@ -619,7 +619,7 @@ export const DARK_THEME: ThemeConfig = {
   text_colors: {
     primary: designTokens.colors.grey[50],
     secondary: `${designTokens.colors.grey['400']}`,
-    disabled: 'colors.grey.600',
+    disabled: designTokens.colors.grey[600],
   },
   component_overrides: {},
 };

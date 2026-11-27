@@ -329,7 +329,7 @@ const VoucherDetailPage: React.FC = () => {
               sx={{
                 p: 1.5,
                 borderRadius: '50%',
-                bgcolor: 'primary.light',
+                bgcolor: 'primary.50',
                 display: 'flex',
               }}
             >
@@ -358,7 +358,7 @@ const VoucherDetailPage: React.FC = () => {
               sx={{
                 p: 1.5,
                 borderRadius: '50%',
-                bgcolor: 'info.light',
+                bgcolor: 'info.50',
                 display: 'flex',
               }}
             >
@@ -387,7 +387,7 @@ const VoucherDetailPage: React.FC = () => {
               sx={{
                 p: 1.5,
                 borderRadius: '50%',
-                bgcolor: 'success.light',
+                bgcolor: 'success.50',
                 display: 'flex',
               }}
             >
@@ -592,7 +592,7 @@ const VoucherDetailPage: React.FC = () => {
               sx={{
                 p: 1,
                 borderRadius: '50%',
-                bgcolor: 'success.light',
+                bgcolor: 'success.50',
                 display: 'flex',
               }}
             >
@@ -632,7 +632,7 @@ const VoucherDetailPage: React.FC = () => {
                 sx={{
                   p: 1,
                   borderRadius: '50%',
-                  bgcolor: 'info.light',
+                  bgcolor: 'info.50',
                   display: 'flex',
                 }}
               >
@@ -673,7 +673,7 @@ const VoucherDetailPage: React.FC = () => {
                 sx={{
                   p: 1,
                   borderRadius: '50%',
-                  bgcolor: 'primary.light',
+                  bgcolor: 'primary.50',
                   display: 'flex',
                 }}
               >

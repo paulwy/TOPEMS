@@ -796,7 +796,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                 alignItems: 'flex-start',
                 gap: 1.5,
                 p: 2,
-                bgcolor: 'info.light',
+                bgcolor: 'info.50',
                 borderRadius: 1,
               }}
             >
@@ -843,7 +843,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                 alignItems: 'flex-start',
                 gap: 1.5,
                 p: 2,
-                bgcolor: 'secondary.light',
+                bgcolor: 'secondary.50',
                 borderRadius: 1,
               }}
             >
@@ -890,7 +890,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                 alignItems: 'flex-start',
                 gap: 1.5,
                 p: 2,
-                bgcolor: 'success.light',
+                bgcolor: 'success.50',
                 borderRadius: 1,
               }}
             >

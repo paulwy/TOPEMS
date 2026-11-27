@@ -78,7 +78,7 @@ const EhsHazardControlsSection: React.FC<EhsHazardControlsSectionProps> = ({
             variant='text'
             size='small'
             onClick={() => onDeleteControl(row.original.id)}
-            sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.light' } }}
+            sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.50' } }}
             startIcon={
               <Box
                 component={Trash2}

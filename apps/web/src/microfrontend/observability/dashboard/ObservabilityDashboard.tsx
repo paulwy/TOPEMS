@@ -247,7 +247,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label={i18n.t('microfrontend.observability_dashboard.k3')}
             value={formatDuration(avgLoadTime)}
             icon={<ClockIcon size={24} />}
-            color='colors.orange.700'
+            color={designTokens.colors.orange[700]}
           />
         </Grid>
       </Grid>
@@ -269,7 +269,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label={i18n.t('microfrontend.observability_dashboard.k5')}
             value={totalErrors}
             icon={<AlertIcon size={24} />}
-            color='colors.error.800'
+            color={designTokens.colors.error[800]}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -306,7 +306,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                     value: Math.round(m.totalLoadTime),
                     color:
                       m.totalLoadTime > SLOW_MODULE_THRESHOLD
-                        ? 'colors.orange.700'
+                        ? designTokens.colors.orange[700]
                         : designTokens.colors.primary.dark,
                   }))}
                 />
@@ -346,7 +346,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <AlertIcon
-                color='colors.orange.700'
+                color={designTokens.colors.orange[700]}
                 size={20}
               />
               <Typography
@@ -506,7 +506,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
                 value: Math.round(m.totalLoadTime),
                 color:
                   m.totalLoadTime > SLOW_MODULE_THRESHOLD
-                    ? 'colors.orange.700'
+                    ? designTokens.colors.orange[700]
                     : designTokens.colors.primary.dark,
               }))}
               height={250}
@@ -617,7 +617,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
             label={i18n.t('microfrontend.observability_dashboard.k20')}
             value={errorStats?.totalErrorTypes || 0}
             icon={<XCircleIcon size={24} />}
-            color='colors.error.800'
+            color={designTokens.colors.error[800]}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>

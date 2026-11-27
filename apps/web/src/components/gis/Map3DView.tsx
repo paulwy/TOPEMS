@@ -428,7 +428,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
               <Typography variant='caption'>{i18n.t('gis.map3_d_view.k8')}</Typography>
             </MuiBox>
             <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <MuiBox sx={{ width: 24, height: 2, bgcolor: 'primary.light' }} />
+              <MuiBox sx={{ width: 24, height: 2, bgcolor: 'primary.50' }} />
               <Typography variant='caption'>{i18n.t('gis.map3_d_view.k9')}</Typography>
             </MuiBox>
             <MuiBox

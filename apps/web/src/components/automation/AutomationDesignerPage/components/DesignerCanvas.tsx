@@ -119,7 +119,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
               >
                 <polygon
                   points='0 0, 10 3.5, 0 7'
-                  fill='colors.grey.500'
+                  fill={designTokens.colors.grey[500]}
                 />
               </marker>
             </defs>
@@ -129,7 +129,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                 <path
                   key={edge.id}
                   d={path}
-                  stroke='colors.grey.500'
+                  stroke={designTokens.colors.grey[500]}
                   strokeWidth={2}
                   fill='none'
                   markerEnd='url(#dag-arrowhead)'
@@ -333,7 +333,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                   width={NODE_WIDTH}
                   height={NODE_HEIGHT}
                   rx={8}
-                  fill={isSelected ? theme.palette.primary.dark : 'colors.grey.500'}
+                  fill={isSelected ? theme.palette.primary.dark : designTokens.colors.grey[500]}
                 />
               );
             })}

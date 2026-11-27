@@ -95,7 +95,7 @@ export const materialReturnSchema: EntitySchema = {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           pending: {
             label: i18n.t('mes.material_return.k13'),
-            bg: 'warning.light',
+            bg: 'warning.50',
             color: 'warning.700',
           },
           approved: {

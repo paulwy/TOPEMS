@@ -19,7 +19,7 @@ export const getStatusStyle = (status: string) => {
   if (s.includes('active') || s.includes(i18n.t('bi.gis_page_components__table_utils.active')))
     return { bgcolor: 'success.50', color: 'var(--success-text)' };
   if (s.includes('pending') || s.includes(i18n.t('bi.gis_page_components__table_utils.pending')))
-    return { bgcolor: 'warning.light', color: 'var(--warning-text)' };
+    return { bgcolor: 'warning.50', color: 'var(--warning-text)' };
   if (
     s.includes('inactive') ||
     s.includes(i18n.t('bi.gis_page_components__table_utils.disabled_filter'))

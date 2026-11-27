@@ -34,7 +34,7 @@ const ServiceDownState: React.FC = () => {
           sx={{
             width: 64,
             height: 64,
-            bgcolor: 'primary.light',
+            bgcolor: 'primary.50',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',

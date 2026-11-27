@@ -207,7 +207,7 @@ const SampleReceivePage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: 'warning.light',
+                  bgcolor: 'warning.50',
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',

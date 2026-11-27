@@ -130,7 +130,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: 'error.light',
+                  bgcolor: 'error.50',
                   borderRadius: 1,
                   border: 1,
                   borderColor: 'error.main',

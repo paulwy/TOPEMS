@@ -53,7 +53,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
             sx={{
               width: 48,
               height: 48,
-              bgcolor: 'primary.light',
+              bgcolor: 'primary.50',
               borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
@@ -101,7 +101,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
             sx={{
               width: 48,
               height: 48,
-              bgcolor: 'warning.light',
+              bgcolor: 'warning.50',
               borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
@@ -149,7 +149,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
             sx={{
               width: 48,
               height: 48,
-              bgcolor: 'info.light',
+              bgcolor: 'info.50',
               borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
@@ -197,7 +197,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
             sx={{
               width: 48,
               height: 48,
-              bgcolor: 'success.light',
+              bgcolor: 'success.50',
               borderRadius: 3,
               display: 'flex',
               alignItems: 'center',

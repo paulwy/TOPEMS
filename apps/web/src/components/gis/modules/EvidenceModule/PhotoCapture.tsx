@@ -221,7 +221,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
               onClick={toggleFlash}
               sx={{
                 borderRadius: 'full',
-                bgcolor: flashOn ? 'warning.main' : 'colors.cyber.glass.divider',
+                bgcolor: flashOn ? 'warning.main' : designTokens.colors.cyber.glass.divider,
                 color: 'common.white',
                 '&:hover': {
                   bgcolor: flashOn ? 'warning.main' : designTokens.colors.cyber.metal.bottomShadow,

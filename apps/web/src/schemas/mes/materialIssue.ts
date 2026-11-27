@@ -76,7 +76,7 @@ export const materialIssueSchema: EntitySchema = {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           pending: {
             label: i18n.t('mes.material_issue.k12'),
-            bg: 'warning.light',
+            bg: 'warning.50',
             color: 'warning.700',
           },
           approved: {

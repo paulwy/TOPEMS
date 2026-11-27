@@ -2,6 +2,7 @@ import type { EntitySchema } from '@/schema-dsl';
 import { Box, Typography, Chip, Stack } from '@mui/material';
 import { FileText, FileSpreadsheet, File, Image, FolderOpen } from 'lucide-react';
 import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
 
 const TYPE_LABELS: Record<string, string> = {
   pdf: 'PDF',
@@ -29,7 +30,7 @@ interface DocumentRow {
 }
 
 const getFileIcon = (type: string) => {
-  const color = TYPE_COLORS[type] || 'colors.grey.400';
+  const color = TYPE_COLORS[type] || designTokens.colors.grey[400];
   switch (type) {
     case 'pdf':
       return (
@@ -167,7 +168,7 @@ export const documentSchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>, _index: number) => {
         const doc = row as unknown as DocumentRow;
         const type = doc.content_type ? getFileType(doc.content_type) : 'pdf';
-        const color = TYPE_COLORS[type] || 'colors.grey.400';
+        const color = TYPE_COLORS[type] || designTokens.colors.grey[400];
         const label = TYPE_LABELS[type] || type;
         return (
           <Chip

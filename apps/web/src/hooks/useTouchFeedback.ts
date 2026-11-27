@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { designTokens } from '@topems/tokens';
 
 export interface TouchFeedbackOptions {
   rippleColor?: string;
@@ -19,7 +20,7 @@ export interface TouchRipple {
 
 export function useTouchFeedback(options: TouchFeedbackOptions = {}) {
   const {
-    rippleColor = 'colors.cyber.glass.bgLight',
+    rippleColor = designTokens.colors.cyber.glass.bgLight,
     minTouchTarget = 44,
     enableLongPress = false,
     longPressDelay = 500,

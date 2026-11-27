@@ -21,29 +21,29 @@ export enum ChartType {
 export const BIChartColors = {
   series: [
     designTokens.colors.primary.main, // Blue (primary.main)
-    'colors.success.main', // Emerald (success.main)
+    designTokens.colors.success.main, // Emerald (success.main)
     designTokens.colors.warning.main, // Amber (warning.main)
     designTokens.colors.error.main, // Red (error.main)
     designTokens.colors.secondary.main, // Violet
-    'colors.cyan.500', // Cyan
+    designTokens.colors.cyan[500], // Cyan
     designTokens.colors.pink.main, // Pink
     designTokens.colors.neon.lime[500], // Lime
   ],
   dark: {
     series: [
-      'colors.primary.400', // Blue (lighter for dark bg)
+      designTokens.colors.primary[400], // Blue (lighter for dark bg)
       'var(--color-success-400)', // Emerald
-      'colors.warning.400', // Amber
+      designTokens.colors.warning[400], // Amber
       'var(--color-error-400)', // Red
-      'colors.secondary.light', // Violet
-      'colors.cyan.400', // Cyan
-      'colors.pink.400', // Pink
+      designTokens.colors.secondary.light, // Violet
+      designTokens.colors.cyan[400], // Cyan
+      designTokens.colors.pink[400], // Pink
       designTokens.colors.neon.lime[400], // Lime
     ],
     grid: designTokens.colors.grey[700],
     text: designTokens.colors.grey['400'],
     background: 'common.white',
-    border: 'colors.grey.600',
+    border: designTokens.colors.grey[600],
   },
   // 赛博朋克霓虹色板 — 高饱和度发光色，适配深空背景
   cyberpunk: {
@@ -65,7 +65,7 @@ export const BIChartColors = {
   neutral: {
     grid: designTokens.colors.border.default,
     gridDark: designTokens.colors.grey[700],
-    text: 'colors.grey.500',
+    text: designTokens.colors.grey[500],
     textDark: designTokens.colors.grey['400'],
     background: 'common.white',
     backgroundDark: 'common.white',
@@ -73,23 +73,23 @@ export const BIChartColors = {
   // Primary palette (kept for backward-compatible reference)
   primary: {
     blue: designTokens.colors.primary.main,
-    cyan: 'colors.cyan.500',
+    cyan: designTokens.colors.cyan[500],
     indigo: designTokens.colors.secondary.dark,
   },
   // Semantic colors
   semantic: {
-    success: 'colors.success.main',
+    success: designTokens.colors.success.main,
     warning: designTokens.colors.warning.main,
     error: designTokens.colors.error.main,
-    info: 'colors.info.main',
+    info: designTokens.colors.info.main,
   },
   // Gradient definitions
   gradients: {
-    blue: [designTokens.colors.primary.main, 'colors.cyan.500'],
-    emerald: ['colors.success.main', 'colors.teal.500'],
-    violet: [designTokens.colors.secondary.main, 'colors.purple.500'],
+    blue: [designTokens.colors.primary.main, designTokens.colors.cyan[500]],
+    emerald: [designTokens.colors.success.main, designTokens.colors.teal[500]],
+    violet: [designTokens.colors.secondary.main, designTokens.colors.purple[500]],
     rose: [designTokens.colors.error[500], 'var(--color-error-400)'],
-    amber: [designTokens.colors.warning.main, 'colors.warning.400'],
+    amber: [designTokens.colors.warning.main, designTokens.colors.warning[400]],
   },
 } as const;
 
@@ -131,19 +131,34 @@ interface ChartThemeColors {
 export const useChartTheme = (): ChartThemeColors => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const p = theme.palette;
 
+  // 图表拿不到 sx 的令牌解析，只能取实际色值：这里统一从当前 palette 现算，
+  // 暗色下网格/浮层/文字跟着主题走（原先写死亮色常量，暗色里网格线近白、浮层发白）。
   return {
-    gridColor: isDark ? BIChartColors.neutral.gridDark : BIChartColors.neutral.grid,
-    textColor: isDark ? BIChartColors.neutral.textDark : BIChartColors.neutral.text,
-    tooltipBg: isDark ? BIChartColors.neutral.backgroundDark : BIChartColors.neutral.background,
-    borderColor: isDark ? 'colors.grey.600' : designTokens.colors.border.default,
-    primary: theme.palette.primary.main,
-    secondary: theme.palette.secondary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    info: theme.palette.info.main,
-    series: isDark ? BIChartColors.dark.series : BIChartColors.series,
+    gridColor: p.divider,
+    textColor: p.text.secondary,
+    tooltipBg: p.background.paper,
+    borderColor: p.divider,
+    primary: p.primary.main,
+    secondary: p.secondary.main,
+    success: p.success.main,
+    warning: p.warning.main,
+    error: p.error.main,
+    info: p.info.main,
+    // 暗色用各语义色的 light 变体，深底上才够亮；亮色沿用既定色板
+    series: isDark
+      ? [
+          p.primary.light,
+          p.success.light,
+          p.warning.light,
+          p.error.light,
+          p.secondary.light,
+          p.cyan[400],
+          p.pink[400],
+          designTokens.colors.neon.lime[400],
+        ]
+      : BIChartColors.series,
   };
 };
 

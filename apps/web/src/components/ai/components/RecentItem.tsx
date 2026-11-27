@@ -50,7 +50,7 @@ export const RecentItem: React.FC<RecentItemData> = ({
           width: 36,
           height: 36,
           borderRadius: 1,
-          bgcolor: 'primary.light',
+          bgcolor: 'primary.50',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
