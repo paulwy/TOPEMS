@@ -119,6 +119,18 @@ const SUPPLIER_FILTER: &str = r#"deleted_at IS NULL
        OR COALESCE(email, '') ILIKE '%' || $3 || '%')"#;
 
 /// GET /api/master-data/suppliers —— 分页只读列表（可选 keyword/status/category 过滤）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/suppliers",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn list_suppliers(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -220,6 +232,18 @@ pub async fn list_suppliers(
 }
 
 /// GET /api/master-data/suppliers/:id —— 按主键读单条
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/suppliers/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn get_supplier(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -377,6 +401,18 @@ fn map_write_error(e: sqlx::Error, ctx: &str) -> TopemsError {
 
 /// POST /api/master-data/suppliers —— 创建一条 MDM 权威供应商。
 /// `source_system` 强制写死为 `'mdm'`，`source_id` 为 NULL（本接口直接在权威表建档）。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/suppliers",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn create_supplier(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -531,6 +567,18 @@ pub async fn create_supplier(
 }
 
 /// PATCH /api/master-data/suppliers/:id —— 部分更新（只更新请求里给出的字段）。
+#[utoipa::path(
+    patch,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/suppliers/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn update_supplier(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -691,6 +739,18 @@ pub async fn update_supplier(
 }
 
 /// DELETE /api/master-data/suppliers/:id —— 软删（只置 deleted_at，绝不物理删除）。
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/suppliers/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn delete_supplier(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

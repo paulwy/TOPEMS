@@ -102,6 +102,18 @@ pub struct MaterialListResponse {
     pub page_size: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/master-data/materials",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn list_materials(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -199,6 +211,18 @@ pub async fn list_materials(
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/master-data/materials/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn get_material(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -253,6 +277,18 @@ pub async fn get_material(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/materials",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn create_material(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -308,6 +344,18 @@ pub async fn create_material(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/materials/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn update_material(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -376,6 +424,18 @@ pub async fn update_material(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/materials/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn delete_material(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -481,6 +541,18 @@ pub struct UomListResponse {
     pub page_size: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/master-data/uoms",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn list_uoms(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -574,6 +646,18 @@ pub async fn list_uoms(
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/master-data/uoms/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn get_uom(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -624,6 +708,18 @@ pub async fn get_uom(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/uoms",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn create_uom(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -681,6 +777,18 @@ pub async fn create_uom(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/uoms/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn update_uom(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -745,6 +853,18 @@ pub async fn update_uom(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/uoms/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn delete_uom(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -850,6 +970,18 @@ pub struct SampleListResponse {
     pub page_size: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/master-data/samples",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn list_samples(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -944,6 +1076,18 @@ pub async fn list_samples(
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/master-data/samples/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn get_sample(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -994,6 +1138,18 @@ pub async fn get_sample(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/samples",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn create_sample(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1051,6 +1207,18 @@ pub async fn create_sample(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/samples/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn update_sample(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1115,6 +1283,18 @@ pub async fn update_sample(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/api/master-data/master-data/samples/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn delete_sample(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

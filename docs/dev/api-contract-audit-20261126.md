@@ -880,3 +880,21 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 **结果**：doc **97/63/34**（较 72 降 38），spec 3522 → 3557，doc 46 条 path；doc 13 条无参 GET 实测 0 404。**剩 34 条后端未实现**（明细见 `/tmp/doc_404_list.txt` 与提交说明）：模板审批流程（submit/approve/reject/cancel）、模板版本（create/update/activate/rollback/fork/diff/compare）、模板克隆/复制/导出/渲染/依赖、文档版本发布/回滚、文档锁、评论增改、协作者增改、工作区 CRUD/移入回收站/恢复。这些需要产品口径（真做还是前端下掉），不是契约层能补的。
 
 附：本轮冒烟顺带暴露 `GET /api/scm/purchase-items` 500（`quantity` NUMERIC 按 f64 解码）。查证 **main 早已修**（`193a1c695` 把 `PurchaseItem.quantity` 改 `Decimal`），本机工作区该文件落后才复现；已从 `origin/main` 取回两个文件、重编译后实测 200，本轮不重复提交该修复。
+
+## 第 34 轮 · master（53 → 1）
+
+**基线**：master 314 调用 / 246 匹配 / 68 缺口；路径前缀 `/api/master-data`（`svc/master-data/src/main.rs` 的 `api_prefix`）。
+
+**做法**
+1. 删 5 个前端占位绑定 `apps/web/src/api/master-data/{readOps,readOps2,readOps3,writeOps,writeOps2}.ts`（全仓库零引用），缺口先降到 53。
+2. 路由真源 `svc/master-data/src/modules/mod.rs`：整文件是一串 `.nest(...)`（quality-v51 / lineage-v52 / kg-v53 / versioning-v54 / mdm-v55..v60 / dict / mdm-v66 / master-data / suppliers）。**`/api/master-data/master-data/{materials,uoms,samples}` 的双层段不是幻影**——`.nest("/master-data", ...)` 就挂在 `/api/master-data` 前缀下，前端调用与真实挂载一致。
+3. 21 个真实 handler 无注解（`master_data.rs` 15 条物料/UOM/样品 CRUD、`supplier_master.rs` 5 条供应商 CRUD、`supplier_category_dict.rs` 1 条只读类别）→ 按全路径 `/api/master-data/...` 插最小注解，`register_annotated_handlers.py` 登记；顺手把早已注解但漏登记的 `kg-v53/categories` 补进 `paths(...)`。注意脚本会重复插入已登记项（`ai_governance_v59::get_suggestions` 报 E0428/E0119），需手工去重。
+4. **mdm-v66 预埋段**（`mod.rs` 的 `/mdm-v66` nest，30 条路由）全部指向 `contract_fallbacks::{ok,list,array}` 共享兜底函数——返 200 空数据，但共享函数无法一函数一注解。按项目既有口径"200 空数据可文档化"，在 spec 里补 34 条 op 并打 **`x-placeholder: true`**，description 明确写"由 contract_fallbacks 承接，V66 后端落地后替换"，不冒充真实实现；`mdm-v59/governance/entity/{type}/{id}` 同理（共享 `list` 兜底，前端两段调用）。
+5. **如实留缺口（1 条）**：`POST /api/master-data/mdm-v57/graph/embeddings` 的 handler 已注解，但实现是 `ApiResponse::not_implemented("Embedding 服务未接入")`（需配 `embedding_model` 由 AI 服务提供）。**撤登记、不进 spec**——501 未实现不算闭环。
+6. 生成器坑复现：`openapi-gen` 是修剪式，必须用 **release 产物**（`target/release/openapi-gen`）；`target/debug/openapi-gen` 是上一轮的旧二进制，会漏掉本轮新注解（本轮先踩了一次：gen 里 0 条新 master-data op）。合并固定三源并集：gen 输出 ∪ 合并前本地 spec ∪ `git show origin/main:docs/api/openapi.json`。
+
+**结果**：master **280/279/1**；spec 3557 → **3590**（+22 真实登记 +34 占位）；master 14 条无参 GET 实测全 200，`--probe` 分类下 master-data 的 SPEC_GAP / REAL_MISSING / NEEDS_PARAM 均为 0。
+
+### 第 34 轮收尾 · 全量冒烟暴露的真缺陷：`GET /api/wms/locations` 500
+
+`wms.locations.capacity` 是 `numeric(15,2)`，本机 `location.rs` 的 SELECT/RETURNING 直接取 `capacity`、按 `Option<f64>` 解码 → 列表接口 500（`error occurred while decoding column "capacity": mismatched types; Rust type Option<f64> (FLOAT8) is not compatible with SQL type NUMERIC`）。查证 **main 早已修**：`30880a671`（第八批新建入口可用性）已把 6 处 SELECT/RETURNING 改成 `capacity::float8 AS capacity`，本机工作区该文件落后才复现（与第 33 轮 scm `quantity` 完全同型）。已把 `origin/main` 版本取回本地、重编译后冒烟复测 FAIL=0，本轮**不重复提交**该修复。同类隐患（NUMERIC 列按 f64 解码）已连续三轮各命中一次，建议后续对 `numeric` 列做一次全仓解码审计。

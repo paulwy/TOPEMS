@@ -37,6 +37,18 @@ pub struct SupplierCategory {
 }
 
 /// GET /api/master-data/supplier-categories —— 只读列表（未软删、按 sort_order/code 排序）。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/master-data/supplier-categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "master-data"
+)]
 pub async fn list_supplier_categories(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
