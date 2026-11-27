@@ -315,6 +315,20 @@
 - **定性边界**：待复核子集多为 seed 批量登记的资源级权限；是规划预留、下线残留还是真死码，须经前端菜单/按钮/SDK 运行期对账与后端细粒度守卫观测后再分，本轮静态复核不自动清理或解绑。
 - **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`pending-548-profile.json`（逐码层级/模块/角色/令牌/字面量命中/资源名分层 + 口径注记）；脚本 `/tmp/topems-c2/scan-pending-profile.py`。矩阵主分类不变：活码 6 / 待复核 548 / 兜底 27。
 
+### 13.8 前端权限引用扩展采集与 fe_refs 对账（#106，静态只读）
+
+- **背景**：承接 §13.4 前端运行期对账盲区，对 581 双零码做前端静态扩展采集，复核 #53 四向比对的 `fe_refs` 是否漏采手写消费点。全程静态只读，不起浏览器、不写库、不改鉴权、不下死码定论。
+- **采集范围（较 #53 口径扩展）**：`apps/web/src` + 7 个 `packages/*/src`（app-shell / business-tools-sdk / shared-components / shared-hooks / shared-utils / api-client / shared-types / tokens）+ `i18n/locales/**/*.json`，共 2573 个前端文件；扩展名 `.ts/.tsx/.js/.jsx/.json`；排除 target/node_modules/dist/测试/vendor。
+- **分层口径**：`menu_config`（module-configs 模块菜单/权限配置）、`component`（组件/hooks 鉴权判断）、`app_shell`、`sdk`（business-tools-sdk/shared-*）为**消费候选层**；`catalog_list`（`CORE_PERMISSION_CODES` 全量清单数组）、`catalog_def`（`PERMISSION_DEFS` 码→名称表）、`role_template`（`ROLE_PERMISSIONS` 角色模板）、`i18n`、`test` 为登记/授予侧/测试，不计消费证据。
+- **对账结果**：
+  - 581 双零码在消费候选层（menu_config/component/app_shell/sdk）**0 命中**；前端唯一登记位置为 `CORE_PERMISSION_CODES` 清单（581/581），其中仅 7 个同时进入 `PERMISSION_DEFS` 名称表（`admin:dashboard:write`、`system:center:read`、`erp:general_ledger:read`、`finance:dashboard:write`、`lims:dashboard:write`、`rd:dashboard:write`、`report:dashboard:write`）。
+  - 全集前端消费层引用码与 581 零重叠：menu_config 413、component 294、app_shell 100；真实接线码形如 `crm:dashboard:read`、`mes:production_order:complete`、`wms:stocktake:admin/write`。
+  - **拼接路径核查**：模块级守卫（`usePermission` 的 `canAccessModule/canWriteModule/...`）只拼两段码 `${module}:read/write/delete/admin/create/update/approve`，不拼第三段资源；三段资源码无前端动态拼接生成路径。
+- **口径结论**：现有 `fe_refs` 排除全量目录表的判定口径准确，581 码前端无漏采手写消费点；574 个三段资源码仅在清单数组挂名、连名称表都未进。前端静态侧与 §13.7 后端静态侧一致：双零码未被前端鉴权链路引用。
+- **盲区边界**：本轮为静态字符串对账，未跑运行期菜单/按钮显隐；`:view` 后缀码经 `:view→:read` 回退判定（#P3 兼容层），不在 581 DB 登记集；SDK 远端动态注入、菜单配置由后端下发的部分未在静态覆盖。是否预留/残留/死码仍须运行期菜单按钮采集 + 后端细粒度观测后再分。
+- **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`fe-refs-recon.json`（逐码分层命中 + 消费层对账 + 口径注记）；脚本 `/tmp/topems-c2/scan-fe-refs.py`。矩阵主分类不变：活码 6 / 待复核 548 / 兜底 27。
+
+
 
 
 
