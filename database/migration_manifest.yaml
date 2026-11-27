@@ -3336,3 +3336,9 @@ pending_forward_patches:
     effect: "删除 public 层四张「零来源 + 零引用 + 0 行」历史试验残骸：core_feedbacks、hrm_master_data_refs、wms_master_data_refs、qa_lab_samples_merge_backup_20260919；删除前逐张断言 0 行/无入向外键/无视图依赖"
     destructive_scan: "DROP TABLE IF EXISTS ×4（to_regclass 守卫、destructive 标记 rows-at-review=0 + ticket）；生产无这四张表 → 纯空跑"
     note: "public 层盘点（217 表/生产 86）证明 public 是在用权威层而非镜像层（运行期 public.* 引用 1,257 处、finance 60 条外键指向 public.core_tenants），故只清零引用孤儿；盘点方法与后续批次规则见 docs/db/public-schema-inventory-2026-11-27.md，脚本 scripts/migration/audit-public-schema.sql；结构由 rollback 按 pg_dump 原样重建"
+  - version: "20261127190000"
+    file: "database/migrations/20261127190000_mes_tenant_id_not_null.sql"
+    status: applied
+    effect: "mes.work_stations / mes.production_orders 的 tenant_id 收紧为 NOT NULL；production_orders 中 5 行 tenant_id 为 NULL 的 MO-TEST 冒烟工单回填默认租户 00000000-0000-0000-0000-000000000001；收尾断言两表 NOT NULL 且 0 行 NULL"
+    destructive_scan: "UPDATE ×2（均带 WHERE tenant_id IS NULL、逐条紧邻豁免标记 max-rows=5/0 + backup）；ALTER COLUMN SET NOT NULL（information_schema 守卫，已 NOT NULL 则跳过）；无 DELETE/TRUNCATE/DROP"
+    note: "20261127170000 的复合外键在 tenant_id 可空时被 MATCH SIMPLE 整条跳过，且 RLS 策略 OR tenant_id IS NULL 对所有租户放行 → 本次收紧让复合外键对任何行都生效；运行期唯一写入路径 svc/mes/src/event_handlers.rs:124 已显式绑定 tenant_id，work_stations 无运行期 INSERT"
