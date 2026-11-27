@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadScmPurchaseOrderOptions, loadScmSupplierOptions } from '@/schemas/dynamicLoaders';
 
 export const deliveryAppointmentSchema: EntitySchema = {
   entity: 'deliveryAppointment',
@@ -10,6 +11,12 @@ export const deliveryAppointmentSchema: EntitySchema = {
     module: 'scm',
     resource: 'deliveryAppointments',
   },
+
+  dynamicOptions: [
+    { field: 'supplier_id', queryKey: ['scm', 'suppliers', 'forDeliveryAppointment'], loader: loadScmSupplierOptions },
+    // 采购订单是 UUID 外键，手填必 422 → 下拉选择
+    { field: 'purchase_order_id', queryKey: ['scm', 'purchaseOrders', 'forDeliveryAppointment'], loader: loadScmPurchaseOrderOptions },
+  ],
 
   // 批 16：写权限资源前缀（DB 实查存在三动作码）
   permissionResource: 'scm:delivery_appointment',
@@ -28,7 +35,8 @@ export const deliveryAppointmentSchema: EntitySchema = {
     {
       name: 'supplier_id',
       label: i18n.t('scm.delivery_appointment.id_3'),
-      type: 'text',
+      // 供应商此前是裸文本框，要求手填 UUID，填不出合法值 → 下拉选择
+      type: 'select',
       required: true,
       listWidth: 120,
       showInList: false,
@@ -43,7 +51,8 @@ export const deliveryAppointmentSchema: EntitySchema = {
     {
       name: 'purchase_order_id',
       label: i18n.t('scm.delivery_appointment.id_5'),
-      type: 'text',
+      // 采购订单是 UUID 外键，手填必 422 → 下拉选择
+      type: 'select',
       listWidth: 120,
       showInList: false,
     },
@@ -51,6 +60,8 @@ export const deliveryAppointmentSchema: EntitySchema = {
       name: 'purchase_order_no',
       label: i18n.t('scm.delivery_appointment.k6'),
       type: 'text',
+      // 选了订单后由后端回填，表单里不再让用户手写（会和 purchase_order_id 打架）
+      hideInForm: true,
       listWidth: 140,
       validation: [{ type: 'maxLength', value: 100 }],
     },
@@ -65,7 +76,8 @@ export const deliveryAppointmentSchema: EntitySchema = {
     {
       name: 'delivery_time',
       label: i18n.t('scm.delivery_appointment.k8'),
-      type: 'text',
+      // 后端是 NaiveTime，文本随便填会 422 → 时间选择器
+      type: 'time',
       listWidth: 100,
       showInList: false,
     },
@@ -144,7 +156,7 @@ export const deliveryAppointmentSchema: EntitySchema = {
     {
       name: 'expected_arrival_time',
       label: i18n.t('scm.delivery_appointment.k29'),
-      type: 'text',
+      type: 'time',
       listWidth: 120,
       showInList: false,
     },

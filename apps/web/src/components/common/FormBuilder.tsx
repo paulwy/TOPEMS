@@ -19,6 +19,7 @@ import {
 import i18n from '@/i18n';
 import FormField from './FormField';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { enUS, zhCN } from '@mui/x-date-pickers/locales';
@@ -94,6 +95,7 @@ export interface FormFieldConfig<T extends Record<string, unknown> = Record<stri
     | 'radio'
     | 'date'
     | 'datetime'
+    | 'time'
     | 'file'
     | 'switch';
   placeholder?: string;
@@ -675,6 +677,36 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                       field.valueFormat === 'iso-datetime' ? 'YYYY-MM-DDTHH:mm:ssZ' : 'YYYY-MM-DD'
                     )
                   )
+                }
+                disabled={isDisabled}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    required: isRequired,
+                    error: !!error,
+                    helperText: error,
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          );
+        case 'time':
+          return (
+            <LocalizationProvider
+              key={field.name}
+              dateAdapter={AdapterDayjs}
+              localeText={
+                (i18n.language === 'en' ? enUS : zhCN).components.MuiLocalizationProvider
+                  .defaultProps.localeText
+              }
+            >
+              <TimePicker
+                label={field.label}
+                // 后端是 NaiveTime，只接受 HH:mm:ss，不能带日期
+                value={value ? dayjs(`2000-01-01T${String(value)}`) : null}
+                onChange={(newValue: dayjs.Dayjs | null) =>
+                  handleChange(field.name, newValue ? newValue.format('HH:mm:ss') : undefined)
                 }
                 disabled={isDisabled}
                 slotProps={{

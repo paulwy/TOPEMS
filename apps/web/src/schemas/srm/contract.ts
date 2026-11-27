@@ -2,7 +2,7 @@ import React from 'react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
-import { srmApi } from '@/api/srm';
+import { loadSrmSupplierOptions } from '@/schemas/dynamicLoaders';
 
 export const contractSchema: EntitySchema = {
   entity: 'supplier_contract',
@@ -18,16 +18,7 @@ export const contractSchema: EntitySchema = {
     {
       field: 'supplier_id',
       queryKey: ['srm', 'suppliers', 'forContract'],
-      loader: async () => {
-        const res = await srmApi.listSuppliers();
-        const payload: unknown = res?.data;
-        const rows = Array.isArray(payload)
-          ? payload
-          : ((payload as { suppliers?: unknown[] })?.suppliers ?? []);
-        return (rows as { id: string; name?: string; name_en?: string; supplier_no?: string }[])
-          .filter((x) => x?.id)
-          .map((x) => ({ value: x.id, label: x.name || x.name_en || x.supplier_no || x.id }));
-      },
+      loader: loadSrmSupplierOptions,
     },
   ],
 

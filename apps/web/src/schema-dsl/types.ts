@@ -22,6 +22,7 @@ export type FieldType =
   | 'autocomplete'
   | 'date'
   | 'datetime'
+  | 'time'
   | 'switch'
   | 'checkbox'
   | 'checkbox-group'
@@ -512,6 +513,7 @@ export function toColumnDef(field: SchemaField): ColumnDef | null {
           autocomplete: 'select',
           date: 'date',
           datetime: 'datetime',
+          time: 'text',
           switch: 'checkbox',
           checkbox: 'checkbox',
           'checkbox-group': 'select',

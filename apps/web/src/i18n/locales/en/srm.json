@@ -448,6 +448,7 @@
   "srm.quotation.k10": "Manage supplier quotations including quote details, amounts, delivery time, etc.",
   "srm.quotation.k11": "Quotation No.",
   "srm.quotation.k12": "Supplier",
+  "srm.quotation.inquiry": "Inquiry",
   "srm.quotation.k13": "Quotation Title",
   "srm.quotation.k14": "Total Quotation Amount",
   "srm.quotation.k15": "Currency",

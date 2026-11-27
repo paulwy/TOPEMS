@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadScmSupplierOptions } from '@/schemas/dynamicLoaders';
 
 export const evaluationSchema: EntitySchema = {
   entity: 'evaluation',
@@ -11,6 +12,10 @@ export const evaluationSchema: EntitySchema = {
     module: 'scm',
     resource: 'evaluations',
   },
+
+  dynamicOptions: [
+    { field: 'supplier_id', queryKey: ['scm', 'suppliers', 'forEvaluation'], loader: loadScmSupplierOptions },
+  ],
 
   // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
   permissionResource: 'scm:supplier_evaluation',
@@ -29,7 +34,8 @@ export const evaluationSchema: EntitySchema = {
     {
       name: 'supplier_id',
       label: i18n.t('scm.evaluation.k3'),
-      type: 'text',
+      // 供应商此前是裸文本框，要求手填 UUID，填不出合法值 → 下拉选择
+      type: 'select',
       required: true,
       listWidth: 160,
     },
@@ -37,6 +43,8 @@ export const evaluationSchema: EntitySchema = {
       name: 'evaluation_date',
       label: i18n.t('scm.evaluation.k4'),
       type: 'date',
+      // scm 的 evaluation_date 是 chrono DateTime<Utc>，只接受带时区的 ISO 串
+      valueFormat: 'iso-datetime',
       required: true,
       sortable: true,
       listWidth: 120,

@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
+import { loadSrmSupplierOptions } from '@/schemas/dynamicLoaders';
 
 export const evaluationSchema: EntitySchema = {
   entity: 'srm_evaluation',
@@ -11,6 +12,11 @@ export const evaluationSchema: EntitySchema = {
     resource: 'supplier-evaluations',
   },
 
+  // 供应商是必填下拉但没有数据源，弹窗里只会显示"请选择"
+  dynamicOptions: [
+    { field: 'supplier_id', queryKey: ['srm', 'suppliers', 'forEvaluation'], loader: loadSrmSupplierOptions },
+  ],
+
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'srm:evaluation',
 
@@ -19,7 +25,10 @@ export const evaluationSchema: EntitySchema = {
       name: 'evaluation_no',
       label: i18n.t('srm.evaluation.k2'),
       type: 'text',
-      readonly: true,
+      // 后端 CreateSupplierEvaluationRequest 必填且做唯一校验；此前 readonly 导致
+      // 弹窗里根本没有这个输入，提交必 422 missing field `evaluation_no`
+      required: true,
+      readonlyOnEdit: true,
       sortable: true,
       listWidth: 150,
       validation: [{ type: 'maxLength', value: 50 }],

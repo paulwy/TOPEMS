@@ -4,6 +4,7 @@ import { columnsFromFields } from '@/schema-dsl/schemaExtensions';
 import type { NestedTableConfig } from '@/schema-dsl/schemaExtensions';
 import type { SchemaField } from '@/schema-dsl/types';
 import i18n from '@/i18n';
+import { loadSrmInquiryOptions, loadSrmSupplierOptions } from '@/schemas/dynamicLoaders';
 
 const quotationItemFields: SchemaField[] = [
   {
@@ -97,6 +98,12 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
     deleteMethod: 'deleteQuotation',
   },
 
+  dynamicOptions: [
+    { field: 'supplier_id', queryKey: ['srm', 'suppliers', 'forQuotation'], loader: loadSrmSupplierOptions },
+    // 报价必须挂在一张询价上（后端 create 校验询价存在），此前表单里没有这个字段
+    { field: 'inquiry_id', queryKey: ['srm', 'inquiries', 'forQuotation'], loader: loadSrmInquiryOptions },
+  ],
+
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）
   permissionResource: 'srm:quotation',
 
@@ -111,9 +118,19 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
       listWidth: 160,
     },
     {
+      name: 'inquiry_id',
+      label: i18n.t('srm.quotation.inquiry'),
+      // 询价单：后端必填且校验存在 → 下拉选择
+      type: 'select',
+      required: true,
+      listWidth: 160,
+      showInList: false,
+    },
+    {
       name: 'supplier_id',
       label: i18n.t('srm.quotation.k12'),
-      type: 'text',
+      // 供应商此前是裸文本框，要求手填 UUID，填不出合法值 → 下拉选择
+      type: 'select',
       required: true,
       listWidth: 140,
     },
@@ -254,7 +271,7 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
   formSections: [
     {
       title: i18n.t('srm.quotation.k46'),
-      fields: ['quotation_no', 'supplier_id', 'title', 'status'],
+      fields: ['quotation_no', 'inquiry_id', 'supplier_id', 'title', 'status'],
     },
     {
       title: i18n.t('srm.quotation.k47'),
