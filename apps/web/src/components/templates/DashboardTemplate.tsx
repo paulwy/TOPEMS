@@ -681,7 +681,7 @@ const legacyToConfig = (s: StatCard): StatCardConfig => ({
       ? { value: s.change, label: s.changeLabel }
       : s.trend && s.trend.length > 0
         ? {
-            value: s.trend[s.trend.length - 1] - s.trend[0],
+            value: Number((s.trend[s.trend.length - 1] - s.trend[0]).toFixed(2)),
             label: i18n.t('components.dashboard_template.k1'),
           }
         : undefined,
