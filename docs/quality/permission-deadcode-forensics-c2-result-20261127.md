@@ -438,6 +438,14 @@
 - **逐码画像**：12 码 inline-trace 触达均为 0；后端无裸码门控、前端无消费点。其中 10 码维持待复核，2 码维持兜底（#104 口径）。
 - **结论**：矩阵主分类不变 **6 / 548 / 27**；产物 `small-set-crosscheck.json`（gitignore），矩阵 10 码补 `small_set_note`，备份 `c2-matrix.v33-pre113.bak.json`。
 
+### 13.16 待复核 548 后端引用面全量收口普查（#114，静态只读；不改判）
+
+- **范围**：对 548 待复核码全量扫 `svc/`、`lib/` 下 `.rs` 字面量引用，收口后端维度（前端维度 #106 已采集：门控直参/绑定 416 码 ∩581=0）。
+- **普查结果**：后端字面量命中仅 **7 码**，运行期裸码门控注解 **∩ 548 = 0**；命中分两类，均无裸码独立消费点：
+  - **带前缀真实码子串命中（5）**：`master-data:read`（真实 `erp:master-data:read`）、`master-data:write`（真实 `erp:master-data:write`）、`workflow:admin`（真实 `unified-core:flow:workflow:admin`）、`report:read`（真实 `lims/hrm/finance:report:read` 等）、`integration:read`（模块门走 `integration:` 前缀）。
+  - **测试种子/断言（2）**：`workflow:approve`（`permission_test.rs` 断言 + 注释计数）、`crm:customer:delete`（`crm_tests.rs` fixture 种子元组，无运行期注解；前端目录挂名；trace 0）。
+- **结论**：548 待复核码后端无裸码门控消费点；矩阵主分类不变 **6 / 548 / 27**。产物 `backend-reference-recon-548.json`（gitignore），矩阵 `crm:customer:delete` 补 `backend_ref_note`，备份 `c2-matrix.v33-pre114.bak.json`。
+
 
 
 
