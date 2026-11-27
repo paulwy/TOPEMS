@@ -88,6 +88,23 @@ after scopes       : ("<null>", "off")
 `unified-core/routes/business_tools/database_permission_store`（后者是用户库目标，不应受本库租户上下文影响）。
 收口这些模块的策略前，需要把它们并入共享池或同样挂 hook。
 
+## 7. 第一波（mes/erp）演练结果（2026-11-27/28）
+
+迁移 `20261127260000_rls_failclose_wave1_mes_erp.sql`（已推送 `99fe5bea0`，尚未投 dev/prod）。
+
+- 演练环境：`topems_fc`（从 dev 全量 pg_dump 还原的克隆库，564MB），不触碰 dev 在用库。
+- 投放：收紧 **39 条**、跳过 5 条（平台共享策略）、失败 0 条；两条后置断言通过。
+- 回滚：`DROP + CREATE` 按快照还原 39 条，表达式回到带 `tenant_id IS NULL` 原样；再投放复验通过，
+  说明 snapshot 结构（polcmd/permissive/roles/qual/with_check）足以精确重建。
+- 语义实测（角色 `topems_app`，`erp.materials` 等收紧表）：
+  无 GUC → **0 行**；本租户 GUC → 自有行；`app.rls_system='on'` → 全量。
+- 端到端（新二进制 `topems-server`，`TOPEMS_RLS_CTX=1`，连克隆库，端口 8123）：
+  `health 200`、`login 200`、`/api/core/iam/users`、`/api/core/menus`、`/api/crm/customers`、
+  `/api/mes/{teams,production-plans,audit-logs}`、`/api/erp/materials` 全部 200 且有数据，
+  与 `TOPEMS_RLS_CTX=0` 的对照实例（8124）在本次抽样的接口上无差异。
+- 局限（下一波要补的验证）：本轮 HTTP 抽样命中的读路径多为平台/未收紧表，尚未对「收紧表 + 普通租户用户」
+  组合做端点级差分；第二波起按「先挑收紧表对应的真实路由 → 造普通租户 token → 对比 0 行/自有行」做验证。
+
 ## 6. 风险与回滚
 
 - 第 1 步失败面：连接池 hook 抛错会导致全站取连接失败 → 必须 `if let Err` 记日志而非中断，先灰度 dev 全端点冒烟。
