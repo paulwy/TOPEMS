@@ -1631,6 +1631,7 @@ pub async fn get_variance_report_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/audit-v52/anomaly/detect",
     tag = "Filled",

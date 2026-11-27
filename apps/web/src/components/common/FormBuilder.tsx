@@ -148,8 +148,6 @@ interface FormBuilderConfig<T extends Record<string, unknown> = Record<string, u
   mode?: FormBuilderMode;
   /** 表单分组配置 */
   formSections?: FormSectionConfig[];
-  /** 外部提交中状态（Mutation 的 isPending）：提交按钮置灰，避免重复提交 */
-  isSubmitting?: boolean;
 }
 
 export default function FormBuilder<T extends Record<string, unknown> = Record<string, unknown>>({
@@ -164,7 +162,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
   colCount = 2,
   onFieldChange,
   onSubmitSuccess,
-  isSubmitting = false,
   onReset,
   mode = 'create',
   formSections,

@@ -1673,6 +1673,7 @@ fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/reports/balance-sheet",
     tag = "Filled",
@@ -1887,6 +1888,7 @@ pub async fn generate_income_statement(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/reports/income-statement",
     tag = "Filled",

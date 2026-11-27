@@ -671,6 +671,7 @@ pub async fn post_voucher(
 
 /// V39.0 Phase 7: 更新凭证
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/api/finance/vouchers/{voucher_id}",
     tag = "Filled",
@@ -1055,6 +1056,7 @@ pub async fn create_aux_account(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/aux-accounts",
     tag = "Filled",
@@ -2691,6 +2693,7 @@ pub async fn create_voucher_template_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/api/finance/voucher-templates/{template_id}",
     tag = "Filled",
@@ -2874,6 +2877,7 @@ pub struct CopyTemplateRequest {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/voucher-templates/{template_id}/copy",
     tag = "Filled",
@@ -3229,6 +3233,7 @@ pub struct AddTemplateEntryRequest {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/voucher-templates/{template_id}/entries",
     tag = "Filled",
@@ -3337,6 +3342,7 @@ pub struct UpdateTemplateEntryRequest {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/api/finance/voucher-templates/{template_id}/entries/{entry_id}",
     tag = "Filled",
@@ -3431,6 +3437,7 @@ async fn update_template_entry_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/api/finance/voucher-templates/{template_id}/entries/{entry_id}",
     tag = "Filled",
@@ -5016,6 +5023,7 @@ pub async fn create_collection_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/api/finance/collections/{collection_id}",
     tag = "Filled",
@@ -5052,6 +5060,7 @@ async fn update_collection_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/api/finance/collections/{collection_id}",
     tag = "Filled",
@@ -5413,6 +5422,7 @@ pub async fn reject_payment_record_handler(
 
 // gate: admin-only
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/api/finance/payment-records/{payment_id}",
     tag = "Filled",
@@ -5450,6 +5460,7 @@ async fn update_payment_record_handler(
 
 // gate: admin-only
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/api/finance/payment-records/{payment_id}",
     tag = "Filled",

@@ -1915,6 +1915,7 @@ async fn acknowledge_alert_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/finance-v60/alert/{id}/resolve",
     tag = "Filled",

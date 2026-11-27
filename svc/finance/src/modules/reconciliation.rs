@@ -457,6 +457,7 @@ pub struct AgingQueryParams {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/reconciliation/sessions/{session_id}/report",
     tag = "Filled",

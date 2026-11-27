@@ -39,6 +39,7 @@ fn current_user_id(claims: &Claims) -> Option<Uuid> {
 
 /// GET /api/core/settlement-center/reconciliations
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/api/core/settlement-center/reconciliations",
     tag = "Filled",
@@ -78,6 +79,7 @@ pub async fn list_reconciliations(
 
 /// POST /api/core/settlement-center/reconciliations
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/reconciliations",
     tag = "Filled",
@@ -220,6 +222,7 @@ pub async fn reconcile(
 
 /// POST /api/core/settlement-center/auto-reconcile
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/auto-reconcile",
     tag = "Filled",
@@ -259,6 +262,7 @@ pub async fn auto_reconcile(
 
 /// GET /api/core/settlement-center/settlements
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/api/core/settlement-center/settlements",
     tag = "Filled",
@@ -298,6 +302,7 @@ pub async fn list_settlements(
 
 /// POST /api/core/settlement-center/settlements
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/settlements",
     tag = "Filled",
@@ -389,6 +394,7 @@ pub async fn get_settlement(
 
 /// POST /api/core/settlement-center/reconciliations/{id}/approve
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/reconciliations/{id}/approve",
     tag = "Filled",
@@ -434,6 +440,7 @@ pub async fn approve_reconciliation(
 
 /// POST /api/core/settlement-center/settlements/{id}/approve
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/settlements/{id}/approve",
     tag = "Filled",
@@ -483,6 +490,7 @@ pub async fn approve_settlement(
 
 /// POST /api/core/settlement-center/links
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/links",
     tag = "Filled",
@@ -561,6 +569,7 @@ pub async fn delete_link(
 
 /// GET /api/core/settlement-center/links
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/api/core/settlement-center/links",
     tag = "Filled",
@@ -604,6 +613,7 @@ pub async fn list_links(
 
 /// GET /api/core/settlement-center/differences
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/api/core/settlement-center/differences",
     tag = "Filled",
@@ -644,6 +654,7 @@ pub async fn list_differences(
 
 /// POST /api/core/settlement-center/differences
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/differences",
     tag = "Filled",
@@ -697,6 +708,7 @@ pub async fn create_difference(
 
 /// POST /api/core/settlement-center/differences/{id}/approve
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/differences/{id}/approve",
     tag = "Filled",
@@ -736,6 +748,7 @@ pub async fn approve_difference(
 
 /// POST /api/core/settlement-center/differences/{id}/reject
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/api/core/settlement-center/differences/{id}/reject",
     tag = "Filled",
@@ -811,6 +824,7 @@ pub async fn get_dashboard(
 
 /// GET /api/core/settlement-center/statistics
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/api/core/settlement-center/statistics",
     tag = "Settlement-Center",

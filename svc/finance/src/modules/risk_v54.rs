@@ -1371,6 +1371,7 @@ pub async fn get_risk_alerts_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/finance/finance-v54/risk/alerts/{id}/acknowledge",
     tag = "Finance",
@@ -1738,6 +1739,7 @@ pub struct ComplianceReportQueryParams {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/finance/finance-v54/compliance/report",
     tag = "Filled",

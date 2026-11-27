@@ -526,6 +526,7 @@ pub async fn create_reconcile_order(
 /// 自动对账：按 counterparty_ids（缺省为全部未完成订单）批量建单并返回汇总。
 /// 匹配明细通过 updateItem 写入，差异实时聚合。
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/api/finance/reconcile/auto",
     tag = "Filled",

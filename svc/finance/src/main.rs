@@ -266,6 +266,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/",
     tag = "Filled",
