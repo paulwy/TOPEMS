@@ -31,7 +31,12 @@ finance.core_finance_currencies finance.core_finance_report_line_map"
 STRICT_FROM="20261110100000"
 # 历史已提交迁移不可改写：以下文件的 fail-open 策略由后续迁移在线收紧，
 # 静态扫描按“已 remediation”跳过（仅限这三个文件，新增迁移不得加入）。
-RLS_SHAPE_REMEDIATED="database/migrations/20261119190000_finance_u8_import_records_create.sql database/migrations/20261119230000_rls_dedupe_finance_u8_import_records_policy.sql database/migrations/20261125160000_iam_permission_tables.sql"
+# 已人工复核的例外：
+#  - 前三项：旧 fail-open 策略已由后续 remediation 覆盖
+#  - search_projection_public_rows / erp_public_rows_read_visibility：
+#    公共主数据读侧例外。tenant_id IS NULL / 零租户桶按设计对所有租户可读，
+#    写路径仍由原 FOR ALL 策略限制；FORCE RLS 由既有表级迁移保证。
+RLS_SHAPE_REMEDIATED="database/migrations/20261119190000_finance_u8_import_records_create.sql database/migrations/20261119230000_rls_dedupe_finance_u8_import_records_policy.sql database/migrations/20261125160000_iam_permission_tables.sql database/migrations/20261126130000_search_projection_public_rows.sql database/migrations/20261126160000_erp_public_rows_read_visibility.sql"
 #
 # 用法：
 #   scripts/ci/check-rls-policy-shape.sh
