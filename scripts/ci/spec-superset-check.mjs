@@ -10,6 +10,10 @@
  *   node scripts/ci/spec-superset-check.mjs --base 88fcc6bfe
  *   node scripts/ci/spec-superset-check.mjs --base-file /tmp/main-openapi.json
  *
+ * 实测确认的幻影路径（main 上文档化但线上 404）可登记到
+ * scripts/ci/spec-prune-allowlist.json 豁免，脚本会打印豁免项而不是判失败：
+ *   { "note": "...", "allow": [ { "path": "/api/x/y", "method": "GET", "reason": "实测 404 …" } ] }
+ *
  * 退出码：0 无丢失（可能提示新增），1 有丢失。
  */
 import fs from 'node:fs';
@@ -31,6 +35,19 @@ function readBase() {
   return { label: ref, doc: JSON.parse(raw) };
 }
 
+function readAllow() {
+  const file = arg('--allow-file', 'scripts/ci/spec-prune-allowlist.json');
+  if (!fs.existsSync(file)) return { label: file, path: new Set(), method: new Set() };
+  const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const path = new Set();
+  const method = new Set();
+  for (const e of doc.allow || []) {
+    if (!e.method) path.add(e.path);
+    else method.add(`${e.method.toUpperCase()} ${e.path}`);
+  }
+  return { label: file, path, method };
+}
+
 function methods(doc) {
   const m = new Map();
   for (const [p, item] of Object.entries(doc.paths || {})) {
@@ -50,12 +67,23 @@ const { label, doc: base } = readBase();
 const cm = methods(cur);
 const bm = methods(base);
 
+const allow = readAllow();
 const lostPaths = [];
 const lostMethods = [];
+const waived = [];
 for (const [p, set] of bm) {
   const curSet = cm.get(p);
-  if (!curSet) lostPaths.push(p);
-  else for (const meth of set) if (!curSet.has(meth)) lostMethods.push(`${meth.toUpperCase()} ${p}`);
+  if (!curSet) {
+    if (allow.path.has(p)) waived.push(p);
+    else lostPaths.push(p);
+  } else {
+    for (const meth of set) {
+      if (curSet.has(meth)) continue;
+      const key = `${meth.toUpperCase()} ${p}`;
+      if (allow.method.has(key)) waived.push(key);
+      else lostMethods.push(key);
+    }
+  }
 }
 
 const addedPaths = [...cm.keys()].filter((p) => !bm.has(p));
@@ -67,6 +95,11 @@ for (const [p, set] of cm) {
 }
 
 console.log(`spec 超集检查  当前=${SPEC} (${cm.size} paths)  基底=${label} (${bm.size} paths)`);
+if (waived.length) {
+  console.log(`\n豁免（实测 404 的幻影路径，见 ${allow.label}）：${waived.length} 条`);
+  for (const w of waived) console.log(`  WAIVED       ${w}`);
+}
+
 console.log(`新增 path ${addedPaths.length} / 新增 method ${addedMethods.length} / 丢失 path ${lostPaths.length} / 丢失 method ${lostMethods.length}`);
 
 if (lostPaths.length || lostMethods.length) {

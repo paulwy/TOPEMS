@@ -115,7 +115,7 @@ pub fn truncate_notification_title(title: &str, max_len: usize) -> String {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notify/send",
+    path = "/notification/notify/send",
     tag = "notification",
     request_body = SendNotificationRequest,
     responses(
@@ -279,7 +279,7 @@ pub async fn send_notification(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notify/broadcast",
+    path = "/notification/notify/broadcast",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -749,7 +749,7 @@ pub async fn mark_as_read(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notify/read-all",
+    path = "/notification/notify/read-all",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -3431,7 +3431,7 @@ pub async fn delete_channel(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notification/channels/{id}/test",
+    path = "/notification/notification/channels/{id}/test",
     params(
         ("id" = String, Path, description = "Channel ID")
     ),
@@ -3497,7 +3497,7 @@ pub async fn test_channel(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["communication:notification:read"])),
-    path = "/notification/channels/{id}/metrics",
+    path = "/notification/notification/channels/{id}/metrics",
     params(
         ("id" = String, Path, description = "Channel ID")
     ),

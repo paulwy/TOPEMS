@@ -1,0 +1,18 @@
+{
+  "note": "main 上已文档化但线上实测 404 的幻影路径。删除前必须用带 token 的 curl 复测，写清实测证据。",
+  "allow": [
+    {
+      "path": "/api/communication/notification/channels",
+      "reason": "实测 404：notification_router 真实挂载在 /api/communication/notification 下，channels CRUD 实际路径是 /api/communication/notification/notification/channels，裸 /channels 不存在"
+    },
+    {
+      "path": "/api/communication/notify/list",
+      "reason": "实测 404：list_notifications 真实路径是 /api/communication/notification/notify/list（多一层 notification）"
+    },
+    {
+      "path": "/api/core/flow/monitor/analysis",
+      "method": "GET",
+      "reason": "实测 404：第 26 轮已从 svc/unified-core/src/routes/flow.rs 删除该别名（无参挂到需要 Path<Uuid> 的 handler 必 500），真实路径是 /api/core/flow/monitor/analysis/{id}"
+    }
+  ]
+}

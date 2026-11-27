@@ -258,23 +258,18 @@
       "path": "/api/core/file/attachments/{id}/download"
     },
     {
-      "method": "DELETE",
-      "path": "/api/core/flow/form-definitions/{id}",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/core/flow/form-instances/{id}",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/core/flow/tasks/{id}/attachments/{sub}",
+      "method": "GET",
+      "path": "/api/core/flow/workflows/{id}/compare/{sub}/{extra}",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
       "method": "GET",
-      "path": "/api/core/flow/form-definitions/categories",
+      "path": "/api/core/flow/workflows/{id}/export",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-definitions/{id}",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -284,12 +279,7 @@
     },
     {
       "method": "GET",
-      "path": "/api/core/flow/form-definitions/{id}",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/form-definitions/{id}/export",
+      "path": "/api/core/flow/form-definitions/categories",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -304,7 +294,32 @@
     },
     {
       "method": "GET",
+      "path": "/api/core/flow/form-definitions/{id}/export",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/workflow-instance/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
       "path": "/api/core/flow/form-instances/form-definition/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/{id}/data",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/{id}/history",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -319,27 +334,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/core/flow/form-instances/workflow-instance/{id}",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/form-instances/{id}",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/form-instances/{id}/data",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
       "path": "/api/core/flow/form-instances/{id}/export",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
       "method": "GET",
-      "path": "/api/core/flow/form-instances/{id}/history",
+      "path": "/api/core/flow/performance",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -349,7 +349,12 @@
     },
     {
       "method": "GET",
-      "path": "/api/core/flow/instances/{id}/diagram",
+      "path": "/api/core/flow/instances/{id}/variables",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/instances/{id}/tasks",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -364,17 +369,7 @@
     },
     {
       "method": "GET",
-      "path": "/api/core/flow/instances/{id}/tasks",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/instances/{id}/variables",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/monitor/instances/{id}/diagram",
+      "path": "/api/core/flow/instances/{id}/diagram",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -394,17 +389,12 @@
     },
     {
       "method": "GET",
+      "path": "/api/core/flow/monitor/instances/{id}/diagram",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
       "path": "/api/core/flow/monitor/logs/node/{id}/{sub}",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/performance",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/tasks/{id}/attachments",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -414,17 +404,12 @@
     },
     {
       "method": "GET",
+      "path": "/api/core/flow/tasks/{id}/attachments",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
       "path": "/api/core/flow/tasks/{id}/form",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/tasks/{id}/history",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "GET",
-      "path": "/api/core/flow/tasks/{id}/timeline",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -434,12 +419,17 @@
     },
     {
       "method": "GET",
-      "path": "/api/core/flow/workflows/{id}/compare/{sub}/{extra}",
+      "path": "/api/core/flow/tasks/{id}/timeline",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
       "method": "GET",
-      "path": "/api/core/flow/workflows/{id}/export",
+      "path": "/api/core/flow/tasks/{id}/history",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/workflows/{id}/copy",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -448,8 +438,13 @@
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
-      "method": "POST",
-      "path": "/api/core/flow/form-definitions/import",
+      "method": "PUT",
+      "path": "/api/core/flow/form-definitions/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/flow/form-definitions/{id}",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -459,17 +454,7 @@
     },
     {
       "method": "POST",
-      "path": "/api/core/flow/form-definitions/{id}/copy",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
       "path": "/api/core/flow/form-definitions/{id}/deactivate",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/form-definitions/{id}/preview",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -479,7 +464,17 @@
     },
     {
       "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/copy",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
       "path": "/api/core/flow/form-definitions/{id}/validate",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/preview",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -489,7 +484,27 @@
     },
     {
       "method": "POST",
+      "path": "/api/core/flow/form-definitions/import",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
       "path": "/api/core/flow/form-instances",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/flow/form-instances/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/flow/form-instances/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-instances/{id}/submit",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -498,8 +513,13 @@
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
+      "method": "PUT",
+      "path": "/api/core/flow/form-instances/{id}/data",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
       "method": "POST",
-      "path": "/api/core/flow/form-instances/{id}/submit",
+      "path": "/api/core/flow/performance/reset",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -519,52 +539,7 @@
     },
     {
       "method": "POST",
-      "path": "/api/core/flow/performance/reset",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
       "path": "/api/core/flow/rules/{id}/test",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/add-sign",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/attachments",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/comments",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/counter-sign",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/form",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/jump",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/reassign",
-      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
-    },
-    {
-      "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/return",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -574,12 +549,17 @@
     },
     {
       "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/urge",
+      "path": "/api/core/flow/tasks/{id}/reassign",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
       "method": "POST",
-      "path": "/api/core/flow/tasks/{id}/variables",
+      "path": "/api/core/flow/tasks/{id}/add-sign",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/counter-sign",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
@@ -589,23 +569,573 @@
     },
     {
       "method": "POST",
-      "path": "/api/core/flow/workflows/{id}/copy",
+      "path": "/api/core/flow/tasks/{id}/return",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
-      "method": "PUT",
-      "path": "/api/core/flow/form-definitions/{id}",
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/jump",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
-      "method": "PUT",
-      "path": "/api/core/flow/form-instances/{id}",
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/urge",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     },
     {
-      "method": "PUT",
-      "path": "/api/core/flow/form-instances/{id}/data",
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/comments",
       "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/attachments",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/flow/tasks/{id}/attachments/{sub}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/form",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/variables",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/batch-unsubscribe",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/deliveries/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/digests/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/groups/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/groups/{id}/members/{sub}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/preferences/global-mute",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/providers/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/scheduled/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/subscriptions/event",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/subscriptions/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/topics/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/topics/{id}/subscribe",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/notification/webhooks/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/push-config/channels/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/communication/notification/push-config/quiet-hours",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification-templates/{id}/variables",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification-templates/{id}/versions",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/deliveries",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/deliveries/batch/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/deliveries/by-channel/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/deliveries/by-user/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/deliveries/failed",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/deliveries/stats",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/deliveries/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/digests",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/digests/summary",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/digests/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/digests/{id}/history",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/event-types",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/groups",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/groups/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/groups/{id}/members",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/groups/{id}/topics",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/my-scheduled",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/my-subscriptions",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/my-topics",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/preferences",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/preferences/categories",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/preferences/defaults",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/preferences/quiet-hours",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/provider-types",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/providers",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/providers/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/scheduled",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/scheduled/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/subscriptions",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/subscriptions/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/topics",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/topics/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/webhooks",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/webhooks/events/{id}/deliveries",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/webhooks/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notification/webhooks/{id}/events",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notifications/bulk-progress/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/notifications/health/detailed",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/push-config",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/push-config/channels",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/communication/notification/push-config/preferences",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification-templates/{id}/clone",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification-templates/{id}/test",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/batch-subscribe",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/deliveries/retry-all",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/deliveries/{id}/retry",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/digests",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/digests/{id}/send",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/groups",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/groups/{id}/broadcast",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/groups/{id}/members",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/preferences/global-mute",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/preferences/reset",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/providers",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/providers/{id}/test",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/scheduled",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/scheduled/{id}/cancel",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/scheduled/{id}/send",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/subscriptions",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/subscriptions/{id}/pause",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/subscriptions/{id}/resume",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/topics",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/topics/{id}/subscribe",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/webhooks",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/webhooks/{id}/disable",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/webhooks/{id}/enable",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/webhooks/{id}/rotate-secret",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notification/webhooks/{id}/test",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/notify/broadcast-with-template",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/push-config/channels",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/communication/notification/push-config/test",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification-templates/{id}/status",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/digests/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/groups/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/groups/{id}/members/{sub}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/preferences",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/preferences/categories/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/preferences/quiet-hours",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/providers/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/scheduled/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/subscriptions/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/topics/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/notification/webhooks/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/push-config",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/push-config/channels/{id}",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/push-config/channels/{id}/disable",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/push-config/channels/{id}/enable",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/push-config/preferences",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/communication/notification/push-config/quiet-hours",
+      "note": "communication 契约兜底桩（comm_stub：200+stubbed，待上游真实实现）"
     }
   ]
 }

@@ -668,3 +668,43 @@ workflow 命名空间 211 条调用、命中 81、缺口 130。第一层原因�
 ### 复用到其他命名空间的顺序
 
 `annotate_missing_routes.py`（补注解）→ `register_annotated_handlers.py`（补登记，注意选对真身 openapi.rs）→ `clone_route_aliases.py`（别名克隆）→ 桩分流到 `openapi-known-stubs.json` → HTTP 实测无参 GET。
+
+## 第 27 轮：notification（双重 /notification 前缀 + 桩分流 + 幻影路径清理）
+
+notification 命名空间 166 条调用、命中 44、缺口 122。这一轮最大的收获是**先分清"前端错"还是"挂载就是这么绕"**——`/notification/notification/channels` 看起来像 bug，实测是真实路径。
+
+### 真相：`notification_router` 本身就带一层 `/notification`
+
+`svc/server/src/modules/communication_real_module.rs` 里 `notification_router` 被 `.nest("/notification", ...)` 挂到 `api_prefix = /api/communication` 下，而 router 内部又有 `"/notification/channels*"`、`"/notify/*"` 这类自带前缀的路径。于是真实路径是两段 notification：
+
+- `/api/communication/notification/notification/channels` → **200**
+- `/api/communication/notification/channels` → **404**
+
+前端 `apiClient.notification` 的 baseURL 就是 `.../api/communication/notification`，再拼 `'/notification/channels'` 恰好对上——**不是前端 bug，是后端挂载与注解路径双向不一致**。
+
+### 做法（四件套 + 一条新规则）
+
+1. **兜底桩分流**：`communication_real_module.rs` 里 `NOTIF_STUB_GET/POST/PUT/DELETE` 四组常量共 106 条（`webhooks/groups/digests/topics/scheduled/providers` 等资源后端只有空壳 `comm_stub`），展开成 `/api/communication/notification<path>` 写进 `openapi-known-stubs.json`（134→240 条），缺口直接 122→13。这些是**真桩**（返回 200 + `x-stub: true`），留在白名单里比硬塞 spec 诚实。
+2. **注解 path 必须带第二层 `/notification`**：`send_notification`、`broadcast_notification`、`mark_all_as_read`、`list_notifications` 的注解原本是 `/notify/send` 这类裸路径，规范化后变成 `/api/communication/notify/send`（404 幻影）。改成 `/notification/notify/send` 等才对上真实挂载。
+3. **channels CRUD 走别名克隆**：`list_channels`/`create_channel`/`get_channel`/`update_channel`/`delete_channel` 的注解都指向 `/notification/push-config/channels*`（同一个 handler 两处挂载），utoipa 只能声明一个 path，7 条 `/notification/notification/channels*` 用克隆补齐并写 `x-alias-of`。
+4. **一个 handler 多方法的克隆**：`delete_all_notifications` 同时挂在 `POST /notifications` 和 `POST /notifications/bulk-delete-all`；`mark_as_read` 注解是 PUT `/notification/notifications/{id}`，但前端按 `POST /notify/{id}/read` 调，克隆时按路由方法覆盖。
+
+### 幻影路径清理与豁免机制
+
+收尾实测发现 spec 里有 2 条线上 404 的路径：`/api/communication/notification/channels`、`/api/communication/notify/list`。它们不是本轮引入的，而是 `origin/main` 上已经文档化错了，并集合并时又被带回来。
+
+给 `scripts/ci/spec-superset-check.mjs` 加了 **`--allow-file` 豁免机制**（默认 `scripts/ci/spec-prune-allowlist.json`）：main 上文档化但实测 404 的路径可以登记豁免，脚本打印 `WAIVED` 而不是判失败，每条都要求写清实测证据。这样"删幻影"和"不许回退"两个目标不再互相打架——**允许删，但必须留证据**。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| notification 契约 调用/匹配/缺口 | 166/44/122 | **166/57/0** |
+| notification 桩豁免 | 0 | **109** |
+| known-stubs 总数 | 134 | **240** |
+| spec paths | 3243 | **3266** |
+| communication 无参 GET 实测 | — | **30 条 0 404** |
+
+### 结论与遗留
+
+notification 命名空间契约缺口清零，但清零的构成要看清：166 条里 **57 条真实命中 + 109 条桩豁免**。真桩覆盖的 `webhooks/groups/digests/topics/scheduled/providers` 目前只有 `comm_stub` 空壳，是继续走桩还是补真实实现，需产品口径决策——这是缺口，不是已完成。
