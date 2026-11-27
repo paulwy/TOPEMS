@@ -475,7 +475,7 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('erp.financial_analysis_page.k0'),
                 value: balanceSheetData.total_assets || 0,
-                color: theme.palette.success.main,
+                color: theme.palette.success[700],
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k1'),
@@ -504,7 +504,7 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('erp.financial_analysis_page.k3'),
                 value: incomeStatementData.total_revenue || 0,
-                color: theme.palette.success.main,
+                color: theme.palette.success[700],
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k4'),
@@ -533,12 +533,12 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('erp.financial_report.label.total_inflow'),
                 value: cashFlowData.total_inflow || 0,
-                color: theme.palette.success.main,
+                color: theme.palette.success[700],
               },
               {
                 name: i18n.t('erp.financial_report.label.total_outflow'),
                 value: cashFlowData.total_outflow || 0,
-                color: theme.palette.warning.main,
+                color: theme.palette.warning[700],
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k10'),
@@ -562,12 +562,12 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('pages.financial_analysis_page.030_0'),
                 value: agingAnalysisData['0-30'] || 0,
-                color: theme.palette.success.main,
+                color: theme.palette.success[700],
               },
               {
                 name: i18n.t('pages.financial_analysis_page.3160_1'),
                 value: agingAnalysisData['31-60'] || 0,
-                color: theme.palette.warning.main,
+                color: theme.palette.warning[700],
               },
               {
                 name: i18n.t('pages.financial_analysis_page.6190_2'),
@@ -601,13 +601,13 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('erp.financial_analysis_page.k12'),
                 value: budgetAnalysisData.actual_amount || 0,
-                color: theme.palette.success.main,
+                color: theme.palette.success[700],
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k13'),
                 value:
                   (budgetAnalysisData.budget_amount || 0) - (budgetAnalysisData.actual_amount || 0),
-                color: theme.palette.warning.main,
+                color: theme.palette.warning[700],
               },
             ],
           },

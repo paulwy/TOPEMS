@@ -169,10 +169,10 @@ const FinanceBudgetDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
-            <TrendingUp sx={{ width: 32, height: 32, color: 'warning.main', mb: 1 }} />
+            <TrendingUp sx={{ width: 32, height: 32, color: 'warning.700', mb: 1 }} />
             <Typography
               variant='h4'
-              sx={{ fontWeight: 'bold', color: 'warning.main' }}
+              sx={{ fontWeight: 'bold', color: 'warning.700' }}
             >
               {formatCurrency(budget.usedAmount)}
             </Typography>
@@ -184,10 +184,10 @@ const FinanceBudgetDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
-            <CheckCircle2 sx={{ width: 32, height: 32, color: 'success.main', mb: 1 }} />
+            <CheckCircle2 sx={{ width: 32, height: 32, color: 'success.700', mb: 1 }} />
             <Typography
               variant='h4'
-              sx={{ fontWeight: 'bold', color: 'success.main' }}
+              sx={{ fontWeight: 'bold', color: 'success.700' }}
             >
               {formatCurrency(budget.remainingAmount)}
             </Typography>
@@ -351,7 +351,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             </Typography>
             <Typography
               variant='body2'
-              sx={{ fontWeight: 'medium', color: 'success.main' }}
+              sx={{ fontWeight: 'medium', color: 'success.700' }}
             >
               {formatCurrency(Math.max(0, budget.remainingAmount - budget.usedAmount * 0.1))}
             </Typography>
@@ -463,7 +463,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             }}
           >
             <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-              <AlertCircle sx={{ width: 24, height: 24, color: 'warning.main', mb: 1 }} />
+              <AlertCircle sx={{ width: 24, height: 24, color: 'warning.700', mb: 1 }} />
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 'bold' }}
@@ -482,7 +482,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               </Typography>
             </Box>
             <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-              <CheckCircle2 sx={{ width: 24, height: 24, color: 'success.main', mb: 1 }} />
+              <CheckCircle2 sx={{ width: 24, height: 24, color: 'success.700', mb: 1 }} />
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 'bold' }}

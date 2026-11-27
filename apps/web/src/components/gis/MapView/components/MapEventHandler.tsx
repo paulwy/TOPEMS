@@ -97,7 +97,7 @@ const MapEventHandler: React.FC<MapEventHandlerProps> = ({
             id: `polygon-${Date.now()}`,
             type: 'polygon',
             points: [{ lat: point[0], lng: point[1] }],
-            color: 'success.main',
+            color: 'success.700',
           });
         } else {
           const updatedDrawing = {

@@ -54,7 +54,7 @@ const statusConfig = {
   },
   warning: {
     icon: <AlertTriangle size={18} />,
-    color: 'warning.main',
+    color: 'warning.700',
     bgColor: 'warning.light',
     label: i18n.t('shared.status_timeline.k4'),
   },

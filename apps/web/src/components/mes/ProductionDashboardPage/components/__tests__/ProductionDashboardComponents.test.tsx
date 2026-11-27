@@ -177,7 +177,7 @@ describe('ProductionDashboard components', () => {
           value='92.5'
           unit='%'
           icon={<span>O</span>}
-          color='success.main'
+          color='success'
           loading
         />
       );
@@ -194,7 +194,7 @@ describe('ProductionDashboard components', () => {
           value='98.6'
           unit='%'
           icon={<span>Q</span>}
-          color='success.main'
+          color='success'
           delta={2.345}
         />
       );
@@ -225,7 +225,7 @@ describe('ProductionDashboard components', () => {
           title='稼动率'
           value='88'
           icon={<span>U</span>}
-          color='info.main'
+          color='info'
           delta={Number.NaN}
         />
       );

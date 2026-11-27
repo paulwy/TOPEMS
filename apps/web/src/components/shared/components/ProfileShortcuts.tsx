@@ -61,7 +61,7 @@ const ProfileShortcuts: React.FC<ProfileShortcutsProps> = ({ profile }) => {
       icon: Bell,
       iconName: 'Bell',
       path: '/notifications',
-      color: 'warning.main',
+      color: 'warning.700',
     },
     {
       id: '5',

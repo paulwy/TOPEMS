@@ -181,7 +181,7 @@ const HrmDepartmentPage: React.FC = () => {
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'success.main' }}
+            sx={{ fontWeight: 700, color: 'success.700' }}
           >
             {active}
           </Typography>
@@ -203,7 +203,7 @@ const HrmDepartmentPage: React.FC = () => {
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'warning.main' }}
+            sx={{ fontWeight: 700, color: 'warning.700' }}
           >
             {inactive}
           </Typography>
@@ -225,7 +225,7 @@ const HrmDepartmentPage: React.FC = () => {
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'info.main' }}
+            sx={{ fontWeight: 700, color: 'info.700' }}
           >
             {employees.length}
           </Typography>

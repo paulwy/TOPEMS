@@ -326,7 +326,7 @@ const MobileApprovalPage: React.FC = () => {
       id: 'approve',
       icon: <Check className={styles.il6} />,
       label: i18n.t('mobile.mobile_approval_page.k15'),
-      color: theme.palette.success.main,
+      color: theme.palette.success[700],
       onClick: () => {},
     },
     {

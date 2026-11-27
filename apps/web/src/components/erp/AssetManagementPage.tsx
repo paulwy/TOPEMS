@@ -37,7 +37,7 @@ const AssetStats: React.FC = () => {
     {
       label: i18n.t('erp.asset_management_page.k2'),
       value: `¥${totalValue.toFixed(2)}`,
-      color: 'success.main',
+      color: 'success.700',
       textColor: 'success.700',
     },
     {

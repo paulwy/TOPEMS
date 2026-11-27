@@ -328,7 +328,7 @@ export const GuidePage: React.FC = () => {
                   >
                     {guide.is_active ? (
                       <CheckCircle
-                        style={{ width: 24, height: 24, color: theme.palette.success.main }}
+                        style={{ width: 24, height: 24, color: theme.palette.success[700] }}
                       />
                     ) : (
                       <PlayCircle
@@ -445,7 +445,7 @@ export const GuidePage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
               <Lightbulb
                 size={20}
-                style={{ color: theme.palette.warning.main }}
+                style={{ color: theme.palette.warning[700] }}
               />
               <Typography
                 variant='h6'

@@ -40,14 +40,14 @@ const CATEGORIES: KnowledgeCategory[] = [
     id: 'tech-doc',
     name: i18n.t('pages.knowledge_base_page.k2'),
     icon: 'code',
-    color: 'success.main',
+    color: 'success.700',
     description: i18n.t('pages.knowledge_base_page.api_3'),
   },
   {
     id: 'training',
     name: i18n.t('pages.knowledge_base_page.k4'),
     icon: 'graduation',
-    color: 'warning.main',
+    color: 'warning.700',
     description: i18n.t('pages.knowledge_base_page.k5'),
   },
   {
@@ -397,12 +397,12 @@ const DocumentKnowledgeBasePage: React.FC = () => {
               <Chip
                 size='small'
                 label={`${i18n.t('pages.knowledge_base_page.k3')} ${categoryDocs.filter((d) => d.status === 'published').length}`}
-                sx={{ bgcolor: 'success.50', color: 'success.main' }}
+                sx={{ bgcolor: 'success.50', color: 'success.700' }}
               />
               <Chip
                 size='small'
                 label={`${i18n.t('pages.knowledge_base_page.k4')} ${categoryDocs.reduce((sum, d) => sum + d.views, 0).toLocaleString()}`}
-                sx={{ bgcolor: 'info.50', color: 'info.main' }}
+                sx={{ bgcolor: 'info.50', color: 'info.700' }}
               />
             </Stack>
           </Box>

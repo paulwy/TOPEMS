@@ -63,7 +63,7 @@ const InboundStats: React.FC = () => {
     {
       label: i18n.t('pages.inbound_page.k0'),
       value: stats.total,
-      color: theme.palette.success.main,
+      color: theme.palette.success[700],
       bgColor: 'grey.100',
       icon: (
         <Download

@@ -85,13 +85,13 @@ function EightDStats() {
       label: i18n.t('pages.qms_eight_d_page.k7'),
       value: stats?.inProgress ?? 0,
       icon: Clock,
-      color: 'warning.main',
+      color: 'warning.700',
     },
     {
       label: i18n.t('pages.qms_eight_d_page.k8'),
       value: stats?.completed ?? 0,
       icon: CheckCircle,
-      color: 'success.main',
+      color: 'success.700',
     },
   ];
 

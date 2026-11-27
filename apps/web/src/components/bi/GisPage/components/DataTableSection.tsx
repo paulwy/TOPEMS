@@ -161,7 +161,7 @@ export const DataTableSection: React.FC<DataTableSectionProps> = ({
               py: 6,
             }}
           >
-            <CircularProgress sx={{ color: 'info.main' }} />
+            <CircularProgress sx={{ color: 'info.700' }} />
           </Box>
         ) : filteredData.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 6 }}>

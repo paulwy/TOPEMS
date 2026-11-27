@@ -538,7 +538,7 @@ export const AiDashboardPage: React.FC = () => {
         title: t('ai.dashboard.feature.summary_title'),
         description: t('ai.dashboard.feature.summary_desc'),
         icon: <FileText />,
-        color: theme.palette.info.main,
+        color: theme.palette.info[700],
         stats: [
           { label: t('ai.dashboard.feature.stat_support_format'), value: '10+' },
           { label: t('ai.dashboard.feature.stat_process_speed'), value: '<30s' },
@@ -553,7 +553,7 @@ export const AiDashboardPage: React.FC = () => {
         title: t('ai.dashboard.feature.code_title'),
         description: t('ai.dashboard.feature.code_desc'),
         icon: <Code />,
-        color: theme.palette.success.main,
+        color: theme.palette.success[700],
         stats: [
           { label: t('ai.dashboard.feature.stat_support_language'), value: '20+' },
           {

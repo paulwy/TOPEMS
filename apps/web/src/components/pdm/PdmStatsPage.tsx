@@ -246,7 +246,7 @@ const PdmStatsPage: React.FC = () => {
       dataKey: 'value',
       nameKey: 'name',
       data: [
-        { name: t('pdm.pdm_stats_page.k23'), value: stats.planningBatches, color: 'warning.main' },
+        { name: t('pdm.pdm_stats_page.k23'), value: stats.planningBatches, color: 'warning.700' },
         {
           name: t('pdm.pdm_stats_page.k24'),
           value: stats.inProgressBatches,
@@ -255,7 +255,7 @@ const PdmStatsPage: React.FC = () => {
         {
           name: t('pdm.pdm_stats_page.k25'),
           value: stats.completedBatches,
-          color: theme.palette.success.main,
+          color: theme.palette.success[700],
         },
         {
           name: t('pdm.pdm_stats_page.k26'),
@@ -276,7 +276,7 @@ const PdmStatsPage: React.FC = () => {
           value: stats.activeProcesses,
           color: theme.palette.teal.main,
         },
-        { name: t('pdm.pdm_stats_page.k29'), value: stats.activeFormulas, color: 'warning.main' },
+        { name: t('pdm.pdm_stats_page.k29'), value: stats.activeFormulas, color: 'warning.700' },
         { name: t('pdm.pdm_stats_page.k30'), value: stats.totalSteps, color: 'secondary.main' },
       ].filter((d) => d.value > 0),
     },

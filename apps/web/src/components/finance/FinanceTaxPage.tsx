@@ -535,7 +535,7 @@ const FinanceTaxPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h6'
-                    sx={{ fontWeight: 700, color: 'success.main' }}
+                    sx={{ fontWeight: 700, color: 'success.700' }}
                   >
                     ¥{selectedTax.paid_amount.toLocaleString()}
                   </Typography>
@@ -579,7 +579,7 @@ const FinanceTaxPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: 'warning.main' }}
+                  sx={{ fontWeight: 700, color: 'warning.700' }}
                 >
                   ¥{selectedTax.owed_amount.toLocaleString()}
                 </Typography>
@@ -717,7 +717,7 @@ const FinanceTaxPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h6'
-                    sx={{ fontWeight: 700, color: 'success.main' }}
+                    sx={{ fontWeight: 700, color: 'success.700' }}
                   >
                     ¥{selectedTax.paid_amount.toLocaleString()}
                   </Typography>

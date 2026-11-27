@@ -152,7 +152,7 @@ const LEVEL_CONFIG = {
   },
   warning: {
     icon: AlertTriangle,
-    color: 'warning.main',
+    color: 'warning.700',
     bgColor: 'warning.light',
     borderColor: 'warning.light',
     titleColor: 'warning.800',

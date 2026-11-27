@@ -460,13 +460,13 @@ export const ProductionDashboardPage: React.FC = () => {
             {wsStatus === 'connected' ? (
               <Wifi
                 size={12}
-                sx={{ color: 'success.main' }}
+                sx={{ color: 'success.700' }}
               />
             ) : wsStatus === 'connecting' || wsStatus === 'reconnecting' ? (
               <Wifi
                 size={12}
                 sx={{
-                  color: 'warning.main',
+                  color: 'warning.700',
                   animation: 'spin 2s linear infinite',
                   '@keyframes spin': {
                     from: { transform: 'rotate(0deg)' },

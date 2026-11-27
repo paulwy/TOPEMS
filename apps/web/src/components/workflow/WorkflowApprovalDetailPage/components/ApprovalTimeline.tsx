@@ -332,7 +332,7 @@ export const TimelineTabContent: React.FC<{
                   {approval.timeout_at && (
                     <Typography
                       variant='caption'
-                      sx={{ display: 'block', color: 'warning.main', mt: 0.5 }}
+                      sx={{ display: 'block', color: 'warning.700', mt: 0.5 }}
                     >
                       {i18n.t('pages.approval_timeline.k7')}:{' '}
                       {new Date(approval.timeout_at).toLocaleString()}

@@ -588,7 +588,7 @@ const PluginUploadPage: React.FC = () => {
           {activeStep === 3 && (
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <CheckCircle
-                sx={{ width: 64, height: 64, color: 'success.main', mx: 'auto', mb: 3 }}
+                sx={{ width: 64, height: 64, color: 'success.700', mx: 'auto', mb: 3 }}
               />
               <Typography
                 variant='h5'

@@ -358,7 +358,7 @@ export const AiCodeAssistantPage: React.FC = () => {
         return (
           <AlertTriangle
             size={16}
-            style={{ color: theme.palette.warning.main }}
+            style={{ color: theme.palette.warning[700] }}
           />
         );
       default:

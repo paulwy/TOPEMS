@@ -184,7 +184,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Star sx={{ width: 16, height: 16, color: 'warning.main', fill: 'warning.main' }} />
+            <Star sx={{ width: 16, height: 16, color: 'warning.700', fill: 'warning.main' }} />
             <Typography
               variant='body2'
               sx={{ fontWeight: 'medium' }}
@@ -1049,7 +1049,7 @@ const PluginMarketplacePage: React.FC = () => {
         label: t('plugin.field.rating'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Star sx={{ width: 16, height: 16, color: 'warning.main', fill: 'warning.main' }} />
+            <Star sx={{ width: 16, height: 16, color: 'warning.700', fill: 'warning.main' }} />
             <Typography
               variant='body2'
               sx={{ fontWeight: 'medium' }}

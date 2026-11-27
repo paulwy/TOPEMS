@@ -304,7 +304,7 @@ const BudgetManagementPage: React.FC = () => {
                       width: 28,
                       height: 28,
                       mr: 1.5,
-                      color: 'success.main',
+                      color: 'success.700',
                     }}
                   />
                   {t('finance.budget_management_page.e3')}

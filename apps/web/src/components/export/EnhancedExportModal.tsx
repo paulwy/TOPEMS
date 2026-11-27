@@ -61,7 +61,7 @@ const exportFormats: {
     label: 'Excel',
     description: i18n.t('components.enhanced_export_modal.k0'),
     icon: <FileSpreadsheet sx={{ width: 24, height: 24 }} />,
-    color: 'success.main',
+    color: 'success.700',
     extension: '.xlsx',
   },
   {
@@ -77,7 +77,7 @@ const exportFormats: {
     label: 'CSV',
     description: i18n.t('components.enhanced_export_modal.k1'),
     icon: <FileText sx={{ width: 24, height: 24 }} />,
-    color: 'info.main',
+    color: 'info.700',
     extension: '.csv',
   },
   {
@@ -93,7 +93,7 @@ const exportFormats: {
     label: 'HTML',
     description: i18n.t('components.enhanced_export_modal.k2'),
     icon: <FileText sx={{ width: 24, height: 24 }} />,
-    color: 'warning.main',
+    color: 'warning.700',
     extension: '.html',
   },
   {

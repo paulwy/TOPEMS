@@ -36,7 +36,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
       id: 'approve',
       icon: <Check className={styles.il1} />,
       label: i18n.t('mobile.approval.action.approve'),
-      color: theme.palette.success.main,
+      color: theme.palette.success[700],
       onClick: onApprove || (() => {}),
     },
     {

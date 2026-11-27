@@ -91,7 +91,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
               {
                 name: i18n.t('bi.gis_page_components__stats_section.equipment'),
                 value: statistics?.device_points || 0,
-                color: theme.palette.success.main,
+                color: theme.palette.success[700],
               },
               {
                 name: i18n.t('bi.gis_page_components__stats_section.pipeline_label'),
@@ -101,7 +101,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
               {
                 name: i18n.t('bi.gis_page_components__stats_section.pipeline_mgmt_title'),
                 value: statistics?.storage_locations || 0,
-                color: 'warning.main',
+                color: 'warning.700',
               },
               {
                 name: i18n.t('bi.gis_page_components__stats_section.plant_map_card'),

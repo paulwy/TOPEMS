@@ -41,7 +41,7 @@ const MaterialStats: React.FC = () => {
     {
       label: i18n.t('erp.material_management_page.k2'),
       value: active,
-      color: 'success.main',
+      color: 'success.700',
       textColor: 'success.dark',
     },
     {

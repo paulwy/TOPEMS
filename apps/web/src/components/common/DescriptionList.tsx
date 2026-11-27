@@ -121,7 +121,7 @@ const DescriptionList: React.FC<DescriptionListProps> = ({
                       {copiedIndex === index ? (
                         <Check
                           size={14}
-                          sx={{ color: 'success.main' }}
+                          sx={{ color: 'success.700' }}
                         />
                       ) : (
                         <Copy size={14} />
@@ -200,7 +200,7 @@ const DescriptionList: React.FC<DescriptionListProps> = ({
                         {copiedIndex === index ? (
                           <Check
                             size={14}
-                            sx={{ color: 'success.main' }}
+                            sx={{ color: 'success.700' }}
                           />
                         ) : (
                           <Copy size={14} />

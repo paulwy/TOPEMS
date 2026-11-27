@@ -91,13 +91,13 @@ const CRMBillingPage: React.FC = () => {
       {
         label: t('crm.billing.stat_paid'),
         value: displayStats?.paidCount ?? 0,
-        color: 'success.main',
+        color: 'success.700',
         amount: displayStats?.paidAmount ?? 0,
       },
       {
         label: t('crm.billing.stat_pending'),
         value: displayStats?.pendingCount ?? 0,
-        color: 'warning.main',
+        color: 'warning.700',
         amount: displayStats?.pendingAmount ?? 0,
       },
       {

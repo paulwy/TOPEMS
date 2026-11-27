@@ -359,7 +359,7 @@ const FinanceCostPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='body1'
-                    sx={{ fontWeight: 700, color: 'success.main' }}
+                    sx={{ fontWeight: 700, color: 'success.700' }}
                   >
                     ¥
                     {Number(

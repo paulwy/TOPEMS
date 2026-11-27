@@ -147,7 +147,7 @@ export default function ConsolidationReportsPage() {
     consolidated_income_statement: {
       name: t('finance.consolidation_reports_page.k1'),
       icon: TrendingUp,
-      color: theme.palette.success.main,
+      color: theme.palette.success[700],
     },
     consolidated_cash_flow: {
       name: t('finance.consolidation_reports_page.k2'),
@@ -157,7 +157,7 @@ export default function ConsolidationReportsPage() {
     consolidated_statement_changes: {
       name: t('finance.consolidation_reports_page.k3'),
       icon: BarChart3,
-      color: 'warning.main',
+      color: 'warning.700',
     },
     elimination_work_sheet: {
       name: t('finance.consolidation_reports_page.k4'),
@@ -301,7 +301,7 @@ export default function ConsolidationReportsPage() {
           {
             name: t('finance.consolidation_reports_page.completed'),
             value: statusDistribution.completed,
-            color: theme.palette.success.main,
+            color: theme.palette.success[700],
           },
           {
             name: t('finance.consolidation_reports_page.pie_published'),

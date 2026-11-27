@@ -403,7 +403,7 @@ const FinanceAssetPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'success.main' }}
+                  sx={{ fontWeight: 700, color: 'success.700' }}
                 >
                   ¥1,000.00
                 </Typography>

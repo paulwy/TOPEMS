@@ -37,7 +37,7 @@ const BankAccountStats: React.FC = () => {
     {
       label: i18n.t('erp.bank_account_page.k2'),
       value: `¥${totalBalance.toFixed(2)}`,
-      color: 'success.main',
+      color: 'success.700',
       textColor: 'success.700',
     },
     {

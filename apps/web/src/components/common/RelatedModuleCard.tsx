@@ -133,7 +133,7 @@ const RelatedModuleCardInner: React.FC<RelatedModuleCardProps> = ({
                     {item.value}
                   </Typography>
                   {item.trend === 'up' && (
-                    <TrendingUp sx={{ width: 14, height: 14, color: 'success.main' }} />
+                    <TrendingUp sx={{ width: 14, height: 14, color: 'success.700' }} />
                   )}
                 </Box>
               </Box>

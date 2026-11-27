@@ -295,7 +295,7 @@ const HrmReportsPage: React.FC = () => {
               {
                 name: i18n.t('hrm.hrm_reports_page.on_time'),
                 value: attendanceSummary?.on_time_count || 0,
-                color: 'success.main',
+                color: 'success.700',
               },
               {
                 name: i18n.t('hrm.hrm_reports_page.late'),

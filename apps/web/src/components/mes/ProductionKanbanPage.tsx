@@ -381,7 +381,7 @@ const ProductionKanbanPage: React.FC = () => {
                           <TableCell align='right'>{item.total_quantity}</TableCell>
                           <TableCell
                             align='right'
-                            sx={{ color: 'success.main' }}
+                            sx={{ color: 'success.700' }}
                           >
                             {item.good_quantity}
                           </TableCell>

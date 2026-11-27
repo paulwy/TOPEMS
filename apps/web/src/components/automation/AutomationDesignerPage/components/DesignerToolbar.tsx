@@ -312,7 +312,7 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
                       {node.isNew && (
                         <Typography
                           component='span'
-                          color='warning.main'
+                          color='warning.700'
                           sx={{ ml: 1 }}
                         >
                           ({t('automation.automation_designer_page_components_designer_toolbar.l1')}

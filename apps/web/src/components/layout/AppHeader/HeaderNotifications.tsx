@@ -100,11 +100,11 @@ export const HeaderNotifications: React.FC = () => {
   const mapTypeToAvatar = (type: NotificationTypeEnum) => {
     switch (type) {
       case 'success':
-        return { color: 'success.main', icon: '✓' };
+        return { color: 'success.700', icon: '✓' };
       case 'warning':
       case 'alert':
       case 'error':
-        return { color: 'warning.main', icon: '!' };
+        return { color: 'warning.700', icon: '!' };
       default:
         return { color: 'primary.main', icon: 'i' };
     }

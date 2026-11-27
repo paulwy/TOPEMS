@@ -149,7 +149,7 @@ const CRMSalesFunnelPage: React.FC = () => {
           {
             name: `${label}${t('crm.salesFunnel.chart_suffix_value')}`,
             value: Math.round(Number(stage.weightedValue) / 10000),
-            color: 'success.main',
+            color: 'success.700',
           },
         ];
       }),

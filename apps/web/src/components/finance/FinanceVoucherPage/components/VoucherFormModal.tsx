@@ -301,7 +301,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
               >
                 {t('finance.finance_voucher_page_components_voucher_detail_modal.e10')}
               </Typography>
-              <Typography sx={{ fontWeight: 'bold', color: 'success.main' }}>
+              <Typography sx={{ fontWeight: 'bold', color: 'success.700' }}>
                 {formatCurrency(
                   newVoucher.items.reduce((sum, item) => sum + item.credit_amount, 0)
                 )}

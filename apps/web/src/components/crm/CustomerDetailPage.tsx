@@ -371,7 +371,7 @@ const CustomerDetailPage: React.FC = () => {
             <Typography color='text.secondary'>
               {t('crm.customerDetail.field_accounts_receivable')}
             </Typography>
-            <Typography sx={{ fontWeight: 'medium', color: 'warning.main' }}>
+            <Typography sx={{ fontWeight: 'medium', color: 'warning.700' }}>
               {formatCurrency(finInfo?.accounts_receivable)}
             </Typography>
           </Box>
@@ -437,7 +437,7 @@ const CustomerDetailPage: React.FC = () => {
             <Typography color='text.secondary'>
               {t('crm.customerDetail.field_total_sales')}
             </Typography>
-            <Typography sx={{ fontWeight: 'medium', color: 'success.main' }}>
+            <Typography sx={{ fontWeight: 'medium', color: 'success.700' }}>
               {formatCurrency(finInfo?.total_sales)}
             </Typography>
           </Box>
@@ -461,7 +461,7 @@ const CustomerDetailPage: React.FC = () => {
             <Typography color='text.secondary'>
               {t('crm.customerDetail.field_receivable_balance')}
             </Typography>
-            <Typography sx={{ fontWeight: 'medium', color: 'warning.main' }}>
+            <Typography sx={{ fontWeight: 'medium', color: 'warning.700' }}>
               {formatCurrency((finInfo?.accounts_receivable || 0) - (finInfo?.total_received || 0))}
             </Typography>
           </Box>

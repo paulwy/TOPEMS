@@ -271,7 +271,7 @@ const HrmPayrollPage: React.FC = () => {
     const salaryCompositionData = [
       { name: t('hrm.hrm_payroll_page.base_salary'), value: 60, color: 'primary.main' },
       { name: t('hrm.hrm_payroll_page.bonus'), value: 15, color: 'success.700' },
-      { name: t('hrm.hrm_payroll_page.allowance'), value: 10, color: 'warning.main' },
+      { name: t('hrm.hrm_payroll_page.allowance'), value: 10, color: 'warning.700' },
       { name: t('hrm.hrm_payroll_page.social_insurance_fund'), value: 8, color: 'error.main' },
       { name: t('hrm.hrm_payroll_page.individual_income_tax'), value: 7, color: 'secondary.main' },
     ];
@@ -280,7 +280,7 @@ const HrmPayrollPage: React.FC = () => {
       {
         name: t('hrm.hrm_payroll_page.pending_calculation'),
         value: rows.filter((r) => r.status === 'draft').length,
-        color: 'warning.main',
+        color: 'warning.700',
       },
       {
         name: t('hrm.hrm_payroll_page.calculated'),

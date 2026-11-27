@@ -525,7 +525,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                       ) : stat.trend.direction === 'neutral' ? (
                         <Minus sx={{ fontSize: 14, color: 'text.secondary' }} />
                       ) : (
-                        <TrendingUp sx={{ fontSize: 14, color: 'success.main' }} />
+                        <TrendingUp sx={{ fontSize: 14, color: 'success.700' }} />
                       )}
                       <Typography
                         variant='caption'

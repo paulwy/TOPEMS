@@ -359,7 +359,7 @@ const FullscreenLoader: React.FC<{
         {timeoutWarning && (
           <Typography
             variant='caption'
-            color='warning.main'
+            color='warning.700'
             sx={{ mt: 1 }}
           >
             {i18n.t('components.loading_provider.k0')}

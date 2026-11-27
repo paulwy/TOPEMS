@@ -37,7 +37,7 @@ const OfficeSuppliesStats: React.FC = () => {
     {
       label: i18n.t('erp.office_supplies_page.k2'),
       value: inStock,
-      color: 'success.main',
+      color: 'success.700',
       textColor: 'success.700',
     },
     {

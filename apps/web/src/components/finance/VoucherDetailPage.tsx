@@ -453,7 +453,7 @@ const VoucherDetailPage: React.FC = () => {
               {t('finance.voucher_detail_page.r2')}{' '}
               <Typography
                 component='span'
-                sx={{ fontWeight: 600, color: 'success.main' }}
+                sx={{ fontWeight: 600, color: 'success.700' }}
               >
                 {formatCurrency(voucher.total_credit)}
               </Typography>
@@ -512,7 +512,7 @@ const VoucherDetailPage: React.FC = () => {
                   <TableCell
                     sx={{
                       textAlign: 'right',
-                      color: 'success.main',
+                      color: 'success.700',
                       fontWeight: 500,
                     }}
                   >
@@ -558,7 +558,7 @@ const VoucherDetailPage: React.FC = () => {
             </Typography>
             <Typography
               variant='h6'
-              sx={{ fontWeight: 'bold', color: 'success.main' }}
+              sx={{ fontWeight: 'bold', color: 'success.700' }}
             >
               {formatCurrency(voucher.total_credit)}
             </Typography>

@@ -217,7 +217,7 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
             <Box sx={{ flex: 1, textAlign: 'center' }}>
               <Typography
                 variant='h6'
-                sx={{ fontWeight: 700, color: 'warning.main', mb: 0.5 }}
+                sx={{ fontWeight: 700, color: 'warning.700', mb: 0.5 }}
               >
                 {attendanceStats?.late_days_this_month || 0}
               </Typography>
@@ -231,7 +231,7 @@ export const AttendanceClockTab: React.FC<AttendanceClockTabProps> = ({
             <Box sx={{ flex: 1, textAlign: 'center' }}>
               <Typography
                 variant='h6'
-                sx={{ fontWeight: 700, color: 'success.main', mb: 0.5 }}
+                sx={{ fontWeight: 700, color: 'success.700', mb: 0.5 }}
               >
                 {attendanceStats?.total_work_hours || 0}h
               </Typography>

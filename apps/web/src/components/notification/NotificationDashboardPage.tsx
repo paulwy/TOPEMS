@@ -392,12 +392,12 @@ const TypeDistributionChart: React.FC = () => {
     {
       label: i18n.t('notification.notification_dashboard_page.k42'),
       value: 28,
-      color: 'success.main',
+      color: 'success.700',
     },
     {
       label: i18n.t('notification.notification_dashboard_page.k43'),
       value: 22,
-      color: 'warning.main',
+      color: 'warning.700',
     },
     {
       label: i18n.t('notification.notification_dashboard_page.k44'),
@@ -479,12 +479,12 @@ const ChannelDistributionChart: React.FC = () => {
     {
       label: i18n.t('notification.notification_dashboard_page.k46'),
       value: 85,
-      color: 'success.main',
+      color: 'success.700',
     },
     {
       label: i18n.t('notification.notification_dashboard_page.k47'),
       value: 180,
-      color: 'warning.main',
+      color: 'warning.700',
     },
     {
       label: i18n.t('notification.notification_dashboard_page.k48'),

@@ -120,7 +120,7 @@ export const taxSchema: EntitySchema = {
       type: 'number',
       listWidth: 140,
       renderCell: (row: Record<string, unknown>, _index: number) =>
-        formatMoney(row.paid_amount as number, { color: 'success.main' }),
+        formatMoney(row.paid_amount as number, { color: 'success.700' }),
     },
     {
       name: 'owed_amount',

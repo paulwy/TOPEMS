@@ -785,7 +785,7 @@ const GisContent: React.FC = () => {
                   borderRadius: 1.5,
                 }}
               >
-                <CircularProgress sx={{ color: 'info.main' }} />
+                <CircularProgress sx={{ color: 'info.700' }} />
               </Box>
             ) : (
               <Box

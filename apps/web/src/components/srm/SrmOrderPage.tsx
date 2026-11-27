@@ -53,7 +53,7 @@ const SrmOrderStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_order_page.k2'),
       value: pending,
-      color: 'warning.main',
+      color: 'warning.700',
       textColor: 'warning.dark',
       icon: (
         <ClipboardList
@@ -77,7 +77,7 @@ const SrmOrderStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_order_page.k4'),
       value: completed,
-      color: 'success.main',
+      color: 'success.700',
       textColor: 'success.dark',
       icon: (
         <ClipboardList

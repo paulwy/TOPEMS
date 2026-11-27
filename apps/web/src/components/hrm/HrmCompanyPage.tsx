@@ -170,7 +170,7 @@ const HrmCompanyPage: React.FC = () => {
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'success.main' }}
+            sx={{ fontWeight: 700, color: 'success.700' }}
           >
             {active}
           </Typography>
@@ -206,7 +206,7 @@ const HrmCompanyPage: React.FC = () => {
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'warning.main' }}
+            sx={{ fontWeight: 700, color: 'warning.700' }}
           >
             {archived}
           </Typography>
@@ -383,7 +383,7 @@ const HrmCompanyPage: React.FC = () => {
 
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Folder sx={{ width: 20, height: 20, color: 'warning.main' }} />
+                <Folder sx={{ width: 20, height: 20, color: 'warning.700' }} />
                 <Typography
                   variant='subtitle1'
                   sx={{ fontWeight: 600 }}

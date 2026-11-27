@@ -449,7 +449,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     {file.status === 'completed' && (
                       <Typography
                         variant='caption'
-                        color='success.main'
+                        color='success.700'
                       >
                         {i18n.t('components.file_upload.k0')}
                       </Typography>
@@ -465,7 +465,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     {file.status === 'paused' && (
                       <Typography
                         variant='caption'
-                        color='warning.main'
+                        color='warning.700'
                       >
                         {i18n.t('components.file_upload.k1')}
                       </Typography>

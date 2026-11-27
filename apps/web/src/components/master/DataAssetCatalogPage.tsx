@@ -262,7 +262,7 @@ const DataAssetCatalogPage: React.FC = () => {
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <DescriptionIcon sx={{ color: 'success.main' }} />
+                <DescriptionIcon sx={{ color: 'success.700' }} />
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -275,7 +275,7 @@ const DataAssetCatalogPage: React.FC = () => {
               ) : (
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: 'success.main' }}
+                  sx={{ fontWeight: 700, color: 'success.700' }}
                 >
                   {dashboard?.active_assets ?? 0}
                 </Typography>
@@ -299,7 +299,7 @@ const DataAssetCatalogPage: React.FC = () => {
               ) : (
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 700, color: 'warning.main' }}
+                  sx={{ fontWeight: 700, color: 'warning.700' }}
                 >
                   {dashboard?.deprecated_assets ?? 0}
                 </Typography>

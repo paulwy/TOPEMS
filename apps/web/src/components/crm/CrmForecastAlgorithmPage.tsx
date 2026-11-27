@@ -249,7 +249,7 @@ const CrmForecastAlgorithmPage: React.FC = () => {
         label: t('crm.forecastAlgorithm.metric_r_squared'),
         align: 'right',
         render: (_value, row) => (
-          <Typography sx={{ color: 'success.main' }}>{Number(row.r_squared).toFixed(4)}</Typography>
+          <Typography sx={{ color: 'success.700' }}>{Number(row.r_squared).toFixed(4)}</Typography>
         ),
       },
       {

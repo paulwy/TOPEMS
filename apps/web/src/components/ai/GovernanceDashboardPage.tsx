@@ -456,7 +456,7 @@ const GovernanceDashboardPage: React.FC = () => {
                     </Typography>
                     <Typography
                       variant='h4'
-                      color='success.main'
+                      color='success.700'
                     >
                       ¥{dashboard.cost_analysis.total_cost.toFixed(2)}
                     </Typography>

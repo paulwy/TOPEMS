@@ -152,7 +152,7 @@ export default function BankAccountManagementPage() {
       {
         label: i18n.t('admin.bank_account_management_page.k8'),
         value: activeCount,
-        color: 'success.main',
+        color: 'success.700',
       },
       {
         label: i18n.t('admin.bank_account_management_page.k9'),
@@ -165,7 +165,7 @@ export default function BankAccountManagementPage() {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }),
-        color: 'warning.main',
+        color: 'warning.700',
       },
     ];
     return (

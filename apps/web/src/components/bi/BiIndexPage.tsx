@@ -101,14 +101,14 @@ const BiIndexPage = () => {
       icon: <FileText size={24} />,
       label: t('bi.bi_index_page.k1'),
       path: '/bi/reports',
-      color: 'warning.main',
+      color: 'warning.700',
       bg: theme.palette.warning[50],
     },
     {
       icon: <Database size={24} />,
       label: t('bi.bi_index_page.k2'),
       path: '/bi/datasets',
-      color: 'success.main',
+      color: 'success.700',
       bg: theme.palette.success[50],
     },
     {
@@ -182,7 +182,7 @@ const BiIndexPage = () => {
       unit: t('bi.bi_index_page.data_unit'),
       change: 5,
       trend: 'up' as const,
-      color: 'warning.main',
+      color: 'warning.700',
       icon: <FileText />,
       sparklineData: [10, 12, 15, 18, 22, 25, 28],
     },
@@ -192,7 +192,7 @@ const BiIndexPage = () => {
       unit: t('bi.bi_index_page.unit_count'),
       change: 3,
       trend: 'up' as const,
-      color: 'success.main',
+      color: 'success.700',
       icon: <Database />,
       sparklineData: [5, 7, 8, 10, 12, 14, 16],
     },
@@ -664,7 +664,7 @@ const BiIndexPage = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Database
                       size={18}
-                      style={{ marginRight: 8, color: theme.palette.success.main }}
+                      style={{ marginRight: 8, color: theme.palette.success[700] }}
                     />
                     <Typography
                       variant='subtitle1'
@@ -759,7 +759,7 @@ const BiIndexPage = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <Zap
                     size={20}
-                    style={{ color: theme.palette.success.main, marginRight: 8 }}
+                    style={{ color: theme.palette.success[700], marginRight: 8 }}
                   />
                   <Typography
                     variant='subtitle1'

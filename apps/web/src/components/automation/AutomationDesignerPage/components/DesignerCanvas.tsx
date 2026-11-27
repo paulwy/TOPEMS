@@ -189,7 +189,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                   {node.isNew && (
                     <Typography
                       variant='caption'
-                      color='warning.main'
+                      color='warning.700'
                     >
                       {t('automation.automation_designer_page_components_designer_canvas.e1')}
                     </Typography>

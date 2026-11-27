@@ -353,7 +353,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 600, color: 'success.main' }}
+            sx={{ fontWeight: 600, color: 'success.700' }}
           >
             {computedStats.completedCards}
           </Typography>

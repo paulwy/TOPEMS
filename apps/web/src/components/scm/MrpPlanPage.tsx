@@ -222,7 +222,7 @@ const MrpPlanPage: React.FC = () => {
                     sx={{
                       fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                       fontWeight: 500,
-                      color: 'success.main',
+                      color: 'success.700',
                     }}
                   >
                     {calculationResult.production_suggestions}

@@ -309,14 +309,14 @@ export const AiKnowledgeBasePage: React.FC = () => {
         return (
           <FileText
             size={16}
-            style={{ color: theme.palette.info.main }}
+            style={{ color: theme.palette.info[700] }}
           />
         );
       case 'process':
         return (
           <FolderOpen
             size={16}
-            style={{ color: theme.palette.success.main }}
+            style={{ color: theme.palette.success[700] }}
           />
         );
       default:

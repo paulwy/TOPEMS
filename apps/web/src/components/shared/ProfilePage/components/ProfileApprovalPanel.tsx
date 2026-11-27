@@ -337,7 +337,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: Bell,
               iconName: 'Bell',
               path: '/notifications',
-              color: 'warning.main',
+              color: 'warning.700',
             },
             {
               id: '5',

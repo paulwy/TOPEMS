@@ -489,7 +489,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                   <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'success.50', borderRadius: 1 }}>
                     <Typography
                       variant='h5'
-                      sx={{ fontWeight: 600, color: 'success.main' }}
+                      sx={{ fontWeight: 600, color: 'success.700' }}
                     >
                       {connections.length}
                     </Typography>
@@ -521,7 +521,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                   <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'warning.50', borderRadius: 1 }}>
                     <Typography
                       variant='h5'
-                      sx={{ fontWeight: 600, color: 'warning.main' }}
+                      sx={{ fontWeight: 600, color: 'warning.700' }}
                     >
                       {stats.find((s) => s.id === 'success-rate')?.value ?? '0%'}
                     </Typography>
@@ -537,7 +537,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                   <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'info.50', borderRadius: 1 }}>
                     <Typography
                       variant='h5'
-                      sx={{ fontWeight: 600, color: 'info.main' }}
+                      sx={{ fontWeight: 600, color: 'info.700' }}
                     >
                       15
                     </Typography>

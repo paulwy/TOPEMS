@@ -170,7 +170,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                       size='small'
                       startIcon={<Edit sx={{ width: 16, height: 16 }} />}
                       sx={{
-                        color: 'info.main',
+                        color: 'info.700',
                         '&:hover': { bgcolor: 'info.50' },
                         borderRadius: 3,
                       }}

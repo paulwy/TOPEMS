@@ -457,7 +457,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Calendar sx={{ width: 20, height: 20, color: 'success.main', mr: 1 }} />
+          <Calendar sx={{ width: 20, height: 20, color: 'success.700', mr: 1 }} />
           <Typography
             variant='h6'
             sx={{ fontWeight: 600 }}
@@ -535,7 +535,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Columns sx={{ width: 20, height: 20, color: 'warning.main', mr: 1 }} />
+              <Columns sx={{ width: 20, height: 20, color: 'warning.700', mr: 1 }} />
               <Typography
                 variant='h6'
                 sx={{ fontWeight: 600 }}
@@ -646,7 +646,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FileText sx={{ width: 20, height: 20, color: 'info.main', mr: 1 }} />
+          <FileText sx={{ width: 20, height: 20, color: 'info.700', mr: 1 }} />
           <Typography
             variant='h6'
             sx={{ fontWeight: 600 }}
@@ -723,7 +723,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 sx={{
                   width: 16,
                   height: 16,
-                  color: 'success.main',
+                  color: 'success.700',
                   mr: 0.5,
                 }}
               />

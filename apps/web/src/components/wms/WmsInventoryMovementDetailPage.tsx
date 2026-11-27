@@ -144,13 +144,13 @@ function OperationTimeline({ move }: { move: ExtendedMovement }) {
       t: move.posted_at ?? move.performed_at,
       title: i18n.t('pages.wms_inventory_movement_detail_page.k9'),
       who: move.posted_by ?? move.performed_by,
-      color: 'warning.main',
+      color: 'warning.700',
     },
     {
       t: move.approved_at,
       title: i18n.t('pages.wms_inventory_movement_detail_page.k10'),
       who: move.approved_by,
-      color: 'success.main',
+      color: 'success.700',
     },
   ].filter((x) => x.t);
 

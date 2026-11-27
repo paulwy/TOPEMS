@@ -201,9 +201,9 @@ const HrmContractDetailPage: React.FC = () => {
             {daysRemaining < 30 ? (
               <AlertCircle sx={{ width: 20, height: 20, color: 'error.main' }} />
             ) : daysRemaining < 90 ? (
-              <Clock sx={{ width: 20, height: 20, color: 'warning.main' }} />
+              <Clock sx={{ width: 20, height: 20, color: 'warning.700' }} />
             ) : (
-              <CheckCircle2 sx={{ width: 20, height: 20, color: 'success.main' }} />
+              <CheckCircle2 sx={{ width: 20, height: 20, color: 'success.700' }} />
             )}
             <Typography
               variant='body1'

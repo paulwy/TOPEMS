@@ -315,7 +315,7 @@ export const WorkflowSettingsPage: React.FC = () => {
         {hasUnsavedChanges && (
           <Typography
             variant='body2'
-            color='warning.main'
+            color='warning.700'
           >
             {tPages('index.k0')}
           </Typography>

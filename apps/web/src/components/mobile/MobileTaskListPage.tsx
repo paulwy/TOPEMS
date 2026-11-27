@@ -213,7 +213,7 @@ const MobileTaskListPage: React.FC = () => {
       id: 'complete',
       icon: <CheckSquare className={styles.il5} />,
       label: i18n.t('mobile.mobile_task_list_page.k13'),
-      color: theme.palette.success.main,
+      color: theme.palette.success[700],
       onClick: () => {},
     },
     {

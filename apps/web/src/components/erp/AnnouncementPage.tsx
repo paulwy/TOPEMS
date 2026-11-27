@@ -40,7 +40,7 @@ const AnnouncementStats: React.FC = () => {
     {
       label: i18n.t('erp.announcement_page.k2'),
       value: published,
-      color: 'success.main',
+      color: 'success.700',
       textColor: 'success.700',
     },
     {

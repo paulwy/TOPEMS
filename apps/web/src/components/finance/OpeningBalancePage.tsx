@@ -551,14 +551,14 @@ export default function OpeningBalancePage() {
                 <AlertCircle
                   size={20}
                   style={{
-                    color: theme.palette.warning.main,
+                    color: theme.palette.warning[700],
                     marginTop: theme.spacing(2),
                   }}
                 />
                 <Box>
                   <Typography
                     variant='body2'
-                    color='warning.main'
+                    color='warning.700'
                     sx={{ fontWeight: 500 }}
                   >
                     {t('finance.opening_balance_page.e5')}

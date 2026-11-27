@@ -37,13 +37,13 @@ const VehicleStats: React.FC = () => {
     {
       label: i18n.t('erp.vehicle_page.k2'),
       value: available,
-      color: 'success.main',
+      color: 'success.700',
       textColor: 'success.700',
     },
     {
       label: i18n.t('erp.vehicle_page.k3'),
       value: inUse,
-      color: 'info.main',
+      color: 'info.700',
       textColor: 'info.700',
     },
     {

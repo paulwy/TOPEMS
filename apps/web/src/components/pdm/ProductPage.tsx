@@ -147,7 +147,7 @@ export default function ProductPage() {
               sx={{
                 fontWeight: 'bold',
                 fontSize: designTokens.typography.fontSize.scale['1.5rem'],
-                color: 'success.main',
+                color: 'success.700',
               }}
             >
               {t('pdm.product_page.m1', { v1: stats.active })}
@@ -176,7 +176,7 @@ export default function ProductPage() {
               sx={{
                 fontWeight: 'bold',
                 fontSize: designTokens.typography.fontSize.scale['1.5rem'],
-                color: 'warning.main',
+                color: 'warning.700',
               }}
             >
               {t('pdm.product_page.m1', { v1: stats.draft })}

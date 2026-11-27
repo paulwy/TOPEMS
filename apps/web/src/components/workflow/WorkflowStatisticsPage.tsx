@@ -398,7 +398,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
               {
                 key: i18n.t('pages.workflow_statistics_page.k62'),
                 name: i18n.t('pages.workflow_statistics_page.k63'),
-                color: 'success.main',
+                color: 'success.700',
               },
             ]}
             height={280}

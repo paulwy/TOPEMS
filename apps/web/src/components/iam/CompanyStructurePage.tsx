@@ -400,7 +400,7 @@ export default function CompanyStructurePage() {
         label: t('iam.company_structure_page.k12'),
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Building2 sx={{ width: 16, height: 16, color: 'success.main' }} />
+            <Building2 sx={{ width: 16, height: 16, color: 'success.700' }} />
             <Typography sx={{ fontWeight: 'medium' }}>{row.child_company_name}</Typography>
             <Typography
               variant='caption'
@@ -639,7 +639,7 @@ export default function CompanyStructurePage() {
       >
         <CardContent>
           <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <AlertCircle sx={{ width: 20, height: 20, color: 'info.main' }} />
+            <AlertCircle sx={{ width: 20, height: 20, color: 'info.700' }} />
             <Box>
               <Typography
                 sx={(t) => ({

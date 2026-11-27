@@ -777,7 +777,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
           <CardHeader
             title={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Sparkles sx={{ color: 'warning.main', fontSize: 20 }} />
+                <Sparkles sx={{ color: 'warning.700', fontSize: 20 }} />
                 <Typography variant='h6'>{i18n.t('components.template_demo_page.k68')}</Typography>
               </Box>
             }
@@ -1115,7 +1115,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                           </Typography>
                         </Box>
                         {template.ai_enabled && (
-                          <Sparkles sx={{ fontSize: 16, color: 'warning.main' }} />
+                          <Sparkles sx={{ fontSize: 16, color: 'warning.700' }} />
                         )}
                       </Box>
                     }

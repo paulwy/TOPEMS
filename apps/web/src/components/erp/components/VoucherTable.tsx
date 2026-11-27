@@ -169,7 +169,7 @@ const VoucherTable: React.FC<VoucherTableProps> = (vm) => {
                   </TableCell>
                   <TableCell
                     align='right'
-                    sx={{ color: 'success.main', fontWeight: 500 }}
+                    sx={{ color: 'success.700', fontWeight: 500 }}
                   >
                     {formatCurrency(voucher.total_credit)}
                   </TableCell>

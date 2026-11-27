@@ -101,7 +101,7 @@ function TransferRouteCard({ transfer }: { transfer: ExtendedTransfer }) {
             <Box>
               <Typography
                 variant='caption'
-                color='success.main'
+                color='success.700'
               >
                 {i18n.t('pages.wms_transfer_detail_page.k1')}
               </Typography>

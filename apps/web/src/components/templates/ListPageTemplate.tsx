@@ -2220,7 +2220,7 @@ export function ListPageTemplate<
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <WarningIcon sx={{ color: 'warning.main', fontSize: 28 }} />
+            <WarningIcon sx={{ color: 'warning.700', fontSize: 28 }} />
             <Typography variant='body1'>
               {i18n.t('templates.listPage.k6')} <strong>{selectedIds.size}</strong>{' '}
               {i18n.t('templates.listPage.k7')}

@@ -556,7 +556,7 @@ const ApsSchedulingPage: React.FC = () => {
               render: (value) => (
                 <Typography
                   variant='caption'
-                  color='success.main'
+                  color='success.700'
                 >
                   {String(value)}
                 </Typography>

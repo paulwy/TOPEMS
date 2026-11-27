@@ -202,7 +202,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                         </TableCell>
                         <TableCell
                           align='right'
-                          sx={{ color: 'success.main' }}
+                          sx={{ color: 'success.700' }}
                         >
                           {item.credit_amount > 0 ? formatCurrency(item.credit_amount) : ''}
                         </TableCell>
@@ -245,7 +245,7 @@ const VoucherDetailTabs: React.FC<VoucherDetailTabsProps> = (vm) => {
                   </Typography>
                   <Typography
                     variant='h6'
-                    sx={{ fontWeight: 'bold', color: 'success.main' }}
+                    sx={{ fontWeight: 'bold', color: 'success.700' }}
                   >
                     {formatCurrency(currentVoucher.total_credit)}
                   </Typography>

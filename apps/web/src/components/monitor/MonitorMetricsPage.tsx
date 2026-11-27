@@ -351,7 +351,7 @@ export const MonitorMetricsPage: React.FC = () => {
               {
                 key: i18n.t('monitor.monitor_metrics_page.k45'),
                 name: i18n.t('monitor.monitor_metrics_page.k46'),
-                color: 'warning.main',
+                color: 'warning.700',
               },
             ]}
             height={280}
@@ -374,7 +374,7 @@ export const MonitorMetricsPage: React.FC = () => {
               {
                 key: i18n.t('monitor.monitor_metrics_page.k49'),
                 name: i18n.t('monitor.monitor_metrics_page.k50'),
-                color: 'success.main',
+                color: 'success.700',
               },
               {
                 key: i18n.t('monitor.monitor_metrics_page.k51'),
@@ -431,8 +431,8 @@ export const MonitorMetricsPage: React.FC = () => {
             data={responseTimeData}
             xKey='name'
             yKeys={[
-              { key: 'P50', name: 'P50', color: 'success.main' },
-              { key: 'P90', name: 'P90', color: 'warning.main' },
+              { key: 'P50', name: 'P50', color: 'success.700' },
+              { key: 'P90', name: 'P90', color: 'warning.700' },
               { key: 'P99', name: 'P99', color: 'error.main' },
             ]}
             height={280}

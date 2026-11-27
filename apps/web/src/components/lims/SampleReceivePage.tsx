@@ -180,7 +180,7 @@ const SampleReceivePage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <TestTube sx={{ width: 20, height: 20, color: 'info.main' }} />
+                <TestTube sx={{ width: 20, height: 20, color: 'info.700' }} />
               </Box>
               <Box>
                 <Typography

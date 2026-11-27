@@ -394,7 +394,7 @@ export function WizardBuilder({
     <Box sx={{ textAlign: 'center', py: 4 }}>
       <Typography
         variant='h5'
-        sx={{ mb: 2, color: 'success.main' }}
+        sx={{ mb: 2, color: 'success.700' }}
       >
         {i18n.t('components.wizard_builder.k2')}
       </Typography>

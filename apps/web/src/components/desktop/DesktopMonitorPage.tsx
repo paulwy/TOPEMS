@@ -139,7 +139,7 @@ const DesktopMonitorPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           <Typography
             variant='h4'
-            sx={{ color: 'success.main' }}
+            sx={{ color: 'success.700' }}
           >
             {metrics?.success_count ?? 0}
           </Typography>
@@ -195,7 +195,7 @@ const DesktopMonitorPage = () => {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           <Typography
             variant='h4'
-            sx={{ color: 'warning.main' }}
+            sx={{ color: 'warning.700' }}
           >
             {metrics?.retry_count ?? 0}
           </Typography>

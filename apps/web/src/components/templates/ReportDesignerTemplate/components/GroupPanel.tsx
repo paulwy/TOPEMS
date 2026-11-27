@@ -47,7 +47,7 @@ export const GroupPanel: React.FC<GroupPanelProps> = ({
         onClick={() => setShowGroupPanel(!showGroupPanel)}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <BarChart3 sx={{ width: 18, height: 18, color: 'success.main' }} />
+          <BarChart3 sx={{ width: 18, height: 18, color: 'success.700' }} />
           <Typography
             variant='subtitle1'
             sx={{ fontWeight: 600 }}

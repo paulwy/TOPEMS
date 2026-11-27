@@ -27,7 +27,7 @@ vi.mock('@/components/ehs', async () => {
       return {
         score,
         level: score >= 6 ? 'high' : score >= 3 ? 'medium' : 'low',
-        color: 'warning.main',
+        color: 'warning.700',
         bgColor: 'warning.50',
       };
     },

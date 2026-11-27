@@ -984,7 +984,7 @@ export const AiModelSettingsPage: React.FC = () => {
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       <AlertCircle
                         size={16}
-                        style={{ color: theme.palette.warning.main }}
+                        style={{ color: theme.palette.warning[700] }}
                       />
                     </ListItemIcon>
                     <ListItemText
@@ -999,7 +999,7 @@ export const AiModelSettingsPage: React.FC = () => {
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       <AlertCircle
                         size={16}
-                        style={{ color: theme.palette.warning.main }}
+                        style={{ color: theme.palette.warning[700] }}
                       />
                     </ListItemIcon>
                     <ListItemText
@@ -1014,7 +1014,7 @@ export const AiModelSettingsPage: React.FC = () => {
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       <AlertCircle
                         size={16}
-                        style={{ color: theme.palette.warning.main }}
+                        style={{ color: theme.palette.warning[700] }}
                       />
                     </ListItemIcon>
                     <ListItemText

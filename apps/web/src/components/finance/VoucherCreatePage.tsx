@@ -560,7 +560,7 @@ const VoucherCreatePage: React.FC = () => {
                       sx={{
                         '& input': {
                           textAlign: 'right',
-                          color: 'success.main',
+                          color: 'success.700',
                           fontWeight: 500,
                         },
                       }}
@@ -569,7 +569,7 @@ const VoucherCreatePage: React.FC = () => {
                           startAdornment: (
                             <Typography
                               sx={{
-                                color: 'success.main',
+                                color: 'success.700',
                                 mr: 0.5,
                                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                               }}

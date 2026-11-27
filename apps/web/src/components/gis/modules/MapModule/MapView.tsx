@@ -832,7 +832,7 @@ const MapView: React.FC<MapViewProps> = ({
                         style={{
                           width: '1.25rem',
                           height: '1.25rem',
-                          color: theme.palette.warning.main,
+                          color: theme.palette.warning[700],
                         }}
                       />
                       <h4 style={{ fontWeight: 600, color: theme.palette.text.primary, margin: 0 }}>

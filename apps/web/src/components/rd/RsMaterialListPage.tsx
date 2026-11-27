@@ -186,7 +186,7 @@ const RsMaterialListPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h4'
-                  sx={{ fontWeight: 'bold', color: 'success.main' }}
+                  sx={{ fontWeight: 'bold', color: 'success.700' }}
                 >
                   {stats.sufficient}
                 </Typography>

@@ -836,7 +836,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const getTrendIcon = () => {
     if (!trend || trend === 'stable') return null;
     return trend === 'up' ? (
-      <TrendingUp style={{ width: 16, height: 16, color: theme.palette.success.main }} />
+      <TrendingUp style={{ width: 16, height: 16, color: theme.palette.success[700] }} />
     ) : (
       <TrendingUp
         style={{

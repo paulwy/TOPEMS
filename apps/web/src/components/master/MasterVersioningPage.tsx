@@ -463,7 +463,7 @@ const MasterVersioningPage: React.FC = () => {
                 {Array.isArray(c.violations) && c.violations.length === 0 && (
                   <Typography
                     variant='body2'
-                    color='success.main'
+                    color='success.700'
                   >
                     {t('master.versioning.k34')}
                   </Typography>

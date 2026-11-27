@@ -187,7 +187,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                     <Typography sx={{ color: 'error.main', fontWeight: 'bold' }}>
                       {item.debit_amount > 0 ? formatCurrency(item.debit_amount) : ''}
                     </Typography>
-                    <Typography sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                    <Typography sx={{ color: 'success.700', fontWeight: 'bold' }}>
                       {item.credit_amount > 0 ? formatCurrency(item.credit_amount) : ''}
                     </Typography>
                   </Box>
@@ -228,7 +228,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                 </Typography>
                 <Typography
                   variant='h6'
-                  sx={{ color: 'success.main', fontWeight: 'bold' }}
+                  sx={{ color: 'success.700', fontWeight: 'bold' }}
                 >
                   {formatCurrency(currentVoucher.total_credit)}
                 </Typography>

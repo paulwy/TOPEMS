@@ -520,12 +520,12 @@ export const MonitorDashboardPage: React.FC = () => {
       {
         label: i18n.t('monitor.monitor_dashboard_page.k19'),
         value: apiServices.filter((s) => s.status === 'healthy').length,
-        color: theme.palette.success.main,
+        color: theme.palette.success[700],
       },
       {
         label: i18n.t('monitor.monitor_dashboard_page.k20'),
         value: apiServices.filter((s) => s.status === 'degraded').length,
-        color: theme.palette.warning.main,
+        color: theme.palette.warning[700],
       },
       {
         label: i18n.t('monitor.monitor_dashboard_page.k21'),

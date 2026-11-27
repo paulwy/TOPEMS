@@ -88,7 +88,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color: 'warning.main' }}
+              sx={{ fontWeight: 700, color: 'warning.700' }}
             >
               {
                 reports.filter(
@@ -108,7 +108,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
               justifyContent: 'center',
             }}
           >
-            <FileText sx={{ width: 24, height: 24, color: 'warning.main' }} />
+            <FileText sx={{ width: 24, height: 24, color: 'warning.700' }} />
           </Box>
         </Box>
       </Box>
@@ -136,7 +136,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color: 'info.main' }}
+              sx={{ fontWeight: 700, color: 'info.700' }}
             >
               {
                 reports.filter(
@@ -156,7 +156,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
               justifyContent: 'center',
             }}
           >
-            <FileText sx={{ width: 24, height: 24, color: 'info.main' }} />
+            <FileText sx={{ width: 24, height: 24, color: 'info.700' }} />
           </Box>
         </Box>
       </Box>
@@ -184,7 +184,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color: 'success.main' }}
+              sx={{ fontWeight: 700, color: 'success.700' }}
             >
               {
                 reports.filter(
@@ -204,7 +204,7 @@ const ReportStats: React.FC<ReportStatsProps> = ({ reports, reportTypes }) => {
               justifyContent: 'center',
             }}
           >
-            <FileText sx={{ width: 24, height: 24, color: 'success.main' }} />
+            <FileText sx={{ width: 24, height: 24, color: 'success.700' }} />
           </Box>
         </Box>
       </Box>

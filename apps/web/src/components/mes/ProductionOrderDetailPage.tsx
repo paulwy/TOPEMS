@@ -368,7 +368,7 @@ const ProductionOrderDetailPage: React.FC = () => {
                   </InputLabel>
                   <Typography
                     variant='body2'
-                    sx={{ fontWeight: 500, color: 'success.main' }}
+                    sx={{ fontWeight: 500, color: 'success.700' }}
                   >
                     {record.qualified_quantity}
                   </Typography>

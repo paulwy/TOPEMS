@@ -162,19 +162,19 @@ const BarcodePage: React.FC = () => {
       {
         label: i18n.t('lims.barcode_page.k20'),
         value: stats.total,
-        icon: <BarcodeIcon sx={{ width: 20, height: 20, color: 'info.main' }} />,
+        icon: <BarcodeIcon sx={{ width: 20, height: 20, color: 'info.700' }} />,
         bg: 'info.50',
       },
       {
         label: i18n.t('lims.barcode_page.k21'),
         value: stats.normal,
-        icon: <BarcodeIcon sx={{ width: 20, height: 20, color: 'success.main' }} />,
+        icon: <BarcodeIcon sx={{ width: 20, height: 20, color: 'success.700' }} />,
         bg: 'success.50',
       },
       {
         label: i18n.t('lims.barcode_page.k22'),
         value: stats.printed,
-        icon: <Printer sx={{ width: 20, height: 20, color: 'info.main' }} />,
+        icon: <Printer sx={{ width: 20, height: 20, color: 'info.700' }} />,
         bg: 'info.50',
       },
       {

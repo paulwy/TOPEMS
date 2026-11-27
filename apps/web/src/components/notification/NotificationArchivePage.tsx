@@ -131,7 +131,7 @@ const NotificationArchivePage: React.FC = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Settings sx={{ width: 20, height: 20, color: 'warning.main', mr: 1 }} />
+            <Settings sx={{ width: 20, height: 20, color: 'warning.700', mr: 1 }} />
             <Typography
               variant='body2'
               sx={(t) => ({

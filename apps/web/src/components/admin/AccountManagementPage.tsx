@@ -333,17 +333,17 @@ const AccountManagementPage: React.FC = () => {
       {
         label: i18n.t('admin.account_management_page.k29'),
         value: stats.detail,
-        color: 'success.main',
+        color: 'success.700',
       },
       {
         label: i18n.t('admin.account_management_page.k30'),
         value: stats.summary,
-        color: 'info.main',
+        color: 'info.700',
       },
       {
         label: i18n.t('admin.account_management_page.k31'),
         value: stats.inactive,
-        color: 'warning.main',
+        color: 'warning.700',
       },
     ];
     return (

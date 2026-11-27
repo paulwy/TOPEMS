@@ -120,7 +120,7 @@ function SummaryFooter({ maxRpn, avgRpn }: { maxRpn: number; avgRpn: number }) {
           {i18n.t('qms:qms_fmea_detail_page.rpn_0')}
           <Box
             component='span'
-            sx={{ fontWeight: 700, color: 'warning.main', mx: 0.5 }}
+            sx={{ fontWeight: 700, color: 'warning.700', mx: 0.5 }}
           >
             {avgRpn}
           </Box>

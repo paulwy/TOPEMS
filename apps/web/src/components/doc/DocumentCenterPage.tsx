@@ -634,7 +634,7 @@ const DocumentCenterPage: React.FC = () => {
                   transition: 'all 0.2s',
                 }}
               >
-                <Folder sx={{ width: 40, height: 40, color: 'warning.main', mb: 1.5 }} />
+                <Folder sx={{ width: 40, height: 40, color: 'warning.700', mb: 1.5 }} />
                 <Typography
                   variant='body2'
                   sx={{

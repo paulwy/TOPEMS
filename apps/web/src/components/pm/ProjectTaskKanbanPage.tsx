@@ -48,7 +48,7 @@ const initialColumns: KanbanColumn[] = [
         priority: 'high',
         assignee: { id: '3', name: i18n.t('pm.project_task_kanban_page.k12') },
         dueDate: '2026-03-18',
-        tags: [{ label: i18n.t('pm.project_task_kanban_page.k13'), color: 'success.main' }],
+        tags: [{ label: i18n.t('pm.project_task_kanban_page.k13'), color: 'success.700' }],
         subtasks: { total: 8, completed: 5 },
         comments: 5,
         attachments: 3,

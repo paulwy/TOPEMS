@@ -232,7 +232,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
                 >
                   <Info
                     size={20}
-                    style={{ color: theme.palette.warning.main }}
+                    style={{ color: theme.palette.warning[700] }}
                   />
                   <Typography
                     variant='h6'

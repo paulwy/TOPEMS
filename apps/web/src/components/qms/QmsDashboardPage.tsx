@@ -348,7 +348,7 @@ const QmsDashboardPage: React.FC = () => {
       label: i18n.t('qms.qms_dashboard_page.k14'),
       icon: <BookOpen className={styles.il8} />,
       onClick: () => navigate(QMS_PATHS.standards),
-      color: 'success.main',
+      color: 'success.700',
     },
     {
       id: 'nonconformance',
@@ -362,7 +362,7 @@ const QmsDashboardPage: React.FC = () => {
       label: i18n.t('pages.qms_dashboard_page.spc_3'),
       icon: <LineChart className={styles.il10} />,
       onClick: () => navigate(QMS_PATHS.spc),
-      color: 'warning.main',
+      color: 'warning.700',
     },
     {
       id: 'audit-management',

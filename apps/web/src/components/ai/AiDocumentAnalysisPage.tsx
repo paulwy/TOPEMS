@@ -558,7 +558,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         <ListItemIcon sx={{ minWidth: 32, pt: 0.5 }}>
                           <Lightbulb
                             size={18}
-                            style={{ color: theme.palette.warning.main }}
+                            style={{ color: theme.palette.warning[700] }}
                           />
                         </ListItemIcon>
                         <ListItemText primary={point} />

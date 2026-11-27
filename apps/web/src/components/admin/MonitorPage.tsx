@@ -384,7 +384,7 @@ const MonitorPage: React.FC = () => {
             <CardContent>
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 'bold', color: 'success.main' }}
+                sx={{ fontWeight: 'bold', color: 'success.700' }}
               >
                 {formatUptime(systemMetrics?.uptime || 0)}
               </Typography>

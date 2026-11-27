@@ -39,7 +39,7 @@ const StatsCards: React.FC = () => {
     {
       label: t('scm.scm_delivery_appointment_page.k1'),
       value: stats.upcoming,
-      color: 'success.main',
+      color: 'success.700',
     },
     { label: t('scm.scm_delivery_appointment_page.k2'), value: stats.overdue, color: 'error.main' },
   ];

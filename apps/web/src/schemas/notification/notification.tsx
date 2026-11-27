@@ -34,13 +34,13 @@ const TYPE_COLORS: Record<
 
 const TYPE_BG_COLORS: Record<string, { bg: string; color: string }> = {
   system: { bg: 'glass.line', color: 'primary.main' },
-  workflow: { bg: designTokens.colors.warning[100], color: 'warning.main' },
-  reminder: { bg: designTokens.colors.warning[100], color: 'warning.main' },
+  workflow: { bg: designTokens.colors.warning[100], color: 'warning.700' },
+  reminder: { bg: designTokens.colors.warning[100], color: 'warning.700' },
   alert: { bg: designTokens.colors.error[100], color: 'error.main' },
-  message: { bg: designTokens.colors.info[100], color: 'info.main' },
-  info: { bg: designTokens.colors.info[100], color: 'info.main' },
-  success: { bg: designTokens.colors.success[100], color: 'success.main' },
-  warning: { bg: designTokens.colors.warning[100], color: 'warning.main' },
+  message: { bg: designTokens.colors.info[100], color: 'info.700' },
+  info: { bg: designTokens.colors.info[100], color: 'info.700' },
+  success: { bg: designTokens.colors.success[100], color: 'success.700' },
+  warning: { bg: designTokens.colors.warning[100], color: 'warning.700' },
   error: { bg: designTokens.colors.error[100], color: 'error.main' },
 };
 

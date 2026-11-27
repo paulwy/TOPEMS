@@ -317,7 +317,7 @@ const DatasetPage = () => {
               justifyContent: 'center',
             }}
           >
-            <Database sx={{ color: 'success.main', fontSize: 20 }} />
+            <Database sx={{ color: 'success.700', fontSize: 20 }} />
           </Box>
           <Box>
             <Typography

@@ -285,7 +285,7 @@ const PluginDetailPage: React.FC = () => {
             key={`plugin-feature-${idx}`}
             sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
           >
-            <CheckCircle sx={{ width: 20, height: 20, color: 'success.main', flexShrink: 0 }} />
+            <CheckCircle sx={{ width: 20, height: 20, color: 'success.700', flexShrink: 0 }} />
             <Typography variant='body2'>{feature}</Typography>
           </Box>
         ))}

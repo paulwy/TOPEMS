@@ -59,7 +59,7 @@ const ModuleCard = ({
   color: string;
 }) => {
   const getTrendIcon = () => {
-    if (trend === 'up') return <TrendingUp sx={{ width: 16, height: 16, color: 'success.main' }} />;
+    if (trend === 'up') return <TrendingUp sx={{ width: 16, height: 16, color: 'success.700' }} />;
     if (trend === 'down')
       return <TrendingDown sx={{ width: 16, height: 16, color: 'error.main' }} />;
     return <Minus sx={{ width: 16, height: 16, color: 'text.disabled' }} />;
@@ -765,7 +765,7 @@ const BIAnalyticsPage = () => {
                   px: 1.25,
                   py: 0.5,
                   bgcolor: 'success.50',
-                  color: 'success.main',
+                  color: 'success.700',
                   fontWeight: 600,
                   borderRadius: 1,
                 }}
@@ -795,7 +795,7 @@ const BIAnalyticsPage = () => {
                   px: 1.25,
                   py: 0.5,
                   bgcolor: 'success.50',
-                  color: 'success.main',
+                  color: 'success.700',
                   fontWeight: 600,
                   borderRadius: 1,
                 }}

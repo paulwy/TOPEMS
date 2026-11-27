@@ -18,9 +18,9 @@ import { CRM_PATHS } from '@/module-configs/crm/config';
 
 const getGradeBadge = (scoreLevel: string) => {
   const gradeConfig: Record<string, { label: string; color: string }> = {
-    A: { label: 'A', color: 'success.main' },
+    A: { label: 'A', color: 'success.700' },
     B: { label: 'B', color: 'primary.main' },
-    C: { label: 'C', color: 'warning.main' },
+    C: { label: 'C', color: 'warning.700' },
     D: { label: 'D', color: 'error.main' },
   };
   const config = gradeConfig[scoreLevel] || {
@@ -52,7 +52,7 @@ const getScoreColor = (score: number) => {
 const getScoreTrendIcon = (trend: string) => {
   switch (trend) {
     case 'up':
-      return <TrendingUp sx={{ width: 16, height: 16, color: 'success.main' }} />;
+      return <TrendingUp sx={{ width: 16, height: 16, color: 'success.700' }} />;
     case 'down':
       return <TrendingDown sx={{ width: 16, height: 16, color: 'error.main' }} />;
     default:
@@ -314,9 +314,9 @@ const CRMCustomerScoringPage: React.FC = () => {
 
     // 后端 rfm 形状为 [{name: segment, value: count}]，不保证固定 9 键：按返回行动态渲染。
     const rfmPalette: Array<{ color: string; bgColor: string }> = [
-      { color: 'success.main', bgColor: 'success.light' },
+      { color: 'success.700', bgColor: 'success.light' },
       { color: 'primary.main', bgColor: 'primary.light' },
-      { color: 'warning.main', bgColor: 'warning.light' },
+      { color: 'warning.700', bgColor: 'warning.light' },
     ];
 
     return (
@@ -335,7 +335,7 @@ const CRMCustomerScoringPage: React.FC = () => {
           <StatCard
             label={t('crm.customerScoring.grade_a')}
             value={gradeDistribution.A}
-            color='success.main'
+            color='success'
             bgColor='success.light'
           />
           <StatCard
@@ -347,7 +347,7 @@ const CRMCustomerScoringPage: React.FC = () => {
           <StatCard
             label={t('crm.customerScoring.grade_c')}
             value={gradeDistribution.C}
-            color='warning.main'
+            color='warning'
             bgColor='warning.light'
           />
           <StatCard

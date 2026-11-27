@@ -477,7 +477,7 @@ export const HelpCenterPage: React.FC = () => {
                   <Box sx={{ textAlign: 'center' }}>
                     <Video
                       size={32}
-                      sx={{ color: theme.palette.success.main, mb: 2 }}
+                      sx={{ color: theme.palette.success[700], mb: 2 }}
                     />
                     <Typography
                       variant='body1'
@@ -497,7 +497,7 @@ export const HelpCenterPage: React.FC = () => {
                   <Box sx={{ textAlign: 'center' }}>
                     <MessageCircle
                       size={32}
-                      sx={{ color: theme.palette.info.main, mb: 2 }}
+                      sx={{ color: theme.palette.info[700], mb: 2 }}
                     />
                     <Typography
                       variant='body1'

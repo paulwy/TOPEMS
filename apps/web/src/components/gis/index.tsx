@@ -1076,7 +1076,7 @@ const GisContent: React.FC = () => {
                     py: 12,
                   }}
                 >
-                  <CircularProgress sx={{ color: 'info.main' }} />
+                  <CircularProgress sx={{ color: 'info.700' }} />
                 </Box>
               ) : activeTab === 'map' ? (
                 <Box

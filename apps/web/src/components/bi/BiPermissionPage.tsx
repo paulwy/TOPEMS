@@ -587,7 +587,7 @@ const BiPermissionPage = () => {
                     }}
                   >
                     <CheckCircle2
-                      sx={{ color: 'success.main' }}
+                      sx={{ color: 'success.700' }}
                       size={24}
                     />
                   </Box>

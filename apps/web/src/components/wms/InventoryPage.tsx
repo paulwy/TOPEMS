@@ -40,7 +40,7 @@ const InventoryStats: React.FC = () => {
     {
       label: i18n.t('pages.inventory_page.k0'),
       value: stats?.total_alerts || inventory.length,
-      color: theme.palette.info.main,
+      color: theme.palette.info[700],
       bgColor: 'grey.100',
       icon: (
         <Package

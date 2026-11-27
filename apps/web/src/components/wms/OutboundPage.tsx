@@ -65,7 +65,7 @@ const OutboundStats: React.FC = () => {
     {
       label: i18n.t('pages.outbound_page.k0'),
       value: stats.total,
-      color: theme.palette.warning.main,
+      color: theme.palette.warning[700],
       bgColor: 'grey.100',
       icon: (
         <Upload

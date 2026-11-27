@@ -155,7 +155,7 @@ export const AutomationDashboardPage: React.FC = () => {
           render: (value) => (
             <Box
               component='span'
-              sx={{ color: 'success.main' }}
+              sx={{ color: 'success.700' }}
             >
               {String(value ?? '')}
             </Box>

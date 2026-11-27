@@ -172,7 +172,7 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
         {healthStatus === 'unhealthy' && (
           <Typography
             variant='caption'
-            color='warning.main'
+            color='warning.700'
           >
             {i18n.t('lib.module_loader.k3')}
           </Typography>

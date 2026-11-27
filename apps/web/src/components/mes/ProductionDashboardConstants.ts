@@ -7,11 +7,11 @@ export const REFRESH_INTERVAL_MS = 10_000;
 export const TREND_HOURS = 12;
 
 export const EQUIPMENT_STATUS_META: Record<string, { label: string; color: string }> = {
-  running: { label: i18n.t('mes.constants.k0'), color: 'success.main' },
-  in_use: { label: i18n.t('mes.constants.k1'), color: 'success.main' },
-  normal: { label: i18n.t('mes.constants.k2'), color: 'success.main' },
+  running: { label: i18n.t('mes.constants.k0'), color: 'success.700' },
+  in_use: { label: i18n.t('mes.constants.k1'), color: 'success.700' },
+  normal: { label: i18n.t('mes.constants.k2'), color: 'success.700' },
   idle: { label: i18n.t('mes.constants.k3'), color: 'primary.main' },
-  maintenance: { label: i18n.t('mes.constants.k4'), color: 'warning.main' },
+  maintenance: { label: i18n.t('mes.constants.k4'), color: 'warning.700' },
   fault: { label: i18n.t('mes.constants.k5'), color: 'error.main' },
   error: { label: i18n.t('mes.constants.k6'), color: 'error.main' },
   scrapped: { label: i18n.t('mes.constants.k7'), color: 'grey.400' },
@@ -43,7 +43,7 @@ export const SCHEDULE_STATUS_META: Record<string, { label: string; color: string
   pending: { label: i18n.t('mes.constants.k12'), color: 'grey.400' },
   in_progress: { label: i18n.t('mes.constants.k13'), color: 'primary.main' },
   processing: { label: i18n.t('mes.constants.k14'), color: 'primary.main' },
-  completed: { label: i18n.t('mes.constants.k15'), color: 'success.main' },
-  paused: { label: i18n.t('mes.constants.k16'), color: 'warning.main' },
+  completed: { label: i18n.t('mes.constants.k15'), color: 'success.700' },
+  paused: { label: i18n.t('mes.constants.k16'), color: 'warning.700' },
   delayed: { label: i18n.t('mes.constants.k17'), color: 'error.main' },
 };
