@@ -30,7 +30,7 @@ interface StatusTimelineProps {
 const statusConfig = {
   completed: {
     icon: <CheckCircle2 size={18} />,
-    color:'success.700',
+    color: 'success.700',
     bgColor: 'success.light',
     label: i18n.t('shared.status_timeline.k0'),
   },

@@ -35,7 +35,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       label: 'Excel (.xlsx)',
       icon: FileSpreadsheet,
       description: i18n.t('components.export_modal.k0'),
-      color:'success.700',
+      color: 'success.700',
       bgColor: 'success.light',
       borderColor: 'success.light',
     },
@@ -44,7 +44,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       label: 'PDF (.pdf)',
       icon: File,
       description: i18n.t('components.export_modal.k1'),
-      color:'error.700',
+      color: 'error.700',
       bgColor: 'error.light',
       borderColor: 'error.light',
     },
@@ -53,7 +53,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       label: 'CSV (.csv)',
       icon: FileText,
       description: i18n.t('components.export_modal.k2'),
-      color:'primary.700',
+      color: 'primary.700',
       bgColor: 'primary.light',
       borderColor: 'primary.light',
     },
@@ -367,8 +367,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                       checked={includeHeaders}
                       onChange={(e) => setIncludeHeaders(e.target.checked)}
                       sx={{
-                        color:'primary.700',
-                        '&.Mui-checked': { color:'primary.700' },
+                        color: 'primary.700',
+                        '&.Mui-checked': { color: 'primary.700' },
                       }}
                     />
                     <Typography
@@ -466,7 +466,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 sx={{
                   width: 64,
                   height: 64,
-                  color:'primary.700',
+                  color: 'primary.700',
                   margin: `0 auto ${designTokens.spacing.md}px`,
                   animation: 'spin 1s linear infinite',
                 }}
@@ -521,7 +521,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   margin: `0 auto ${designTokens.spacing.md}px`,
                 }}
               >
-                <CheckCircle sx={{ width: 32, height: 32, color:'success.700' }} />
+                <CheckCircle sx={{ width: 32, height: 32, color: 'success.700' }} />
               </Box>
               <Typography
                 sx={{
@@ -558,13 +558,13 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   margin: `0 auto ${designTokens.spacing.md}px`,
                 }}
               >
-                <X sx={{ width: 32, height: 32, color:'error.700' }} />
+                <X sx={{ width: 32, height: 32, color: 'error.700' }} />
               </Box>
               <Typography
                 sx={{
                   fontSize: designTokens.typography.fontSize.scale['1.125rem'],
                   fontWeight: 'medium',
-                  color:'error.700',
+                  color: 'error.700',
                 }}
               >
                 {exportError}

@@ -39,13 +39,13 @@ TOPEMS 主题系统采用 **三层 Token 架构**，从原始设计值到语义�
 
 ### 核心文件说明
 
-| 文件 | 职责 |
-|------|------|
-| `tokens.ts` | 定义 `designTokens`（基础层）和 `semanticTokens`（语义层） |
-| `theme.ts` | 通过 `createCustomTheme(mode)` 将 Token 转化为 MUI 主题对象 |
-| `moduleThemes.ts` | 定义 25 个模块各自的专属颜色主题 |
-| `gradients.ts` | 基于模块主题生成渐变色方案 |
-| `App.tsx` | 通过 `<ThemeProvider>` 将主题注入到整个应用 |
+| 文件              | 职责                                                        |
+| ----------------- | ----------------------------------------------------------- |
+| `tokens.ts`       | 定义 `designTokens`（基础层）和 `semanticTokens`（语义层）  |
+| `theme.ts`        | 通过 `createCustomTheme(mode)` 将 Token 转化为 MUI 主题对象 |
+| `moduleThemes.ts` | 定义 25 个模块各自的专属颜色主题                            |
+| `gradients.ts`    | 基于模块主题生成渐变色方案                                  |
+| `App.tsx`         | 通过 `<ThemeProvider>` 将主题注入到整个应用                 |
 
 ### 主题注入流程
 
@@ -59,11 +59,7 @@ function App() {
 
   const theme = useMemo(() => createCustomTheme(mode), [mode]);
 
-  return (
-    <ThemeProvider theme={theme}>
-      {/* 应用内容 */}
-    </ThemeProvider>
-  );
+  return <ThemeProvider theme={theme}>{/* 应用内容 */}</ThemeProvider>;
 }
 ```
 
@@ -71,7 +67,7 @@ function App() {
 
 ```tsx
 const toggleDarkMode = () => {
-  setMode(prev => prev === 'light' ? 'dark' : 'light');
+  setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
   localStorage.setItem('theme-mode', mode === 'light' ? 'dark' : 'light');
 };
 ```
@@ -89,7 +85,7 @@ const toggleDarkMode = () => {
 export const designTokens = {
   colors: {
     primary: {
-      50:  '#eff6ff',
+      50: '#eff6ff',
       100: '#dbeafe',
       200: '#bfdbfe',
       300: '#93c5fd',
@@ -104,10 +100,10 @@ export const designTokens = {
     // ...更多颜色
   },
   shadows: {
-    sm:  '0 1px 2px rgba(0,0,0,0.05)',
-    md:  '0 4px 6px rgba(0,0,0,0.07)',
-    lg:  '0 10px 15px rgba(0,0,0,0.1)',
-    xl:  '0 20px 25px rgba(0,0,0,0.12)',
+    sm: '0 1px 2px rgba(0,0,0,0.05)',
+    md: '0 4px 6px rgba(0,0,0,0.07)',
+    lg: '0 10px 15px rgba(0,0,0,0.1)',
+    xl: '0 20px 25px rgba(0,0,0,0.12)',
   },
   spacing: {
     xs: 4,
@@ -148,41 +144,41 @@ export const designTokens = {
 // tokens.ts — semanticTokens 片段
 export const semanticTokens = {
   background: {
-    default: designTokens.colors.neutral[50],    // 页面背景
-    card:     designTokens.colors.neutral.white,  // 卡片背景
-    elevated: designTokens.colors.neutral.white,  // 浮层背景
-    sunken:   designTokens.colors.neutral[100],   // 凹陷区域背景
+    default: designTokens.colors.neutral[50], // 页面背景
+    card: designTokens.colors.neutral.white, // 卡片背景
+    elevated: designTokens.colors.neutral.white, // 浮层背景
+    sunken: designTokens.colors.neutral[100], // 凹陷区域背景
     brandGradient: `linear-gradient(135deg, ${designTokens.colors.primary.main}, ${designTokens.colors.secondary.main})`,
   },
   elevation: {
-    card:    designTokens.shadows.sm,
-    modal:   designTokens.shadows.lg,
+    card: designTokens.shadows.sm,
+    modal: designTokens.shadows.lg,
     popover: designTokens.shadows.md,
     tooltip: designTokens.shadows.md,
   },
   radius: {
-    card:    `${designTokens.radius.md}px`,
-    button:  `${designTokens.radius.md}px`,
-    input:   `${designTokens.radius.sm}px`,
-    modal:   `${designTokens.radius.lg}px`,
-    chip:    `${designTokens.radius.full}px`,
+    card: `${designTokens.radius.md}px`,
+    button: `${designTokens.radius.md}px`,
+    input: `${designTokens.radius.sm}px`,
+    modal: `${designTokens.radius.lg}px`,
+    chip: `${designTokens.radius.full}px`,
   },
   border: {
-    card:    `1px solid ${designTokens.colors.neutral[200]}`,
-    input:   `1px solid ${designTokens.colors.neutral[300]}`,
+    card: `1px solid ${designTokens.colors.neutral[200]}`,
+    input: `1px solid ${designTokens.colors.neutral[300]}`,
     divider: `1px solid ${designTokens.colors.neutral[100]}`,
   },
   text: {
-    primary:   designTokens.colors.neutral[900],
+    primary: designTokens.colors.neutral[900],
     secondary: designTokens.colors.neutral[500],
-    disabled:  designTokens.colors.neutral[400],
-    onBrand:   '#ffffff',
+    disabled: designTokens.colors.neutral[400],
+    onBrand: '#ffffff',
   },
   state: {
-    error:     designTokens.colors.error[500],
-    success:   designTokens.colors.success[500],
-    warning:   designTokens.colors.warning[500],
-    info:      designTokens.colors.info[500],
+    error: designTokens.colors.error[500],
+    success: designTokens.colors.success[500],
+    warning: designTokens.colors.warning[500],
+    info: designTokens.colors.info[500],
   },
 };
 ```
@@ -250,17 +246,17 @@ export function createCustomTheme(mode: 'light' | 'dark') {
 export const designTokens = {
   colors: {
     primary: {
-      50:  '#ecfdf5',
+      50: '#ecfdf5',
       100: '#d1fae5',
       200: '#a7f3d0',
       300: '#6ee7b7',
       400: '#34d399',
-      500: '#10b981',  // emerald-500 — 新主色
+      500: '#10b981', // emerald-500 — 新主色
       600: '#059669',
       700: '#047857',
       800: '#065f46',
       900: '#064e3b',
-      main: '#10b981',  // ← 更新 main
+      main: '#10b981', // ← 更新 main
     },
     // ...
   },
@@ -284,10 +280,10 @@ export const semanticTokens = {
   },
   // 新增：状态指示相关语义
   indicator: {
-    online:  designTokens.colors.success[500],
+    online: designTokens.colors.success[500],
     offline: designTokens.colors.neutral[400],
-    busy:    designTokens.colors.warning[500],
-    error:   designTokens.colors.error[500],
+    busy: designTokens.colors.warning[500],
+    error: designTokens.colors.error[500],
   },
 };
 ```
@@ -324,30 +320,30 @@ TOPEMS 系统包含 25 个业务模块，每个模块拥有独立的颜色标识
 export const moduleThemes = {
   dashboard: {
     name: '仪表盘',
-    main:        '#6366f1',  // indigo — 模块主色
-    light:       '#e0e7ff',  // 浅色变体
-    dark:        '#4338ca',  // 深色变体
+    main: '#6366f1', // indigo — 模块主色
+    light: '#e0e7ff', // 浅色变体
+    dark: '#4338ca', // 深色变体
     contrastText: '#ffffff', // 主色上的文字颜色
   },
   production: {
     name: '生产管理',
-    main:        '#f59e0b',  // amber
-    light:       '#fef3c7',
-    dark:        '#d97706',
+    main: '#f59e0b', // amber
+    light: '#fef3c7',
+    dark: '#d97706',
     contrastText: '#ffffff',
   },
   quality: {
     name: '质量管理',
-    main:        '#10b981',  // emerald
-    light:       '#d1fae5',
-    dark:        '#059669',
+    main: '#10b981', // emerald
+    light: '#d1fae5',
+    dark: '#059669',
     contrastText: '#ffffff',
   },
   equipment: {
     name: '设备管理',
-    main:        '#8b5cf6',  // violet
-    light:       '#ede9fe',
-    dark:        '#7c3aed',
+    main: '#8b5cf6', // violet
+    light: '#ede9fe',
+    dark: '#7c3aed',
     contrastText: '#ffffff',
   },
   // ...共 25 个模块
@@ -364,8 +360,8 @@ export function getModuleGradient(moduleKey: keyof typeof moduleThemes) {
   const theme = moduleThemes[moduleKey];
   return {
     primary: `linear-gradient(135deg, ${theme.main}, ${theme.dark})`,
-    light:   `linear-gradient(135deg, ${theme.light}, ${theme.main}20)`,
-    subtle:  `linear-gradient(180deg, ${theme.main}08, transparent)`,
+    light: `linear-gradient(135deg, ${theme.light}, ${theme.main}20)`,
+    subtle: `linear-gradient(180deg, ${theme.main}08, transparent)`,
   };
 }
 ```
@@ -385,7 +381,7 @@ function ModuleHeader({ moduleKey }: { moduleKey: string }) {
         borderRadius: semanticTokens.radius.card,
       }}
     >
-      <Typography variant="h5">{moduleThemes[moduleKey].name}</Typography>
+      <Typography variant='h5'>{moduleThemes[moduleKey].name}</Typography>
     </Box>
   );
 }
@@ -399,9 +395,9 @@ export const moduleThemes = {
   // ...已有模块
   newModule: {
     name: '新模块',
-    main:        '#ec4899',  // pink — 选择一个未使用的颜色
-    light:       '#fce7f3',
-    dark:        '#db2777',
+    main: '#ec4899', // pink — 选择一个未使用的颜色
+    light: '#fce7f3',
+    dark: '#db2777',
     contrastText: '#ffffff',
   },
 };
@@ -423,7 +419,7 @@ export const moduleThemes = {
 // 获取当前模式
 const getStoredMode = (): 'light' | 'dark' => {
   const stored = localStorage.getItem('theme-mode');
-  return (stored === 'dark' ? 'dark' : 'light');
+  return stored === 'dark' ? 'dark' : 'light';
 };
 
 // 切换并保存
@@ -446,27 +442,27 @@ export function createCustomTheme(mode: 'light' | 'dark') {
   const darkOverrides = isDark
     ? {
         background: {
-          default:  designTokens.colors.neutral[900],
-          card:     designTokens.colors.neutral[800],
+          default: designTokens.colors.neutral[900],
+          card: designTokens.colors.neutral[800],
           elevated: designTokens.colors.neutral[800],
-          sunken:   designTokens.colors.neutral[950],
+          sunken: designTokens.colors.neutral[950],
         },
         elevation: {
           // 暗色模式下阴影需要更柔和
-          card:    '0 1px 3px rgba(0,0,0,0.3)',
-          modal:   '0 10px 25px rgba(0,0,0,0.5)',
+          card: '0 1px 3px rgba(0,0,0,0.3)',
+          modal: '0 10px 25px rgba(0,0,0,0.5)',
           popover: '0 4px 10px rgba(0,0,0,0.4)',
         },
         border: {
-          card:    `1px solid ${designTokens.colors.neutral[700]}`,
-          input:   `1px solid ${designTokens.colors.neutral[600]}`,
+          card: `1px solid ${designTokens.colors.neutral[700]}`,
+          input: `1px solid ${designTokens.colors.neutral[600]}`,
           divider: `1px solid ${designTokens.colors.neutral[700]}`,
         },
         text: {
-          primary:   designTokens.colors.neutral[100],
+          primary: designTokens.colors.neutral[100],
           secondary: designTokens.colors.neutral[400],
-          disabled:  designTokens.colors.neutral[600],
-          onBrand:   '#ffffff',
+          disabled: designTokens.colors.neutral[600],
+          onBrand: '#ffffff',
         },
       }
     : {};
@@ -541,12 +537,12 @@ cp src/theme/tokens.ts src/theme/tokens.custom.ts
 export const customDesignTokens = {
   colors: {
     primary: {
-      50:  '#fdf4ff',
+      50: '#fdf4ff',
       100: '#fae8ff',
       200: '#f5d0fe',
       300: '#f0abfc',
       400: '#e879f9',
-      500: '#d946ef',  // fuchsia-500 — 自定义品牌色
+      500: '#d946ef', // fuchsia-500 — 自定义品牌色
       600: '#c026d3',
       700: '#a21caf',
       800: '#86198f',
@@ -560,7 +556,7 @@ export const customDesignTokens = {
   },
   // 可调整间距、圆角、阴影等
   radius: {
-    sm: 4,   // 比默认更小
+    sm: 4, // 比默认更小
     md: 8,
     lg: 12,
     xl: 16,
@@ -575,8 +571,8 @@ export const customDesignTokens = {
 // tokens.custom.ts
 export const customSemanticTokens = {
   background: {
-    default:  customDesignTokens.colors.neutral[50],
-    card:     customDesignTokens.colors.neutral.white,
+    default: customDesignTokens.colors.neutral[50],
+    card: customDesignTokens.colors.neutral.white,
     // ...
   },
   // ...
@@ -593,7 +589,7 @@ import { customDesignTokens, customSemanticTokens } from './tokens.custom';
 export function createCustomBrandedTheme(mode: 'light' | 'dark') {
   const isDark = mode === 'dark';
   // ... 与 createCustomTheme 类似的逻辑，但使用 custom* Token
-  return createTheme({ /* ... */ });
+  return createTheme({/* ... */});
 }
 ```
 
@@ -605,19 +601,13 @@ import { createCustomBrandedTheme } from './theme.custom';
 
 function App() {
   const themeVariant = useThemeVariant(); // 'default' | 'custom'
-  const mode = useThemeMode();            // 'light' | 'dark'
+  const mode = useThemeMode(); // 'light' | 'dark'
 
   const theme = useMemo(() => {
-    return themeVariant === 'custom'
-      ? createCustomBrandedTheme(mode)
-      : createCustomTheme(mode);
+    return themeVariant === 'custom' ? createCustomBrandedTheme(mode) : createCustomTheme(mode);
   }, [themeVariant, mode]);
 
-  return (
-    <ThemeProvider theme={theme}>
-      {/* ... */}
-    </ThemeProvider>
-  );
+  return <ThemeProvider theme={theme}>{/* ... */}</ThemeProvider>;
 }
 ```
 
@@ -645,7 +635,10 @@ function DashboardCard({ title, children }) {
         },
       }}
     >
-      <Typography variant="h6" sx={{ color: semanticTokens.text.primary, mb: 1 }}>
+      <Typography
+        variant='h6'
+        sx={{ color: semanticTokens.text.primary, mb: 1 }}
+      >
         {title}
       </Typography>
       {children}
@@ -761,8 +754,8 @@ TOPEMS 的 `@topems/tokens` 包可将 Token 导出为 CSS 自定义属性，供�
   --t-bg-elevated: #ffffff;
 
   /* 语义阴影 */
-  --t-elevation-card: 0 1px 2px rgba(0,0,0,0.05);
-  --t-elevation-modal: 0 10px 15px rgba(0,0,0,0.1);
+  --t-elevation-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --t-elevation-modal: 0 10px 15px rgba(0, 0, 0, 0.1);
 
   /* 语义圆角 */
   --t-radius-card: 12px;
@@ -783,11 +776,11 @@ TOPEMS 的 `@topems/tokens` 包可将 Token 导出为 CSS 自定义属性，供�
 }
 
 /* 暗色模式 */
-[data-theme="dark"] {
+[data-theme='dark'] {
   --t-bg-default: #111827;
   --t-bg-card: #1f2937;
   --t-bg-elevated: #1f2937;
-  --t-elevation-card: 0 1px 3px rgba(0,0,0,0.3);
+  --t-elevation-card: 0 1px 3px rgba(0, 0, 0, 0.3);
   /* ... */
 }
 ```
@@ -798,21 +791,26 @@ TOPEMS 的 `@topems/tokens` 包可将 Token 导出为 CSS 自定义属性，供�
 <!-- 邮件模板示例 -->
 <!DOCTYPE html>
 <html>
-<head>
-  <link rel="stylesheet" href="https://cdn.example.com/topems/tokens.css">
-</head>
-<body>
-  <div style="
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.example.com/topems/tokens.css"
+    />
+  </head>
+  <body>
+    <div
+      style="
     background: var(--t-bg-card);
     border: 1px solid var(--t-color-neutral-200);
     border-radius: var(--t-radius-card);
     box-shadow: var(--t-elevation-card);
     padding: var(--t-spacing-lg);
-  ">
-    <h2 style="color: var(--t-color-primary-main);">通知标题</h2>
-    <p style="color: var(--t-text-secondary);">通知内容</p>
-  </div>
-</body>
+  "
+    >
+      <h2 style="color: var(--t-color-primary-main);">通知标题</h2>
+      <p style="color: var(--t-text-secondary);">通知内容</p>
+    </div>
+  </body>
 </html>
 ```
 
@@ -919,14 +917,14 @@ production: {
 
 ### 6. Token 命名规范
 
-| 层级 | 命名模式 | 示例 |
-|------|---------|------|
-| Base — 颜色 | `{family}.{shade}` | `primary.500`, `neutral[100]` |
-| Base — 通用 | `{category}.{variant}` | `shadows.sm`, `radius.md`, `motion.easing` |
-| Semantic — 背景级 | `background.{scenario}` | `background.card`, `background.sunken` |
-| Semantic — 视觉级 | `{visual}.{scenario}` | `elevation.card`, `border.input` |
-| Semantic — 文本级 | `text.{role}` | `text.primary`, `text.secondary` |
-| Semantic — 状态级 | `state.{type}` | `state.error`, `state.success` |
+| 层级              | 命名模式                | 示例                                       |
+| ----------------- | ----------------------- | ------------------------------------------ |
+| Base — 颜色       | `{family}.{shade}`      | `primary.500`, `neutral[100]`              |
+| Base — 通用       | `{category}.{variant}`  | `shadows.sm`, `radius.md`, `motion.easing` |
+| Semantic — 背景级 | `background.{scenario}` | `background.card`, `background.sunken`     |
+| Semantic — 视觉级 | `{visual}.{scenario}`   | `elevation.card`, `border.input`           |
+| Semantic — 文本级 | `text.{role}`           | `text.primary`, `text.secondary`           |
+| Semantic — 状态级 | `state.{type}`          | `state.error`, `state.success`             |
 
 ### 7. 版本兼容性
 

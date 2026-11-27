@@ -106,7 +106,7 @@ const ScoringDimensionStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_scoring_dimension_page.k4'),
       value: stats.active,
-      color:'success.700',
+      color: 'success.700',
       bgColor: 'success.50',
     },
     {
@@ -118,7 +118,7 @@ const ScoringDimensionStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_scoring_dimension_page.k6'),
       value: stats.inactive,
-      color:'error.700',
+      color: 'error.700',
       bgColor: 'error.50',
     },
   ];

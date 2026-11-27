@@ -59,9 +59,9 @@ const baseAdapter = createCrudPageAdapter<Document, CreateDocumentRequest>({
 const statusColorMap: Record<string, { bg: string; color: string }> = {
   draft: { bg: 'grey.100', color: 'text.secondary' },
 
-  review: { bg: 'warning.50', color:'warning.700' },
-  approved: { bg: 'info.50', color:'info.700' },
-  published: { bg: 'success.50', color:'success.700' },
+  review: { bg: 'warning.50', color: 'warning.700' },
+  approved: { bg: 'info.50', color: 'info.700' },
+  published: { bg: 'success.50', color: 'success.700' },
   archived: { bg: 'grey.100', color: 'text.secondary' },
 };
 
@@ -268,7 +268,7 @@ export const DocumentPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color:'primary.700' }} />
+              <FileText sx={{ width: 20, height: 20, color: 'primary.700' }} />
             </Box>
             <Box>
               <Typography
@@ -304,7 +304,7 @@ export const DocumentPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.700' }} />
             </Box>
             <Box>
               <Typography
@@ -340,7 +340,7 @@ export const DocumentPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertCircle sx={{ width: 20, height: 20, color:'warning.700' }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: 'warning.700' }} />
             </Box>
             <Box>
               <Typography
@@ -599,7 +599,7 @@ export const DocumentPage: React.FC = () => {
                             size='small'
                             sx={{
                               backgroundColor: 'success.50',
-                              color:'success.700',
+                              color: 'success.700',
                               fontWeight: 500,
                               fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                             }}

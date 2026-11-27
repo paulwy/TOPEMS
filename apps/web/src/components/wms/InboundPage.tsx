@@ -75,7 +75,7 @@ const InboundStats: React.FC = () => {
     {
       label: i18n.t('pages.inbound_page.k1'),
       value: stats.pending,
-      color:'warning.700',
+      color: 'warning.700',
       bgColor: 'warning.light',
       icon: (
         <Check
@@ -87,7 +87,7 @@ const InboundStats: React.FC = () => {
     {
       label: i18n.t('pages.inbound_page.k2'),
       value: stats.receiving,
-      color:'info.700',
+      color: 'info.700',
       bgColor: 'info.light',
       icon: (
         <Package
@@ -99,7 +99,7 @@ const InboundStats: React.FC = () => {
     {
       label: i18n.t('pages.inbound_page.k3'),
       value: stats.completed,
-      color:'success.700',
+      color: 'success.700',
       bgColor: 'success.light',
       icon: (
         <ClipboardCheck

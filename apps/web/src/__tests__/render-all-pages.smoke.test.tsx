@@ -32,7 +32,7 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     this.props.errors.push(`[${this.props.name}] ${msg}`);
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -58,8 +58,11 @@ describe('全部路由页面渲染冒烟（静态 35 路由）', () => {
           <ThemeProvider theme={createTheme()}>
             <QueryClientProvider client={qc}>
               <MemoryRouter initialEntries={[path]}>
-                <Suspense fallback={<div data-testid="loading" />}>
-                  <CaptureBoundary name={path} errors={captured}>
+                <Suspense fallback={<div data-testid='loading' />}>
+                  <CaptureBoundary
+                    name={path}
+                    errors={captured}
+                  >
                     {isReactElement ? element : <Element />}
                   </CaptureBoundary>
                 </Suspense>
@@ -81,7 +84,10 @@ describe('全部路由页面渲染冒烟（静态 35 路由）', () => {
       );
     }
     expect(thrown, `页面 ${path} 渲染抛错: ${thrown?.message}`).toBeNull();
-    expect(captured, `页面 ${path} 运行时错误（忽略 context 依赖）: ${captured.join(' | ')}`).toHaveLength(0);
+    expect(
+      captured,
+      `页面 ${path} 运行时错误（忽略 context 依赖）: ${captured.join(' | ')}`
+    ).toHaveLength(0);
   });
 
   it('汇总：所有页面渲染错误', () => {
@@ -89,7 +95,9 @@ describe('全部路由页面渲染冒烟（静态 35 路由）', () => {
       expect(renderErrors).toEqual([]);
     } else {
       // 失败已由 it.each 逐条报告，这里仅汇总打印
-      console.info(`[页面渲染冒烟] 共 ${renderErrors.length} 个页面异常:\n${renderErrors.join('\n')}`);
+      console.info(
+        `[页面渲染冒烟] 共 ${renderErrors.length} 个页面异常:\n${renderErrors.join('\n')}`
+      );
       expect(renderErrors.length).toBeGreaterThanOrEqual(0);
     }
   });

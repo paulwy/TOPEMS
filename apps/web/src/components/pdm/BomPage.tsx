@@ -49,9 +49,9 @@ const baseAdapter = createCrudPageAdapter<BomVersion, CreateBomVersionRequest>({
 const statusColorMap: Record<string, { bg: string; color: string }> = {
   draft: { bg: 'grey.100', color: 'text.secondary' },
 
-  active: { bg: 'success.50', color:'success.700' },
+  active: { bg: 'success.50', color: 'success.700' },
   archived: { bg: 'grey.100', color: 'text.secondary' },
-  superseded: { bg: 'warning.50', color:'warning.700' },
+  superseded: { bg: 'warning.50', color: 'warning.700' },
 };
 
 const statusLabelMap: Record<string, string> = {
@@ -273,7 +273,7 @@ export const BomPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Package sx={{ width: 20, height: 20, color:'secondary.700' }} />
+              <Package sx={{ width: 20, height: 20, color: 'secondary.700' }} />
             </Box>
             <Box>
               <Typography
@@ -309,7 +309,7 @@ export const BomPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.700' }} />
             </Box>
             <Box>
               <Typography
@@ -345,7 +345,7 @@ export const BomPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Archive sx={{ width: 20, height: 20, color:'warning.700' }} />
+              <Archive sx={{ width: 20, height: 20, color: 'warning.700' }} />
             </Box>
             <Box>
               <Typography

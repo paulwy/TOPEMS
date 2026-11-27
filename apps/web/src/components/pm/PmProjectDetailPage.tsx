@@ -676,7 +676,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.actual_cost')}
               </Typography>
-              <Typography sx={{ fontWeight: 500, color:'warning.700' }}>
+              <Typography sx={{ fontWeight: 500, color: 'warning.700' }}>
                 {formatCurrency(project.actual_cost)}
               </Typography>
             </Box>
@@ -693,7 +693,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.committed_cost')}
               </Typography>
-              <Typography sx={{ fontWeight: 500, color:'primary.700' }}>
+              <Typography sx={{ fontWeight: 500, color: 'primary.700' }}>
                 {formatCurrency(project.committed_cost)}
               </Typography>
             </Box>
@@ -710,7 +710,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.remaining_budget')}
               </Typography>
-              <Typography sx={{ fontWeight: 500, color:'success.700' }}>
+              <Typography sx={{ fontWeight: 500, color: 'success.700' }}>
                 {formatCurrency(project.remaining_budget)}
               </Typography>
             </Box>
@@ -794,7 +794,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.accounts_receivable')}
               </Typography>
-              <Typography sx={{ fontWeight: 500, color:'warning.700' }}>
+              <Typography sx={{ fontWeight: 500, color: 'warning.700' }}>
                 {formatCurrency(project.accounts_receivable)}
               </Typography>
             </Box>
@@ -811,7 +811,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.invoiced_amount')}
               </Typography>
-              <Typography sx={{ fontWeight: 500, color:'primary.700' }}>
+              <Typography sx={{ fontWeight: 500, color: 'primary.700' }}>
                 {formatCurrency(
                   (project.revenue_recognized || 0) - (project.accounts_receivable || 0)
                 )}
@@ -830,7 +830,7 @@ const PmProjectDetailPage: React.FC = () => {
               <Typography sx={{ color: 'text.secondary' }}>
                 {t('pm.project_detail.gross_profit')}
               </Typography>
-              <Typography sx={{ fontWeight: 500, color:'success.700' }}>
+              <Typography sx={{ fontWeight: 500, color: 'success.700' }}>
                 {formatCurrency(project.gross_profit)}
               </Typography>
             </Box>
@@ -899,7 +899,7 @@ const PmProjectDetailPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 600, color:'primary.700' }}
+                  sx={{ fontWeight: 600, color: 'primary.700' }}
                 >
                   -
                 </Typography>
@@ -921,7 +921,7 @@ const PmProjectDetailPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 600, color:'success.700' }}
+                  sx={{ fontWeight: 600, color: 'success.700' }}
                 >
                   -
                 </Typography>
@@ -943,7 +943,7 @@ const PmProjectDetailPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 600, color:'warning.700' }}
+                  sx={{ fontWeight: 600, color: 'warning.700' }}
                 >
                   -
                 </Typography>
@@ -965,7 +965,7 @@ const PmProjectDetailPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h6'
-                  sx={{ fontWeight: 600, color:'secondary.700' }}
+                  sx={{ fontWeight: 600, color: 'secondary.700' }}
                 >
                   -
                 </Typography>

@@ -462,7 +462,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             </Box>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color:'success.700' }}
+              sx={{ fontWeight: 700, color: 'success.700' }}
             >
               {totalCompleted}
             </Typography>
@@ -484,7 +484,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             </Box>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color:'error.700' }}
+              sx={{ fontWeight: 700, color: 'error.700' }}
             >
               {totalRejected}
             </Typography>
@@ -506,7 +506,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             </Box>
             <Typography
               variant='h5'
-              sx={{ fontWeight: 700, color:'warning.700' }}
+              sx={{ fontWeight: 700, color: 'warning.700' }}
             >
               {completionRate.toFixed(1)}%
             </Typography>

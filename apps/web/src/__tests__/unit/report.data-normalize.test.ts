@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeReportRow, normalizeReportRows } from '../../components/report/reportDataNormalize';
+import {
+  normalizeReportRow,
+  normalizeReportRows,
+} from '../../components/report/reportDataNormalize';
 
 /**
  * 报表列表归一化回归护栏（2026-11-27）

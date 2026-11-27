@@ -59,19 +59,19 @@ const SupplierStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_supplier_page.k2'),
       value: stats.active,
-      color:'success.700',
+      color: 'success.700',
       bgColor: 'success.50',
     },
     {
       label: i18n.t('pages.srm_supplier_page.k3'),
       value: stats.lowRisk,
-      color:'success.700',
+      color: 'success.700',
       bgColor: 'success.50',
     },
     {
       label: i18n.t('pages.srm_supplier_page.k4'),
       value: stats.highRisk,
-      color:'error.700',
+      color: 'error.700',
       bgColor: 'error.50',
     },
   ];

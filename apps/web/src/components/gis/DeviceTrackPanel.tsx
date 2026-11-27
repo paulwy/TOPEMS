@@ -263,7 +263,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               onClick={() => setTimeRange({ start: '', end: '' })}
               sx={{
                 fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                color:'primary.700',
+                color: 'primary.700',
                 textTransform: 'none',
               }}
             >
@@ -369,7 +369,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                         display: 'flex',
                         alignItems: 'center',
                         gap: 2,
-                        color:'primary.700',
+                        color: 'primary.700',
                         mb: 1,
                       }}
                     >
@@ -380,7 +380,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Box>
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color:'primary.700' }}
+                      sx={{ fontWeight: 600, color: 'primary.700' }}
                     >
                       {formatDistance(statistics.total_distance)}
                     </Typography>
@@ -401,7 +401,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                         display: 'flex',
                         alignItems: 'center',
                         gap: 2,
-                        color:'success.700',
+                        color: 'success.700',
                         mb: 1,
                       }}
                     >
@@ -412,7 +412,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Box>
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color:'success.700' }}
+                      sx={{ fontWeight: 600, color: 'success.700' }}
                     >
                       {formatSpeed(statistics.avg_speed)}
                     </Typography>
@@ -425,7 +425,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                         display: 'flex',
                         alignItems: 'center',
                         gap: 2,
-                        color:'warning.700',
+                        color: 'warning.700',
                         mb: 1,
                       }}
                     >
@@ -436,7 +436,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Box>
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color:'error.700' }}
+                      sx={{ fontWeight: 600, color: 'error.700' }}
                     >
                       {formatSpeed(statistics.max_speed)}
                     </Typography>
@@ -457,7 +457,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                         display: 'flex',
                         alignItems: 'center',
                         gap: 2,
-                        color:'secondary.700',
+                        color: 'secondary.700',
                         mb: 1,
                       }}
                     >
@@ -468,7 +468,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Box>
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color:'secondary.700' }}
+                      sx={{ fontWeight: 600, color: 'secondary.700' }}
                     >
                       {statistics.track_points}
                     </Typography>

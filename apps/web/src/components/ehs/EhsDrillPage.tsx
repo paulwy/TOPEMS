@@ -51,9 +51,9 @@ const drillAdapter: CrudApiAdapter<DrillRecord> = {
 };
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  planned: { bg: 'info.50', color:'info.700' },
-  in_progress: { bg: 'warning.50', color:'warning.700' },
-  completed: { bg: 'success.50', color:'success.700' },
+  planned: { bg: 'info.50', color: 'info.700' },
+  in_progress: { bg: 'warning.50', color: 'warning.700' },
+  completed: { bg: 'success.50', color: 'success.700' },
 };
 
 const statusLabelMap: Record<string, string> = {
@@ -117,7 +117,7 @@ const EhsDrillPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Clock sx={{ width: 20, height: 20, color:'warning.700' }} />
+              <Clock sx={{ width: 20, height: 20, color: 'warning.700' }} />
             </Box>
             <Box>
               <Typography
@@ -153,7 +153,7 @@ const EhsDrillPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Activity sx={{ width: 20, height: 20, color:'success.700' }} />
+              <Activity sx={{ width: 20, height: 20, color: 'success.700' }} />
             </Box>
             <Box>
               <Typography
@@ -189,7 +189,7 @@ const EhsDrillPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertCircle sx={{ width: 20, height: 20, color:'info.700' }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: 'info.700' }} />
             </Box>
             <Box>
               <Typography

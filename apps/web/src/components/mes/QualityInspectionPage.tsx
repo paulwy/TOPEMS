@@ -273,7 +273,7 @@ const QualityInspectionPage: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color:'error.700' }}
+                  sx={{ fontWeight: 700, color: 'error.700' }}
                 >
                   {stats.failed}
                 </Typography>

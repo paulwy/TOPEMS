@@ -77,7 +77,7 @@ const OutboundStats: React.FC = () => {
     {
       label: i18n.t('pages.outbound_page.k1'),
       value: stats.pending,
-      color:'warning.700',
+      color: 'warning.700',
       bgColor: 'warning.light',
       icon: (
         <Check
@@ -89,7 +89,7 @@ const OutboundStats: React.FC = () => {
     {
       label: i18n.t('pages.outbound_page.k2'),
       value: stats.picking,
-      color:'info.700',
+      color: 'info.700',
       bgColor: 'info.light',
       icon: (
         <ClipboardList
@@ -101,7 +101,7 @@ const OutboundStats: React.FC = () => {
     {
       label: i18n.t('pages.outbound_page.k3'),
       value: stats.completed,
-      color:'success.700',
+      color: 'success.700',
       bgColor: 'success.light',
       icon: (
         <Package

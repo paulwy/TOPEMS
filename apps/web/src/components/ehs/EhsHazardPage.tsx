@@ -131,7 +131,7 @@ const EhsHazardPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <XCircle sx={{ width: 20, height: 20, color:'error.700' }} />
+              <XCircle sx={{ width: 20, height: 20, color: 'error.700' }} />
             </Box>
             <Box>
               <Typography
@@ -203,7 +203,7 @@ const EhsHazardPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.700' }} />
             </Box>
             <Box>
               <Typography

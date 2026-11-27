@@ -36,7 +36,7 @@ function StatsCards({ stats }: { stats: QualityControlStats }) {
   const theme = useTheme();
   const cards = [
     {
-      icon: <AlertCircle sx={{ width: 20, height: 20, color:'error.700' }} />,
+      icon: <AlertCircle sx={{ width: 20, height: 20, color: 'error.700' }} />,
       iconBg: 'error.50',
       label: i18n.t('qms.qms_quality_control_page.k0'),
       value: stats.totalNonconformances,
@@ -48,25 +48,25 @@ function StatsCards({ stats }: { stats: QualityControlStats }) {
       value: stats.openNonconformances,
     },
     {
-      icon: <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />,
+      icon: <CheckCircle sx={{ width: 20, height: 20, color: 'success.700' }} />,
       iconBg: 'success.50',
       label: i18n.t('qms.qms_quality_control_page.k2'),
       value: stats.closedNonconformances,
     },
     {
-      icon: <FileText sx={{ width: 20, height: 20, color:'primary.700' }} />,
+      icon: <FileText sx={{ width: 20, height: 20, color: 'primary.700' }} />,
       iconBg: 'primary.100',
       label: i18n.t('qms.qms_quality_control_page.k3'),
       value: stats.totalAudits,
     },
     {
-      icon: <FileText sx={{ width: 20, height: 20, color:'secondary.700' }} />,
+      icon: <FileText sx={{ width: 20, height: 20, color: 'secondary.700' }} />,
       iconBg: 'secondary.100',
       label: i18n.t('qms.qms_quality_control_page.k4'),
       value: stats.inProgressAudits,
     },
     {
-      icon: <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />,
+      icon: <CheckCircle sx={{ width: 20, height: 20, color: 'success.700' }} />,
       iconBg: 'success.50',
       label: i18n.t('qms.qms_quality_control_page.k5'),
       value: stats.completedAudits,

@@ -248,7 +248,7 @@ const SampleReceivePage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />
+                <CheckCircle sx={{ width: 20, height: 20, color: 'success.700' }} />
               </Box>
               <Box>
                 <Typography

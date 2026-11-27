@@ -41,10 +41,10 @@ const occupationalDiseaseAdapter: CrudApiAdapter<OccupationalDiseaseCase> = {
 };
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  suspected: { bg: 'warning.50', color:'warning.700' },
-  confirmed: { bg: 'error.50', color:'error.700' },
-  recovered: { bg: 'success.50', color:'success.700' },
-  chronic: { bg: 'info.50', color:'info.700' },
+  suspected: { bg: 'warning.50', color: 'warning.700' },
+  confirmed: { bg: 'error.50', color: 'error.700' },
+  recovered: { bg: 'success.50', color: 'success.700' },
+  chronic: { bg: 'info.50', color: 'info.700' },
   deceased: { bg: 'grey.100', color: 'text.secondary' },
 };
 
@@ -57,9 +57,9 @@ const statusLabelMap: Record<string, string> = {
 };
 
 const severityColorMap: Record<string, { bg: string; color: string }> = {
-  mild: { bg: 'success.50', color:'success.700' },
-  moderate: { bg: 'warning.50', color:'warning.700' },
-  severe: { bg: 'error.50', color:'error.700' },
+  mild: { bg: 'success.50', color: 'success.700' },
+  moderate: { bg: 'warning.50', color: 'warning.700' },
+  severe: { bg: 'error.50', color: 'error.700' },
   fatal: { bg: 'error.50', color: 'error.700' },
 };
 
@@ -168,7 +168,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <CalendarCheck sx={{ width: 20, height: 20, color:'primary.700' }} />
+              <CalendarCheck sx={{ width: 20, height: 20, color: 'primary.700' }} />
             </Box>
             <Box>
               <Typography
@@ -240,7 +240,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <ClipboardList sx={{ width: 20, height: 20, color:'error.700' }} />
+              <ClipboardList sx={{ width: 20, height: 20, color: 'error.700' }} />
             </Box>
             <Box>
               <Typography

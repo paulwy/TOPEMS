@@ -65,7 +65,7 @@ export const InventoryReportABCOverview: React.FC<InventoryReportABCOverviewProp
             >
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color:'error.700' }}
+                sx={{ fontWeight: 700, color: 'error.700' }}
               >
                 {abcAnalysis.filter((item) => item.category === 'A').length}
               </Typography>
@@ -90,7 +90,7 @@ export const InventoryReportABCOverview: React.FC<InventoryReportABCOverviewProp
             >
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color:'warning.700' }}
+                sx={{ fontWeight: 700, color: 'warning.700' }}
               >
                 {abcAnalysis.filter((item) => item.category === 'B').length}
               </Typography>
@@ -115,7 +115,7 @@ export const InventoryReportABCOverview: React.FC<InventoryReportABCOverviewProp
             >
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color:'success.700' }}
+                sx={{ fontWeight: 700, color: 'success.700' }}
               >
                 {abcAnalysis.filter((item) => item.category === 'C').length}
               </Typography>

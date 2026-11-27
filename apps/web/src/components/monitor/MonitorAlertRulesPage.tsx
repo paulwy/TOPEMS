@@ -414,7 +414,7 @@ const MonitorAlertRulesPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Settings
               size={18}
-              sx={{ color:'primary.700' }}
+              sx={{ color: 'primary.700' }}
             />
             <Typography
               variant='body2'
@@ -425,7 +425,7 @@ const MonitorAlertRulesPage: React.FC = () => {
           </Box>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color:'primary.700' }}
+            sx={{ fontWeight: 700, color: 'primary.700' }}
           >
             {total}
           </Typography>

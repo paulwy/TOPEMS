@@ -132,7 +132,7 @@ const EhsCheckPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <ClipboardCheck sx={{ width: 20, height: 20, color:'success.700' }} />
+                <ClipboardCheck sx={{ width: 20, height: 20, color: 'success.700' }} />
               </Box>
               <Box>
                 <Typography

@@ -72,7 +72,7 @@ export const materialBomSchema: EntitySchema = {
           obsolete: {
             label: i18n.t('mes.material_bom.k13'),
             bg: 'error.50',
-            color:'error.700',
+            color: 'error.700',
           },
         };
         const s = statusMap[(row.status as string) || 'draft'] || {

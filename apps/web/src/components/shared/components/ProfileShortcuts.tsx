@@ -45,7 +45,7 @@ const ProfileShortcuts: React.FC<ProfileShortcutsProps> = ({ profile }) => {
       icon: FileText,
       iconName: 'FileText',
       path: '/documents',
-      color:'success.700',
+      color: 'success.700',
     },
     {
       id: '3',

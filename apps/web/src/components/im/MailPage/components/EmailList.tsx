@@ -512,7 +512,7 @@ const EmailList: React.FC<EmailListProps> = ({
                               onClick={() => openResendEmailDialog(email.id)}
                               sx={{
                                 color: 'success.main',
-                                '&:hover': { color:'success.700' },
+                                '&:hover': { color: 'success.700' },
                               }}
                               title={t('im.email_list.k9')}
                             >
@@ -524,7 +524,7 @@ const EmailList: React.FC<EmailListProps> = ({
                             size='small'
                             sx={{
                               color: 'error.main',
-                              '&:hover': { color:'error.700' },
+                              '&:hover': { color: 'error.700' },
                             }}
                             onClick={() => openDeleteEmailDialog(email.id)}
                             title={t('im.email_list.k10')}

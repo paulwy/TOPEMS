@@ -31,9 +31,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   render: (args) => (
-    <div
-      className={styles.il1}
-    >
+    <div className={styles.il1}>
       <LazyImage {...args} />
     </div>
   ),
@@ -42,9 +40,7 @@ export const Default: Story = {
 
 export const WithPlaceholder: Story = {
   render: (args) => (
-    <div
-      className={styles.il2}
-    >
+    <div className={styles.il2}>
       <LazyImage {...args} />
     </div>
   ),

@@ -281,7 +281,7 @@ const LimsSampleDetailPage: React.FC = () => {
         variant='subtitle1'
         sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
       >
-        <FileText sx={{ fontSize: 20, color:'primary.700' }} />
+        <FileText sx={{ fontSize: 20, color: 'primary.700' }} />
         {i18n.t('pages.lims_sample_detail_page.k8')}
       </Typography>
       {tasks.length > 0 ? (
@@ -469,14 +469,14 @@ const LimsSampleDetailPage: React.FC = () => {
                 sx={{
                   fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                   fontWeight: 700,
-                  color:'success.700',
+                  color: 'success.700',
                 }}
               >
                 {stats.passed}
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color:'success.700', mt: 0.5 }}
+                sx={{ color: 'success.700', mt: 0.5 }}
               >
                 {i18n.t('pages.lims_sample_detail_page.k11')}
               </Typography>
@@ -493,14 +493,14 @@ const LimsSampleDetailPage: React.FC = () => {
                 sx={{
                   fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                   fontWeight: 700,
-                  color:'error.700',
+                  color: 'error.700',
                 }}
               >
                 {stats.failed}
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color:'error.700', mt: 0.5 }}
+                sx={{ color: 'error.700', mt: 0.5 }}
               >
                 {i18n.t('pages.lims_sample_detail_page.k12')}
               </Typography>

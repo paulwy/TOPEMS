@@ -31,9 +31,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   render: (args) => (
-    <div
-      className={styles.il1}
-    >
+    <div className={styles.il1}>
       <PageTransition {...args}>
         <div
           style={{

@@ -118,7 +118,7 @@ const PmProjectListPage: React.FC = () => {
             <Box
               sx={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color:'success.700',
+                color: 'success.700',
               }}
             >
               {i18n.t('pm.pm_project_list_page.k7')}
@@ -127,7 +127,7 @@ const PmProjectListPage: React.FC = () => {
               sx={{
                 fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                 fontWeight: 700,
-                color:'success.700',
+                color: 'success.700',
               }}
             >
               {activeCount}
@@ -137,7 +137,7 @@ const PmProjectListPage: React.FC = () => {
             <Box
               sx={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color:'warning.700',
+                color: 'warning.700',
               }}
             >
               {i18n.t('pm.pm_project_list_page.k8')}
@@ -146,7 +146,7 @@ const PmProjectListPage: React.FC = () => {
               sx={{
                 fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                 fontWeight: 700,
-                color:'warning.700',
+                color: 'warning.700',
               }}
             >
               {pendingCount}
@@ -156,7 +156,7 @@ const PmProjectListPage: React.FC = () => {
             <Box
               sx={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color:'primary.700',
+                color: 'primary.700',
               }}
             >
               {i18n.t('pm.pm_project_list_page.k9')}
@@ -165,7 +165,7 @@ const PmProjectListPage: React.FC = () => {
               sx={{
                 fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                 fontWeight: 700,
-                color:'primary.700',
+                color: 'primary.700',
               }}
             >
               {completedCount}

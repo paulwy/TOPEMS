@@ -559,7 +559,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
               px: 2,
               py: 1,
               bgcolor: 'error.50',
-              color:'error.700',
+              color: 'error.700',
               fontSize: designTokens.typography.fontSize.scale['0.75rem'],
               borderBottom: 1,
               borderColor: 'error.main',

@@ -141,7 +141,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
-                    color:'error.700',
+                    color: 'error.700',
                   }}
                 >
                   <AlertCircle size={16} />
@@ -149,7 +149,7 @@ const EmailDetailDialog: React.FC<EmailDetailDialogProps> = ({
                 </Box>
                 <Typography
                   variant='body2'
-                  sx={{ mt: 1, color:'error.700' }}
+                  sx={{ mt: 1, color: 'error.700' }}
                 >
                   {selectedEmail.error_message}
                 </Typography>

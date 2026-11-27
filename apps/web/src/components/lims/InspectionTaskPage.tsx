@@ -237,9 +237,9 @@ const InspectionTaskPage: React.FC = () => {
       {
         label: i18n.t('lims.inspection_task_page.k30'),
         value: stats.pending,
-        icon: <Clock sx={{ width: 20, height: 20, color:'warning.700' }} />,
+        icon: <Clock sx={{ width: 20, height: 20, color: 'warning.700' }} />,
         bg: 'warning.50',
-        color:'warning.700',
+        color: 'warning.700',
       },
       {
         label: i18n.t('lims.inspection_task_page.k31'),
@@ -251,9 +251,9 @@ const InspectionTaskPage: React.FC = () => {
       {
         label: i18n.t('lims.inspection_task_page.k32'),
         value: stats.completed,
-        icon: <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />,
+        icon: <CheckCircle sx={{ width: 20, height: 20, color: 'success.700' }} />,
         bg: 'success.50',
-        color:'success.700',
+        color: 'success.700',
       },
     ];
     return (

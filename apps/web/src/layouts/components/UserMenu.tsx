@@ -298,7 +298,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             color: 'error.main',
             '&:hover': {
               bgcolor: 'error.50',
-              color:'error.700',
+              color: 'error.700',
             },
           }}
         >

@@ -17,7 +17,7 @@ const getChipSx = (colorClass: string): object => {
   const colorMap: Record<string, { backgroundColor: string; color: string }> = {
     'bg-green-100 text-green-800': {
       backgroundColor: 'success.50',
-      color:'success.700',
+      color: 'success.700',
     },
     'bg-gray-100 text-gray-800': {
       backgroundColor: 'grey.100',
@@ -29,19 +29,19 @@ const getChipSx = (colorClass: string): object => {
     },
     'bg-blue-100 text-blue-800': {
       backgroundColor: 'primary.100',
-      color:'primary.700',
+      color: 'primary.700',
     },
     'bg-purple-100 text-purple-800': {
       backgroundColor: 'secondary.50',
-      color:'secondary.700',
+      color: 'secondary.700',
     },
     'bg-teal-100 text-teal-800': {
       backgroundColor: 'info.50',
-      color:'info.700',
+      color: 'info.700',
     },
     'bg-orange-100 text-orange-800': {
       backgroundColor: 'warning.50',
-      color:'warning.700',
+      color: 'warning.700',
     },
   };
   return colorMap[colorClass] || { backgroundColor: 'grey.100', color: 'grey.700' };

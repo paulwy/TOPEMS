@@ -52,7 +52,7 @@ const InventoryStats: React.FC = () => {
     {
       label: i18n.t('pages.inventory_page.k1'),
       value: stats?.low_stock_count || 0,
-      color:'warning.700',
+      color: 'warning.700',
       bgColor: 'warning.light',
       icon: (
         <AlertTriangle
@@ -76,7 +76,7 @@ const InventoryStats: React.FC = () => {
     {
       label: i18n.t('pages.inventory_page.k3'),
       value: stats?.total_alerts || 0,
-      color:'success.700',
+      color: 'success.700',
       bgColor: 'success.50',
       icon: (
         <CheckCircle

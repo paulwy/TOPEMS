@@ -213,7 +213,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           }}
         >
           <div className={styles.il1}>
-            <FileText sx={{ width: 24, height: 24, color:'primary.700' }} />
+            <FileText sx={{ width: 24, height: 24, color: 'primary.700' }} />
             <h2
               style={{
                 fontSize: '18px',
@@ -269,7 +269,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 sx={{
                   width: 40,
                   height: 40,
-                  color:'primary.700',
+                  color: 'primary.700',
                   animation: 'spin 1s linear infinite',
                   marginBottom: 1.5,
                 }}

@@ -205,7 +205,7 @@ const EquipmentOEEPage: React.FC = () => {
             </InputLabel>
             <Box
               component='span'
-              sx={{ color:'success.700' }}
+              sx={{ color: 'success.700' }}
             >
               {record.good_count} {i18n.t('pages.equipment_oee_page.k0')}
             </Box>
@@ -216,7 +216,7 @@ const EquipmentOEEPage: React.FC = () => {
             </InputLabel>
             <Box
               component='span'
-              sx={{ color:'error.700' }}
+              sx={{ color: 'error.700' }}
             >
               {record.reject_count} {i18n.t('pages.equipment_oee_page.k1')}
             </Box>
@@ -258,7 +258,7 @@ const EquipmentOEEPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Activity
             size={18}
-            sx={{ color:'primary.700' }}
+            sx={{ color: 'primary.700' }}
           />
           <Typography
             variant='body2'

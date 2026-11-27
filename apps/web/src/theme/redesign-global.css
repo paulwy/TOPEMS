@@ -120,34 +120,82 @@ a:hover {
 /* ============================================================
    2. 排版工具类
    ============================================================ */
-.font-brand { font-family: var(--font-brand); }
-.font-ui { font-family: var(--font-ui); }
-.font-mono { font-family: var(--font-mono); }
+.font-brand {
+  font-family: var(--font-brand);
+}
+.font-ui {
+  font-family: var(--font-ui);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
 
-.text-xs { font-size: var(--text-xs); }
-.text-sm { font-size: var(--text-sm); }
-.text-base { font-size: var(--text-base); }
-.text-md { font-size: var(--text-md); }
-.text-lg { font-size: var(--text-lg); }
-.text-xl { font-size: var(--text-xl); }
-.text-2xl { font-size: var(--text-2xl); }
-.text-3xl { font-size: var(--text-3xl); }
-.text-4xl { font-size: var(--text-4xl); }
+.text-xs {
+  font-size: var(--text-xs);
+}
+.text-sm {
+  font-size: var(--text-sm);
+}
+.text-base {
+  font-size: var(--text-base);
+}
+.text-md {
+  font-size: var(--text-md);
+}
+.text-lg {
+  font-size: var(--text-lg);
+}
+.text-xl {
+  font-size: var(--text-xl);
+}
+.text-2xl {
+  font-size: var(--text-2xl);
+}
+.text-3xl {
+  font-size: var(--text-3xl);
+}
+.text-4xl {
+  font-size: var(--text-4xl);
+}
 
-.font-normal { font-weight: var(--font-normal); }
-.font-medium { font-weight: var(--font-medium); }
-.font-semibold { font-weight: var(--font-semibold); }
-.font-bold { font-weight: var(--font-bold); }
+.font-normal {
+  font-weight: var(--font-normal);
+}
+.font-medium {
+  font-weight: var(--font-medium);
+}
+.font-semibold {
+  font-weight: var(--font-semibold);
+}
+.font-bold {
+  font-weight: var(--font-bold);
+}
 
-.leading-none { line-height: var(--leading-none); }
-.leading-tight { line-height: var(--leading-tight); }
-.leading-snug { line-height: var(--leading-snug); }
-.leading-normal { line-height: var(--leading-normal); }
-.leading-relaxed { line-height: var(--leading-relaxed); }
+.leading-none {
+  line-height: var(--leading-none);
+}
+.leading-tight {
+  line-height: var(--leading-tight);
+}
+.leading-snug {
+  line-height: var(--leading-snug);
+}
+.leading-normal {
+  line-height: var(--leading-normal);
+}
+.leading-relaxed {
+  line-height: var(--leading-relaxed);
+}
 
-.tracking-tight { letter-spacing: var(--tracking-tight); }
-.tracking-wide { letter-spacing: var(--tracking-wide); }
-.tracking-wider { letter-spacing: var(--tracking-wider); }
+.tracking-tight {
+  letter-spacing: var(--tracking-tight);
+}
+.tracking-wide {
+  letter-spacing: var(--tracking-wide);
+}
+.tracking-wider {
+  letter-spacing: var(--tracking-wider);
+}
 
 .uppercase-label {
   font-size: var(--text-xs);
@@ -160,41 +208,102 @@ a:hover {
 /* ============================================================
    3. 颜色工具类
    ============================================================ */
-.text-primary { color: var(--text-primary); }
-.text-secondary { color: var(--text-secondary); }
-.text-tertiary { color: var(--text-tertiary); }
-.text-disabled { color: var(--text-disabled); }
-.text-accent { color: var(--accent-primary-text); }
-.text-cyan { color: var(--accent-secondary-text); }
-.text-success { color: var(--success-text); }
-.text-warning { color: var(--warning-text); }
-.text-error { color: var(--error-text); }
-.text-info { color: var(--info-text); }
+.text-primary {
+  color: var(--text-primary);
+}
+.text-secondary {
+  color: var(--text-secondary);
+}
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+.text-disabled {
+  color: var(--text-disabled);
+}
+.text-accent {
+  color: var(--accent-primary-text);
+}
+.text-cyan {
+  color: var(--accent-secondary-text);
+}
+.text-success {
+  color: var(--success-text);
+}
+.text-warning {
+  color: var(--warning-text);
+}
+.text-error {
+  color: var(--error-text);
+}
+.text-info {
+  color: var(--info-text);
+}
 
-.bg-primary { background-color: var(--bg-primary); }
-.bg-secondary { background-color: var(--bg-secondary); }
-.bg-elevated { background-color: var(--bg-elevated); }
-.bg-surface-1 { background-color: var(--surface-1); }
-.bg-surface-2 { background-color: var(--surface-2); }
-.bg-surface-3 { background-color: var(--surface-3); }
+.bg-primary {
+  background-color: var(--bg-primary);
+}
+.bg-secondary {
+  background-color: var(--bg-secondary);
+}
+.bg-elevated {
+  background-color: var(--bg-elevated);
+}
+.bg-surface-1 {
+  background-color: var(--surface-1);
+}
+.bg-surface-2 {
+  background-color: var(--surface-2);
+}
+.bg-surface-3 {
+  background-color: var(--surface-3);
+}
 
-.border-default { border-color: var(--border-default); }
-.border-hover { border-color: var(--border-hover); }
+.border-default {
+  border-color: var(--border-default);
+}
+.border-hover {
+  border-color: var(--border-hover);
+}
 
 /* ============================================================
    4. 布局工具类
    ============================================================ */
-.stack-xs > * + * { margin-top: var(--space-1); }
-.stack-sm > * + * { margin-top: var(--space-2); }
-.stack-md > * + * { margin-top: var(--space-3); }
-.stack-lg > * + * { margin-top: var(--space-4); }
-.stack-xl > * + * { margin-top: var(--space-6); }
+.stack-xs > * + * {
+  margin-top: var(--space-1);
+}
+.stack-sm > * + * {
+  margin-top: var(--space-2);
+}
+.stack-md > * + * {
+  margin-top: var(--space-3);
+}
+.stack-lg > * + * {
+  margin-top: var(--space-4);
+}
+.stack-xl > * + * {
+  margin-top: var(--space-6);
+}
 
-.row-xs { display: flex; gap: var(--space-1); }
-.row-sm { display: flex; gap: var(--space-2); }
-.row-md { display: flex; gap: var(--space-3); }
-.row-lg { display: flex; gap: var(--space-4); }
-.row-xl { display: flex; gap: var(--space-6); }
+.row-xs {
+  display: flex;
+  gap: var(--space-1);
+}
+.row-sm {
+  display: flex;
+  gap: var(--space-2);
+}
+.row-md {
+  display: flex;
+  gap: var(--space-3);
+}
+.row-lg {
+  display: flex;
+  gap: var(--space-4);
+}
+.row-xl {
+  display: flex;
+  gap: var(--space-6);
+}
 
 .sr-only {
   position: absolute;
@@ -212,8 +321,12 @@ a:hover {
    5. Keyframes
    ============================================================ */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeInUp {
@@ -250,7 +363,8 @@ a:hover {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
   }
   50% {
@@ -259,18 +373,33 @@ a:hover {
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.2); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes tab-underline {
@@ -327,14 +456,30 @@ a:hover {
 }
 
 /* 级联入场延迟 */
-.stagger-1 { animation-delay: 40ms; }
-.stagger-2 { animation-delay: 80ms; }
-.stagger-3 { animation-delay: 120ms; }
-.stagger-4 { animation-delay: 160ms; }
-.stagger-5 { animation-delay: 200ms; }
-.stagger-6 { animation-delay: 240ms; }
-.stagger-7 { animation-delay: 280ms; }
-.stagger-8 { animation-delay: 320ms; }
+.stagger-1 {
+  animation-delay: 40ms;
+}
+.stagger-2 {
+  animation-delay: 80ms;
+}
+.stagger-3 {
+  animation-delay: 120ms;
+}
+.stagger-4 {
+  animation-delay: 160ms;
+}
+.stagger-5 {
+  animation-delay: 200ms;
+}
+.stagger-6 {
+  animation-delay: 240ms;
+}
+.stagger-7 {
+  animation-delay: 280ms;
+}
+.stagger-8 {
+  animation-delay: 320ms;
+}
 
 /* ============================================================
    7. 骨架屏
@@ -427,17 +572,35 @@ a:hover {
   gap: var(--space-4);
 }
 
-.r-col-12 { grid-column: span 12; }
-.r-col-8 { grid-column: span 12; }
-.r-col-6 { grid-column: span 12; }
-.r-col-4 { grid-column: span 12; }
-.r-col-3 { grid-column: span 12; }
+.r-col-12 {
+  grid-column: span 12;
+}
+.r-col-8 {
+  grid-column: span 12;
+}
+.r-col-6 {
+  grid-column: span 12;
+}
+.r-col-4 {
+  grid-column: span 12;
+}
+.r-col-3 {
+  grid-column: span 12;
+}
 
 @media (min-width: 1024px) {
-  .r-col-lg-8 { grid-column: span 8; }
-  .r-col-lg-6 { grid-column: span 6; }
-  .r-col-lg-4 { grid-column: span 4; }
-  .r-col-lg-3 { grid-column: span 3; }
+  .r-col-lg-8 {
+    grid-column: span 8;
+  }
+  .r-col-lg-6 {
+    grid-column: span 6;
+  }
+  .r-col-lg-4 {
+    grid-column: span 4;
+  }
+  .r-col-lg-3 {
+    grid-column: span 3;
+  }
 }
 
 /* ============================================================

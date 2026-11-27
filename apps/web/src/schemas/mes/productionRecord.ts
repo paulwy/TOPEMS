@@ -119,7 +119,7 @@ export const productionRecordSchema: EntitySchema = {
           in_progress: {
             label: i18n.t('mes.production_record.k16'),
             bg: 'primary.100',
-            color:'primary.700',
+            color: 'primary.700',
           },
           completed: {
             label: i18n.t('mes.production_record.k17'),
@@ -129,7 +129,7 @@ export const productionRecordSchema: EntitySchema = {
           cancelled: {
             label: i18n.t('mes.production_record.k18'),
             bg: 'error.50',
-            color:'error.700',
+            color: 'error.700',
           },
         };
         const s = statusMap[(row.status as string) || 'pending'] || {

@@ -76,14 +76,14 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
         row.original.likelihood || 'medium'
       );
       const colorMap: Record<string, { bg: string; color: string }> = {
-        [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.50', color:'error.700' },
+        [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.50', color: 'error.700' },
         [i18n.t('pages.ehs_hazard_detail_page.k1')]: {
           bg: 'warning.100',
           color: 'var(--warning-600)',
         },
         [i18n.t('pages.ehs_hazard_detail_page.k2')]: {
           bg: 'success.50',
-          color:'success.700',
+          color: 'success.700',
         },
       };
       const colors = colorMap[
@@ -410,7 +410,7 @@ const EhsHazardDetailPage: React.FC = () => {
             variant='text'
             size='small'
             onClick={() => handleDeleteControl(row.original.id)}
-            sx={{ color:'error.700', '&:hover': { backgroundColor: 'error.50' } }}
+            sx={{ color: 'error.700', '&:hover': { backgroundColor: 'error.50' } }}
             startIcon={
               <Box
                 component={Trash2}
@@ -499,7 +499,7 @@ const EhsHazardDetailPage: React.FC = () => {
               borderRadius: 1,
             }}
           >
-            <Typography sx={{ color:'error.700', fontSize: 12 }}>
+            <Typography sx={{ color: 'error.700', fontSize: 12 }}>
               {t('ehs.ehs_hazard_detail_page.k3')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'error.700', mt: 0.5 }}>
@@ -541,10 +541,10 @@ const EhsHazardDetailPage: React.FC = () => {
               borderRadius: 1,
             }}
           >
-            <Typography sx={{ color:'primary.700', fontSize: 12 }}>
+            <Typography sx={{ color: 'primary.700', fontSize: 12 }}>
               {t('ehs.ehs_hazard_detail_page.k5')}
             </Typography>
-            <Typography sx={{ fontWeight: 500, color:'primary.700', mt: 0.5 }}>
+            <Typography sx={{ fontWeight: 500, color: 'primary.700', mt: 0.5 }}>
               {hazard.likelihood === 'high'
                 ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.likelihood === 'medium'

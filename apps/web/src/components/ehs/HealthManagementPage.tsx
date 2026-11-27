@@ -127,7 +127,7 @@ const HealthManagementPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Heart sx={{ width: 20, height: 20, color:'success.700' }} />
+                <Heart sx={{ width: 20, height: 20, color: 'success.700' }} />
               </Box>
               <Box>
                 <Typography
@@ -163,7 +163,7 @@ const HealthManagementPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Users sx={{ width: 20, height: 20, color:'warning.700' }} />
+                <Users sx={{ width: 20, height: 20, color: 'warning.700' }} />
               </Box>
               <Box>
                 <Typography
@@ -191,9 +191,9 @@ const HealthManagementPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      active: { bg: 'success.50', color:'success.700' },
-      inactive: { bg: 'error.50', color:'error.700' },
-      suspended: { bg: 'warning.50', color:'warning.700' },
+      active: { bg: 'success.50', color: 'success.700' },
+      inactive: { bg: 'error.50', color: 'error.700' },
+      suspended: { bg: 'warning.50', color: 'warning.700' },
     };
     const statusLabels: Record<string, string> = {
       active: t('ehs.health_management_page.normal'),

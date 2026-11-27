@@ -132,7 +132,8 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent);
   }
   50% {
@@ -141,7 +142,8 @@ body {
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -209,7 +211,12 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-primary-foreground) 20%, transparent), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-primary-foreground) 20%, transparent),
+    transparent
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -346,7 +353,12 @@ button:disabled {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-primary-light), var(--color-secondary-light), var(--color-error-400));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-light),
+    var(--color-secondary-light),
+    var(--color-error-400)
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -404,7 +416,15 @@ button:disabled {
     0 0 0 4px var(--color-primary-400, #769cf5);
 }
 /* 全局兜底：所有可交互元素在键盘聚焦时均显示可见焦点环（WCAG 2.4.7） */
-:where(button, [role='button'], a, input, select, textarea, [tabindex]:not([tabindex='-1'])):focus-visible {
+:where(
+  button,
+  [role='button'],
+  a,
+  input,
+  select,
+  textarea,
+  [tabindex]:not([tabindex='-1'])
+):focus-visible {
   outline: 2px solid var(--color-primary-400, #769cf5);
   outline-offset: 2px;
 }
@@ -438,7 +458,11 @@ button:disabled {
   background: color-mix(in srgb, var(--color-background, #ffffff) 85%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom-color: color-mix(in srgb, var(--color-border, rgba(0, 0, 0, 0.12)) 80%, transparent);
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--color-border, rgba(0, 0, 0, 0.12)) 80%,
+    transparent
+  );
 }
 
 /* 页面渐变背景 — design demo `.page-gradient-bg`（双椭圆品牌色径向渐变） */

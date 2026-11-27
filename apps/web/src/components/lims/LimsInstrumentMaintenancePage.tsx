@@ -88,12 +88,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
       normal: {
         bg: 'success.50',
-        color:'success.700',
+        color: 'success.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k4'),
       },
       in_use: {
         bg: 'success.50',
-        color:'success.700',
+        color: 'success.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k5'),
       },
       calibration: {
@@ -103,17 +103,17 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       },
       calibrated: {
         bg: 'info.100',
-        color:'info.700',
+        color: 'info.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k7'),
       },
       maintenance: {
         bg: 'error.50',
-        color:'error.700',
+        color: 'error.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k8'),
       },
       under_maintenance: {
         bg: 'warning.50',
-        color:'warning.700',
+        color: 'warning.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k9'),
       },
       disabled: {
@@ -327,7 +327,7 @@ const MaintenanceStatsCard: React.FC = () => {
         >
           <Box
             component={DollarSign}
-            sx={{ fontSize: 20, color:'success.700' }}
+            sx={{ fontSize: 20, color: 'success.700' }}
           />
           {i18n.t('pages.lims_instrument_maintenance_page.k9')}
         </Typography>
@@ -350,7 +350,7 @@ const MaintenanceStatsCard: React.FC = () => {
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color:'success.700' }}
+              sx={{ fontWeight: 700, color: 'success.700' }}
             >
               -
             </Typography>
@@ -371,7 +371,7 @@ const MaintenanceStatsCard: React.FC = () => {
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color:'primary.700' }}
+              sx={{ fontWeight: 700, color: 'primary.700' }}
             >
               ¥-
             </Typography>
@@ -392,7 +392,7 @@ const MaintenanceStatsCard: React.FC = () => {
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color:'info.700' }}
+              sx={{ fontWeight: 700, color: 'info.700' }}
             >
               -
             </Typography>
@@ -413,7 +413,7 @@ const MaintenanceStatsCard: React.FC = () => {
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color:'warning.700' }}
+              sx={{ fontWeight: 700, color: 'warning.700' }}
             >
               -
             </Typography>

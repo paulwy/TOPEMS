@@ -18,10 +18,8 @@ import { designTokens } from '@/theme/tokens';
 
 // 使用语义令牌设置组件内部间距
 <Box sx={{ p: semanticTokens.space.card.padding }}>
-  <Typography sx={{ color: semanticTokens.text.body.secondary.color }}>
-    辅助说明文字
-  </Typography>
-</Box>
+  <Typography sx={{ color: semanticTokens.text.body.secondary.color }}>辅助说明文字</Typography>
+</Box>;
 
 // 创建自定义主题时使用 designTokens
 const customTheme = createTheme({
@@ -57,12 +55,12 @@ const bgColor = '#f8fafc'; // 应统一使用 semanticTokens.background.page
 
 ### 核心原则
 
-| 规则 | 说明 |
-|------|------|
-| 唯一来源 | 所有令牌从 `@/theme/tokens` 导入，不要在其他文件中重新定义 |
-| 语义优先 | 组件样式使用 `semanticTokens`，主题创建使用 `designTokens` |
+| 规则       | 说明                                                         |
+| ---------- | ------------------------------------------------------------ |
+| 唯一来源   | 所有令牌从 `@/theme/tokens` 导入，不要在其他文件中重新定义   |
+| 语义优先   | 组件样式使用 `semanticTokens`，主题创建使用 `designTokens`   |
 | 禁止硬编码 | `sx` 和 `style` 中不出现 `#xxxxxx`、`'XXpx'`（8px 基数除外） |
-| 禁止复制 | 相同的令牌值只引用一次，不跨文件重复 |
+| 禁止复制   | 相同的令牌值只引用一次，不跨文件重复                         |
 
 ---
 
@@ -95,7 +93,7 @@ interface MyCardProps {
 
 // 使用 sx 进行样式定制
 <MyCard
-  size="md"
+  size='md'
   disabled={false}
   onClick={(id) => handleSelect(id)}
   sx={{
@@ -104,11 +102,14 @@ interface MyCardProps {
   }}
 >
   <Typography>卡片内容</Typography>
-</MyCard>
+</MyCard>;
 
 // LoadingSpinner 已迁移至 sx API
 import { LoadingSpinner } from '@/components/common';
-<LoadingSpinner size="md" sx={{ color: 'primary.main' }} />
+<LoadingSpinner
+  size='md'
+  sx={{ color: 'primary.main' }}
+/>;
 ```
 
 ### ❌ 错误做法
@@ -136,12 +137,12 @@ interface BadProps {
 
 ### 核心原则
 
-| 规则 | 说明 |
-|------|------|
+| 规则      | 说明                                                              |
+| --------- | ----------------------------------------------------------------- |
 | `sx` 优先 | MUI 组件使用 `sx?: SxProps<Theme>`，不使用 `style` 或 `className` |
-| 统一尺寸 | 使用 `ComponentSize`（`'sm' \| 'md' \| 'lg'`），不自创尺寸值 |
-| 语义回调 | 事件签名为 `(value: T) => void`，不暴露 `React.MouseEvent` |
-| 标准属性 | 可交互组件提供 `disabled`，数据组件提供 `loading` |
+| 统一尺寸  | 使用 `ComponentSize`（`'sm' \| 'md' \| 'lg'`），不自创尺寸值      |
+| 语义回调  | 事件签名为 `(value: T) => void`，不暴露 `React.MouseEvent`        |
+| 标准属性  | 可交互组件提供 `disabled`，数据组件提供 `loading`                 |
 
 ---
 
@@ -213,13 +214,13 @@ function ModuleHeader({ moduleCode }: { moduleCode: string }) {
 
 ### 核心原则
 
-| 规则 | 说明 |
-|------|------|
-| Palette 优先 | 优先使用 `palette.primary.main`、`palette.success.light` 等 |
-| 语义令牌 | 背景/边框使用 `semanticTokens.background.card`、`semanticTokens.border.default` |
-| 模块色 | 通过 `getModuleTheme()` 获取，不硬编码模块颜色 |
-| 双重编码 | 颜色必须配合图标或文字一起使用，不能单独依赖颜色传达含义 |
-| 对比度 | 确保 WCAG AA 4.5:1 对比度，正文字号建议至少 4.5:1 |
+| 规则         | 说明                                                                            |
+| ------------ | ------------------------------------------------------------------------------- |
+| Palette 优先 | 优先使用 `palette.primary.main`、`palette.success.light` 等                     |
+| 语义令牌     | 背景/边框使用 `semanticTokens.background.card`、`semanticTokens.border.default` |
+| 模块色       | 通过 `getModuleTheme()` 获取，不硬编码模块颜色                                  |
+| 双重编码     | 颜色必须配合图标或文字一起使用，不能单独依赖颜色传达含义                        |
+| 对比度       | 确保 WCAG AA 4.5:1 对比度，正文字号建议至少 4.5:1                               |
 
 ---
 
@@ -291,12 +292,12 @@ import { Box, Stack, Grid } from '@mui/material';
 
 ### 核心原则
 
-| 规则 | 说明 |
-|------|------|
-| 语义层 | 组件内间距使用 `semanticTokens.space.card`、`form`、`list` 等 |
-| 8px 网格 | MUI spacing 遵循 8px 基数（`p={2}` = 16px, `gap={3}` = 24px） |
-| 页面级 | 使用 `semanticTokens.space.page.horizontal/vertical/sectionGap` |
-| 禁止负边距 | 负边距是布局 hack，应通过正确的 Flexbox/Grid 实现 |
+| 规则       | 说明                                                            |
+| ---------- | --------------------------------------------------------------- |
+| 语义层     | 组件内间距使用 `semanticTokens.space.card`、`form`、`list` 等   |
+| 8px 网格   | MUI spacing 遵循 8px 基数（`p={2}` = 16px, `gap={3}` = 24px）   |
+| 页面级     | 使用 `semanticTokens.space.page.horizontal/vertical/sectionGap` |
+| 禁止负边距 | 负边距是布局 hack，应通过正确的 Flexbox/Grid 实现               |
 
 ---
 
@@ -353,13 +354,13 @@ import { semanticTokens } from '@/theme/tokens';
 
 ### 核心原则
 
-| 规则 | 说明 |
-|------|------|
-| 语义令牌 | 使用 `semanticTokens.text.heading['1']`~`['6']` |
-| 正文层级 | `body.default`、`body.secondary`、`caption` 三级足够 |
-| MUI Typography | 优先使用 `variant` prop，不直接使用 HTML h1-h6 |
-| 字号克制 | 单个页面不超过 3 种字号 |
-| 禁止硬编码 | 不在 sx 中直接设置 fontSize/fontWeight/fontFamily |
+| 规则           | 说明                                                 |
+| -------------- | ---------------------------------------------------- |
+| 语义令牌       | 使用 `semanticTokens.text.heading['1']`~`['6']`      |
+| 正文层级       | `body.default`、`body.secondary`、`caption` 三级足够 |
+| MUI Typography | 优先使用 `variant` prop，不直接使用 HTML h1-h6       |
+| 字号克制       | 单个页面不超过 3 种字号                              |
+| 禁止硬编码     | 不在 sx 中直接设置 fontSize/fontWeight/fontFamily    |
 
 ---
 
@@ -448,13 +449,13 @@ interface ActionCardProps {
 
 ### 核心原则
 
-| 规则 | 说明 |
-|------|------|
-| MUI 内置 | hover/focus/active 由 MUI 组件自动处理，不手动实现 |
-| disabled 一致 | 所有可交互组件提供 `disabled` prop |
-| loading 反馈 | 异步操作提供 `loading` 状态（LoadingButton 或 LoadingSpinner） |
-| 完整反馈 | 任何可点击元素都必须有 hover 和 focus 的视觉反馈 |
-| 同步禁用 | 禁用视觉样式和点击行为必须同步 |
+| 规则          | 说明                                                           |
+| ------------- | -------------------------------------------------------------- |
+| MUI 内置      | hover/focus/active 由 MUI 组件自动处理，不手动实现             |
+| disabled 一致 | 所有可交互组件提供 `disabled` prop                             |
+| loading 反馈  | 异步操作提供 `loading` 状态（LoadingButton 或 LoadingSpinner） |
+| 完整反馈      | 任何可点击元素都必须有 hover 和 focus 的视觉反馈               |
+| 同步禁用      | 禁用视觉样式和点击行为必须同步                                 |
 
 ---
 
@@ -532,13 +533,13 @@ function StatusCard() {
 
 ### 核心原则
 
-| 规则 | 说明 |
-|------|------|
-| Palette 引用 | `theme.palette.xxx` 自动适配两种模式 |
-| 语义令牌 | `semanticTokens` 引用的值是主题感知的 |
+| 规则             | 说明                                                      |
+| ---------------- | --------------------------------------------------------- |
+| Palette 引用     | `theme.palette.xxx` 自动适配两种模式                      |
+| 语义令牌         | `semanticTokens` 引用的值是主题感知的                     |
 | 禁止 white/black | 使用 `palette.text.primary` 和 `palette.background.paper` |
-| alpha() 工具 | 半透明效果使用 MUI 的 `alpha()` 函数 |
-| 暗色对比度 | 暗色模式需要 **更高** 对比度，不是更低；务必检查 |
+| alpha() 工具     | 半透明效果使用 MUI 的 `alpha()` 函数                      |
+| 暗色对比度       | 暗色模式需要 **更高** 对比度，不是更低；务必检查          |
 
 ---
 
@@ -625,14 +626,14 @@ import { SkipToContent } from '@/components/layout/GlobalLayout';
 
 ### 核心原则
 
-| 规则 | 说明 |
-|------|------|
-| 语义化 HTML | `<button>` 用于操作，`<a>` 用于导航，`<input>` 用于数据输入 |
-| aria-label | 所有纯图标按钮必须添加 `aria-label` |
-| 标签关联 | `<label htmlFor>` + `<input id>` 成对使用 |
-| 键盘导航 | Tab / Enter / Space / Escape 必须全部可用 |
-| heading 层级 | 不跳级（h1 > h2 > h3），GlobalLayout 中已有 SkipToContent |
-| 减弱动画 | 尊重 `prefers-reduced-motion` 媒体查询 |
+| 规则         | 说明                                                        |
+| ------------ | ----------------------------------------------------------- |
+| 语义化 HTML  | `<button>` 用于操作，`<a>` 用于导航，`<input>` 用于数据输入 |
+| aria-label   | 所有纯图标按钮必须添加 `aria-label`                         |
+| 标签关联     | `<label htmlFor>` + `<input id>` 成对使用                   |
+| 键盘导航     | Tab / Enter / Space / Escape 必须全部可用                   |
+| heading 层级 | 不跳级（h1 > h2 > h3），GlobalLayout 中已有 SkipToContent   |
+| 减弱动画     | 尊重 `prefers-reduced-motion` 媒体查询                      |
 
 ---
 
@@ -656,6 +657,7 @@ import { SkipToContent } from '@/components/layout/GlobalLayout';
 ---
 
 > 如有疑问，请参考以下文档：
+>
 > - [设计令牌指南](./design-tokens-guide.md)
 > - [颜色使用指南](./color-usage-guide.md)
 > - [组件 API 参考](./component-api-reference.md)

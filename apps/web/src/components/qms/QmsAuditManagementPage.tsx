@@ -72,7 +72,7 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color:'primary.700' }} />
+              <FileText sx={{ width: 20, height: 20, color: 'primary.700' }} />
             </Box>
             <Box>
               <Typography
@@ -108,7 +108,7 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color:'secondary.700' }} />
+              <FileText sx={{ width: 20, height: 20, color: 'secondary.700' }} />
             </Box>
             <Box>
               <Typography
@@ -144,7 +144,7 @@ function AuditStatsCards({ rows }: { rows: AuditPlan[] }) {
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.700' }} />
             </Box>
             <Box>
               <Typography

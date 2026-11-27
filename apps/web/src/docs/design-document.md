@@ -261,8 +261,8 @@
 
 ### 2.1 认证服务 (IAM Auth)
 
-| API路径                          | 方法    | 功能         |
-| -------------------------------- | ------- | ------------ |
+| API路径                                | 方法    | 功能         |
+| -------------------------------------- | ------- | ------------ |
 | `/api/core/iam/auth/login`             | POST    | 用户登录     |
 | `/api/core/iam/auth/register`          | POST    | 用户注册     |
 | `/api/core/iam/auth/refresh`           | POST    | 刷新Token    |
@@ -275,8 +275,8 @@
 
 ### 2.2 用户管理 (IAM Users)
 
-| API路径                         | 方法           | 功能               |
-| ------------------------------- | -------------- | ------------------ |
+| API路径                               | 方法           | 功能               |
+| ------------------------------------- | -------------- | ------------------ |
 | `/api/core/iam/users`                 | GET/POST       | 用户列表/创建用户  |
 | `/api/core/iam/users/:id`             | GET/PUT/DELETE | 用户详情/更新/删除 |
 | `/api/core/iam/users/me`              | GET/PUT        | 当前用户信息       |
@@ -286,30 +286,30 @@
 
 ### 2.3 角色管理 (IAM Roles)
 
-| API路径                         | 方法            | 功能               |
-| ------------------------------- | --------------- | ------------------ |
+| API路径                               | 方法            | 功能               |
+| ------------------------------------- | --------------- | ------------------ |
 | `/api/core/iam/roles`                 | GET/POST        | 角色列表/创建角色  |
 | `/api/core/iam/roles/:id`             | GET/PUT/DELETE  | 角色详情/更新/删除 |
 | `/api/core/iam/roles/:id/permissions` | GET/POST/DELETE | 角色权限管理       |
 
 ### 2.4 权限管理 (IAM Permissions)
 
-| API路径                   | 方法           | 功能               |
-| ------------------------- | -------------- | ------------------ |
+| API路径                         | 方法           | 功能               |
+| ------------------------------- | -------------- | ------------------ |
 | `/api/core/iam/permissions`     | GET/POST       | 权限列表/创建权限  |
 | `/api/core/iam/permissions/:id` | GET/PUT/DELETE | 权限详情/更新/删除 |
 
 ### 2.5 审计日志 (IAM Audit)
 
-| API路径                            | 方法     | 功能                  |
-| ---------------------------------- | -------- | --------------------- |
+| API路径                                  | 方法     | 功能                  |
+| ---------------------------------------- | -------- | --------------------- |
 | `/api/core/iam/access-logs`              | GET/POST | 访问日志列表/创建日志 |
 | `/api/core/iam/access-logs/user/:userId` | GET      | 用户访问日志          |
 
 ### 2.6 人力资源管理 (HRM)
 
-| API路径                       | 方法                      | 功能       |
-| ----------------------------- | ------------------------- | ---------- |
+| API路径                        | 方法                      | 功能       |
+| ------------------------------ | ------------------------- | ---------- |
 | `/api/hrm/companies`           | CRUD                      | 公司管理   |
 | `/api/hrm/departments`         | CRUD                      | 部门管理   |
 | `/api/hrm/employees`           | CRUD                      | 员工管理   |
@@ -331,8 +331,8 @@
 
 ### 2.7 客户关系管理 (CRM)
 
-| API路径                 | 方法 | 功能       |
-| ----------------------- | ---- | ---------- |
+| API路径                  | 方法 | 功能       |
+| ------------------------ | ---- | ---------- |
 | `/api/crm/customers`     | CRUD | 客户管理   |
 | `/api/crm/contacts`      | CRUD | 联系人管理 |
 | `/api/crm/opportunities` | CRUD | 商机管理   |
@@ -340,8 +340,8 @@
 
 ### 2.8 企业资源规划 (ERP)
 
-| API路径                                     | 方法              | 功能       |
-| ------------------------------------------- | ----------------- | ---------- |
+| API路径                                      | 方法              | 功能       |
+| -------------------------------------------- | ----------------- | ---------- |
 | `/api/erp/assets`                            | CRUD              | 资产管理   |
 | `/api/erp/expenses`                          | CRUD              | 费用管理   |
 | `/api/erp/budgets`                           | CRUD              | 预算管理   |
@@ -357,20 +357,20 @@
 | `/api/erp/bank-accounts`                     | CRUD              | 银行账户   |
 | `/api/erp/bank-transactions`                 | CRUD              | 银行交易   |
 | `/api/erp/finance/accounts/opening-balances` | CRUD + batch      | 期初余额   |
-| `/api/bi/reports/balance-sheet`             | GET               | 资产负债表 |
-| `/api/bi/reports/income-statement`          | GET               | 利润表     |
-| `/api/bi/reports/cash-flow`                 | GET               | 现金流量表 |
-| `/api/bi/reports/business-overview`         | GET               | 业务概览   |
+| `/api/bi/reports/balance-sheet`              | GET               | 资产负债表 |
+| `/api/bi/reports/income-statement`           | GET               | 利润表     |
+| `/api/bi/reports/cash-flow`                  | GET               | 现金流量表 |
+| `/api/bi/reports/business-overview`          | GET               | 业务概览   |
 
 ### 2.9 工作流服务 (Flow)
 
-| API路径                          | 方法            | 功能       |
-| -------------------------------- | --------------- | ---------- |
+| API路径                                 | 方法            | 功能       |
+| --------------------------------------- | --------------- | ---------- |
 | `/api/core/flow/workflows`              | CRUD            | 工作流管理 |
 | `/api/core/flow/workflows/:id/versions` | CRUD + activate | 版本管理   |
 | `/api/core/flow/instances`              | CRUD            | 流程实例   |
 | `/api/core/flow/approvals`              | CRUD + process  | 审批管理   |
-| `/api/core/notification/notifications`          | CRUD            | 流程通知   |
+| `/api/core/notification/notifications`  | CRUD            | 流程通知   |
 | `/api/core/flow/statistics`             | GET             | 流程统计   |
 | `/api/core/flow/performance`            | GET             | 性能统计   |
 
@@ -386,9 +386,9 @@
 | `/api/pm/projects/:id/expenses`   | CRUD                       | 项目费用 |
 | `/api/pm/projects/:id/benefits`   | CRUD                       | 项目收益 |
 | `/api/pm/projects/:id/approval`   | GET/POST                   | 项目审批 |
-| `/api/hrm/contracts`               | CRUD + milestones/payments | 合同管理 |
+| `/api/hrm/contracts`              | CRUD + milestones/payments | 合同管理 |
 | `/api/pm/contract-templates`      | CRUD                       | 合同模板 |
-| `/api/erp/budgets`                 | CRUD                       | 预算管理 |
+| `/api/erp/budgets`                | CRUD                       | 预算管理 |
 | `/api/pm/risks`                   | CRUD                       | 风险管理 |
 | `/api/pm/quality-checks`          | CRUD                       | 质量检查 |
 | `/api/pm/defects`                 | CRUD                       | 缺陷管理 |
@@ -396,16 +396,16 @@
 | `/api/pm/settlements`             | CRUD                       | 结算管理 |
 | `/api/pm/documents`               | CRUD                       | 文档管理 |
 | `/api/bi/reports`                 | CRUD                       | 报表管理 |
-| `/api/core/flow/statistics`              | GET                        | PM统计   |
+| `/api/core/flow/statistics`       | GET                        | PM统计   |
 
 ### 2.11 研发管理 (RS)
 
-| API路径               | 方法                       | 功能     |
-| --------------------- | -------------------------- | -------- |
-| `/api/pm/projects`    | CRUD + batch/export/import | 项目管理 |
-| `/api/rd/experiments` | CRUD + phase/trace         | 试验管理 |
-| `/api/rd/formulas`    | CRUD + versions/approve    | 配方管理 |
-| `/api/core/flow/statistics`  | GET                        | RS统计   |
+| API路径                     | 方法                       | 功能     |
+| --------------------------- | -------------------------- | -------- |
+| `/api/pm/projects`          | CRUD + batch/export/import | 项目管理 |
+| `/api/rd/experiments`       | CRUD + phase/trace         | 试验管理 |
+| `/api/rd/formulas`          | CRUD + versions/approve    | 配方管理 |
+| `/api/core/flow/statistics` | GET                        | RS统计   |
 | `/api/core/iam/audit-logs`  | CRUD                       | 审计日志 |
 
 ### 2.12 商业智能 (BI)
@@ -419,29 +419,29 @@
 | `/api/bi/analytics/quality`     | GET  | 质量分析     |
 | `/api/bi/analytics/production`  | GET  | 生产分析     |
 | `/api/bi/analytics/laboratory`  | GET  | 实验室分析   |
-| `/api/bi/rs/summary`         | GET  | RS模块分析   |
-| `/api/bi/lims/summary`       | GET  | LIMS模块分析 |
-| `/api/bi/qms/summary`        | GET  | QMS模块分析  |
-| `/api/bi/ehs/summary`        | GET  | EHS模块分析  |
-| `/api/bi/srm/summary`        | GET  | SRM模块分析  |
-| `/api/bi/pdm/summary`        | GET  | PDM模块分析  |
+| `/api/bi/rs/summary`            | GET  | RS模块分析   |
+| `/api/bi/lims/summary`          | GET  | LIMS模块分析 |
+| `/api/bi/qms/summary`           | GET  | QMS模块分析  |
+| `/api/bi/ehs/summary`           | GET  | EHS模块分析  |
+| `/api/bi/srm/summary`           | GET  | SRM模块分析  |
+| `/api/bi/pdm/summary`           | GET  | PDM模块分析  |
 
 ### 2.13 实验室信息管理 (LIMS)
 
-| API路径               | 方法                       | 功能     |
-| --------------------- | -------------------------- | -------- |
-| `/api/lims/samples`     | CRUD + batch/export/import | 样品管理 |
-| `/api/lims/processes`   | CRUD                       | 检验流程 |
-| `/api/lims/tasks`       | CRUD + complete_step       | 检验任务 |
-| `/api/lims/records`     | CRUD                       | 检验记录 |
-| `/api/lims/instruments` | CRUD                       | 仪器管理 |
-| `/api/lims/maintenance` | CRUD                       | 仪器维护 |
-| `/api/core/flow/statistics`  | GET                        | LIMS统计 |
+| API路径                     | 方法                       | 功能     |
+| --------------------------- | -------------------------- | -------- |
+| `/api/lims/samples`         | CRUD + batch/export/import | 样品管理 |
+| `/api/lims/processes`       | CRUD                       | 检验流程 |
+| `/api/lims/tasks`           | CRUD + complete_step       | 检验任务 |
+| `/api/lims/records`         | CRUD                       | 检验记录 |
+| `/api/lims/instruments`     | CRUD                       | 仪器管理 |
+| `/api/lims/maintenance`     | CRUD                       | 仪器维护 |
+| `/api/core/flow/statistics` | GET                        | LIMS统计 |
 
 ### 2.14 质量管理 (QMS)
 
-| API路径                           | 方法 | 功能     |
-| --------------------------------- | ---- | -------- |
+| API路径                            | 方法 | 功能     |
+| ---------------------------------- | ---- | -------- |
 | `/api/qms/standards`               | CRUD | 质量标准 |
 | `/api/qms/standards/:id/revisions` | GET  | 标准版本 |
 | `/api/qms/checks`                  | CRUD | 质量检查 |
@@ -453,8 +453,8 @@
 
 ### 2.15 环境健康安全 (EHS)
 
-| API路径                           | 方法 | 功能       |
-| --------------------------------- | ---- | ---------- |
+| API路径                            | 方法 | 功能       |
+| ---------------------------------- | ---- | ---------- |
 | `/api/ehs/hazards`                 | CRUD | 危险源管理 |
 | `/api/ehs/hazards/:id/assessments` | CRUD | 风险评估   |
 | `/api/ehs/hazards/:id/controls`    | CRUD | 控制措施   |
@@ -466,24 +466,24 @@
 
 ### 2.16 供应商关系管理 (SRM)
 
-| API路径                        | 方法 | 功能       |
-| ------------------------------ | ---- | ---------- |
-| `/api/scm/suppliers`            | CRUD | 供应商管理 |
-| `/api/scm/supplier-evaluations` | CRUD | 供应商评估 |
-| `/api/scm/purchase-orders`      | CRUD | 采购订单   |
-| `/api/scm/supplier-contracts`   | CRUD | 供应商合同 |
-| `/api/core/flow/statistics`           | GET  | SRM统计    |
-| `/api/core/flow/statistics/detailed`  | GET  | 详细统计   |
-| `/api/scm/suppliers-with-stats` | GET  | 供应商统计 |
+| API路径                              | 方法 | 功能       |
+| ------------------------------------ | ---- | ---------- |
+| `/api/scm/suppliers`                 | CRUD | 供应商管理 |
+| `/api/scm/supplier-evaluations`      | CRUD | 供应商评估 |
+| `/api/scm/purchase-orders`           | CRUD | 采购订单   |
+| `/api/scm/supplier-contracts`        | CRUD | 供应商合同 |
+| `/api/core/flow/statistics`          | GET  | SRM统计    |
+| `/api/core/flow/statistics/detailed` | GET  | 详细统计   |
+| `/api/scm/suppliers-with-stats`      | GET  | 供应商统计 |
 
 ### 2.17 生产数据管理 (PDM)
 
-| API路径              | 方法 | 功能     |
-| -------------------- | ---- | -------- |
-| `/api/lims/processes`  | CRUD | 工艺流程 |
-| `/api/mes/steps`      | CRUD | 工序管理 |
-| `/api/rd/formulas`   | CRUD | 配方管理 |
-| `/api/mes/batches`    | CRUD | 批次管理 |
+| API路径                     | 方法 | 功能     |
+| --------------------------- | ---- | -------- |
+| `/api/lims/processes`       | CRUD | 工艺流程 |
+| `/api/mes/steps`            | CRUD | 工序管理 |
+| `/api/rd/formulas`          | CRUD | 配方管理 |
+| `/api/mes/batches`          | CRUD | 批次管理 |
 | `/api/core/flow/statistics` | GET  | PDM统计  |
 
 ---
@@ -523,8 +523,8 @@
 
 #### 3.2.1 CRM模块 - 缺少专门API
 
-| 前端页面        | 缺失的后端API | 建议完善方案                    |
-| --------------- | ------------- | ------------------------------- |
+| 前端页面        | 缺失的后端API | 建议完善方案                     |
+| --------------- | ------------- | -------------------------------- |
 | `/crm/scoring`  | 客户评分API   | 新增 `/api/crm/customer-scoring` |
 | `/crm/forecast` | 销售预测API   | 新增 `/api/crm/sales-forecast`   |
 | `/crm/billing`  | 账单管理API   | 新增 `/api/crm/billing`          |
@@ -537,12 +537,12 @@
 
 #### 3.2.3 Notifications模块 - 需要独立服务
 
-| 前端页面                   | 当前状态        | 建议完善方案                             |
-| -------------------------- | --------------- | ---------------------------------------- |
+| 前端页面                   | 当前状态        | 建议完善方案                                            |
+| -------------------------- | --------------- | ------------------------------------------------------- |
 | `/notifications`           | 使用Flow通知API | 新增独立通知服务 `/api/core/notification/notifications` |
-| `/notifications/templates` | 无对应API       | 新增通知模板API                          |
-| `/notifications/archive`   | 无对应API       | 新增通知归档API                          |
-| `/notifications/stats`     | 无对应API       | 新增通知统计API                          |
+| `/notifications/templates` | 无对应API       | 新增通知模板API                                         |
+| `/notifications/archive`   | 无对应API       | 新增通知归档API                                         |
+| `/notifications/stats`     | 无对应API       | 新增通知统计API                                         |
 
 #### 3.2.4 Docs模块 - 需要文档服务
 
@@ -554,38 +554,38 @@
 
 #### 3.2.5 AI模块 - 需要AI服务
 
-| 前端页面 | 当前状态  | 建议完善方案                 |
-| -------- | --------- | ---------------------------- |
+| 前端页面 | 当前状态  | 建议完善方案              |
+| -------- | --------- | ------------------------- |
 | `/ai`    | 无对应API | 新增AI服务API `/api/ai/*` |
 
 #### 3.2.6 GIS模块 - 需要GIS服务
 
-| 前端页面 | 当前状态  | 建议完善方案                   |
-| -------- | --------- | ------------------------------ |
+| 前端页面 | 当前状态  | 建议完善方案                |
+| -------- | --------- | --------------------------- |
 | `/gis`   | 无对应API | 新增GIS服务API `/api/gis/*` |
 
 #### 3.2.7 IM模块 - 需要即时通讯服务
 
-| 前端页面 | 当前状态  | 建议完善方案                 |
-| -------- | --------- | ---------------------------- |
+| 前端页面 | 当前状态  | 建议完善方案                   |
+| -------- | --------- | ------------------------------ |
 | `/im`    | 无对应API | 新增IM服务API `/api/core/im/*` |
 
 #### 3.2.8 Mail模块 - 需要邮件服务
 
-| 前端页面 | 当前状态  | 建议完善方案                     |
-| -------- | --------- | -------------------------------- |
+| 前端页面 | 当前状态  | 建议完善方案                       |
+| -------- | --------- | ---------------------------------- |
 | `/mail`  | 无对应API | 新增邮件服务API `/api/core/mail/*` |
 
 #### 3.2.9 Mobile模块 - 需要移动服务
 
-| 前端页面              | 当前状态  | 建议完善方案                       |
-| --------------------- | --------- | ---------------------------------- |
+| 前端页面              | 当前状态  | 建议完善方案                    |
+| --------------------- | --------- | ------------------------------- |
 | `/mobile-workstation` | 无对应API | 新增移动服务API `/api/mobile/*` |
 
 #### 3.2.10 Performance模块 - 需要监控服务
 
-| 前端页面       | 当前状态  | 建议完善方案                        |
-| -------------- | --------- | ----------------------------------- |
+| 前端页面       | 当前状态  | 建议完善方案                     |
+| -------------- | --------- | -------------------------------- |
 | `/performance` | 无对应API | 新增性能监控API `/api/monitor/*` |
 
 ### 3.3 完善方案建议

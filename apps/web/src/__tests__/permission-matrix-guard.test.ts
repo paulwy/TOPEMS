@@ -50,19 +50,22 @@ describe('Permission Matrix 3-Way Gate · Guardian (never rebound vs baseline)',
     console.log('\n==== Permission Matrix Guardian Run ====');
     console.log('  Integrity PASS  :', report.integrity.passed);
     console.log('  ── Scanner stats ──');
-    Object.keys(report.scanners || {}).forEach(k => {
+    Object.keys(report.scanners || {}).forEach((k) => {
       console.log(`   . ${k.padEnd(26)} = ${report!.scanners[k]}`);
     });
     console.log('  ── Summary vs Baseline ──');
-    (['R1', 'R2', 'R3'] as const).forEach(r => {
+    (['R1', 'R2', 'R3'] as const).forEach((r) => {
       const cur = report!.summary[r];
       const base = (BASELINE as any)[r];
-      const status = cur <= base
-        ? `≤${base} ✅ (${cur <= base ? 'passed' : 'n/a'}${cur < base ? ' improved: -' + (base - cur) : ''})`
-        : `EXCEEDS ${base} ❌ (+${cur - base})`;
-      console.log(`   ${r}: ${String(cur).padStart(5)} / baseline ${String(base).padStart(5)}  ·  ${status}`);
+      const status =
+        cur <= base
+          ? `≤${base} ✅ (${cur <= base ? 'passed' : 'n/a'}${cur < base ? ' improved: -' + (base - cur) : ''})`
+          : `EXCEEDS ${base} ❌ (+${cur - base})`;
+      console.log(
+        `   ${r}: ${String(cur).padStart(5)} / baseline ${String(base).padStart(5)}  ·  ${status}`
+      );
     });
-    (['R4', 'R5', 'R6'] as const).forEach(r => {
+    (['R4', 'R5', 'R6'] as const).forEach((r) => {
       console.log(`   ${r}: ${String(report!.summary[r]).padStart(5)} · WARN (not guarded)`);
     });
   }, 30000); // 1500+ .rs files scan — allow 30s

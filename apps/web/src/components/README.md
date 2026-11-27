@@ -298,89 +298,89 @@ export type { StatusBadgeProps } from './StatusBadge';
 
 ### 数据表格
 
-| 推荐组件 | 路径 | 使用场景 | 状态 |
-| -------- | ---- | -------- | ---- |
-| **DataTable** | `common/DataTable.tsx` | 标准列表页、数据展示、CRUD 操作 | ✅ 推荐 |
-| MobileDataTable | `mobile/MobileDataTable.tsx` | 移动端列表展示 | ✅ 推荐 (移动端) |
-| ui/DataTable | `ui/DataTable.tsx` | - | ❌ 遗留，待迁移 |
+| 推荐组件        | 路径                         | 使用场景                        | 状态             |
+| --------------- | ---------------------------- | ------------------------------- | ---------------- |
+| **DataTable**   | `common/DataTable.tsx`       | 标准列表页、数据展示、CRUD 操作 | ✅ 推荐          |
+| MobileDataTable | `mobile/MobileDataTable.tsx` | 移动端列表展示                  | ✅ 推荐 (移动端) |
+| ui/DataTable    | `ui/DataTable.tsx`           | -                               | ❌ 遗留，待迁移  |
 
 ### 页面容器/布局
 
-| 推荐组件 | 路径 | 使用场景 | 状态 |
-| -------- | ---- | -------- | ---- |
-| **PageContainer** | `common/PageContainer.tsx` | 标准页面容器 | ✅ 推荐 |
-| **ListPageTemplate** | `templates/ListPageTemplate.tsx` | 列表页模板 | ✅ 推荐 |
-| **FormPageTemplate** | `templates/FormPageTemplate.tsx` | 表单页模板 | ✅ 推荐 |
-| **DetailPageTemplate** | `templates/DetailPageTemplate.tsx` | 详情页模板 | ✅ 推荐 |
-| **DashboardTemplate** | `templates/DashboardTemplate.tsx` | 仪表盘模板 | ✅ 推荐 |
-| ResponsivePage | `common/ResponsivePage.tsx` | 响应式页面包装 | ✅ 推荐 |
+| 推荐组件               | 路径                               | 使用场景       | 状态    |
+| ---------------------- | ---------------------------------- | -------------- | ------- |
+| **PageContainer**      | `common/PageContainer.tsx`         | 标准页面容器   | ✅ 推荐 |
+| **ListPageTemplate**   | `templates/ListPageTemplate.tsx`   | 列表页模板     | ✅ 推荐 |
+| **FormPageTemplate**   | `templates/FormPageTemplate.tsx`   | 表单页模板     | ✅ 推荐 |
+| **DetailPageTemplate** | `templates/DetailPageTemplate.tsx` | 详情页模板     | ✅ 推荐 |
+| **DashboardTemplate**  | `templates/DashboardTemplate.tsx`  | 仪表盘模板     | ✅ 推荐 |
+| ResponsivePage         | `common/ResponsivePage.tsx`        | 响应式页面包装 | ✅ 推荐 |
 
 ### 表单组件
 
-| 推荐组件 | 路径 | 使用场景 | 状态 |
-| -------- | ---- | -------- | ---- |
-| **FormBuilder** | `common/FormBuilder.tsx` | 动态表单、配置化表单 | ✅ 推荐 |
-| **FormField** | `common/FormField.tsx` | 单个表单字段 | ✅ 推荐 |
-| **FormFieldGroup** | `common/FormFieldGroup.tsx` | 表单字段分组 | ✅ 推荐 |
-| FormDialog | `common/FormDialog.tsx` | 弹窗表单 | ✅ 推荐 |
-| FormDrawer | `common/FormDrawer.tsx` | 抽屉表单 | ✅ 推荐 |
-| FormSelect | `common/FormSelect.tsx` | 表单选择器 | ✅ 推荐 |
+| 推荐组件           | 路径                        | 使用场景             | 状态    |
+| ------------------ | --------------------------- | -------------------- | ------- |
+| **FormBuilder**    | `common/FormBuilder.tsx`    | 动态表单、配置化表单 | ✅ 推荐 |
+| **FormField**      | `common/FormField.tsx`      | 单个表单字段         | ✅ 推荐 |
+| **FormFieldGroup** | `common/FormFieldGroup.tsx` | 表单字段分组         | ✅ 推荐 |
+| FormDialog         | `common/FormDialog.tsx`     | 弹窗表单             | ✅ 推荐 |
+| FormDrawer         | `common/FormDrawer.tsx`     | 抽屉表单             | ✅ 推荐 |
+| FormSelect         | `common/FormSelect.tsx`     | 表单选择器           | ✅ 推荐 |
 
 ### 反馈/状态
 
-| 推荐组件 | 路径 | 使用场景 | 状态 |
-| -------- | ---- | -------- | ---- |
-| **EmptyState** | `common/EmptyState.tsx` | 空状态展示 | ✅ 推荐 |
-| **LoadingSpinner** | `common/LoadingSpinner.tsx` | 加载状态 | ✅ 推荐 |
-| **SkeletonScreen** | `common/SkeletonScreen.tsx` | 骨架屏 | ✅ 推荐 |
-| **ConfirmDialog** | `common/ConfirmDialog.tsx` | 确认对话框 | ✅ 推荐 |
-| **ErrorBoundary** | `ErrorBoundary.tsx` | 错误边界 | ✅ 推荐 |
-| **StatusBadge** | `common/StatusBadge.tsx` | 状态徽章 | ✅ 推荐 |
-| AlertCard | `common/AlertCard.tsx` | 警告卡片 | ✅ 推荐 |
-| AlertPanel | `common/AlertPanel.tsx` | 警告面板 | ✅ 推荐 |
+| 推荐组件           | 路径                        | 使用场景   | 状态    |
+| ------------------ | --------------------------- | ---------- | ------- |
+| **EmptyState**     | `common/EmptyState.tsx`     | 空状态展示 | ✅ 推荐 |
+| **LoadingSpinner** | `common/LoadingSpinner.tsx` | 加载状态   | ✅ 推荐 |
+| **SkeletonScreen** | `common/SkeletonScreen.tsx` | 骨架屏     | ✅ 推荐 |
+| **ConfirmDialog**  | `common/ConfirmDialog.tsx`  | 确认对话框 | ✅ 推荐 |
+| **ErrorBoundary**  | `ErrorBoundary.tsx`         | 错误边界   | ✅ 推荐 |
+| **StatusBadge**    | `common/StatusBadge.tsx`    | 状态徽章   | ✅ 推荐 |
+| AlertCard          | `common/AlertCard.tsx`      | 警告卡片   | ✅ 推荐 |
+| AlertPanel         | `common/AlertPanel.tsx`     | 警告面板   | ✅ 推荐 |
 
 ### 导航/菜单
 
-| 推荐组件 | 路径 | 使用场景 | 状态 |
-| -------- | ---- | -------- | ---- |
-| **AppSidebar** | `layout/AppSidebar.tsx` | 应用侧边栏 | ✅ 推荐 |
-| **AppHeader** | `layout/AppHeader.tsx` | 应用头部 | ✅ 推荐 |
-| **GlobalLayout** | `layout/GlobalLayout.tsx` | 全局布局 | ✅ 推荐 |
-| **ModuleTabs** | `layout/ModuleTabs.tsx` | 模块标签页 | ✅ 推荐 |
-| TabPanel | `common/TabPanel.tsx` | 标签面板 | ✅ 推荐 |
-| ExtendedTab | `common/ExtendedTab.tsx` | 扩展标签 | ✅ 推荐 |
+| 推荐组件         | 路径                      | 使用场景   | 状态    |
+| ---------------- | ------------------------- | ---------- | ------- |
+| **AppSidebar**   | `layout/AppSidebar.tsx`   | 应用侧边栏 | ✅ 推荐 |
+| **AppHeader**    | `layout/AppHeader.tsx`    | 应用头部   | ✅ 推荐 |
+| **GlobalLayout** | `layout/GlobalLayout.tsx` | 全局布局   | ✅ 推荐 |
+| **ModuleTabs**   | `layout/ModuleTabs.tsx`   | 模块标签页 | ✅ 推荐 |
+| TabPanel         | `common/TabPanel.tsx`     | 标签面板   | ✅ 推荐 |
+| ExtendedTab      | `common/ExtendedTab.tsx`  | 扩展标签   | ✅ 推荐 |
 
 ### 图表/数据可视化
 
-| 推荐组件 | 路径 | 使用场景 | 状态 |
-| -------- | ---- | -------- | ---- |
-| **charts/** | `charts/` | 基础图表 (Recharts) | ✅ 推荐 |
-| **bi/** | `bi/` | BI 高级图表 | ✅ 推荐 |
-| **MetricCard** | `bi/MetricCard.tsx` | 指标卡片 | ✅ 推荐 |
-| **ChartCard** | `bi/ChartCard.tsx` | 图表卡片 | ✅ 推荐 |
+| 推荐组件       | 路径                | 使用场景            | 状态    |
+| -------------- | ------------------- | ------------------- | ------- |
+| **charts/**    | `charts/`           | 基础图表 (Recharts) | ✅ 推荐 |
+| **bi/**        | `bi/`               | BI 高级图表         | ✅ 推荐 |
+| **MetricCard** | `bi/MetricCard.tsx` | 指标卡片            | ✅ 推荐 |
+| **ChartCard**  | `bi/ChartCard.tsx`  | 图表卡片            | ✅ 推荐 |
 
 ### 搜索/筛选
 
-| 推荐组件 | 路径 | 使用场景 | 状态 |
-| -------- | ---- | -------- | ---- |
-| **GlobalSearchBar** | `GlobalSearchBar/` | 全局搜索 | ✅ 推荐 |
-| **QuickSearch** | `common/QuickSearch.tsx` | 快速搜索 | ✅ 推荐 |
-| **FilterBar** | `common/FilterBar.tsx` | 筛选栏 | ✅ 推荐 |
-| **AdvancedFilter** | `common/AdvancedFilter.tsx` | 高级筛选 | ✅ 推荐 |
+| 推荐组件            | 路径                         | 使用场景     | 状态    |
+| ------------------- | ---------------------------- | ------------ | ------- |
+| **GlobalSearchBar** | `GlobalSearchBar/`           | 全局搜索     | ✅ 推荐 |
+| **QuickSearch**     | `common/QuickSearch.tsx`     | 快速搜索     | ✅ 推荐 |
+| **FilterBar**       | `common/FilterBar.tsx`       | 筛选栏       | ✅ 推荐 |
+| **AdvancedFilter**  | `common/AdvancedFilter.tsx`  | 高级筛选     | ✅ 推荐 |
 | **DateRangePicker** | `common/DateRangePicker.tsx` | 日期范围选择 | ✅ 推荐 |
 
 ### 移动端组件
 
-| 推荐组件 | 路径 | 使用场景 | 状态 |
-| -------- | ---- | -------- | ---- |
-| **MobileLayoutV3** | `../../layouts/MobileLayoutV3.tsx` | 移动端宿主布局（`route.module==='mobile'` 自带壳，Industrial OS 视觉） | ✅ 推荐 |
-| **MobileHeader** | `mobile/MobileHeader.tsx` | 移动端头部 | ✅ 推荐 |
-| **MobileDataTable** | `mobile/MobileDataTable.tsx` | 移动端数据表格 | ✅ 推荐 |
-| **MobileForm** | `mobile/MobileForm.tsx` | 移动端表单 | ✅ 推荐 |
-| **MobileCard** | `mobile/MobileCard.tsx` | 移动端卡片 | ✅ 推荐 |
-| **BottomTabBar** | `mobile/BottomTabBar.tsx` | 底部标签栏 | ✅ 推荐 |
-| **PullToRefresh** | `mobile/PullToRefresh.tsx` | 下拉刷新 | ✅ 推荐 |
-| **SwipeAction** | `mobile/SwipeAction.tsx` | 滑动操作 | ✅ 推荐 |
+| 推荐组件            | 路径                               | 使用场景                                                               | 状态    |
+| ------------------- | ---------------------------------- | ---------------------------------------------------------------------- | ------- |
+| **MobileLayoutV3**  | `../../layouts/MobileLayoutV3.tsx` | 移动端宿主布局（`route.module==='mobile'` 自带壳，Industrial OS 视觉） | ✅ 推荐 |
+| **MobileHeader**    | `mobile/MobileHeader.tsx`          | 移动端头部                                                             | ✅ 推荐 |
+| **MobileDataTable** | `mobile/MobileDataTable.tsx`       | 移动端数据表格                                                         | ✅ 推荐 |
+| **MobileForm**      | `mobile/MobileForm.tsx`            | 移动端表单                                                             | ✅ 推荐 |
+| **MobileCard**      | `mobile/MobileCard.tsx`            | 移动端卡片                                                             | ✅ 推荐 |
+| **BottomTabBar**    | `mobile/BottomTabBar.tsx`          | 底部标签栏                                                             | ✅ 推荐 |
+| **PullToRefresh**   | `mobile/PullToRefresh.tsx`         | 下拉刷新                                                               | ✅ 推荐 |
+| **SwipeAction**     | `mobile/SwipeAction.tsx`           | 滑动操作                                                               | ✅ 推荐 |
 
 ### 业务模块组件
 

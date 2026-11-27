@@ -9,31 +9,34 @@
 > 旧版（V22）按使用频率分三层，共 15 个模板类型。
 
 ### 高频（4 个）
-| 类型 | 组件 | 用途 |
-| --- | --- | --- |
-| `list` | `ListPageTemplate` | 数据列表 / CRUD 管理 / 查询结果 |
-| `detail` | `DetailPageTemplate` | 详情查看 / 信息展示 |
-| `form` | `FormPageTemplate` | 新增 / 编辑 / 数据录入 |
-| `dashboard` | `DashboardTemplate` | 模块首页 / 数据概览 |
+
+| 类型        | 组件                 | 用途                            |
+| ----------- | -------------------- | ------------------------------- |
+| `list`      | `ListPageTemplate`   | 数据列表 / CRUD 管理 / 查询结果 |
+| `detail`    | `DetailPageTemplate` | 详情查看 / 信息展示             |
+| `form`      | `FormPageTemplate`   | 新增 / 编辑 / 数据录入          |
+| `dashboard` | `DashboardTemplate`  | 模块首页 / 数据概览             |
 
 ### 中频（5 个）
-| 类型 | 组件 | 用途 |
-| --- | --- | --- |
-| `tree` | `TreePageTemplate` | 组织架构 / 分类管理 / 层级数据 |
-| `stats` | `StatsPageTemplate` | 数据报表 / 统计分析 |
-| `settings` | `SettingsPageTemplate` | 系统设置 / 参数配置 |
-| `kanban` | `KanbanPageTemplate` | 任务看板 / 状态流转 |
-| `card-list` | `CardListTemplate` | 产品展示 / 卡片列表 |
+
+| 类型        | 组件                   | 用途                           |
+| ----------- | ---------------------- | ------------------------------ |
+| `tree`      | `TreePageTemplate`     | 组织架构 / 分类管理 / 层级数据 |
+| `stats`     | `StatsPageTemplate`    | 数据报表 / 统计分析            |
+| `settings`  | `SettingsPageTemplate` | 系统设置 / 参数配置            |
+| `kanban`    | `KanbanPageTemplate`   | 任务看板 / 状态流转            |
+| `card-list` | `CardListTemplate`     | 产品展示 / 卡片列表            |
 
 ### 低频（6 个）
-| 类型 | 组件 | 用途 |
-| --- | --- | --- |
-| `wizard` | `WizardPageTemplate` | 分步表单 / 引导流程 |
-| `timeline` | `TimelinePageTemplate` | 操作日志 / 历史记录 |
-| `master-detail` | `MasterDetailPageTemplate` | 主从表 / 关联数据 |
-| `markdown-editor` | `MarkdownEditorTemplate` | 文档编辑 / 知识库 |
-| `report-designer` | `ReportDesignerTemplate` | 自定义报表 / 数据透视 |
-| `gis-map` | `GisMapTemplate` | 地理信息 / 设备定位 |
+
+| 类型              | 组件                       | 用途                  |
+| ----------------- | -------------------------- | --------------------- |
+| `wizard`          | `WizardPageTemplate`       | 分步表单 / 引导流程   |
+| `timeline`        | `TimelinePageTemplate`     | 操作日志 / 历史记录   |
+| `master-detail`   | `MasterDetailPageTemplate` | 主从表 / 关联数据     |
+| `markdown-editor` | `MarkdownEditorTemplate`   | 文档编辑 / 知识库     |
+| `report-designer` | `ReportDesignerTemplate`   | 自定义报表 / 数据透视 |
+| `gis-map`         | `GisMapTemplate`           | 地理信息 / 设备定位   |
 
 ---
 
@@ -104,18 +107,18 @@ templates/
 
 ## 四、10 个扩展模板说明
 
-| 类型 | 组件 | 推荐触发条件 | 替代方案（核心模板） |
-| --- | --- | --- | --- |
-| `tree` | `TreePageTemplate` | 强层级交互（拖拽、批量操作） | `ListPageTemplate` + 树形扩展 |
-| `stats` | `StatsPageTemplate` | 多图表 + 数据表格的报表页 | `DashboardTemplate` |
-| `settings` | `SettingsPageTemplate` | 系统设置 / 偏好配置 | 无（独占场景） |
-| `wizard` | `WizardPageTemplate` | 多步表单 + 步骤校验 | `FormPageTemplate`（简单分步） |
-| `timeline` | `TimelinePageTemplate` | 时间线 / 历史记录 | `DetailPageTemplate`（自定义渲染） |
-| `card-list` | `CardListTemplate` | 纯卡片网格 + 指标卡 | `ListPageTemplate`（卡片视图） |
-| `master-detail` | `MasterDetailPageTemplate` | 主从表联动 | `ListPageTemplate` + `DetailPageTemplate` |
-| `markdown-editor` | `MarkdownEditorTemplate` | 文档编辑 / 知识库 | 无（独占场景） |
-| `report-designer` | `ReportDesignerTemplate` | 可视化报表设计器 | 无（独占场景） |
-| `gis-map` | `GisMapTemplate` | 地理信息 / 轨迹追踪 | 无（独占场景） |
+| 类型              | 组件                       | 推荐触发条件                 | 替代方案（核心模板）                      |
+| ----------------- | -------------------------- | ---------------------------- | ----------------------------------------- |
+| `tree`            | `TreePageTemplate`         | 强层级交互（拖拽、批量操作） | `ListPageTemplate` + 树形扩展             |
+| `stats`           | `StatsPageTemplate`        | 多图表 + 数据表格的报表页    | `DashboardTemplate`                       |
+| `settings`        | `SettingsPageTemplate`     | 系统设置 / 偏好配置          | 无（独占场景）                            |
+| `wizard`          | `WizardPageTemplate`       | 多步表单 + 步骤校验          | `FormPageTemplate`（简单分步）            |
+| `timeline`        | `TimelinePageTemplate`     | 时间线 / 历史记录            | `DetailPageTemplate`（自定义渲染）        |
+| `card-list`       | `CardListTemplate`         | 纯卡片网格 + 指标卡          | `ListPageTemplate`（卡片视图）            |
+| `master-detail`   | `MasterDetailPageTemplate` | 主从表联动                   | `ListPageTemplate` + `DetailPageTemplate` |
+| `markdown-editor` | `MarkdownEditorTemplate`   | 文档编辑 / 知识库            | 无（独占场景）                            |
+| `report-designer` | `ReportDesignerTemplate`   | 可视化报表设计器             | 无（独占场景）                            |
+| `gis-map`         | `GisMapTemplate`           | 地理信息 / 轨迹追踪          | 无（独占场景）                            |
 
 ---
 
@@ -149,18 +152,18 @@ import {
 import { TreePageTemplate } from '@/components/templates/extensions';
 
 // ✅ 推荐：扩展模板的动态导入（减少首屏 bundle）
-const StatsPageTemplate = React.lazy(
-  () => import('@/components/templates/extensions').then(m => ({ default: m.StatsPageTemplate }))
+const StatsPageTemplate = React.lazy(() =>
+  import('@/components/templates/extensions').then((m) => ({ default: m.StatsPageTemplate }))
 );
 ```
 
 ### 5.3 类型导入迁移
 
-| 旧写法 | 新写法（推荐） |
-| --- | --- |
-| `import type { ListPageTemplateProps } from '@/components/templates'` | `import type { ListPageTemplateProps } from '@/components/templates/core'` |
-| `import type { TreePageTemplateProps } from '@/components/templates'` | `import type { TreePageTemplateProps } from '@/components/templates/extensions'` |
-| `import type { StatCard } from '@/components/templates'` | `import type { StatCard } from '@/components/templates/core'`（明确来自 Dashboard） |
+| 旧写法                                                                | 新写法（推荐）                                                                      |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `import type { ListPageTemplateProps } from '@/components/templates'` | `import type { ListPageTemplateProps } from '@/components/templates/core'`          |
+| `import type { TreePageTemplateProps } from '@/components/templates'` | `import type { TreePageTemplateProps } from '@/components/templates/extensions'`    |
+| `import type { StatCard } from '@/components/templates'`              | `import type { StatCard } from '@/components/templates/core'`（明确来自 Dashboard） |
 
 ### 5.4 别名类型（向后兼容）
 
@@ -173,24 +176,24 @@ const StatsPageTemplate = React.lazy(
 
 ### 5.5 分类常量迁移
 
-| 旧写法 | 新写法 |
-| --- | --- |
-| `CORE_8_TEMPLATES`（8 个） | `CORE_TEMPLATES`（5 个核心）+ `EXTENSION_TEMPLATES`（10 个扩展） |
-| `getHighFrequencyTemplates()` | 仍可用；或按 `isCore` 字段筛选 |
+| 旧写法                        | 新写法                                                           |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `CORE_8_TEMPLATES`（8 个）    | `CORE_TEMPLATES`（5 个核心）+ `EXTENSION_TEMPLATES`（10 个扩展） |
+| `getHighFrequencyTemplates()` | 仍可用；或按 `isCore` 字段筛选                                   |
 
 > `CORE_8_TEMPLATES` 作为兼容别名保留，等价于 `CORE_TEMPLATES + tree + stats + settings`。
 
 ### 5.6 `recommendTemplate` 行为变更
 
-| dataType | 旧推荐 | 新推荐 | 说明 |
-| --- | --- | --- | --- |
-| `list` | `list` | `list` | 核心 |
-| `detail` | `detail` | `detail` | 核心 |
-| `form` | `form` | `form` | 核心 |
-| `dashboard` | `dashboard` | `dashboard` | 核心 |
-| `tree` | `tree` | `list` ⚠️ | 优先核心（ListPageTemplate 含树形扩展） |
-| `chart` | `stats` | `dashboard` ⚠️ | 优先核心（DashboardTemplate 含 ChartCard） |
-| `settings` | `settings` | `settings` | 扩展（无核心替代） |
+| dataType    | 旧推荐      | 新推荐         | 说明                                       |
+| ----------- | ----------- | -------------- | ------------------------------------------ |
+| `list`      | `list`      | `list`         | 核心                                       |
+| `detail`    | `detail`    | `detail`       | 核心                                       |
+| `form`      | `form`      | `form`         | 核心                                       |
+| `dashboard` | `dashboard` | `dashboard`    | 核心                                       |
+| `tree`      | `tree`      | `list` ⚠️      | 优先核心（ListPageTemplate 含树形扩展）    |
+| `chart`     | `stats`     | `dashboard` ⚠️ | 优先核心（DashboardTemplate 含 ChartCard） |
+| `settings`  | `settings`  | `settings`     | 扩展（无核心替代）                         |
 
 ---
 
@@ -236,9 +239,9 @@ const routes = [
 ```typescript
 import { recommendTemplate } from '@/components/templates';
 
-recommendTemplate('tree');    // → 'list'      (核心，含树形扩展)
-recommendTemplate('chart');   // → 'dashboard' (核心，含 ChartCard)
-recommendTemplate('settings');// → 'settings'  (扩展，无核心替代)
+recommendTemplate('tree'); // → 'list'      (核心，含树形扩展)
+recommendTemplate('chart'); // → 'dashboard' (核心，含 ChartCard)
+recommendTemplate('settings'); // → 'settings'  (扩展，无核心替代)
 ```
 
 ---
@@ -246,15 +249,18 @@ recommendTemplate('settings');// → 'settings'  (扩展，无核心替代)
 ## 七、文件清单
 
 ### 新增文件
+
 - `templates/core/index.ts` — 5 个核心模板聚合导出
 - `templates/extensions/index.ts` — 10 个扩展模板聚合导出
 - `templates/STREAMLINING.md` — 本文档
 
 ### 修改文件
+
 - `templates/index.ts` — 重写为分层导出 + 向后兼容别名
 - `templates/classification.ts` — 新增 `CORE_TEMPLATES`、`EXTENSION_TEMPLATES`、`isCore` 字段，更新 `recommendTemplate`
 
 ### 未变动文件
+
 - 所有 `*.tsx` 模板实现文件**原地保留**，未移动、未重命名
 - `PageHeader.tsx`、`TemplateDemoPage.tsx` 等辅助文件未变动
 

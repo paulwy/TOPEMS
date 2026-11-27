@@ -95,7 +95,7 @@ const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ h
               borderRadius: 1,
             }}
           >
-            <Typography sx={{ color:'error.700', fontSize: 12 }}>
+            <Typography sx={{ color: 'error.700', fontSize: 12 }}>
               {t('ehs.ehshazarddetailpage.critical_level')}
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'error.700', mt: 0.5 }}>
@@ -137,10 +137,10 @@ const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ h
               borderRadius: 1,
             }}
           >
-            <Typography sx={{ color:'primary.700', fontSize: 12 }}>
+            <Typography sx={{ color: 'primary.700', fontSize: 12 }}>
               {t('ehs.ehshazarddetailpage.likelihood')}
             </Typography>
-            <Typography sx={{ fontWeight: 500, color:'primary.700', mt: 0.5 }}>
+            <Typography sx={{ fontWeight: 500, color: 'primary.700', mt: 0.5 }}>
               {hazard.likelihood === 'high'
                 ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.likelihood === 'medium'

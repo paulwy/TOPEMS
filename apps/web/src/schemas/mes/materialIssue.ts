@@ -92,7 +92,7 @@ export const materialIssueSchema: EntitySchema = {
           cancelled: {
             label: i18n.t('mes.material_issue.k15'),
             bg: 'error.50',
-            color:'error.700',
+            color: 'error.700',
           },
         };
         const s = statusMap[(row.status as string) || 'pending'] || {

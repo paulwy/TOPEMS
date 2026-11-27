@@ -47,62 +47,62 @@
 
 纯工具型 hooks，与业务完全解耦，可在任意项目/场景下复用。
 
-| Hook | 用途 |
-| ---- | ---- |
+| Hook                                                         | 用途                                |
+| ------------------------------------------------------------ | ----------------------------------- |
 | `useDebounce` / `useDebouncedValue` / `useDebouncedCallback` | 防抖（来自 `@topems/shared-hooks`） |
-| `useThrottle` / `useThrottledValue` / `useThrottledCallback` | 节流 |
-| `useIntersectionObserver` / `useInView` | 视口交叉观察 |
-| `useCountUp` | 数字滚动动画 |
-| `useResponsive` / `useIsMobile` | 响应式断点 |
-| `useTouchFeedback` / `useSwipeGesture` / `useDoubleTap` | 触摸反馈 |
-| `useVirtualScroll` | 虚拟滚动 |
-| `useUrlState` / `useUrlListState` | URL 状态同步 |
-| `useColumnConfig` / `useColumnWidth` | 列配置 / 列宽管理 |
+| `useThrottle` / `useThrottledValue` / `useThrottledCallback` | 节流                                |
+| `useIntersectionObserver` / `useInView`                      | 视口交叉观察                        |
+| `useCountUp`                                                 | 数字滚动动画                        |
+| `useResponsive` / `useIsMobile`                              | 响应式断点                          |
+| `useTouchFeedback` / `useSwipeGesture` / `useDoubleTap`      | 触摸反馈                            |
+| `useVirtualScroll`                                           | 虚拟滚动                            |
+| `useUrlState` / `useUrlListState`                            | URL 状态同步                        |
+| `useColumnConfig` / `useColumnWidth`                         | 列配置 / 列宽管理                   |
 
 ### 2. `ui/` — UI 交互层
 
 通用 UI 交互逻辑，与具体业务无关，但依赖 React 视图框架。
 
-| Hook | 用途 |
-| ---- | ---- |
-| `useConfirmDialog` | 确认弹窗 |
-| `useDialogForm` | 表单弹窗（create/edit/view） |
-| `useDataTable` / `useExportData` | 数据表格 |
-| `useWindowManager` | 多窗口管理 |
-| `useBackNavigation` | 返回导航 |
-| `useAutoBreadcrumbs` | 自动面包屑 |
-| `useBatchSelection` | 批量选择 |
-| `useImportExport` | 导入导出 |
-| `usePerformanceMonitor` | 性能监控 |
-| `useKeyboardShortcuts` / `useShortcutsHelp` / `matchShortcut` / ... | 快捷键 |
+| Hook                                                                | 用途                         |
+| ------------------------------------------------------------------- | ---------------------------- |
+| `useConfirmDialog`                                                  | 确认弹窗                     |
+| `useDialogForm`                                                     | 表单弹窗（create/edit/view） |
+| `useDataTable` / `useExportData`                                    | 数据表格                     |
+| `useWindowManager`                                                  | 多窗口管理                   |
+| `useBackNavigation`                                                 | 返回导航                     |
+| `useAutoBreadcrumbs`                                                | 自动面包屑                   |
+| `useBatchSelection`                                                 | 批量选择                     |
+| `useImportExport`                                                   | 导入导出                     |
+| `usePerformanceMonitor`                                             | 性能监控                     |
+| `useKeyboardShortcuts` / `useShortcutsHelp` / `matchShortcut` / ... | 快捷键                       |
 
 ### 3. `domain/` — 领域能力层
 
 通用业务抽象，封装"增删改查 / 列表页 / 模块数据"等横切模式。
 
-| Hook | 用途 |
-| ---- | ---- |
-| `useCrud`（来自 `@topems/shared-hooks`） | 标准 CRUD |
-| `useCrudMutations` | CRUD Mutation 封装 |
-| `useCrudQueries` / `useModuleQueries` / `useCrudOperations` | CRUD Query 封装 |
-| `useCrudForm` | CRUD 表单 |
-| `useListPageState` | 列表页状态 |
-| `useModuleData` | 模块数据加载 |
-| `useResourceCRUD` | 资源型 CRUD |
+| Hook                                                        | 用途               |
+| ----------------------------------------------------------- | ------------------ |
+| `useCrud`（来自 `@topems/shared-hooks`）                    | 标准 CRUD          |
+| `useCrudMutations`                                          | CRUD Mutation 封装 |
+| `useCrudQueries` / `useModuleQueries` / `useCrudOperations` | CRUD Query 封装    |
+| `useCrudForm`                                               | CRUD 表单          |
+| `useListPageState`                                          | 列表页状态         |
+| `useModuleData`                                             | 模块数据加载       |
+| `useResourceCRUD`                                           | 资源型 CRUD        |
 
 ### 4. `features/` — 业务特征层
 
 按业务领域组织的特征 hooks。**禁止被下层调用**。
 
-| 子模块 | 包含 Hooks |
-| ------ | ---------- |
-| `auth/` | `useAuth` / `usePermission` / `usePermissionCheck` / `useRole` / `useOrganization` |
-| `notification/` | `useNotification` / `useNotificationState` / `useNotificationWebSocket` / `useNotificationSettings` |
-| `ai/` | `useAIHelper` / `useAIContext` |
-| `websocket/` | `useWebSocket` / `useDashboardWebSocket` / `useImWebSocket` |
-| `offline/` | `useNetworkStatus` / `useOfflineQuery` / `useOfflineMutation` / `useOfflineSync` |
-| `finance/` | `useErp*` / `useFinance*` / `useCrmFinance*` / `useHrmFinance*` / `usePmFinance*` / `useExternalErp*` / `useVoucherTemplate*` / `useConsolidation*` |
-| `system/` | `useServiceStatus` / `useCode*` / `useUiState`（含 `useModal` / `useDrawer` / `useTabs` 等） |
+| 子模块          | 包含 Hooks                                                                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth/`         | `useAuth` / `usePermission` / `usePermissionCheck` / `useRole` / `useOrganization`                                                                  |
+| `notification/` | `useNotification` / `useNotificationState` / `useNotificationWebSocket` / `useNotificationSettings`                                                 |
+| `ai/`           | `useAIHelper` / `useAIContext`                                                                                                                      |
+| `websocket/`    | `useWebSocket` / `useDashboardWebSocket` / `useImWebSocket`                                                                                         |
+| `offline/`      | `useNetworkStatus` / `useOfflineQuery` / `useOfflineMutation` / `useOfflineSync`                                                                    |
+| `finance/`      | `useErp*` / `useFinance*` / `useCrmFinance*` / `useHrmFinance*` / `usePmFinance*` / `useExternalErp*` / `useVoucherTemplate*` / `useConsolidation*` |
+| `system/`       | `useServiceStatus` / `useCode*` / `useUiState`（含 `useModal` / `useDrawer` / `useTabs` 等）                                                        |
 
 ## 依赖规则
 
@@ -114,14 +114,15 @@ features  ──►  domain  ──►  ui  ──►  foundation
    └────────────┴──────────┴──────────┴──► @topems/shared-hooks / @topems/shared-types
 ```
 
-| 调用方 ↓ \ 被调用方 → | foundation | ui | domain | features |
-| --------------------- | ---------- | -- | ------ | -------- |
-| foundation            | ✓          | ✗  | ✗      | ✗        |
-| ui                    | ✓          | ✓  | ✗      | ✗        |
-| domain                | ✓          | ✓  | ✓      | ✗        |
-| features              | ✓          | ✓  | ✓      | ✓（仅同层互调） |
+| 调用方 ↓ \ 被调用方 → | foundation | ui  | domain | features        |
+| --------------------- | ---------- | --- | ------ | --------------- |
+| foundation            | ✓          | ✗   | ✗      | ✗               |
+| ui                    | ✓          | ✓   | ✗      | ✗               |
+| domain                | ✓          | ✓   | ✓      | ✗               |
+| features              | ✓          | ✓   | ✓      | ✓（仅同层互调） |
 
 违反方向的典型反例：
+
 - ❌ `foundation/useUrlState` 内部调用 `domain/useCrud`
 - ❌ `ui/useDataTable` 内部调用 `features/useAuth`
 - ❌ `domain/useCrudForm` 内部调用 `features/useNotification`

@@ -257,7 +257,7 @@ export default function ConsolidationScopePage() {
                       gap: 1,
                     }}
                   >
-                    <Users sx={{ width: 20, height: 20, color:'primary.700' }} />
+                    <Users sx={{ width: 20, height: 20, color: 'primary.700' }} />
                     {selectedScope.name}
                   </Typography>
                   <Button

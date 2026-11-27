@@ -29,13 +29,13 @@ TOPEMS 项目的无障碍目标是达到 **WCAG 2.2 AA 级别**合规，确保�
 
 ### 当前状态
 
-| 阶段 | 内容 | 状态 |
-|------|------|------|
+| 阶段    | 内容                               | 状态      |
+| ------- | ---------------------------------- | --------- |
 | Phase A | 基础语义化 HTML（landmark、roles） | ✅ 已完成 |
 | Phase B | 焦点管理、SkipToContent、ARIA 基础 | ✅ 已完成 |
-| Phase C | 键盘导航完整审计 | 🔲 待完成 |
-| Phase D | 颜色对比度完整审计与修复 | 🔲 待完成 |
-| Phase E | 屏幕阅读器全面测试 | 🔲 待完成 |
+| Phase C | 键盘导航完整审计                   | 🔲 待完成 |
+| Phase D | 颜色对比度完整审计与修复           | 🔲 待完成 |
+| Phase E | 屏幕阅读器全面测试                 | 🔲 待完成 |
 
 ### MUI 的优势
 
@@ -69,16 +69,16 @@ import Button from '@mui/material/Button';
 
 **优先使用 MUI 组件：**
 
-| 用途 | MUI 组件 | 对应 HTML |
-|------|----------|-----------|
-| 按钮 | `Button` / `IconButton` | `<button>` |
-| 链接 | `Link` / `ButtonBase` with href | `<a>` |
-| 输入框 | `TextField` | `<input>` |
-| 下拉选择 | `Select` / `Autocomplete` | `<select>` |
-| 导航 | `List` + `ListItemButton` | `<nav>` |
-| 对话框 | `Dialog` | `<dialog>` |
-| 选项卡 | `Tabs` + `TabPanel` | `[role="tablist"]` |
-| 表单分组 | `FormGroup` + `FormLabel` | `<fieldset>` + `<legend>` |
+| 用途     | MUI 组件                        | 对应 HTML                 |
+| -------- | ------------------------------- | ------------------------- |
+| 按钮     | `Button` / `IconButton`         | `<button>`                |
+| 链接     | `Link` / `ButtonBase` with href | `<a>`                     |
+| 输入框   | `TextField`                     | `<input>`                 |
+| 下拉选择 | `Select` / `Autocomplete`       | `<select>`                |
+| 导航     | `List` + `ListItemButton`       | `<nav>`                   |
+| 对话框   | `Dialog`                        | `<dialog>`                |
+| 选项卡   | `Tabs` + `TabPanel`             | `[role="tablist"]`        |
+| 表单分组 | `FormGroup` + `FormLabel`       | `<fieldset>` + `<legend>` |
 
 **必须手动添加 role 的场景：**
 
@@ -155,7 +155,7 @@ import { Trash2 } from 'lucide-react';
 ```tsx
 // 极不推荐，仅在没有 MUI 替代方案时使用
 <div
-  role="button"
+  role='button'
   tabIndex={0}
   onClick={handleClick}
   onKeyDown={(e) => {
@@ -171,14 +171,14 @@ import { Trash2 } from 'lucide-react';
 
 **键盘交互规范：**
 
-| 按键 | 行为 |
-|------|------|
-| `Tab` | 移动到下一个可聚焦元素 |
-| `Shift + Tab` | 移动到上一个可聚焦元素 |
-| `Enter` / `Space` | 激活按钮、链接 |
-| `Escape` | 关闭弹窗、下拉菜单、抽屉 |
-| `Arrow Keys` | 在单选组、标签页、菜单中导航 |
-| `Home` / `End` | 跳转到首项/末项（列表、下拉框） |
+| 按键              | 行为                            |
+| ----------------- | ------------------------------- |
+| `Tab`             | 移动到下一个可聚焦元素          |
+| `Shift + Tab`     | 移动到上一个可聚焦元素          |
+| `Enter` / `Space` | 激活按钮、链接                  |
+| `Escape`          | 关闭弹窗、下拉菜单、抽屉        |
+| `Arrow Keys`      | 在单选组、标签页、菜单中导航    |
+| `Home` / `End`    | 跳转到首项/末项（列表、下拉框） |
 
 **焦点陷阱（Focus Trap）：**
 
@@ -187,14 +187,22 @@ import { Trash2 } from 'lucide-react';
 ```tsx
 import Dialog from '@mui/material/Dialog';
 
-<Dialog open={isOpen} onClose={handleClose}>
+<Dialog
+  open={isOpen}
+  onClose={handleClose}
+>
   <DialogTitle>确认删除</DialogTitle>
   <DialogContent>确定要删除这条记录吗？</DialogContent>
   <DialogActions>
     <Button onClick={handleClose}>取消</Button>
-    <Button onClick={handleConfirm} variant="contained">确认</Button>
+    <Button
+      onClick={handleConfirm}
+      variant='contained'
+    >
+      确认
+    </Button>
   </DialogActions>
-</Dialog>
+</Dialog>;
 // Dialog 自动：焦点陷阱、Escape 关闭、焦点移至对话框
 ```
 
@@ -241,19 +249,19 @@ WCAG AA 要求文本与背景之间有足够的对比度，确保视力不佳的
 
 ### 对比度要求
 
-| 元素类型 | 最低对比度 |
-|----------|-----------|
-| 普通文本（< 18px） | **4.5 : 1** |
-| 大号文本（≥ 18px 粗体 或 ≥ 24px） | **3.0 : 1** |
+| 元素类型                            | 最低对比度  |
+| ----------------------------------- | ----------- |
+| 普通文本（< 18px）                  | **4.5 : 1** |
+| 大号文本（≥ 18px 粗体 或 ≥ 24px）   | **3.0 : 1** |
 | UI 组件与图形（图标、边框、焦点环） | **3.0 : 1** |
 
 ### 当前 Design Token 审计
 
-| Token 组合 | 对比度 | 状态 |
-|-----------|--------|------|
-| `text.primary` (#1e293b) on `background.paper` (#ffffff) | 12.63 : 1 | ✅ 通过 |
-| `text.secondary` (#64748b) on `background.paper` (#ffffff) | 4.62 : 1 | ✅ 通过 |
-| `text.muted` (#94a3b8) on `background.paper` (#ffffff) | **2.87 : 1** | ❌ 不通过 |
+| Token 组合                                                 | 对比度       | 状态      |
+| ---------------------------------------------------------- | ------------ | --------- |
+| `text.primary` (#1e293b) on `background.paper` (#ffffff)   | 12.63 : 1    | ✅ 通过   |
+| `text.secondary` (#64748b) on `background.paper` (#ffffff) | 4.62 : 1     | ✅ 通过   |
+| `text.muted` (#94a3b8) on `background.paper` (#ffffff)     | **2.87 : 1** | ❌ 不通过 |
 
 **关键发现：`text.muted` 不满足 WCAG AA 文本对比度要求。**
 
@@ -480,7 +488,7 @@ function EmailField() {
 
   return (
     <TextField
-      label="电子邮箱"
+      label='电子邮箱'
       value={email}
       onChange={(e) => {
         setEmail(e.target.value);
@@ -490,7 +498,7 @@ function EmailField() {
       helperText={error}
       // MUI TextField 自动通过 aria-describedby 关联 helperText
       required
-      aria-required="true"
+      aria-required='true'
     />
   );
 }
@@ -525,11 +533,20 @@ function EmailField() {
 import FormFieldGroup from '@/components/common/FormFieldGroup';
 
 // ✅ 使用已有的 FormFieldGroup 组件
-<FormFieldGroup legend="联系信息">
-  <TextField label="手机号码" fullWidth />
-  <TextField label="电子邮箱" fullWidth />
-  <TextField label="通讯地址" fullWidth />
-</FormFieldGroup>
+<FormFieldGroup legend='联系信息'>
+  <TextField
+    label='手机号码'
+    fullWidth
+  />
+  <TextField
+    label='电子邮箱'
+    fullWidth
+  />
+  <TextField
+    label='通讯地址'
+    fullWidth
+  />
+</FormFieldGroup>;
 // 内部使用 fieldset + legend 语义化结构
 ```
 
@@ -539,37 +556,42 @@ import FormFieldGroup from '@/components/common/FormFieldGroup';
 function ProjectForm() {
   return (
     <form onSubmit={handleSubmit}>
-      <Typography variant="h5" id="form-title">创建新项目</Typography>
+      <Typography
+        variant='h5'
+        id='form-title'
+      >
+        创建新项目
+      </Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
         {/* 基本信息 */}
-        <FormFieldGroup legend="基本信息">
+        <FormFieldGroup legend='基本信息'>
           <TextField
-            label="项目名称"
+            label='项目名称'
             required
             fullWidth
-            id="project-name"
+            id='project-name'
           />
           <TextField
-            label="项目描述"
+            label='项目描述'
             multiline
             rows={3}
             fullWidth
-            id="project-desc"
+            id='project-desc'
           />
         </FormFieldGroup>
 
         {/* 时间设置 */}
-        <FormFieldGroup legend="时间设置">
+        <FormFieldGroup legend='时间设置'>
           <TextField
-            label="开始日期"
-            type="date"
+            label='开始日期'
+            type='date'
             required
             fullWidth
             InputLabelProps={{ shrink: true }}
           />
           <TextField
-            label="结束日期"
-            type="date"
+            label='结束日期'
+            type='date'
             required
             fullWidth
             InputLabelProps={{ shrink: true }}
@@ -578,8 +600,17 @@ function ProjectForm() {
 
         {/* 提交 */}
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button type="submit" variant="contained">创建项目</Button>
-          <Button type="button" variant="outlined" onClick={handleCancel}>
+          <Button
+            type='submit'
+            variant='contained'
+          >
+            创建项目
+          </Button>
+          <Button
+            type='button'
+            variant='outlined'
+            onClick={handleCancel}
+          >
             取消
           </Button>
         </Box>
@@ -618,10 +649,17 @@ function ProjectForm() {
 // 1. 打开时：焦点移到对话框内第一个可聚焦元素
 // 2. 打开时：焦点陷阱生效，Tab 不会离开对话框
 // 3. 关闭时：焦点恢复到触发元素
-<Dialog open={isOpen} onClose={handleClose}>
+<Dialog
+  open={isOpen}
+  onClose={handleClose}
+>
   <DialogTitle>编辑记录</DialogTitle>
   <DialogContent>
-    <TextField label="名称" autoFocus /> {/* autoFocus 控制初始焦点 */}
+    <TextField
+      label='名称'
+      autoFocus
+    />{' '}
+    {/* autoFocus 控制初始焦点 */}
   </DialogContent>
 </Dialog>
 ```
@@ -645,7 +683,7 @@ function PageWithHeading() {
     <div>
       <Typography
         ref={headingRef}
-        variant="h4"
+        variant='h4'
         tabIndex={-1}
         // tabIndex={-1} 使元素可编程聚焦但不参与 Tab 导航
       >
@@ -661,8 +699,14 @@ function PageWithHeading() {
 
 ```tsx
 // ✅ 正确：使用 aria-live 而非焦点抢占
-<Snackbar open={showNotification} autoHideDuration={4000}>
-  <Alert severity="success" aria-live="polite">
+<Snackbar
+  open={showNotification}
+  autoHideDuration={4000}
+>
+  <Alert
+    severity='success'
+    aria-live='polite'
+  >
     操作已成功完成
   </Alert>
 </Snackbar>
@@ -706,8 +750,8 @@ const InteractiveCard = styled(Box)(({ theme }) => ({
 
 <InteractiveCard
   tabIndex={0}
-  role="button"
-  aria-label="打开项目详情"
+  role='button'
+  aria-label='打开项目详情'
   onClick={handleClick}
   onKeyDown={(e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -717,7 +761,7 @@ const InteractiveCard = styled(Box)(({ theme }) => ({
   }}
 >
   {/* 卡片内容 */}
-</InteractiveCard>
+</InteractiveCard>;
 ```
 
 ### 已完成项目
@@ -803,7 +847,11 @@ function BannerCarousel() {
 
   return (
     <Box>
-      <Box role="img" aria-label="项目公告轮播" aria-live="off">
+      <Box
+        role='img'
+        aria-label='项目公告轮播'
+        aria-live='off'
+      >
         {/* 轮播内容 */}
       </Box>
       <IconButton
@@ -823,9 +871,15 @@ function BannerCarousel() {
 
 ```tsx
 // ✅ 动态更新的列表使用 aria-live 区域
-<Box aria-live="polite" aria-relevant="additions">
+<Box
+  aria-live='polite'
+  aria-relevant='additions'
+>
   {notifications.map((n) => (
-    <NotificationItem key={n.id} notification={n} />
+    <NotificationItem
+      key={n.id}
+      notification={n}
+    />
   ))}
 </Box>
 // 当新通知添加时，屏幕阅读器会播报新内容
@@ -853,12 +907,12 @@ function BannerCarousel() {
 
 ### 测试工具
 
-| 工具 | 平台 | 说明 |
-|------|------|------|
+| 工具      | 平台        | 说明                         |
+| --------- | ----------- | ---------------------------- |
 | VoiceOver | macOS / iOS | 系统内置，按 `Cmd + F5` 开启 |
-| NVDA | Windows | 免费开源，需单独安装 |
-| JAWS | Windows | 商业软件 |
-| TalkBack | Android | 系统内置 |
+| NVDA      | Windows     | 免费开源，需单独安装         |
+| JAWS      | Windows     | 商业软件                     |
+| TalkBack  | Android     | 系统内置                     |
 
 ### 每页测试清单
 
@@ -951,14 +1005,14 @@ module.exports = {
 
 常见可检测的问题：
 
-| 规则 | 检测内容 |
-|------|----------|
-| `alt-text` | `<img>` 缺少 alt 属性 |
-| `anchor-is-valid` | `<a>` 缺少 href 或使用错误 |
-| `aria-props` | 无效的 ARIA 属性值 |
-| `click-events-have-key-events` | onClick 但无键盘事件 |
-| `no-static-element-interactions` | 非交互元素有交互处理器 |
-| `role-has-required-aria-props` | role 缺少必需的 ARIA 属性 |
+| 规则                             | 检测内容                   |
+| -------------------------------- | -------------------------- |
+| `alt-text`                       | `<img>` 缺少 alt 属性      |
+| `anchor-is-valid`                | `<a>` 缺少 href 或使用错误 |
+| `aria-props`                     | 无效的 ARIA 属性值         |
+| `click-events-have-key-events`   | onClick 但无键盘事件       |
+| `no-static-element-interactions` | 非交互元素有交互处理器     |
+| `role-has-required-aria-props`   | role 缺少必需的 ARIA 属性  |
 
 ### 浏览器扩展
 
@@ -1035,13 +1089,13 @@ test('Dashboard accessibility', async ({ page }) => {
 
 ### 工具使用优先级
 
-| 优先级 | 工具 | 使用场景 |
-|--------|------|----------|
-| 1（必须） | eslint-plugin-jsx-a11y | 日常开发，PR 检查 |
-| 2（必须） | axe DevTools | 手动审计，深度检查 |
-| 3（推荐） | @axe-core/react | 组件单元测试 |
-| 4（推荐） | Lighthouse | 定期全站审计 |
-| 5（可选） | axe-core + Playwright | E2E 无障碍测试 |
+| 优先级    | 工具                   | 使用场景           |
+| --------- | ---------------------- | ------------------ |
+| 1（必须） | eslint-plugin-jsx-a11y | 日常开发，PR 检查  |
+| 2（必须） | axe DevTools           | 手动审计，深度检查 |
+| 3（推荐） | @axe-core/react        | 组件单元测试       |
+| 4（推荐） | Lighthouse             | 定期全站审计       |
+| 5（可选） | axe-core + Playwright  | E2E 无障碍测试     |
 
 ---
 
@@ -1051,26 +1105,26 @@ test('Dashboard accessibility', async ({ page }) => {
 
 **最常犯的无障碍错误及修复：**
 
-| 错误 | 修复 |
-|------|------|
-| `<div onClick>` | 改用 `<Button>` 或添加 `role="button"` + `tabIndex={0}` + 键盘事件 |
-| `<IconButton>` 无 `aria-label` | 添加 `aria-label` 描述性文字 |
-| `<input placeholder="...">` 无 label | 添加 `<label>` 或使用 `TextField` |
-| 颜色是唯一的信息传达方式 | 添加文字/图标作为辅助 |
-| `text.muted` 用于关键信息 | 改用 `text.secondary` |
-| 自定义焦点样式移除 outline | 保持 `:focus-visible` 的 outline |
+| 错误                                 | 修复                                                               |
+| ------------------------------------ | ------------------------------------------------------------------ |
+| `<div onClick>`                      | 改用 `<Button>` 或添加 `role="button"` + `tabIndex={0}` + 键盘事件 |
+| `<IconButton>` 无 `aria-label`       | 添加 `aria-label` 描述性文字                                       |
+| `<input placeholder="...">` 无 label | 添加 `<label>` 或使用 `TextField`                                  |
+| 颜色是唯一的信息传达方式             | 添加文字/图标作为辅助                                              |
+| `text.muted` 用于关键信息            | 改用 `text.secondary`                                              |
+| 自定义焦点样式移除 outline           | 保持 `:focus-visible` 的 outline                                   |
 
 **WCAG AA 合规速查：**
 
-| 要求 | 标准 | 检查方式 |
-|------|------|----------|
-| 文本对比度 | ≥ 4.5:1 | axe DevTools / 手动计算 |
-| 大号文本对比度 | ≥ 3:1 | axe DevTools / 手动计算 |
-| 键盘可访问性 | 所有功能可键盘操作 | 手动 Tab 测试 |
-| 焦点可见 | 清晰的焦点指示器 | 视觉检查 |
-| 表单标签 | 每个 input 有 label | 代码审查 / axe |
-| 页面标题 | 每页有描述性标题 | 浏览器标签检查 |
-| 跳转链接 | 提供 SkipToContent | Tab 首次按键 |
+| 要求           | 标准                | 检查方式                |
+| -------------- | ------------------- | ----------------------- |
+| 文本对比度     | ≥ 4.5:1             | axe DevTools / 手动计算 |
+| 大号文本对比度 | ≥ 3:1               | axe DevTools / 手动计算 |
+| 键盘可访问性   | 所有功能可键盘操作  | 手动 Tab 测试           |
+| 焦点可见       | 清晰的焦点指示器    | 视觉检查                |
+| 表单标签       | 每个 input 有 label | 代码审查 / axe          |
+| 页面标题       | 每页有描述性标题    | 浏览器标签检查          |
+| 跳转链接       | 提供 SkipToContent  | Tab 首次按键            |
 
 ### 相关资源
 
@@ -1082,5 +1136,5 @@ test('Dashboard accessibility', async ({ page }) => {
 
 ---
 
-*最后更新：2026-06-28*
-*维护团队：TOPEMS Frontend Team*
+_最后更新：2026-06-28_
+_维护团队：TOPEMS Frontend Team_

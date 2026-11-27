@@ -136,7 +136,7 @@ export const materialRequirementSchema: EntitySchema = {
           urgent: {
             label: i18n.t('mes.material_requirement.k19'),
             bg: 'error.50',
-            color:'error.700',
+            color: 'error.700',
           },
           high: {
             label: i18n.t('mes.material_requirement.k20'),
@@ -146,7 +146,7 @@ export const materialRequirementSchema: EntitySchema = {
           normal: {
             label: i18n.t('mes.material_requirement.k21'),
             bg: 'primary.100',
-            color:'primary.700',
+            color: 'primary.700',
           },
           low: {
             label: i18n.t('mes.material_requirement.k22'),
@@ -189,7 +189,7 @@ export const materialRequirementSchema: EntitySchema = {
           confirmed: {
             label: i18n.t('mes.material_requirement.k30'),
             bg: 'primary.100',
-            color:'primary.700',
+            color: 'primary.700',
           },
           released: {
             label: i18n.t('mes.material_requirement.k31'),
@@ -204,7 +204,7 @@ export const materialRequirementSchema: EntitySchema = {
           cancelled: {
             label: i18n.t('mes.material_requirement.k33'),
             bg: 'error.50',
-            color:'error.700',
+            color: 'error.700',
           },
         };
         const s = statusMap[(row.status as string) || 'draft'] || {

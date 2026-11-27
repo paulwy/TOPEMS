@@ -43,9 +43,14 @@ describe('R13 V222 P4 i18n Hardcoded Guardian (3 zero + 4 bound)', () => {
     console.log('\n── R13 P4 Guardian Module Counts ──');
     for (const n of allNames) {
       const bound = BOUND_PAIRS.find(([m]) => m === n)?.[1];
-      const status = bound !== undefined
-        ? (counts[n] <= bound ? `≤${bound} ✅` : `EXCEEDS ${bound} ❌`)
-        : counts[n] === 0 ? 'ZERO ✅' : `!=0 (${counts[n]}) ❌`;
+      const status =
+        bound !== undefined
+          ? counts[n] <= bound
+            ? `≤${bound} ✅`
+            : `EXCEEDS ${bound} ❌`
+          : counts[n] === 0
+            ? 'ZERO ✅'
+            : `!=0 (${counts[n]}) ❌`;
       console.log(`  ${n.padEnd(22)}: ${String(counts[n]).padStart(5)}  ${status}`);
     }
   }, 60000); // 7 modules (possibly 1000+ files) → allow 60s

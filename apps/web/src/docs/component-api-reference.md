@@ -10,22 +10,22 @@
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `status` | `string` | - | **必填**。状态值，对应 `statusMap` 中的 key |
-| `statusMap` | `StatusMapConfig` | `DEFAULT_STATUS_MAP` | 状态映射配置，默认内置 40+ 预设 |
-| `label` | `string` | - | 自定义显示标签，覆盖 statusMap 中的 label |
-| `color` | `StatusColor` | - | 自定义颜色：`default` / `primary` / `secondary` / `success` / `warning` / `error` / `info` |
-| `icon` | `ReactNode` | - | 自定义图标，覆盖 statusMap 中的 icon |
-| `showIcon` | `boolean` | `false` | 是否在徽章中显示图标 |
-| `size` | `StatusSize` | `'sm'` | 尺寸：`sm`（24px） / `md`（32px） / `lg`（40px） |
-| `variant` | `StatusVariant` | `'filled'` | 变体：`filled` / `outlined` / `soft` |
-| `clickable` | `boolean` | `false` | 是否可点击（显示手型光标） |
-| `onClick` | `() => void` | - | 点击事件回调 |
-| `disabled` | `boolean` | `false` | 是否禁用（降低透明度） |
-| `sx` | `object` | - | 自定义 MUI sx 样式 |
-| `useChip` | `boolean` | `true` | 是否使用 Chip 组件渲染 |
-| `render` | `(config: StatusConfig) => ReactNode` | - | 自定义渲染函数 |
+| 属性        | 类型                                  | 默认值               | 说明                                                                                       |
+| ----------- | ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------ |
+| `status`    | `string`                              | -                    | **必填**。状态值，对应 `statusMap` 中的 key                                                |
+| `statusMap` | `StatusMapConfig`                     | `DEFAULT_STATUS_MAP` | 状态映射配置，默认内置 40+ 预设                                                            |
+| `label`     | `string`                              | -                    | 自定义显示标签，覆盖 statusMap 中的 label                                                  |
+| `color`     | `StatusColor`                         | -                    | 自定义颜色：`default` / `primary` / `secondary` / `success` / `warning` / `error` / `info` |
+| `icon`      | `ReactNode`                           | -                    | 自定义图标，覆盖 statusMap 中的 icon                                                       |
+| `showIcon`  | `boolean`                             | `false`              | 是否在徽章中显示图标                                                                       |
+| `size`      | `StatusSize`                          | `'sm'`               | 尺寸：`sm`（24px） / `md`（32px） / `lg`（40px）                                           |
+| `variant`   | `StatusVariant`                       | `'filled'`           | 变体：`filled` / `outlined` / `soft`                                                       |
+| `clickable` | `boolean`                             | `false`              | 是否可点击（显示手型光标）                                                                 |
+| `onClick`   | `() => void`                          | -                    | 点击事件回调                                                                               |
+| `disabled`  | `boolean`                             | `false`              | 是否禁用（降低透明度）                                                                     |
+| `sx`        | `object`                              | -                    | 自定义 MUI sx 样式                                                                         |
+| `useChip`   | `boolean`                             | `true`               | 是否使用 Chip 组件渲染                                                                     |
+| `render`    | `(config: StatusConfig) => ReactNode` | -                    | 自定义渲染函数                                                                             |
 
 ### 使用示例
 
@@ -79,52 +79,52 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `columns` | `ColumnDef<TData, TValue>[]` | - | **必填**。TanStack 列定义 |
-| `data` | `TData[]` | - | **必填**。表格数据数组 |
-| `searchKey` | `string` | - | 搜索字段名 |
-| `searchPlaceholder` | `string` | - | 搜索框占位文字 |
-| `showSearch` | `boolean` | - | 是否显示搜索框 |
-| `showFilters` | `boolean` | - | 是否显示筛选按钮 |
-| `showExport` | `boolean` | - | 是否显示导出按钮 |
-| `showSelection` | `boolean` | - | 是否显示行选择框 |
-| `showCreate` | `boolean` | - | 是否显示新建按钮 |
-| `createLabel` | `string` | - | 新建按钮标签 |
-| `onCreate` | `() => void` | - | 新建按钮回调 |
-| `exportFileName` | `string` | - | 导出文件名 |
-| `enablePagination` | `boolean` | - | 是否启用分页 |
-| `totalPages` | `number` | - | 总页数 |
-| `totalItems` | `number` | - | 总记录数 |
-| `pageSize` | `number` | - | 每页条数 |
-| `currentPage` | `number` | - | 当前页码（受控） |
-| `onPageChange` | `(page: number) => void` | - | 页码变化回调 |
-| `onPageSizeChange` | `(size: number) => void` | - | 每页条数变化回调 |
-| `onRowClick` | `(row: TData) => void` | - | 行点击回调 |
-| `onSelectionChange` | `(keys: Set<string> \| string[]) => void` | - | 选择变化回调 |
-| `showRefresh` | `boolean` | - | 是否显示刷新按钮 |
-| `onRefresh` | `() => void` | - | 刷新回调 |
-| `loading` | `boolean` | - | 是否加载中（显示骨架屏） |
-| `responsive` | `boolean` | - | 是否响应式布局 |
-| `emptyMessage` | `string` | - | 空数据提示 |
-| `getRowKey` | `(row: TData) => string` | - | 获取行 key 的函数 |
-| `extraActions` | `ReactNode` | - | 额外操作按钮 |
-| `sx` | `object` | - | 自定义样式 |
-| `persistColumnConfig` | `boolean` | - | 是否启用列配置持久化（localStorage） |
-| `columnConfigKey` | `string` | - | 列配置存储 key 前缀 |
-| `enableRowExpansion` | `boolean` | - | 是否启用行展开 |
-| `expandedRowRender` | `(row: TData) => ReactNode` | - | 行展开内容渲染 |
-| `enableVirtualization` | `boolean` | - | 是否启用虚拟滚动 |
-| `rowHeight` | `number` | - | 虚拟滚动行高（px） |
-| `enableStickyHeader` | `boolean` | - | 是否固定表头 |
-| `showRowNumber` | `boolean` | - | 是否显示行号 |
-| `enableAdvancedFilter` | `boolean` | - | 是否启用高级筛选 |
-| `advancedFilters` | `AdvancedFilter[]` | - | 高级筛选配置 |
-| `striped` | `boolean` | - | 是否显示行条纹 |
-| `compact` | `boolean` | - | 是否紧凑模式 |
-| `emptyState` | `ReactNode` | - | 空状态自定义内容 |
-| `selectionKey` | `keyof TData` | - | 选择 key |
-| `selectedIds` | `string[]` | - | 已选中的 id 列表（受控） |
+| 属性                   | 类型                                      | 默认值 | 说明                                 |
+| ---------------------- | ----------------------------------------- | ------ | ------------------------------------ |
+| `columns`              | `ColumnDef<TData, TValue>[]`              | -      | **必填**。TanStack 列定义            |
+| `data`                 | `TData[]`                                 | -      | **必填**。表格数据数组               |
+| `searchKey`            | `string`                                  | -      | 搜索字段名                           |
+| `searchPlaceholder`    | `string`                                  | -      | 搜索框占位文字                       |
+| `showSearch`           | `boolean`                                 | -      | 是否显示搜索框                       |
+| `showFilters`          | `boolean`                                 | -      | 是否显示筛选按钮                     |
+| `showExport`           | `boolean`                                 | -      | 是否显示导出按钮                     |
+| `showSelection`        | `boolean`                                 | -      | 是否显示行选择框                     |
+| `showCreate`           | `boolean`                                 | -      | 是否显示新建按钮                     |
+| `createLabel`          | `string`                                  | -      | 新建按钮标签                         |
+| `onCreate`             | `() => void`                              | -      | 新建按钮回调                         |
+| `exportFileName`       | `string`                                  | -      | 导出文件名                           |
+| `enablePagination`     | `boolean`                                 | -      | 是否启用分页                         |
+| `totalPages`           | `number`                                  | -      | 总页数                               |
+| `totalItems`           | `number`                                  | -      | 总记录数                             |
+| `pageSize`             | `number`                                  | -      | 每页条数                             |
+| `currentPage`          | `number`                                  | -      | 当前页码（受控）                     |
+| `onPageChange`         | `(page: number) => void`                  | -      | 页码变化回调                         |
+| `onPageSizeChange`     | `(size: number) => void`                  | -      | 每页条数变化回调                     |
+| `onRowClick`           | `(row: TData) => void`                    | -      | 行点击回调                           |
+| `onSelectionChange`    | `(keys: Set<string> \| string[]) => void` | -      | 选择变化回调                         |
+| `showRefresh`          | `boolean`                                 | -      | 是否显示刷新按钮                     |
+| `onRefresh`            | `() => void`                              | -      | 刷新回调                             |
+| `loading`              | `boolean`                                 | -      | 是否加载中（显示骨架屏）             |
+| `responsive`           | `boolean`                                 | -      | 是否响应式布局                       |
+| `emptyMessage`         | `string`                                  | -      | 空数据提示                           |
+| `getRowKey`            | `(row: TData) => string`                  | -      | 获取行 key 的函数                    |
+| `extraActions`         | `ReactNode`                               | -      | 额外操作按钮                         |
+| `sx`                   | `object`                                  | -      | 自定义样式                           |
+| `persistColumnConfig`  | `boolean`                                 | -      | 是否启用列配置持久化（localStorage） |
+| `columnConfigKey`      | `string`                                  | -      | 列配置存储 key 前缀                  |
+| `enableRowExpansion`   | `boolean`                                 | -      | 是否启用行展开                       |
+| `expandedRowRender`    | `(row: TData) => ReactNode`               | -      | 行展开内容渲染                       |
+| `enableVirtualization` | `boolean`                                 | -      | 是否启用虚拟滚动                     |
+| `rowHeight`            | `number`                                  | -      | 虚拟滚动行高（px）                   |
+| `enableStickyHeader`   | `boolean`                                 | -      | 是否固定表头                         |
+| `showRowNumber`        | `boolean`                                 | -      | 是否显示行号                         |
+| `enableAdvancedFilter` | `boolean`                                 | -      | 是否启用高级筛选                     |
+| `advancedFilters`      | `AdvancedFilter[]`                        | -      | 高级筛选配置                         |
+| `striped`              | `boolean`                                 | -      | 是否显示行条纹                       |
+| `compact`              | `boolean`                                 | -      | 是否紧凑模式                         |
+| `emptyState`           | `ReactNode`                               | -      | 空状态自定义内容                     |
+| `selectionKey`         | `keyof TData`                             | -      | 选择 key                             |
+| `selectedIds`          | `string[]`                                | -      | 已选中的 id 列表（受控）             |
 
 ### 使用示例
 
@@ -143,8 +143,8 @@ const columns: ColumnDef<User>[] = [
   columns={columns}
   data={users}
   showSearch
-  searchKey="name"
-  searchPlaceholder="搜索姓名..."
+  searchKey='name'
+  searchPlaceholder='搜索姓名...'
   showSelection
   onSelectionChange={(keys) => console.log(keys)}
   enablePagination
@@ -153,7 +153,7 @@ const columns: ColumnDef<User>[] = [
   onPageChange={(page) => fetchUsers(page)}
   onRowClick={(row) => navigate(HRM_PATHS.employeeDetail.replace(':id', row.id))}
   loading={isLoading}
-/>
+/>;
 ```
 
 ### 注意事项
@@ -171,16 +171,16 @@ const columns: ColumnDef<User>[] = [
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `icon` | `ReactNode` | - | 自定义图标 |
-| `emoji` | `string` | - | emoji 图标（与 icon 二选一） |
-| `title` | `string` | - | **必填**。标题文字 |
-| `description` | `string` | - | 描述文字 |
-| `action` | `{ label: string; onClick?: () => void; href?: string }` | - | 操作按钮配置 |
-| `align` | `'center' \| 'left'` | `'center'` | 对齐方式 |
-| `compact` | `boolean` | `false` | 紧凑模式（减小间距和图标尺寸） |
-| `children` | `ReactNode` | - | 自定义内容 |
+| 属性          | 类型                                                     | 默认值     | 说明                           |
+| ------------- | -------------------------------------------------------- | ---------- | ------------------------------ |
+| `icon`        | `ReactNode`                                              | -          | 自定义图标                     |
+| `emoji`       | `string`                                                 | -          | emoji 图标（与 icon 二选一）   |
+| `title`       | `string`                                                 | -          | **必填**。标题文字             |
+| `description` | `string`                                                 | -          | 描述文字                       |
+| `action`      | `{ label: string; onClick?: () => void; href?: string }` | -          | 操作按钮配置                   |
+| `align`       | `'center' \| 'left'`                                     | `'center'` | 对齐方式                       |
+| `compact`     | `boolean`                                                | `false`    | 紧凑模式（减小间距和图标尺寸） |
+| `children`    | `ReactNode`                                              | -          | 自定义内容                     |
 
 > `actionLabel` 和 `onAction` 已废弃，请使用 `action` 对象替代。
 
@@ -218,27 +218,27 @@ import { EmptyState, ListEmptyState, SearchEmptyState } from '@/components/commo
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `items` | `DescriptionItem[]` | - | **必填**。描述项数组 |
-| `columns` | `number \| { xs?; sm?; md?; lg? }` | `2` | 列数，支持响应式对象 |
-| `direction` | `'horizontal' \| 'vertical'` | `'horizontal'` | 布局方向 |
-| `labelWidth` | `number \| string` | `80` (横向) / `120` (纵向) | 标签宽度 |
-| `size` | `'small' \| 'medium' \| 'large'` | `'medium'` | 尺寸 |
-| `divider` | `boolean` | `false` | 是否显示分割线 |
-| `sx` | `object` | - | 自定义样式 |
-| `gap` | `number` | `3` | 网格间距（MUI spacing 单位） |
+| 属性         | 类型                               | 默认值                     | 说明                         |
+| ------------ | ---------------------------------- | -------------------------- | ---------------------------- |
+| `items`      | `DescriptionItem[]`                | -                          | **必填**。描述项数组         |
+| `columns`    | `number \| { xs?; sm?; md?; lg? }` | `2`                        | 列数，支持响应式对象         |
+| `direction`  | `'horizontal' \| 'vertical'`       | `'horizontal'`             | 布局方向                     |
+| `labelWidth` | `number \| string`                 | `80` (横向) / `120` (纵向) | 标签宽度                     |
+| `size`       | `'small' \| 'medium' \| 'large'`   | `'medium'`                 | 尺寸                         |
+| `divider`    | `boolean`                          | `false`                    | 是否显示分割线               |
+| `sx`         | `object`                           | -                          | 自定义样式                   |
+| `gap`        | `number`                           | `3`                        | 网格间距（MUI spacing 单位） |
 
 ### DescriptionItem
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `label` | `string` | 标签文字 |
-| `value` | `ReactNode` | 值内容 |
-| `span` | `number \| 'full'` | 跨列数（`'full'` 占满整行） |
-| `copyable` | `boolean` | 是否显示复制按钮 |
-| `tooltip` | `string` | 悬停提示 |
-| `loading` | `boolean` | 是否显示加载骨架屏 |
+| 属性       | 类型               | 说明                        |
+| ---------- | ------------------ | --------------------------- |
+| `label`    | `string`           | 标签文字                    |
+| `value`    | `ReactNode`        | 值内容                      |
+| `span`     | `number \| 'full'` | 跨列数（`'full'` 占满整行） |
+| `copyable` | `boolean`          | 是否显示复制按钮            |
+| `tooltip`  | `string`           | 悬停提示                    |
+| `loading`  | `boolean`          | 是否显示加载骨架屏          |
 
 ### 使用示例
 
@@ -250,12 +250,12 @@ import { DescriptionList } from '@/components/common/DescriptionList';
     { label: '订单编号', value: 'ORD-2024-001', copyable: true },
     { label: '客户名称', value: '某某科技有限公司' },
     { label: '金额', value: '¥12,500.00', span: 'full' },
-    { label: '状态', value: <StatusBadge status="processing" /> },
+    { label: '状态', value: <StatusBadge status='processing' /> },
     { label: '创建时间', value: '2024-01-15 10:30', loading: isLoading },
   ]}
   columns={2}
   divider
-/>
+/>;
 ```
 
 ### 注意事项
@@ -272,32 +272,32 @@ import { DescriptionList } from '@/components/common/DescriptionList';
 
 ### Avatar Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `src` | `string` | - | 头像图片 URL |
-| `name` | `string` | - | 姓名（用于生成首字母） |
-| `label` | `string` | - | 自定义显示文字（优先于 name 生成） |
-| `size` | `AvatarSize` | `'md'` | 尺寸：`xs`(24px) / `sm`(32px) / `md`(40px) / `lg`(56px) / `xl`(72px) |
-| `variant` | `'circular' \| 'rounded' \| 'square'` | `'circular'` | 形状变体 |
-| `color` | `string` | `'primary'` | 主题色（无 src 时用于背景） |
-| `bgColor` | `string` | - | 自定义背景色 |
-| `status` | `AvatarStatus` | - | 在线状态：`online` / `offline` / `busy` / `away` |
-| `statusColor` | `string` | - | 自定义状态指示色 |
-| `badge` | `number \| string` | - | 徽标数字 |
-| `badgeColor` | `'primary' \| 'secondary' \| 'error' \| 'warning' \| 'success' \| 'info'` | `'error'` | 徽标颜色 |
-| `onClick` | `() => void` | - | 点击回调（出现悬停动效） |
-| `sx` | `SxProps<Theme>` | - | 自定义 MUI sx 样式 |
-| `children` | `ReactNode` | - | 自定义内容 |
+| 属性          | 类型                                                                      | 默认值       | 说明                                                                 |
+| ------------- | ------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
+| `src`         | `string`                                                                  | -            | 头像图片 URL                                                         |
+| `name`        | `string`                                                                  | -            | 姓名（用于生成首字母）                                               |
+| `label`       | `string`                                                                  | -            | 自定义显示文字（优先于 name 生成）                                   |
+| `size`        | `AvatarSize`                                                              | `'md'`       | 尺寸：`xs`(24px) / `sm`(32px) / `md`(40px) / `lg`(56px) / `xl`(72px) |
+| `variant`     | `'circular' \| 'rounded' \| 'square'`                                     | `'circular'` | 形状变体                                                             |
+| `color`       | `string`                                                                  | `'primary'`  | 主题色（无 src 时用于背景）                                          |
+| `bgColor`     | `string`                                                                  | -            | 自定义背景色                                                         |
+| `status`      | `AvatarStatus`                                                            | -            | 在线状态：`online` / `offline` / `busy` / `away`                     |
+| `statusColor` | `string`                                                                  | -            | 自定义状态指示色                                                     |
+| `badge`       | `number \| string`                                                        | -            | 徽标数字                                                             |
+| `badgeColor`  | `'primary' \| 'secondary' \| 'error' \| 'warning' \| 'success' \| 'info'` | `'error'`    | 徽标颜色                                                             |
+| `onClick`     | `() => void`                                                              | -            | 点击回调（出现悬停动效）                                             |
+| `sx`          | `SxProps<Theme>`                                                          | -            | 自定义 MUI sx 样式                                                   |
+| `children`    | `ReactNode`                                                               | -            | 自定义内容                                                           |
 
 ### AvatarGroup Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `avatars` | `Array<Omit<CustomAvatarProps, 'size'>>` | - | **必填**。头像配置数组 |
-| `max` | `number` | `5` | 最大显示数量 |
-| `size` | `AvatarSize` | `'md'` | 统一尺寸 |
-| `spacing` | `number` | - | 头像重叠间距 |
-| `sx` | `SxProps<Theme>` | - | 自定义样式 |
+| 属性      | 类型                                     | 默认值 | 说明                   |
+| --------- | ---------------------------------------- | ------ | ---------------------- |
+| `avatars` | `Array<Omit<CustomAvatarProps, 'size'>>` | -      | **必填**。头像配置数组 |
+| `max`     | `number`                                 | `5`    | 最大显示数量           |
+| `size`    | `AvatarSize`                             | `'md'` | 统一尺寸               |
+| `spacing` | `number`                                 | -      | 头像重叠间距           |
+| `sx`      | `SxProps<Theme>`                         | -      | 自定义样式             |
 
 ### 使用示例
 
@@ -335,28 +335,28 @@ import { Avatar, AvatarGroup } from '@/components/common/Avatar';
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `items` | `TimelineItem[]` | - | **必填**。时间线条目数组 |
-| `orientation` | `'vertical' \| 'horizontal'` | `'vertical'` | 排列方向 |
-| `variant` | `'outlined' \| 'filled' \| 'soft'` | `'filled'` | 样式变体 |
-| `size` | `'small' \| 'medium' \| 'large'` | `'medium'` | 尺寸 |
-| `sx` | `object` | - | 自定义样式 |
-| `onItemClick` | `(item: TimelineItem) => void` | - | 条目点击回调 |
+| 属性          | 类型                               | 默认值       | 说明                     |
+| ------------- | ---------------------------------- | ------------ | ------------------------ |
+| `items`       | `TimelineItem[]`                   | -            | **必填**。时间线条目数组 |
+| `orientation` | `'vertical' \| 'horizontal'`       | `'vertical'` | 排列方向                 |
+| `variant`     | `'outlined' \| 'filled' \| 'soft'` | `'filled'`   | 样式变体                 |
+| `size`        | `'small' \| 'medium' \| 'large'`   | `'medium'`   | 尺寸                     |
+| `sx`          | `object`                           | -            | 自定义样式               |
+| `onItemClick` | `(item: TimelineItem) => void`     | -            | 条目点击回调             |
 
 ### TimelineItem
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `id` | `string` | 唯一标识 |
-| `title` | `string` | 标题 |
-| `description` | `string` | 描述文字 |
-| `time` | `string` | 时间文字 |
-| `status` | `'completed' \| 'pending' \| 'active' \| 'error' \| 'warning' \| 'info'` | 状态 |
-| `icon` | `ReactNode` | 自定义图标 |
-| `color` | `string` | 自定义颜色 |
-| `content` | `ReactNode` | 自定义内容（渲染在描述和时间下方） |
-| `loading` | `boolean` | 是否显示加载态 |
+| 属性          | 类型                                                                     | 说明                               |
+| ------------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| `id`          | `string`                                                                 | 唯一标识                           |
+| `title`       | `string`                                                                 | 标题                               |
+| `description` | `string`                                                                 | 描述文字                           |
+| `time`        | `string`                                                                 | 时间文字                           |
+| `status`      | `'completed' \| 'pending' \| 'active' \| 'error' \| 'warning' \| 'info'` | 状态                               |
+| `icon`        | `ReactNode`                                                              | 自定义图标                         |
+| `color`       | `string`                                                                 | 自定义颜色                         |
+| `content`     | `ReactNode`                                                              | 自定义内容（渲染在描述和时间下方） |
+| `loading`     | `boolean`                                                                | 是否显示加载态                     |
 
 ### 使用示例
 
@@ -371,10 +371,10 @@ import { Timeline } from '@/components/common/Timeline';
     { id: '4', title: '物流运输', status: 'pending' },
     { id: '5', title: '签收确认', status: 'pending' },
   ]}
-  orientation="vertical"
-  size="medium"
-  variant="filled"
-/>
+  orientation='vertical'
+  size='medium'
+  variant='filled'
+/>;
 ```
 
 ### 注意事项
@@ -392,13 +392,13 @@ import { Timeline } from '@/components/common/Timeline';
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `children` | `ReactNode` | - | 面板内容 |
-| `index` | `number` | - | **必填**。面板索引 |
-| `value` | `number` | - | **必填**。当前激活的 Tab 索引 |
-| `loading` | `boolean` | - | 是否加载中（显示骨架屏） |
-| `emptyMessage` | `string` | - | 空数据提示文字 |
+| 属性           | 类型        | 默认值 | 说明                          |
+| -------------- | ----------- | ------ | ----------------------------- |
+| `children`     | `ReactNode` | -      | 面板内容                      |
+| `index`        | `number`    | -      | **必填**。面板索引            |
+| `value`        | `number`    | -      | **必填**。当前激活的 Tab 索引 |
+| `loading`      | `boolean`   | -      | 是否加载中（显示骨架屏）      |
+| `emptyMessage` | `string`    | -      | 空数据提示文字                |
 
 ### 使用示例
 
@@ -411,14 +411,25 @@ function MyTabs() {
 
   return (
     <>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-        <Tab label="基本信息" />
-        <Tab label="操作记录" />
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+      >
+        <Tab label='基本信息' />
+        <Tab label='操作记录' />
       </Tabs>
-      <TabPanel value={tab} index={0} loading={loading}>
+      <TabPanel
+        value={tab}
+        index={0}
+        loading={loading}
+      >
         基本信息内容
       </TabPanel>
-      <TabPanel value={tab} index={1} emptyMessage="暂无操作记录">
+      <TabPanel
+        value={tab}
+        index={1}
+        emptyMessage='暂无操作记录'
+      >
         操作记录内容
       </TabPanel>
     </>
@@ -440,18 +451,18 @@ function MyTabs() {
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `title` | `string` | - | **必填**。分组标题 |
-| `description` | `string` | - | 描述文字（sm 以上断点显示） |
-| `tooltip` | `string` | - | 标题旁提示信息 |
-| `children` | `ReactNode` | - | **必填**。表单子元素 |
-| `collapsible` | `boolean` | `false` | 是否可折叠 |
-| `defaultExpanded` | `boolean` | `true` | 默认展开状态 |
-| `columns` | `number` | - | 网格列数（设置后使用 Grid 布局） |
-| `gap` | `number` | `2` | 子元素间距（MUI spacing 单位） |
-| `required` | `boolean` | - | 是否显示红色必填星号 |
-| `sx` | `object` | - | 自定义样式 |
+| 属性              | 类型        | 默认值  | 说明                             |
+| ----------------- | ----------- | ------- | -------------------------------- |
+| `title`           | `string`    | -       | **必填**。分组标题               |
+| `description`     | `string`    | -       | 描述文字（sm 以上断点显示）      |
+| `tooltip`         | `string`    | -       | 标题旁提示信息                   |
+| `children`        | `ReactNode` | -       | **必填**。表单子元素             |
+| `collapsible`     | `boolean`   | `false` | 是否可折叠                       |
+| `defaultExpanded` | `boolean`   | `true`  | 默认展开状态                     |
+| `columns`         | `number`    | -       | 网格列数（设置后使用 Grid 布局） |
+| `gap`             | `number`    | `2`     | 子元素间距（MUI spacing 单位）   |
+| `required`        | `boolean`   | -       | 是否显示红色必填星号             |
+| `sx`              | `object`    | -       | 自定义样式                       |
 
 ### 使用示例
 
@@ -459,18 +470,32 @@ function MyTabs() {
 import { FormFieldGroup } from '@/components/common/FormFieldGroup';
 
 <FormFieldGroup
-  title="基本信息"
-  description="填写员工的基本个人信息"
-  tooltip="所有带 * 的字段为必填项"
+  title='基本信息'
+  description='填写员工的基本个人信息'
+  tooltip='所有带 * 的字段为必填项'
   required
   columns={2}
   collapsible
 >
-  <TextField label="姓名" fullWidth required />
-  <TextField label="工号" fullWidth required />
-  <TextField label="部门" fullWidth />
-  <TextField label="职位" fullWidth />
-</FormFieldGroup>
+  <TextField
+    label='姓名'
+    fullWidth
+    required
+  />
+  <TextField
+    label='工号'
+    fullWidth
+    required
+  />
+  <TextField
+    label='部门'
+    fullWidth
+  />
+  <TextField
+    label='职位'
+    fullWidth
+  />
+</FormFieldGroup>;
 ```
 
 ### 注意事项
@@ -488,43 +513,43 @@ import { FormFieldGroup } from '@/components/common/FormFieldGroup';
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `isOpen` | `boolean` | - | **必填**。是否打开 |
-| `onClose` | `() => void` | - | **必填**。关闭回调 |
-| `onConfirm` | `() => Promise<void> \| void` | - | 确认回调（支持异步） |
-| `title` | `string` | - | **必填**。标题 |
-| `message` | `ReactNode` | - | 消息内容 |
-| `type` | `DialogType` | `'confirm'` | 类型：`alert` / `confirm` / `prompt` / `info` / `success` / `warning` / `error` |
-| `confirmLabel` | `string` | `'确认'` | 确认按钮文字 |
-| `cancelLabel` | `string` | `'取消'` | 取消按钮文字 |
-| `confirmColor` | `DialogButtonType` | `'primary'` | 确认按钮颜色：`primary` / `secondary` / `success` / `warning` / `error` |
-| `danger` | `boolean` | `false` | 是否为危险操作（确认按钮变为红色） |
-| `size` | `DialogSize` | `'md'` | 尺寸：`xs`(280px) / `sm`(360px) / `md`(480px) / `lg`(640px) / `xl`(800px) |
-| `confirmDisabled` | `boolean` | `false` | 确认按钮是否禁用 |
-| `closable` | `boolean` | `true` | 是否可通过关闭按钮或 ESC 关闭 |
-| `showCloseButton` | `boolean` | `false` | 是否显示右上角关闭按钮 |
-| `draggable` | `boolean` | `false` | 是否支持拖拽移动 |
-| `icon` | `ReactNode` | - | 自定义图标（覆盖类型默认图标） |
-| `buttons` | `DialogButton[]` | - | 自定义按钮列表（设置后覆盖默认按钮） |
-| `children` | `ReactNode` | - | 自定义内容 |
-| `showTitle` | `boolean` | `true` | 是否显示标题 |
-| `showMessage` | `boolean` | `true` | 是否显示消息 |
-| `centered` | `boolean` | `true` | 是否居中显示 |
-| `closeOnBackdropClick` | `boolean` | `true` | 点击遮罩是否关闭 |
-| `showSuccessIcon` | `boolean` | `false` | 是否显示居中大成功图标 |
-| `sx` | `object` | - | 自定义样式 |
+| 属性                   | 类型                          | 默认值      | 说明                                                                            |
+| ---------------------- | ----------------------------- | ----------- | ------------------------------------------------------------------------------- |
+| `isOpen`               | `boolean`                     | -           | **必填**。是否打开                                                              |
+| `onClose`              | `() => void`                  | -           | **必填**。关闭回调                                                              |
+| `onConfirm`            | `() => Promise<void> \| void` | -           | 确认回调（支持异步）                                                            |
+| `title`                | `string`                      | -           | **必填**。标题                                                                  |
+| `message`              | `ReactNode`                   | -           | 消息内容                                                                        |
+| `type`                 | `DialogType`                  | `'confirm'` | 类型：`alert` / `confirm` / `prompt` / `info` / `success` / `warning` / `error` |
+| `confirmLabel`         | `string`                      | `'确认'`    | 确认按钮文字                                                                    |
+| `cancelLabel`          | `string`                      | `'取消'`    | 取消按钮文字                                                                    |
+| `confirmColor`         | `DialogButtonType`            | `'primary'` | 确认按钮颜色：`primary` / `secondary` / `success` / `warning` / `error`         |
+| `danger`               | `boolean`                     | `false`     | 是否为危险操作（确认按钮变为红色）                                              |
+| `size`                 | `DialogSize`                  | `'md'`      | 尺寸：`xs`(280px) / `sm`(360px) / `md`(480px) / `lg`(640px) / `xl`(800px)       |
+| `confirmDisabled`      | `boolean`                     | `false`     | 确认按钮是否禁用                                                                |
+| `closable`             | `boolean`                     | `true`      | 是否可通过关闭按钮或 ESC 关闭                                                   |
+| `showCloseButton`      | `boolean`                     | `false`     | 是否显示右上角关闭按钮                                                          |
+| `draggable`            | `boolean`                     | `false`     | 是否支持拖拽移动                                                                |
+| `icon`                 | `ReactNode`                   | -           | 自定义图标（覆盖类型默认图标）                                                  |
+| `buttons`              | `DialogButton[]`              | -           | 自定义按钮列表（设置后覆盖默认按钮）                                            |
+| `children`             | `ReactNode`                   | -           | 自定义内容                                                                      |
+| `showTitle`            | `boolean`                     | `true`      | 是否显示标题                                                                    |
+| `showMessage`          | `boolean`                     | `true`      | 是否显示消息                                                                    |
+| `centered`             | `boolean`                     | `true`      | 是否居中显示                                                                    |
+| `closeOnBackdropClick` | `boolean`                     | `true`      | 点击遮罩是否关闭                                                                |
+| `showSuccessIcon`      | `boolean`                     | `false`     | 是否显示居中大成功图标                                                          |
+| `sx`                   | `object`                      | -           | 自定义样式                                                                      |
 
 ### DialogButton
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `label` | `string` | 按钮文字 |
-| `onClick` | `() => void` | 点击回调 |
-| `type` | `DialogButtonType` | 颜色类型 |
-| `primary` | `boolean` | 是否为主要按钮（contained 样式） |
-| `loading` | `boolean` | 是否显示加载态 |
-| `disabled` | `boolean` | 是否禁用 |
+| 属性       | 类型               | 说明                             |
+| ---------- | ------------------ | -------------------------------- |
+| `label`    | `string`           | 按钮文字                         |
+| `onClick`  | `() => void`       | 点击回调                         |
+| `type`     | `DialogButtonType` | 颜色类型                         |
+| `primary`  | `boolean`          | 是否为主要按钮（contained 样式） |
+| `loading`  | `boolean`          | 是否显示加载态                   |
+| `disabled` | `boolean`          | 是否禁用                         |
 
 ### 使用示例
 
@@ -588,31 +613,31 @@ import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 ### Props
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `filters` | `FilterConfig[]` | - | **必填**。筛选配置数组 |
-| `onFilterChange` | `(filters: Record<string, any>) => void` | - | 筛选变化回调（返回所有筛选值） |
-| `onReset` | `() => void` | - | 重置回调 |
-| `onSearch` | `() => void` | - | 搜索按钮回调 |
-| `collapsible` | `boolean` | `true` | 是否可折叠 |
-| `defaultExpanded` | `boolean` | `true` | 默认展开 |
-| `dense` | `boolean` | `false` | 紧凑模式（减小内边距） |
-| `variant` | `'standard' \| 'outlined' \| 'filled'` | `'outlined'` | 输入框变体 |
+| 属性              | 类型                                     | 默认值       | 说明                           |
+| ----------------- | ---------------------------------------- | ------------ | ------------------------------ |
+| `filters`         | `FilterConfig[]`                         | -            | **必填**。筛选配置数组         |
+| `onFilterChange`  | `(filters: Record<string, any>) => void` | -            | 筛选变化回调（返回所有筛选值） |
+| `onReset`         | `() => void`                             | -            | 重置回调                       |
+| `onSearch`        | `() => void`                             | -            | 搜索按钮回调                   |
+| `collapsible`     | `boolean`                                | `true`       | 是否可折叠                     |
+| `defaultExpanded` | `boolean`                                | `true`       | 默认展开                       |
+| `dense`           | `boolean`                                | `false`      | 紧凑模式（减小内边距）         |
+| `variant`         | `'standard' \| 'outlined' \| 'filled'`   | `'outlined'` | 输入框变体                     |
 
 ### FilterConfig
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `id` | `string` | 筛选项唯一标识 |
-| `label` | `string` | 标签文字 |
-| `type` | `'select' \| 'multiselect' \| 'date' \| 'dateRange' \| 'text' \| 'number' \| 'search'` | 控件类型，默认 `text` |
-| `placeholder` | `string` | 占位文字 |
-| `options` | `{ value: string \| number; label: string }[]` | 选项列表（select/multiselect） |
-| `value` | `any` | 受控值 |
-| `defaultValue` | `any` | 默认值（用于重置） |
-| `onChange` | `(value: any, filter: FilterConfig) => void` | 单个筛选项变化回调 |
-| `width` | `number \| string` | 控件宽度 |
-| `searchable` | `boolean` | 是否可搜索（multiselect） |
+| 属性           | 类型                                                                                   | 说明                           |
+| -------------- | -------------------------------------------------------------------------------------- | ------------------------------ |
+| `id`           | `string`                                                                               | 筛选项唯一标识                 |
+| `label`        | `string`                                                                               | 标签文字                       |
+| `type`         | `'select' \| 'multiselect' \| 'date' \| 'dateRange' \| 'text' \| 'number' \| 'search'` | 控件类型，默认 `text`          |
+| `placeholder`  | `string`                                                                               | 占位文字                       |
+| `options`      | `{ value: string \| number; label: string }[]`                                         | 选项列表（select/multiselect） |
+| `value`        | `any`                                                                                  | 受控值                         |
+| `defaultValue` | `any`                                                                                  | 默认值（用于重置）             |
+| `onChange`     | `(value: any, filter: FilterConfig) => void`                                           | 单个筛选项变化回调             |
+| `width`        | `number \| string`                                                                     | 控件宽度                       |
+| `searchable`   | `boolean`                                                                              | 是否可搜索（multiselect）      |
 
 ### 使用示例
 
@@ -622,10 +647,15 @@ import { FilterBar } from '@/components/common/FilterBar';
 <FilterBar
   filters={[
     { id: 'keyword', label: '关键词', type: 'text', placeholder: '输入关键词...' },
-    { id: 'status', label: '状态', type: 'select', options: [
-      { value: 'active', label: '启用' },
-      { value: 'inactive', label: '禁用' },
-    ]},
+    {
+      id: 'status',
+      label: '状态',
+      type: 'select',
+      options: [
+        { value: 'active', label: '启用' },
+        { value: 'inactive', label: '禁用' },
+      ],
+    },
     { id: 'department', label: '部门', type: 'multiselect', options: deptOptions },
     { id: 'dateRange', label: '日期范围', type: 'dateRange' },
   ]}
@@ -633,7 +663,7 @@ import { FilterBar } from '@/components/common/FilterBar';
   onReset={() => fetchData({})}
   onSearch={() => triggerSearch()}
   collapsible
-/>
+/>;
 ```
 
 ### 注意事项
