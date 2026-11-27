@@ -75,12 +75,7 @@ pub fn history_minutes(minutes: i64) -> Vec<SysSample> {
         .unwrap_or_default()
 }
 
-fn collect(
-    sys: &mut System,
-    networks: &mut Networks,
-    disks: &Disks,
-    first: bool,
-) -> SysSample {
+fn collect(sys: &mut System, networks: &mut Networks, disks: &Disks, first: bool) -> SysSample {
     sys.refresh_memory();
     sys.refresh_cpu_usage();
     // 网卡必须复用同一个 Networks 实例：每次重建会把累计字节清零，
@@ -97,7 +92,10 @@ fn collect(
     };
 
     let disk_total: u64 = disks.iter().map(|d| d.total_space()).sum();
-    let disk_used: u64 = disks.iter().map(|d| d.total_space() - d.available_space()).sum();
+    let disk_used: u64 = disks
+        .iter()
+        .map(|d| d.total_space() - d.available_space())
+        .sum();
     let disk = if disk_total > 0 {
         (disk_used as f64 / disk_total as f64 * 100.0) as f32
     } else {

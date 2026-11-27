@@ -1342,6 +1342,7 @@ pub async fn delete_certificate(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:read"])),
     get,
     path = "/training/statistics",
     tag = "ehs",

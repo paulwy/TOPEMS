@@ -187,6 +187,7 @@ pub struct UpdateInspectionRecordRequest {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     post,
     path = "/checks/plans/{plan_id}/items",
     tag = "ehs",
@@ -301,6 +302,7 @@ pub async fn create_plan_item(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     delete,
     path = "/checks/plans/{plan_id}/items/{item_id}",
     tag = "ehs",
@@ -392,6 +394,7 @@ pub struct CreateSafetyCheckRequest {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     post,
     path = "/checks",
     tag = "ehs",

@@ -1228,6 +1228,7 @@ pub fn storage_compatibility(classes: &[&str]) -> bool {
 // 详情类 GET 返回 200 + 内层 404，PUT/DELETE 返回成功（幂等）。
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     put,
     path = "/hazardous-materials/movements/{id}",
     tag = "ehs",
@@ -1245,6 +1246,7 @@ pub async fn update_stock_record(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     delete,
     path = "/hazardous-materials/movements/{id}",
     tag = "ehs",
@@ -1261,6 +1263,7 @@ pub async fn delete_stock_record(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:read"])),
     get,
     path = "/hazardous-materials/msds/{id}",
     tag = "ehs",
@@ -1283,6 +1286,7 @@ pub async fn get_msds_by_id(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     put,
     path = "/hazardous-materials/msds/{id}",
     tag = "ehs",
@@ -1301,6 +1305,7 @@ pub async fn update_msds_by_id(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     delete,
     path = "/hazardous-materials/msds/{id}",
     tag = "ehs",
@@ -1317,6 +1322,7 @@ pub async fn delete_msds_by_id(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     put,
     path = "/hazardous-materials/categories/{id}",
     tag = "ehs",
@@ -1334,6 +1340,7 @@ pub async fn update_material_category(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     delete,
     path = "/hazardous-materials/categories/{id}",
     tag = "ehs",

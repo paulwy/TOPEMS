@@ -1434,6 +1434,7 @@ pub async fn create_review(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:read"])),
     get,
     path = "/incidents/{id}/actions",
     tag = "ehs",
@@ -1499,6 +1500,7 @@ pub async fn list_incident_actions(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     post,
     path = "/incidents/{id}/actions",
     tag = "ehs",
@@ -1563,6 +1565,7 @@ pub async fn create_incident_action(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ehs:admin"])),
     put,
     path = "/incidents/{id}/actions/{action_id}",
     tag = "ehs",
