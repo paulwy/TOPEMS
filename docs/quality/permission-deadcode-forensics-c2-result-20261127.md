@@ -410,6 +410,23 @@
 - **间接引用补充**：业务服务内联鉴权多走各服务 `shared/permission.rs` 的枚举/常量码（如 pm `PmPermission::*` 转字符串），静态字面量扫描收不全；该部分由 #98（§11）静态间接引用补盲部分收口。
 - **口径结论**：本轮未改矩阵主分类 **6 / 548 / 27**；2 个待复核 read 码保留原绑定，待端点级内联补埋立项后再复核。
 
+### 13.14 待复核 read 码跨产物专项复核（#112，静态只读；不改判）
+
+- **范围**：待复核 548 中 5 个 `read` 动作码（GET 路径最易触达，优先复核）：`erp:general_ledger:read`、`integration:read`、`master-data:read`、`notification:template:read`、`report:read`。
+- **后端模块门口径复核**：`has_module_permission(module)` 认 `<module>:` 前缀任一码（`all`/`*`/超管短路），不直引 `<module>:read` 裸码；写门 `require_module_write` 拼 `<module>:admin`。故两段伞码 `integration:read`、`master-data:read` 不会被模块门按字面量校验。
+- **前端资源前缀口径复核**：`permissionResource`（`crudPermissions.ts`）仅展开 `:create / :update / :delete` 三写码，**不展开 `:read`**；CrudPage `detail` 读操作不受写权限门控，页面进入不设 read 码门控。
+- **逐码画像**：
+
+| 候选 read 码 | 后端字面量 | 前端引用 | inline-trace | 判定 |
+|---|:---:|---|:---:|---|
+| `erp:general_ledger:read` | 无 | 目录挂名 | 2 条 c2_admin allowed | 无端点字段、admin 全量令牌低鉴别力，不计观测，维持待复核（#111） |
+| `report:read` | 无 | 目录挂名 | 2 条 c2_admin allowed | 同上，维持待复核（#111） |
+| `integration:read` | 无（模块门走前缀） | 目录挂名 | 0 | #98 B 类 plan/tier 装配拼接码，维持待复核 |
+| `master-data:read` | 无（真实注解码为 `erp:master-data:read`，三段非候选） | 目录挂名 | 0 | #98 B 类拼接装配，维持待复核 |
+| `notification:template:read` | 无 | 目录挂名（前缀不拼 read） | 0 | 前端无 read 门控，目录挂名，维持待复核 |
+
+- **结论**：5 个 read 码后端均无裸码门控引用、前端无 read 消费点；2 条 trace 触达为 admin 全量令牌放行、鉴别力不足，不改判。矩阵主分类不变 **6 / 548 / 27**；产物 `read-codes-crosscheck.json`（gitignore），矩阵 3 码补 `read_code_note`，备份 `c2-matrix.v33-pre112.bak.json`。
+
 
 
 
