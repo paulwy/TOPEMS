@@ -14,7 +14,11 @@ export const evaluationSchema: EntitySchema = {
 
   // 供应商是必填下拉但没有数据源，弹窗里只会显示"请选择"
   dynamicOptions: [
-    { field: 'supplier_id', queryKey: ['srm', 'suppliers', 'forEvaluation'], loader: loadSrmSupplierOptions },
+    {
+      field: 'supplier_id',
+      queryKey: ['srm', 'suppliers', 'forEvaluation'],
+      loader: loadSrmSupplierOptions,
+    },
   ],
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）

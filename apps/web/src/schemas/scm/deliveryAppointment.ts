@@ -13,9 +13,17 @@ export const deliveryAppointmentSchema: EntitySchema = {
   },
 
   dynamicOptions: [
-    { field: 'supplier_id', queryKey: ['scm', 'suppliers', 'forDeliveryAppointment'], loader: loadScmSupplierOptions },
+    {
+      field: 'supplier_id',
+      queryKey: ['scm', 'suppliers', 'forDeliveryAppointment'],
+      loader: loadScmSupplierOptions,
+    },
     // 采购订单是 UUID 外键，手填必 422 → 下拉选择
-    { field: 'purchase_order_id', queryKey: ['scm', 'purchaseOrders', 'forDeliveryAppointment'], loader: loadScmPurchaseOrderOptions },
+    {
+      field: 'purchase_order_id',
+      queryKey: ['scm', 'purchaseOrders', 'forDeliveryAppointment'],
+      loader: loadScmPurchaseOrderOptions,
+    },
   ],
 
   // 批 16：写权限资源前缀（DB 实查存在三动作码）

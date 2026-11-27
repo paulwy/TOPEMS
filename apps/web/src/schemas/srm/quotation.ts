@@ -99,9 +99,17 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
   },
 
   dynamicOptions: [
-    { field: 'supplier_id', queryKey: ['srm', 'suppliers', 'forQuotation'], loader: loadSrmSupplierOptions },
+    {
+      field: 'supplier_id',
+      queryKey: ['srm', 'suppliers', 'forQuotation'],
+      loader: loadSrmSupplierOptions,
+    },
     // 报价必须挂在一张询价上（后端 create 校验询价存在），此前表单里没有这个字段
-    { field: 'inquiry_id', queryKey: ['srm', 'inquiries', 'forQuotation'], loader: loadSrmInquiryOptions },
+    {
+      field: 'inquiry_id',
+      queryKey: ['srm', 'inquiries', 'forQuotation'],
+      loader: loadSrmInquiryOptions,
+    },
   ],
 
   // 批 23：写权限资源前缀（DB 实查 create/update/delete 三码齐全）

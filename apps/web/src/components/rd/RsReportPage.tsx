@@ -38,7 +38,8 @@ const emptyReportData: RsReportData = {
   experiments: { total: 0, lab: 0, pilot: 0, scaleup: 0 },
   formulas: { total: 0, published: 0, testing: 0, draft: 0 },
   monthlyProgress: [],
-};const RsReportPage: React.FC = () => {
+};
+const RsReportPage: React.FC = () => {
   const reportQuery = useQuery<RsReportData>({
     queryKey: QUERY_KEYS.AD_HOC.RD_REPORT_SUMMARY_BASE,
     queryFn: async () => {
@@ -48,14 +49,7 @@ const emptyReportData: RsReportData = {
       //   /reports/projects/trends   按周立项趋势
       //   /experiments/phase/{lab|pilot|scaleup}  三阶段试验数
       //   /formulas                  配方台账
-      const [
-        summaryRes,
-        trendsRes,
-        labRes,
-        pilotRes,
-        scaleupRes,
-        formulasRes,
-      ] = await Promise.all([
+      const [summaryRes, trendsRes, labRes, pilotRes, scaleupRes, formulasRes] = await Promise.all([
         apiClient.rd.get<Record<string, unknown>>('/reports/projects/summary'),
         apiClient.rd.get<Array<Record<string, unknown>>>('/reports/projects/trends'),
         apiClient.rd.get<{ total: number }>('/experiments/phase/lab', {

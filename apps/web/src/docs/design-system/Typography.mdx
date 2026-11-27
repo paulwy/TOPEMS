@@ -38,6 +38,7 @@ import React from 'react';
 const HeadingSpecimen = ({ variant, tokenKey }) => {
 const token = designTokens.typography[tokenKey];
 return (
+
 <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
 <Box sx={{ flex: '1 1 300px' }}>
 <Typography variant={variant} sx={{ mb: 0 }}>
@@ -87,6 +88,7 @@ return (
 const BodySpecimen = ({ variant, tokenKey, label, sampleText }) => {
 const token = designTokens.typography[tokenKey];
 return (
+
 <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'flex-start', gap: 3, flexWrap: 'wrap' }}>
 <Box sx={{ flex: '1 1 300px' }}>
 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600 }}>{label}</Typography>

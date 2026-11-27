@@ -14,7 +14,11 @@ export const evaluationSchema: EntitySchema = {
   },
 
   dynamicOptions: [
-    { field: 'supplier_id', queryKey: ['scm', 'suppliers', 'forEvaluation'], loader: loadScmSupplierOptions },
+    {
+      field: 'supplier_id',
+      queryKey: ['scm', 'suppliers', 'forEvaluation'],
+      loader: loadScmSupplierOptions,
+    },
   ],
 
   // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
