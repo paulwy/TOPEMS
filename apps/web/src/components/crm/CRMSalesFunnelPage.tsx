@@ -20,6 +20,14 @@ import i18n from '@/i18n';
 
 type FunnelViewMode = 'count' | 'weighted';
 
+// 大额金额用「万」缩写：卡片宽度固定，百万级以上直接写元会在中间折行成 ¥3,390,0 / 00
+const formatMoney = (value: number): string => {
+  const v = Number(value);
+  if (!Number.isFinite(v)) return '¥0';
+  if (Math.abs(v) >= 1_000_000) return `¥${(v / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 })}万`;
+  return `¥${Math.round(v).toLocaleString()}`;
+};
+
 interface MappedStage {
   stage: string;
   count: number;
@@ -107,14 +115,14 @@ const CRMSalesFunnelPage: React.FC = () => {
     {
       id: 'value',
       title: t('crm.salesFunnel.stat_total_value'),
-      value: `¥${Math.round(Number(metrics.totalValue)).toLocaleString()}`,
+      value: formatMoney(metrics.totalValue),
       icon: <DollarSign size={20} />,
       color: 'success',
     },
     {
       id: 'avg',
       title: t('crm.salesFunnel.stat_avg_value'),
-      value: `¥${Math.round(Number(metrics.avgValue)).toLocaleString()}`,
+      value: formatMoney(metrics.avgValue),
       icon: <Target size={20} />,
       color: 'info',
     },
@@ -130,29 +138,21 @@ const CRMSalesFunnelPage: React.FC = () => {
   const charts: ChartConfig[] = [
     {
       id: 'stage-distribution',
-      title: t('crm.salesFunnel.chart_stage_distribution'),
+      title:
+        viewMode === 'count'
+          ? t('crm.salesFunnel.chart_stage_distribution')
+          : t('crm.salesFunnel.chart_stage_weighted'),
       type: 'bar' as const,
       dataKey: 'value',
       nameKey: 'name',
-      data: stages.flatMap((stage) => {
-        const label = stageLabelMap[stage.stage] || stage.stage;
-        if (viewMode === 'count') {
-          return [
-            {
-              name: `${label}${t('crm.salesFunnel.chart_suffix_count')}`,
-              value: stage.count,
-              color: 'primary.main',
-            },
-          ];
-        }
-        return [
-          {
-            name: `${label}${t('crm.salesFunnel.chart_suffix_value')}`,
-            value: Math.round(Number(stage.weightedValue) / 10000),
-            color: 'success.700',
-          },
-        ];
-      }),
+      // 图表标题已说明口径，类目名不再重复拼「-商机数」，否则窄卡片里 x 轴标签互相压字
+      data: stages.map((stage) => ({
+        name: stageLabelMap[stage.stage] || stage.stage,
+        value:
+          viewMode === 'count'
+            ? stage.count
+            : Math.round(Number(stage.weightedValue) / 10000),
+      })),
     },
   ];
 
