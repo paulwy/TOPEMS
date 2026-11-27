@@ -5807,7 +5807,7 @@
   "bi.bi_permission_page.created_at_col": "Created At",
   "bi.bi_permission_page.datasource_resource": "Text C11322",
   "bi.data_analysis_page.data_detail_tab": "Text 56a37c",
-  "bi.data_analysis_page.order_no_col": "Text 1e8dc2",
+  "bi.data_analysis_page.order_no_col": "Order No.",
   "bi.data_analysis_page.page_title": "Sales Analysis",
   "bi.dataset_page.page_title": "Text Db302a",
   "bi.dataset_page.datasource_tab": "Text C11322",
@@ -5864,5 +5864,9 @@
   "dashboard.dash_lims_desc": "Laboratory Information Management System",
   "dashboard.dash_lims_name": "LIMS Laboratory Management",
   "dashboard.dash_pdm_desc": "Product Data Management System",
-  "dashboard.dash_pdm_name": "PDM Product Data Management"
+  "dashboard.dash_pdm_name": "PDM Product Data Management",
+  "dashboard.dash_rd_desc": "Research & Development Project and Document Management",
+  "dashboard.dash_rd_name": "R&D Management",
+  "dashboard.dash_srm_desc": "Supplier Relationship Management System",
+  "dashboard.dash_srm_name": "SRM Supplier Management"
 }

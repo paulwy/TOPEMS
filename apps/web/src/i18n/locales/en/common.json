@@ -1212,5 +1212,7 @@
   "common.priority_low": "Low",
   "common.priority_unknown": "Unknown",
   "common.basic_info": "Basic Information",
-  "common.home": "Home"
+  "common.home": "Home",
+  "common.submit_failed": "Submission failed",
+  "common.unit_wan": "10K"
 }
