@@ -82,14 +82,17 @@ const FSM_STATUS_COLORS: Record<QmsFsmType, Record<string, string>> = {
 
 // 状态中文标签映射（跨 FSM 通用，状态值相同时取同一标签）
 const STATUS_LABELS: Record<string, string> = {
-  pending: i18n.t('components.status_badge.k0'),
-  in_progress: i18n.t('components.status_badge.k1'),
-  pending_audit: i18n.t('components.status_badge.k2'),
-  completed: i18n.t('components.status_badge.k3'),
-  rejected: i18n.t('components.status_badge.k4'),
-  open: i18n.t('components.status_badge.k5'),
+  // 批注：这一组此前整体错位——pending 显示「草稿」、in_progress 显示「待审批」、
+  // pending_audit 显示「已审批」、completed 显示「进行中」、rejected 显示「已完成」。
+  // 现按语义重新对齐（检验单 completed 在详情页显示成「进行中」即由此而来）。
+  pending: i18n.t('components.status_badge.k6'),
+  in_progress: i18n.t('components.status_badge.k3'),
+  pending_audit: i18n.t('components.status_badge.k1'),
+  completed: i18n.t('components.status_badge.k4'),
+  rejected: i18n.t('qms.inspection_redesign.status_rejected'),
+  open: i18n.t('components.status_badge.k6'),
   resolved: i18n.t('components.status_badge.k6'),
-  closed: i18n.t('components.status_badge.k7'),
+  closed: i18n.t('components.status_badge.k4'),
   cancelled: i18n.t('components.status_badge.k8'),
   draft: i18n.t('components.status_badge.k9'),
   scheduled: i18n.t('components.status_badge.k10'),

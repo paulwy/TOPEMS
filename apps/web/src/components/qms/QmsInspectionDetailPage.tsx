@@ -115,9 +115,21 @@ export default function QmsInspectionDetailPage() {
     );
   }
 
+  // 检验类型后端存 incoming/process/final，此前详情页直接把枚举原文渲染出来
+  //（列表页早已用 qms.inspection_redesign.type_* 做本地化）。这里复用同一组文案。
+  const inspectionTypeLabel = (type?: string): string => {
+    if (!type) return '-';
+    const key = `qms.inspection_redesign.type_${type}`;
+    const translated = i18n.t(key);
+    return translated === key ? type : translated;
+  };
+
   const infoFields = [
     { label: i18n.t('qms.qms_inspection_detail_page.k5'), value: inspection.inspection_no },
-    { label: i18n.t('qms.qms_inspection_detail_page.k6'), value: inspection.inspection_type },
+    {
+      label: i18n.t('qms.qms_inspection_detail_page.k6'),
+      value: inspectionTypeLabel(inspection.inspection_type),
+    },
     { label: i18n.t('qms.qms_inspection_detail_page.k7'), value: inspection.product_name ?? '-' },
     { label: i18n.t('qms.qms_inspection_detail_page.k8'), value: inspection.inspector ?? '-' },
     { label: i18n.t('qms.qms_inspection_detail_page.k9'), value: inspection.assignee ?? '-' },
