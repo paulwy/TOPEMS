@@ -415,5 +415,6 @@
   "notification.notification_center.dnd_enable": "启用免打扰",
   "notification.notification_center.dnd_enable_desc": "在指定时间段内不发送通知",
   "notification.notification_center.dnd_start": "开始时间",
-  "notification.notification_center.dnd_end": "结束时间"
+  "notification.notification_center.dnd_end": "结束时间",
+  "notification.notification_dashboard_page.total_count": "通知总数"
 }

@@ -301,5 +301,8 @@
   "integration.nav.integration-wms-scm": "WMS-SCM 集成",
   "integration.nav.integration-wms-scm_desc": "WMS-SCM 集成",
   "integration.nav.integration-settings": "集成设置",
-  "integration.nav.integration-settings_desc": "集成设置"
+  "integration.nav.integration-settings_desc": "集成设置",
+  "integration.integration_dashboard_page.last_sync": "最近同步时间",
+  "integration.integration_dashboard_page.event_count": "集成事件数",
+  "integration.integration_dashboard_page.failed_by_system": "各系统失败数"
 }

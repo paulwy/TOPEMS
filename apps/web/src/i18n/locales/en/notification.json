@@ -768,5 +768,6 @@
   "notification.notification_center.dnd_enable": "Enable Do Not Disturb",
   "notification.notification_center.dnd_enable_desc": "Suppress notifications during the set period",
   "notification.notification_center.dnd_start": "Start time",
-  "notification.notification_center.dnd_end": "End time"
+  "notification.notification_center.dnd_end": "End time",
+  "notification.notification_dashboard_page.total_count": "Total notifications"
 }

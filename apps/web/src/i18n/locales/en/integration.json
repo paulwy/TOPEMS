@@ -75,7 +75,7 @@
   "integration.integration_dashboard_page.k10": "vs last month",
   "integration.integration_dashboard_page.k11": "Sync Trend",
   "integration.integration_dashboard_page.k12": "Connection Status",
-  "integration.integration_dashboard_page.k13": "Sync Volume by System",
+  "integration.integration_dashboard_page.k13": "Syncs by system",
   "integration.integration_dashboard_page.k14": "New Connection",
   "integration.integration_dashboard_page.k15": "View Logs",
   "integration.integration_dashboard_page.k16": "Data Mapping",
@@ -557,5 +557,8 @@
   "integration.nav.integration-lims-qms_desc": "LIMS-QMS",
   "integration.nav.integration-mes-erp_desc": "MES-ERP",
   "integration.nav.integration-wms-scm_desc": "WMS-SCM",
-  "integration.nav.integration-settings_desc": "Settings"
+  "integration.nav.integration-settings_desc": "Settings",
+  "integration.integration_dashboard_page.last_sync": "Last sync",
+  "integration.integration_dashboard_page.event_count": "Integration events",
+  "integration.integration_dashboard_page.failed_by_system": "Failures by system"
 }

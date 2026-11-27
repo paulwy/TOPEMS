@@ -1,26 +1,32 @@
+/**
+ * 通知看板
+ *
+ * 全部数字来自真实接口，原先的 23/42/256/87.5%、七日折线（sent/read 写死数组）、
+ * 类型与渠道分布常量、5 条示例通知已删除：
+ *  - GET /notification/notifications/stats/me → total / total_unread / by_type
+ *  - GET /notification/notification/channels  → 渠道数
+ *  - GET /notification/notification-templates → 模板数
+ *  - GET /notification/notifications          → 最近通知
+ * 后端只给 by_type，没有按天序列，所以趋势图如实显示「暂无数据」。
+ */
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Bell,
   Inbox,
-  Calendar,
   CheckCheck,
   Layers,
   FileText,
   TrendingUp,
-  BarChart3,
   PieChart,
   Eye,
   AlertCircle,
   CheckCircle,
-  Info,
-  MessageSquare,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { Box, Typography, useTheme } from '@mui/material';
+
 import { useNavigate } from 'react-router-dom';
 import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
-import { PageContainer } from '@/components/common';
 import {
   DashboardTemplate,
   type StatCard,
@@ -30,147 +36,152 @@ import {
 } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import {
+  getMyNotificationStats,
+  getNotifications,
+  getTemplates,
+  notificationApi,
+} from '@/api/notification';
+
+interface MyStats {
+  total: number;
+  total_unread: number;
+  by_type: Array<{ notification_type?: string; count?: number }>;
+}
 
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const dashboardQuery = useQuery<boolean>({
-    queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_DASHBOARD_BASE,
-    queryFn: async () => true,
+
+  const statsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.NOTIFICATION_DASHBOARD_BASE, 'stats'],
+    queryFn: async () => {
+      const res = await getMyNotificationStats();
+      return (res?.data ?? null) as unknown as MyStats | null;
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const channelsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.NOTIFICATION_DASHBOARD_BASE, 'channels'],
+    queryFn: async () => {
+      const res = await notificationApi.listChannels({ page: 1, page_size: 1 });
+      return Number((res?.data as { total?: number } | undefined)?.total ?? 0);
+    },
     staleTime: 5 * 60 * 1000,
   });
-  const loading = dashboardQuery.isFetching;
+
+  const templatesQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.NOTIFICATION_DASHBOARD_BASE, 'templates'],
+    queryFn: async () => {
+      const res = await getTemplates(1, 1);
+      const d = res?.data as unknown;
+      if (Array.isArray(d)) return d.length;
+      return Number((d as { total?: number } | undefined)?.total ?? 0);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const recentQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.NOTIFICATION_DASHBOARD_BASE, 'recent'],
+    queryFn: async () => {
+      const res = await getNotifications(1, 5);
+      return (res?.data?.notifications ?? []) as Array<{
+        id: string;
+        title: string;
+        content?: string;
+        notification_type?: string;
+        is_read?: boolean;
+        created_at?: string;
+        priority?: number;
+      }>;
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const loading =
+    statsQuery.isFetching ||
+    channelsQuery.isFetching ||
+    templatesQuery.isFetching ||
+    recentQuery.isFetching;
+
+  const statsData = statsQuery.data;
+  const total = Number(statsData?.total ?? 0);
+  const unread = Number(statsData?.total_unread ?? 0);
+  const readRate = total > 0 ? ((total - unread) / total) * 100 : 0;
+
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'unread',
         title: i18n.t('notification.notification_dashboard_page.k0'),
-        value: '23',
+        value: unread,
         icon: <Bell size={20} />,
-        change: 5,
-        changeLabel: i18n.t('notification.notification_dashboard_page.k1'),
         color: 'error',
       },
       {
-        id: 'today',
-        title: i18n.t('notification.notification_dashboard_page.k2'),
-        value: '42',
+        id: 'total',
+        title: i18n.t('notification.notification_dashboard_page.total_count'),
+        value: total,
         icon: <Inbox size={20} />,
-        change: 8,
-        changeLabel: i18n.t('notification.notification_dashboard_page.k3'),
         color: 'primary',
-      },
-      {
-        id: 'week',
-        title: i18n.t('notification.notification_dashboard_page.k4'),
-        value: '256',
-        icon: <Calendar size={20} />,
-        change: 12,
-        changeLabel: i18n.t('notification.notification_dashboard_page.k5'),
-        color: 'info',
       },
       {
         id: 'read-rate',
         title: i18n.t('notification.notification_dashboard_page.k6'),
-        value: '87.5',
+        value: readRate.toFixed(1),
         unit: '%',
         icon: <CheckCheck size={20} />,
-        change: 3.2,
-        changeLabel: i18n.t('notification.notification_dashboard_page.k7'),
+        progress: Math.round(readRate),
         color: 'success',
       },
       {
         id: 'channels',
         title: i18n.t('notification.notification_dashboard_page.k8'),
-        value: '4',
+        value: channelsQuery.data ?? 0,
         icon: <Layers size={20} />,
-        change: 0,
-        changeLabel: i18n.t('notification.notification_dashboard_page.k9'),
         color: 'warning',
       },
       {
         id: 'templates',
         title: i18n.t('notification.notification_dashboard_page.k10'),
-        value: '18',
+        value: templatesQuery.data ?? 0,
         icon: <FileText size={20} />,
-        change: 2,
-        changeLabel: i18n.t('notification.notification_dashboard_page.k11'),
         color: 'secondary',
       },
     ],
-    []
+    [unread, total, readRate, channelsQuery.data, templatesQuery.data]
   );
+
+  const typeDistribution = useMemo(
+    () =>
+      (statsData?.by_type ?? [])
+        .filter((t) => Number(t.count ?? 0) > 0)
+        .map((t) => ({ name: t.notification_type ?? '-', value: Number(t.count ?? 0) })),
+    [statsData]
+  );
+
   const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'trend',
         title: i18n.t('notification.notification_dashboard_page.k12'),
         subtitle: i18n.t('notification.notification_dashboard_page.7_13'),
-        icon: <TrendingUp size={18} />,
         type: 'line',
-        chart: (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <NotificationTrendChart />
-          </Box>
-        ),
-        height: 300,
-        span: 2,
+        // stats/me 只返回累计与 by_type，没有按天序列；空数据如实渲染「暂无数据」
+        data: [],
       },
       {
         id: 'type-distribution',
         title: i18n.t('notification.notification_dashboard_page.k14'),
         subtitle: i18n.t('notification.notification_dashboard_page.k15'),
-        icon: <PieChart size={18} />,
         type: 'pie',
-        chart: (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <TypeDistributionChart />
-          </Box>
-        ),
-        height: 300,
-        span: 1,
-      },
-      {
-        id: 'channel-distribution',
-        title: i18n.t('notification.notification_dashboard_page.k16'),
-        subtitle: i18n.t('notification.notification_dashboard_page.k17'),
-        icon: <BarChart3 size={18} />,
-        type: 'bar',
-        chart: (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <ChannelDistributionChart />
-          </Box>
-        ),
-        height: 300,
-        span: 1,
+        data: typeDistribution.map((t) => ({ label: t.name, value: t.value })),
       },
     ],
-    []
+    [typeDistribution]
   );
+
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
@@ -205,339 +216,48 @@ export const NotificationDashboardPage: React.FC = () => {
     ],
     [navigate, addNotification]
   );
+
   const recentItems: RecentItem[] = useMemo(
-    () => [
-      {
-        id: '1',
-        title: i18n.t('notification.notification_dashboard_page.k24'),
-        description: i18n.t('pages.notification_dashboard_page.k0'),
-        time: i18n.t('pages.notification_dashboard_page.10_1'),
-        icon: <AlertCircle size={18} />,
-        status: 'warning',
-        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '1')),
-      },
-      {
-        id: '2',
-        title: i18n.t('notification.notification_dashboard_page.k25'),
-        description: i18n.t('pages.notification_dashboard_page.k2'),
-        time: i18n.t('pages.notification_dashboard_page.30_3'),
-        icon: <CheckCircle size={18} />,
-        status: 'success',
-        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '2')),
-      },
-      {
-        id: '3',
-        title: i18n.t('notification.notification_dashboard_page.k26'),
-        description: i18n.t('notification.notification_dashboard_page.k27'),
-        time: i18n.t('pages.notification_dashboard_page.1_4'),
-        icon: <MessageSquare size={18} />,
-        status: 'info',
-        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '3')),
-      },
-      {
-        id: '4',
-        title: i18n.t('notification.notification_dashboard_page.k28'),
-        description: i18n.t('notification.notification_dashboard_page.k29'),
-        time: i18n.t('pages.notification_dashboard_page.2_5'),
-        icon: <Info size={18} />,
-        status: 'default',
-        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '4')),
-      },
-      {
-        id: '5',
-        title: i18n.t('notification.notification_dashboard_page.k30'),
-        description: i18n.t('pages.notification_dashboard_page.20246_6'),
-        time: i18n.t('notification.notification_dashboard_page.k31'),
-        icon: <FileText size={18} />,
-        status: 'success',
-        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '5')),
-      },
-    ],
-    [navigate]
+    () =>
+      (recentQuery.data ?? []).map((n) => ({
+        id: n.id,
+        title: n.title,
+        description: n.content ?? '',
+        time: n.created_at
+          ? new Date(n.created_at).toLocaleString('zh-CN', { hour12: false })
+          : '',
+        icon: n.is_read ? <CheckCircle size={18} /> : <AlertCircle size={18} />,
+        status: (n.is_read ? 'success' : 'warning') as 'success' | 'warning',
+        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', n.id)),
+      })),
+    [recentQuery.data, navigate]
   );
+
   const handleRefresh = () => {
-    dashboardQuery.refetch();
+    void statsQuery.refetch();
+    void channelsQuery.refetch();
+    void templatesQuery.refetch();
+    void recentQuery.refetch();
     addNotification({
       message: i18n.t('notification.notification_dashboard_page.k32'),
       type: 'success',
       duration: 2000,
     });
   };
+
   return (
-    <PageContainer
-      headerProps={{
-        pageIcon: <Bell size={20} />,
-      }}
-    >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
-        loading={loading}
-        stats={stats}
-        charts={charts}
-        quickActions={quickActions}
-        recentItems={recentItems}
-        recentTitle={i18n.t('notification.notification_dashboard_page.k33')}
-        onRefresh={handleRefresh}
-      />
-    </PageContainer>
+    <DashboardTemplate
+      title=''
+      autoTitle
+      loading={loading}
+      stats={stats}
+      charts={charts}
+      quickActions={quickActions}
+      recentItems={recentItems}
+      recentTitle={i18n.t('notification.notification_dashboard_page.k33')}
+      onRefresh={handleRefresh}
+    />
   );
 };
-const NotificationTrendChart: React.FC = () => {
-  const theme = useTheme();
-  const days = [
-    i18n.t('notification.notification_dashboard_page.k40'),
-    i18n.t('notification.notification_dashboard_page.k39'),
-    i18n.t('notification.notification_dashboard_page.k38'),
-    i18n.t('notification.notification_dashboard_page.k37'),
-    i18n.t('notification.notification_dashboard_page.k36'),
-    i18n.t('notification.notification_dashboard_page.k35'),
-    i18n.t('notification.notification_dashboard_page.k34'),
-  ];
-  const sentData = [45, 52, 38, 65, 48, 28, 32];
-  const readData = [38, 45, 32, 58, 42, 22, 28];
-  const max = Math.max(...sentData, ...readData);
-  const sentPoints = sentData
-    .map((value, index) => {
-      const x = (index / (days.length - 1)) * 100;
-      const y = 100 - (value / max) * 90 - 5;
-      return `${x},${y}`;
-    })
-    .join(' ');
-  const readPoints = readData
-    .map((value, index) => {
-      const x = (index / (days.length - 1)) * 100;
-      const y = 100 - (value / max) * 90 - 5;
-      return `${x},${y}`;
-    })
-    .join(' ');
-  return (
-    <Box sx={{ width: '100%', height: '100%', p: 2 }}>
-      <Box sx={{ display: 'flex', gap: 2, mb: 1, justifyContent: 'flex-end' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main' }} />
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            {i18n.t('pages.notification_dashboard_page.k0')}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            {i18n.t('pages.notification_dashboard_page.k1')}
-          </Typography>
-        </Box>
-      </Box>
-      <svg
-        width='100%'
-        height='80%'
-        preserveAspectRatio='none'
-      >
-        {[0, 25, 50, 75, 100].map((value) => (
-          <line
-            key={value}
-            x1='0'
-            y1={`${100 - value}%`}
-            x2='100%'
-            y2={`${100 - value}%`}
-            stroke={theme.palette.grey[300]}
-            strokeWidth='0.5'
-            strokeDasharray='4,4'
-          />
-        ))}
-        <polyline
-          points={sentPoints}
-          fill='none'
-          stroke='primary.main'
-          strokeWidth='2'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-        <polyline
-          points={readPoints}
-          fill='none'
-          stroke='success.main'
-          strokeWidth='2'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-      </svg>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-        {days.map((day) => (
-          <Typography
-            key={day}
-            variant='caption'
-            color='text.secondary'
-          >
-            {day}
-          </Typography>
-        ))}
-      </Box>
-    </Box>
-  );
-};
-const TypeDistributionChart: React.FC = () => {
-  const data = [
-    {
-      label: i18n.t('notification.notification_dashboard_page.k41'),
-      value: 35,
-      color: 'primary.main',
-    },
-    {
-      label: i18n.t('notification.notification_dashboard_page.k42'),
-      value: 28,
-      color: 'success.700',
-    },
-    {
-      label: i18n.t('notification.notification_dashboard_page.k43'),
-      value: 22,
-      color: 'warning.700',
-    },
-    {
-      label: i18n.t('notification.notification_dashboard_page.k44'),
-      value: 15,
-      color: 'secondary.main',
-    },
-  ];
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  let currentAngle = -90;
-  const radius = 60;
-  const center = 80;
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, width: '100%', height: '100%' }}>
-      <svg
-        width='160'
-        height='160'
-        viewBox='0 0 160 160'
-      >
-        {data.map((item, index) => {
-          const angle = (item.value / total) * 360;
-          const startAngle = currentAngle;
-          const endAngle = currentAngle + angle;
-          currentAngle = endAngle;
-          const startRad = (startAngle * Math.PI) / 180;
-          const endRad = (endAngle * Math.PI) / 180;
-          const x1 = center + radius * Math.cos(startRad);
-          const y1 = center + radius * Math.sin(startRad);
-          const x2 = center + radius * Math.cos(endRad);
-          const y2 = center + radius * Math.sin(endRad);
-          const largeArc = angle > 180 ? 1 : 0;
-          const pathData = `M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-          return (
-            <path
-              key={index}
-              d={pathData}
-              fill={item.color}
-            />
-          );
-        })}
-        <circle
-          cx={center}
-          cy={center}
-          r={35}
-          fill='var(--color-primary-foreground)'
-        />
-      </svg>
-      <Box sx={{ flex: 1 }}>
-        {data.map((item) => (
-          <Box
-            key={item.label}
-            sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
-          >
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
-            <Typography
-              variant='body2'
-              sx={{ flex: 1 }}
-            >
-              {item.label}
-            </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {item.value}%
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-    </Box>
-  );
-};
-const ChannelDistributionChart: React.FC = () => {
-  const data = [
-    {
-      label: i18n.t('notification.notification_dashboard_page.k45'),
-      value: 120,
-      color: 'primary.main',
-    },
-    {
-      label: i18n.t('notification.notification_dashboard_page.k46'),
-      value: 85,
-      color: 'success.700',
-    },
-    {
-      label: i18n.t('notification.notification_dashboard_page.k47'),
-      value: 180,
-      color: 'warning.700',
-    },
-    {
-      label: i18n.t('notification.notification_dashboard_page.k48'),
-      value: 95,
-      color: 'secondary.main',
-    },
-  ];
-  const max = Math.max(...data.map((item) => item.value));
-  return (
-    <Box sx={{ width: '100%', height: '100%', p: 2 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'flex-end',
-          height: '75%',
-        }}
-      >
-        {data.map((item) => (
-          <Box
-            key={item.label}
-            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
-          >
-            <Typography
-              variant='caption'
-              color='text.secondary'
-            >
-              {item.value}
-            </Typography>
-            <Box
-              sx={{
-                width: 32,
-                height: `${(item.value / max) * 100}%`,
-                bgcolor: item.color,
-                borderRadius: 1,
-                minHeight: 8,
-              }}
-            />
-          </Box>
-        ))}
-      </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}>
-        {data.map((item) => (
-          <Typography
-            key={item.label}
-            variant='caption'
-            color='text.secondary'
-          >
-            {item.label}
-          </Typography>
-        ))}
-      </Box>
-    </Box>
-  );
-};
+
 export default NotificationDashboardPage;

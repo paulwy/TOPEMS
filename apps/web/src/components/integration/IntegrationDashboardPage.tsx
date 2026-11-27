@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { PageContainer } from '@/components/common';
 import {
   DashboardTemplate,
   type StatCard,
@@ -28,6 +27,8 @@ import {
 } from '@/components/templates';
 import { INTEGRATION_PATHS } from '@/module-configs/integration/config';
 import { useNotificationStore } from '@/store';
+import { integrationApi } from '@/api/integration';
+import type { IntegrationSyncStats } from '@/api/integration';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
@@ -38,95 +39,158 @@ export const IntegrationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const loadingQuery = useQuery<boolean>({
-    queryKey: QUERY_KEYS.AD_HOC.INTEGRATION_DASHBOARD_BASE,
-    queryFn: async () => true,
-    staleTime: Infinity,
+  // 全部数字来自真实接口：/integration/stats、/integration/sync-stats、
+  // /integration/erp/connections、/integration/events。
+  // 原先写死的 12/156/98.5%/125ms/12,580/23 及各自 change 环比（+2/+23/-15/+1250…）已删除。
+  const statsQuery = useQuery<IntegrationSyncStats | null>({
+    queryKey: [...QUERY_KEYS.AD_HOC.INTEGRATION_DASHBOARD_BASE, 'sync-stats'],
+    queryFn: async () => {
+      const res = await integrationApi.sync.getIntegrationSyncStats();
+      return (res?.data ?? null) as IntegrationSyncStats | null;
+    },
+    staleTime: 60 * 1000,
   });
-  const loading = loadingQuery.isLoading;
+
+  const connectionsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.INTEGRATION_DASHBOARD_BASE, 'connections'],
+    queryFn: async () => {
+      const res = await integrationApi.connections.listConnections();
+      return Array.isArray(res?.data)
+        ? (res.data as Array<{ status?: string; isactive?: boolean }>)
+        : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  // 「活跃连接」只数启用的：status=active/connected，缺该字段时回落到 isactive
+  const activeConnections = (connectionsQuery.data ?? []).filter((c) =>
+    c.status ? ['active', 'connected'].includes(c.status) : c.isactive !== false
+  ).length;
+
+  const historyQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.INTEGRATION_DASHBOARD_BASE, 'history'],
+    queryFn: async () => {
+      const res = await integrationApi.sync.getIntegrationSyncHistory({ page: 1, pageSize: 50 });
+      return Array.isArray(res?.data) ? res.data : [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const eventsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.INTEGRATION_DASHBOARD_BASE, 'events'],
+    queryFn: async () => {
+      const res = await integrationApi.listEvents();
+      return Array.isArray(res?.data) ? res.data : [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const loading =
+    statsQuery.isFetching ||
+    connectionsQuery.isFetching ||
+    eventsQuery.isFetching ||
+    historyQuery.isFetching;
+
+  const syncStats = statsQuery.data;
+  const totalSyncs = Number(syncStats?.total_syncs ?? 0);
+  const successRate = Number(syncStats?.success_rate ?? 0);
+  const failed = Number(syncStats?.integration_stats
+    ? Object.values(syncStats.integration_stats).reduce((sum, v) => sum + Number(v.failed ?? 0), 0)
+    : 0);
+  const lastSyncText = syncStats?.last_sync_at
+    ? new Date(syncStats.last_sync_at).toLocaleString('zh-CN', { hour12: false })
+    : '--';
 
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'active-connections',
         title: i18n.t('integration.integration_dashboard_page.k0'),
-        value: '12',
+        value: activeConnections,
         icon: <Plug size={20} />,
-        change: 2,
-        changeLabel: i18n.t('integration.integration_dashboard_page.k1'),
         color: 'success',
       },
       {
         id: 'sync-tasks',
         title: i18n.t('integration.integration_dashboard_page.k2'),
-        value: '156',
+        value: totalSyncs,
         icon: <GitMerge size={20} />,
-        change: 23,
-        changeLabel: i18n.t('integration.integration_dashboard_page.k3'),
         color: 'primary',
       },
       {
         id: 'success-rate',
         title: i18n.t('integration.integration_dashboard_page.k4'),
-        value: '98.5%',
+        value: successRate.toFixed(1),
+        unit: '%',
         icon: <CheckCircle2 size={20} />,
-        change: 0.5,
-        changeLabel: i18n.t('integration.integration_dashboard_page.k5'),
+        progress: Math.round(successRate),
         color: 'success',
       },
       {
-        id: 'avg-latency',
-        title: i18n.t('integration.integration_dashboard_page.k6'),
-        value: '125ms',
+        id: 'last-sync',
+        title: i18n.t('integration.integration_dashboard_page.last_sync'),
+        value: lastSyncText,
         icon: <Activity size={20} />,
-        change: -15,
-        changeLabel: i18n.t('integration.integration_dashboard_page.m1'),
         color: 'info',
-      },
-      {
-        id: 'sync-records',
-        title: i18n.t('integration.integration_dashboard_page.k7'),
-        value: '12,580',
-        icon: <RefreshCw size={20} />,
-        change: 1250,
-        changeLabel: i18n.t('integration.integration_dashboard_page.k8'),
-        color: 'primary',
       },
       {
         id: 'errors',
         title: i18n.t('integration.integration_dashboard_page.k9'),
-        value: '23',
+        value: failed,
         icon: <AlertTriangle size={20} />,
-        change: -5,
-        changeLabel: t('integration.integration_dashboard_page.k10'),
         color: 'error',
       },
+      {
+        id: 'sync-records',
+        title: i18n.t('integration.integration_dashboard_page.event_count'),
+        value: eventsQuery.data?.length ?? 0,
+        icon: <RefreshCw size={20} />,
+        color: 'primary',
+      },
     ],
-    [t]
+    [activeConnections, totalSyncs, successRate, lastSyncText, failed, eventsQuery.data, t]
   );
+
+  const historyByDay = useMemo(() => {
+    const buckets = new Map<string, number>();
+    for (const row of historyQuery.data ?? []) {
+      const day = (row.started_at ?? '').slice(0, 10);
+      if (!day) continue;
+      buckets.set(day, (buckets.get(day) ?? 0) + 1);
+    }
+    return [...buckets.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([label, value]) => ({ label, value }));
+  }, [historyQuery.data]);
 
   const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'trend',
         title: i18n.t('integration.integration_dashboard_page.k11'),
-        chart: <Activity size={18} />,
         type: 'line',
+        // 同步历史按天聚合（后端当前库为空时如实显示「暂无数据」）
+        data: historyByDay,
       },
       {
         id: 'status',
-        title: i18n.t('integration.integration_dashboard_page.k12'),
-        chart: <Plug size={18} />,
+        title: i18n.t('integration.integration_dashboard_page.k13'),
         type: 'pie',
+        data: Object.entries(syncStats?.integration_stats ?? {}).map(([label, v]) => ({
+          label,
+          value: Number(v.total ?? 0),
+        })),
       },
       {
         id: 'systems',
-        title: i18n.t('integration.integration_dashboard_page.k13'),
-        chart: <GitMerge size={18} />,
+        title: i18n.t('integration.integration_dashboard_page.failed_by_system'),
         type: 'bar',
+        data: Object.entries(syncStats?.integration_stats ?? {}).map(([label, v]) => ({
+          label,
+          value: Number(v.failed ?? 0),
+        })),
       },
     ],
-    []
+    [syncStats, failed, historyByDay]
   );
 
   const quickActions: QuickAction[] = useMemo(
@@ -164,72 +228,48 @@ export const IntegrationDashboardPage: React.FC = () => {
   );
 
   const recentItems: RecentItem[] = useMemo(
-    () => [
-      {
-        id: '1',
-        title: i18n.t('integration.integration_dashboard_page.m2'),
-        subtitle: i18n.t('integration.integration_dashboard_page.2_18'),
-        status: 'success',
+    () =>
+      (eventsQuery.data ?? []).slice(0, 5).map((ev) => ({
+        id: ev.id,
+        title: `${ev.source_system ?? '-'} → ${ev.target_system ?? '-'}`,
+        description: `${ev.event_type ?? ''}${ev.error_message ? `：${ev.error_message}` : ''}`,
+        time: ev.created_at
+          ? new Date(ev.created_at).toLocaleString('zh-CN', { hour12: false })
+          : '',
+        status: (
+          ev.status === 'success' || ev.status === 'synced'
+            ? 'success'
+            : ev.status === 'failed' || ev.status === 'error'
+              ? 'error'
+              : 'default'
+        ) as 'success' | 'error' | 'default',
         onClick: () => navigate(INTEGRATION_PATHS.events),
-      },
-      {
-        id: '2',
-        title: i18n.t('integration.integration_dashboard_page.m3'),
-        subtitle: i18n.t('integration.integration_dashboard_page.5_19'),
-        status: 'success',
-        onClick: () => navigate(INTEGRATION_PATHS.events),
-      },
-      {
-        id: '3',
-        title: i18n.t('integration.integration_dashboard_page.m4'),
-        subtitle: i18n.t('integration.integration_dashboard_page.10_20'),
-        status: 'success',
-        onClick: () => navigate(INTEGRATION_PATHS.events),
-      },
-      {
-        id: '4',
-        title: i18n.t('integration.integration_dashboard_page.m5'),
-        subtitle: i18n.t('integration.integration_dashboard_page.15_21'),
-        status: 'warning',
-        onClick: () => navigate(INTEGRATION_PATHS.events),
-      },
-      {
-        id: '5',
-        title: i18n.t('integration.integration_dashboard_page.m6'),
-        subtitle: i18n.t('integration.integration_dashboard_page.30_22'),
-        status: 'error',
-        onClick: () => navigate(INTEGRATION_PATHS.events),
-      },
-    ],
-    [navigate]
+      })),
+    [eventsQuery.data, navigate]
   );
 
   return (
-    <PageContainer
-      headerProps={{
-        pageIcon: <Plug size={20} />,
+    <DashboardTemplate
+      title=''
+      autoTitle
+      loading={loading}
+      stats={stats}
+      charts={charts}
+      quickActions={quickActions}
+      recentItems={recentItems}
+      recentTitle={t('integration.integration_dashboard_page.k23')}
+      onRefresh={() => {
+        void statsQuery.refetch();
+        void connectionsQuery.refetch();
+        void eventsQuery.refetch();
+        void historyQuery.refetch();
+        addNotification({
+          title: t('integration.integration_dashboard_page.k25'),
+          message: t('integration.integration_dashboard_page.k24'),
+          type: 'success',
+        });
       }}
-    >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
-        loading={loading}
-        stats={stats}
-        charts={charts}
-        quickActions={quickActions}
-        recentItems={recentItems}
-        recentTitle={t('integration.integration_dashboard_page.k23')}
-        onRefresh={() => {
-          loadingQuery.refetch();
-          addNotification({
-            title: t('integration.integration_dashboard_page.k25'),
-            message: t('integration.integration_dashboard_page.k24'),
-            type: 'success',
-          });
-        }}
-      />
-    </PageContainer>
+    />
   );
 };
 
