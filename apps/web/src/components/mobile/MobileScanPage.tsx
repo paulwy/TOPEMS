@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import styles from './MobileScanPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { mobileApi } from '@/api/mobile';
@@ -81,94 +81,7 @@ const MobileScanPage: React.FC = () => {
     i18n.t('mobile.mobile_scan_page.k1'),
     i18n.t('mobile.mobile_scan_page.k0'),
   ];
-  useEffect(() => {
-    const history: ScanHistoryItem[] = [
-      {
-        id: '1',
-        content: 'PROD-2024-001234',
-        type: 'barcode',
-        format: 'Code 128',
-        time: '10:30',
-        relatedData: {
-          type: i18n.t('mobile.mobile_scan_page.k3'),
-          name: i18n.t('mobile.mobile_scan_page.k4'),
-          code: 'PROD-2024-001234',
-        },
-      },
-      {
-        id: '2',
-        content: 'INV-A3-005678',
-        type: 'qrcode',
-        format: 'QR Code',
-        time: '09:45',
-        relatedData: {
-          type: i18n.t('mobile.mobile_scan_page.k5'),
-          name: 'A3-05-02',
-          code: 'INV-A3-005678',
-        },
-      },
-      {
-        id: '3',
-        content: 'PO-2024-06-0891',
-        type: 'barcode',
-        format: 'EAN-13',
-        time: i18n.t('pages.mobile_scan_page.1620_0'),
-        relatedData: {
-          type: i18n.t('mobile.mobile_scan_page.k6'),
-          name: i18n.t('mobile.mobile_scan_page.k7'),
-          code: 'PO-2024-06-0891',
-        },
-      },
-      {
-        id: '4',
-        content: 'EMP-10086',
-        type: 'qrcode',
-        format: 'QR Code',
-        time: i18n.t('pages.mobile_scan_page.1415_1'),
-        relatedData: {
-          type: i18n.t('mobile.mobile_scan_page.k8'),
-          name: i18n.t('mobile.mobile_scan_page.k9'),
-          code: 'EMP-10086',
-        },
-      },
-      {
-        id: '5',
-        content: 'EQ-2024-0042',
-        type: 'barcode',
-        format: 'Code 39',
-        time: i18n.t('pages.mobile_scan_page.1000_2'),
-        relatedData: {
-          type: i18n.t('mobile.mobile_scan_page.k10'),
-          name: i18n.t('pages.mobile_scan_page.cnc3_3'),
-          code: 'EQ-2024-0042',
-        },
-      },
-    ];
-    setScanHistory(history);
-  }, []);
-  const simulateScan = useCallback(() => {
-    if (!scanning) return;
-    // 扫码硬件未接入，不生成随机 mock 结果
-    setTimeout(() => {
-      if (scanning) {
-        setScanning(false);
-        addNotification({
-          title: i18n.t('mobile.mobile_scan_page.k13'),
-          message: i18n.t('mobile.mobile_scan_page.scan_not_connected'),
-          type: 'warning',
-        });
-      }
-    }, 1500);
-  }, [scanning, addNotification]);
-  useEffect(() => {
-    if (activeTab === 0 && scanning && !scanResult) {
-      const timer = setTimeout(() => {
-        simulateScan();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-    return;
-  }, [activeTab, scanning, scanResult, simulateScan]);
+  // 历史记录只存本机真实录入/扫描结果，不再灌入演示数据
   const handleRescan = () => {
     setScanResult(null);
     setScanning(true);
@@ -485,6 +398,13 @@ const MobileScanPage: React.FC = () => {
               </Box>
             )}
           </Paper>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ display: 'block', textAlign: 'center', mb: 2 }}
+          >
+            {i18n.t('mobile.mobile_scan_page.scan_not_connected')}
+          </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
               <IconButton

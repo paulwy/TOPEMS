@@ -7,7 +7,7 @@ use axum::{
 use opentelemetry::trace::TraceContextExt;
 use std::cell::RefCell;
 use std::time::Instant;
-use tracing::info_span;
+use tracing::{info_span, Instrument};
 use uuid::Uuid;
 
 use super::{generate_request_id, TraceContext};
@@ -53,14 +53,13 @@ pub async fn request_context_middleware(mut request: Request, next: Next) -> Res
         http.scheme = %request.uri().scheme_str().unwrap_or("http"),
     );
 
-    let _enter = span.enter();
-
     request.extensions_mut().insert(RequestContext {
         request_id: request_id.clone(),
         trace_context: trace_context.clone(),
     });
 
-    let mut response = next.run(request).await;
+    // span 守卫不能跨 await 持有（会串行化请求并触发 tracing 订阅器 panic），改用 instrument
+    let mut response = next.run(request).instrument(span.clone()).await;
 
     let duration = start.elapsed();
     let status = response.status().as_u16();

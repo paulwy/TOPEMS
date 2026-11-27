@@ -8,7 +8,7 @@ use opentelemetry::global;
 use opentelemetry::propagation::Extractor;
 use opentelemetry::trace::TraceContextExt;
 use std::time::Instant;
-use tracing::info_span;
+use tracing::{info_span, Instrument};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
@@ -35,9 +35,8 @@ pub async fn telemetry_middleware(request: Request, next: Next) -> Response {
 
     let _ = span.set_parent(parent_context);
 
-    let _enter = span.enter();
-
-    let mut response = next.run(request).await;
+    // span 守卫不能跨 await 持有（同 request_context_middleware 口径）
+    let mut response = next.run(request).instrument(span.clone()).await;
 
     let duration = start.elapsed();
     let status = response.status().as_u16();

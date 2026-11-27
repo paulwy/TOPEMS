@@ -1,5 +1,5 @@
 use std::time::Instant;
-use tracing::info_span;
+use tracing::{info_span, Instrument};
 
 pub async fn trace_db_query<T>(
     sql: &str,
@@ -7,10 +7,9 @@ pub async fn trace_db_query<T>(
     f: impl std::future::Future<Output = Result<T, sqlx::Error>>,
 ) -> Result<T, sqlx::Error> {
     let span = info_span!("db_query", sql = %sql);
-    let _enter = span.enter();
 
     let start = Instant::now();
-    let result = f.await;
+    let result = f.instrument(span).await;
     let duration = start.elapsed();
 
     tracing::info!(
@@ -28,10 +27,9 @@ pub async fn trace_external_call<T>(
     f: impl std::future::Future<Output = Result<T, reqwest::Error>>,
 ) -> Result<T, reqwest::Error> {
     let span = info_span!("external_call", url = %url, method = %method);
-    let _enter = span.enter();
 
     let start = Instant::now();
-    let result = f.await;
+    let result = f.instrument(span).await;
     let duration = start.elapsed();
 
     tracing::info!(
@@ -48,10 +46,9 @@ pub async fn trace_rabbitmq_publish<T>(
     f: impl std::future::Future<Output = Result<T, amqprs::error::Error>>,
 ) -> Result<T, amqprs::error::Error> {
     let span = info_span!("rabbitmq_publish", exchange = %exchange, routing_key = %routing_key);
-    let _enter = span.enter();
 
     let start = Instant::now();
-    let result = f.await;
+    let result = f.instrument(span).await;
     let duration = start.elapsed();
 
     tracing::info!(
@@ -68,10 +65,9 @@ pub async fn trace_redis_operation<T>(
     f: impl std::future::Future<Output = redis::RedisResult<T>>,
 ) -> redis::RedisResult<T> {
     let span = info_span!("redis_operation", command = %command);
-    let _enter = span.enter();
 
     let start = Instant::now();
-    let result = f.await;
+    let result = f.instrument(span).await;
     let duration = start.elapsed();
 
     if let Some(key) = key {
@@ -92,10 +88,9 @@ pub async fn trace_service_call<T, E>(
     f: impl std::future::Future<Output = Result<T, E>>,
 ) -> Result<T, E> {
     let span = info_span!("service_client_call", service = %service, endpoint = %endpoint);
-    let _enter = span.enter();
 
     let start = Instant::now();
-    let result = f.await;
+    let result = f.instrument(span).await;
     let duration = start.elapsed();
 
     tracing::info!(
