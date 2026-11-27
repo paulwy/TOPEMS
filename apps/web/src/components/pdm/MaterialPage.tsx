@@ -200,7 +200,7 @@ export default function MaterialPage() {
               sx={{
                 fontWeight: 'bold',
                 fontSize: designTokens.typography.fontSize.scale['1.5rem'],
-                color: 'success.main',
+                color: 'success.700',
               }}
             >
               ¥ {stats.totalValue.toLocaleString()}

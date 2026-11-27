@@ -318,7 +318,7 @@ export const DocumentPage: React.FC = () => {
               </Typography>
               <Typography
                 variant='h5'
-                sx={{ fontWeight: 700, color: 'success.main' }}
+                sx={{ fontWeight: 700, color: 'success.700' }}
               >
                 {stats.published}
               </Typography>
@@ -354,7 +354,7 @@ export const DocumentPage: React.FC = () => {
               </Typography>
               <Typography
                 variant='h5'
-                sx={{ fontWeight: 700, color: 'warning.main' }}
+                sx={{ fontWeight: 700, color: 'warning.700' }}
               >
                 {stats.review}
               </Typography>

@@ -441,36 +441,27 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                   }
                   sx={(t) => {
                     // 芯片必须「浅底 + 同色系深字」：直接用 main 当文字会和 light 底撞成同色
-                    const dark = t.palette.mode === 'dark';
                     const up = stat.trend!.direction === 'up';
                     const down = stat.trend!.direction === 'down';
                     return {
                       position: 'absolute',
                       top: 12,
                       right: 12,
+                      // 亮色 .100 是浅底、暗色 .100 反相后是深底，两端都能配 .700 的字；
+                      // 不要再按 mode 分叉（.300 那份在暗色里是深字压深底）
                       bgcolor: grad
                         ? 'glass.topLight'
                         : up
-                          ? dark
-                            ? 'success.100'
-                            : 'success.50'
+                          ? 'success.100'
                           : down
-                            ? dark
-                              ? 'error.100'
-                              : 'error.50'
-                            : dark
-                              ? 'grey.200'
-                              : 'grey.100',
+                            ? 'error.100'
+                            : 'grey.100',
                       color: grad
                         ? 'var(--color-primary-foreground)'
                         : up
-                          ? dark
-                            ? 'success.300'
-                            : 'success.700'
+                          ? 'success.700'
                           : down
-                            ? dark
-                              ? 'error.300'
-                              : 'error.700'
+                            ? 'error.700'
                             : 'text.secondary',
                       fontWeight: 500,
                     };
