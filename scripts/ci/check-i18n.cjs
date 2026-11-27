@@ -296,7 +296,10 @@ function flatten(obj, prefix = '', out = new Map()) {
       flatten(v, p, out);
     } else if (typeof v === 'string') {
       out.set(p, v);
-    } else if (v !== undefined && v !== null) {
+    } else if (Array.isArray(v)) {
+      // 数组是表格/配置数据，不是翻译单元；塞进 String() 会制造无意义的键对齐差异。
+      continue;
+    } else if (typeof v === 'number' || typeof v === 'boolean') {
       out.set(p, String(v));
     }
   }

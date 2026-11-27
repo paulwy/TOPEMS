@@ -483,5 +483,6 @@
   "automation.nav.automation-runs_desc": "Runs",
   "automation.nav.automation-designer_desc": "Designer",
   "automation.nav.automation-variables_desc": "Variables",
-  "automation.automation_rules_page.k34": " (copy)"
+  "automation.automation_rules_page.k34": " (copy)",
+  "automation_rules_page.delete_confirm_message": "Are you sure you want to delete this rule?"
 }

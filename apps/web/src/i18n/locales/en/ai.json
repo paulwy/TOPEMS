@@ -1335,5 +1335,10 @@
   "ai.ai_prompt_library_page.error_load": "Failed to load prompt templates, please retry",
   "ai.ai_prompt_library_page.error_favorite": "Failed to update favorite, please retry",
   "ai.ai_prompt_library_page.error_delete": "Failed to delete prompt, please retry",
-  "ai.ai_prompt_library_page.error_generate": "Failed to run prompt, please retry"
+  "ai.ai_prompt_library_page.error_generate": "Failed to run prompt, please retry",
+  "ai.dify.placeholder.input": "Type a message...",
+  "ai.ai_prompt_library_page.columns.name": "Name",
+  "ai.ai_prompt_library_page.columns.category": "Category",
+  "ai.ai_prompt_library_page.columns.usage_count": "Usage Count",
+  "ai.ai_prompt_library_page.columns.created_by": "Created By"
 }
