@@ -241,6 +241,15 @@ pre-commit:
           node scripts/ci/check-error-handling.cjs
         fi
 
+    # [Gate SDP] 软删谓词 AND/OR 优先级：`WHERE deleted_at IS NULL AND a OR b` 里 OR 会旁路软删过滤
+    # （2026-11-27 B365：tenant 列表、gis 位置搜索各踩过一次），同层 OR 一律阻断。
+    soft-delete-precedence:
+      tags: database rust sql
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-soft-delete-precedence.cjs --changed-only
+
     # [Gate V518] 桥接网完备性（B7 收尾：新增错误类型必须有 → TopemsError 桥接）
     bridge-coverage:
       tags: rust errors

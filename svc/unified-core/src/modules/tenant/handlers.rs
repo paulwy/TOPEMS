@@ -54,18 +54,10 @@ pub async fn list_tenants(
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户列表读作用域失败: {}", e);
-            return Json(CoreResponse::success(
-                ListTenantsResponse {
-                    items: Vec::new(),
-                    total: 0,
-                    page,
-                    page_size,
-                },
-                "Tenants retrieved",
-            ));
+            return Json(CoreResponse::error("创建租户列表读作用域失败"));
         }
     };
-    let tenants: Vec<Tenant> = match (params.search, params.status, params.plan) {
+    let tenants_result: Result<Vec<Tenant>, sqlx::Error> = match (params.search, params.status, params.plan) {
         (Some(s), Some(st), Some(p)) => {
             sqlx::query_as(
                 "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
@@ -77,7 +69,6 @@ pub async fn list_tenants(
             .bind(offset)
             .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
         }
         (Some(s), Some(st), None) => {
             sqlx::query_as(
@@ -89,7 +80,6 @@ pub async fn list_tenants(
             .bind(offset)
             .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
         }
         (Some(s), None, Some(p)) => {
             sqlx::query_as(
@@ -101,7 +91,6 @@ pub async fn list_tenants(
             .bind(offset)
             .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
         }
         (None, Some(st), Some(p)) => {
             sqlx::query_as(
@@ -113,18 +102,16 @@ pub async fn list_tenants(
             .bind(offset)
             .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
         }
         (Some(s), None, None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(format!("%{}%", s))
             .bind(page_size)
             .bind(offset)
             .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
         }
         (None, Some(st), None) => {
             sqlx::query_as(
@@ -135,7 +122,6 @@ pub async fn list_tenants(
             .bind(offset)
             .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
         }
         (None, None, Some(p)) => {
             sqlx::query_as(
@@ -146,31 +132,45 @@ pub async fn list_tenants(
             .bind(offset)
             .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
         }
         (None, None, None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2"
             )
             .bind(page_size)
             .bind(offset)
             .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
         }
     };
 
-    let total: i64 = if let Some(s) = search {
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1")
-            .bind(format!("%{}%", s))
-            .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0)
+    let tenants = match tenants_result {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("[Tenant] 查询租户列表失败: {}", e);
+            return Json(CoreResponse::error("查询租户列表失败"));
+        }
+    };
+
+    let total_result: Result<i64, sqlx::Error> = if let Some(s) = search {
+        sqlx::query_scalar(
+            "SELECT COUNT(*) FROM public.core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1)",
+        )
+        .bind(format!("%{}%", s))
+        .fetch_one(&mut scope)
+        .await
     } else {
         sqlx::query_scalar("SELECT COUNT(*) FROM public.core_tenants WHERE deleted_at IS NULL")
             .fetch_one(&mut scope)
             .await
-            .unwrap_or(0)
+    };
+
+    let total = match total_result {
+        Ok(n) => n,
+        Err(e) => {
+            tracing::error!("[Tenant] 统计租户总数失败: {}", e);
+            return Json(CoreResponse::error("统计租户总数失败"));
+        }
     };
 
     let _ = scope.commit().await;

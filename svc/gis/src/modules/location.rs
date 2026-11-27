@@ -348,7 +348,7 @@ pub async fn search_locations(
     let query = if payload.location_type.is_some() {
         "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
     } else {
-        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
+        "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) ORDER BY created_at DESC"
     };
 
     let result = if payload.location_type.is_some() {
