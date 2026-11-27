@@ -115,7 +115,7 @@ pub fn truncate_notification_title(title: &str, max_len: usize) -> String {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notification/notify/send",
+    path = "/notify/send",
     tag = "notification",
     request_body = SendNotificationRequest,
     responses(
@@ -279,7 +279,7 @@ pub async fn send_notification(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notification/notify/broadcast",
+    path = "/notify/broadcast",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -485,7 +485,7 @@ pub async fn create_notification(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["communication:notification:read"])),
-    path = "/notification/notify/list",
+    path = "/notify/list",
     tag = "notification",
     params(
         ("page" = Option<u32>, Query, description = "Page number"),
@@ -749,7 +749,7 @@ pub async fn mark_as_read(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
-    path = "/notification/notify/read-all",
+    path = "/notify/read-all",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
