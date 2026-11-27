@@ -217,6 +217,9 @@ awk -F'\t' -v anchor="$ANCHOR" '
     for (i = 1; i <= rn; i++) {
       v = rorder[i]
       if (rcount[v] > 1) { printf "duplicate\t%s\t%s\n", v, rfile[v]; dups++ }
+      # status=superseded：文件应用后撤回、由后续版本承接的溯源登记，本就无磁盘文件，
+      # 豁免磁盘文件 / checksum 比对（仍参与 duplicate 防重登记）。
+      if (rst[v] == "superseded") continue
       if (!(v in dfile)) { printf "missing_on_disk\t%s\t%s\n", v, rfile[v]; missing++ ; continue }
       if (rfile[v] != "database/migrations/" dfile[v]) {
         printf "file_mismatch\t%s\tmanifest=%s disk=%s\n", v, rfile[v], dfile[v]; mism++
