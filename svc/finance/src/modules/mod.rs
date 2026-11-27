@@ -3142,29 +3142,46 @@ pub async fn get_template_usage_stats_handler(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    let rule_count: i64 = sqlx::query_scalar(
+    let rule_count: i64 = match sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_voucher_generation_rules WHERE mapping_config::jsonb->>'template_id' = $1"),
     )
     .bind(template_id.to_string())
     .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
-    let generated_voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+    .await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
+    let generated_voucher_count: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE template_id = $1"
     ))
     .bind(template_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
-    let last_used_at: Option<DateTime<Utc>> = sqlx::query_scalar(only_own_schema_query!(
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
+    let last_used_at: Option<DateTime<Utc>> = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT MAX(created_at) FROM finance.core_finance_vouchers WHERE template_id = $1"
     ))
     .bind(template_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(None);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     ApiResponse::success(
         serde_json::json!({
             "template_id": template_id,
@@ -3213,7 +3230,7 @@ async fn add_template_entry_handler(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+    let count: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
     ))
@@ -3221,20 +3238,31 @@ async fn add_template_entry_handler(
     .bind(template_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     if count == 0 {
         return ApiResponse::not_found("凭证模板不存在");
     }
     let sort_order: i32 = match req.sort_order {
         Some(s) => s,
         None => {
-            let max_order: i32 = sqlx::query_scalar(
+            let max_order: i32 = match sqlx::query_scalar(
                 only_own_schema_query!("finance", "SELECT COALESCE(MAX(sort_order), 0) FROM finance.finance_voucher_template_lines WHERE template_id = $1"),
             )
             .bind(template_id)
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("[finance] 查询失败: {}", e);
+                    return crate::shared::err_resp(e);
+                }
+            };
             max_order + 1
         }
     };
@@ -3304,15 +3332,20 @@ async fn update_template_entry_handler(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    let owns: i64 = sqlx::query_scalar(
+    let owns: i64 = match sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_voucher_template_lines l JOIN finance.finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
     )
     .bind(tenant_id)
     .bind(template_id)
     .bind(entry_id)
     .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    .await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     if owns == 0 {
         return ApiResponse::not_found("模板分录不存在");
     }
@@ -3457,7 +3490,7 @@ pub async fn reorder_template_entries_handler(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+    let count: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
     ))
@@ -3465,7 +3498,13 @@ pub async fn reorder_template_entries_handler(
     .bind(template_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     if count == 0 {
         return ApiResponse::not_found("凭证模板不存在");
     }
@@ -3603,10 +3642,29 @@ pub async fn import_template_handler(
     let created_by = claims.username.clone();
 
     let mut file_content: Option<Vec<u8>> = None;
-    while let Ok(Some(field)) = multipart.next_field().await {
+    loop {
+        // multipart 流本身的错误不能当成「没有更多字段」：否则上传中断会被静默丢弃
+        let field = match multipart.next_field().await {
+            Ok(Some(field)) => field,
+            Ok(None) => break,
+            Err(e) => {
+                return ApiResponse::from(TopemsError::FileFormatError(format!(
+                    "解析上传文件失败: {}",
+                    e
+                )))
+            }
+        };
         let name = field.name().unwrap_or("").to_string();
         if name == "file" {
-            let data = field.bytes().await.unwrap_or_default();
+            let data = match field.bytes().await {
+                Ok(data) => data,
+                Err(e) => {
+                    return ApiResponse::from(TopemsError::FileFormatError(format!(
+                        "读取上传文件内容失败: {}",
+                        e
+                    )))
+                }
+            };
             file_content = Some(data.to_vec());
         }
     }
@@ -6047,14 +6105,20 @@ pub async fn get_next_voucher_no(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    let count: i64 = sqlx::query_scalar(only_own_schema_query!(
+    let count: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE tenant_id = $1"
     ))
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[finance] 查询失败: {}", e);
+            return crate::shared::err_resp(e);
+        }
+    };
     let voucher_no = format!("{}{:06}", prefix, count + 1);
     ApiResponse::success(serde_json::json!({"voucher_no": voucher_no}), "查询成功")
 }
@@ -6127,18 +6191,41 @@ pub async fn import_vouchers_general(
     mut multipart: Multipart,
 ) -> ApiResponse<serde_json::Value> {
     let mut file_content: Option<Vec<u8>> = None;
-    while let Ok(Some(field)) = multipart.next_field().await {
+    loop {
+        let field = match multipart.next_field().await {
+            Ok(Some(field)) => field,
+            Ok(None) => break,
+            Err(e) => {
+                return ApiResponse::from(TopemsError::FileFormatError(format!(
+                    "解析上传文件失败: {}",
+                    e
+                )))
+            }
+        };
         if field.name() == Some("file") {
-            let data = field.bytes().await.unwrap_or_default();
+            let data = match field.bytes().await {
+                Ok(data) => data,
+                Err(e) => {
+                    return ApiResponse::from(TopemsError::FileFormatError(format!(
+                        "读取上传文件内容失败: {}",
+                        e
+                    )))
+                }
+            };
             file_content = Some(data.to_vec());
         }
     }
-    if file_content.is_none() {
+    let Some(file_data) = file_content else {
         return ApiResponse::bad_request("缺少 file 字段");
-    }
-    ApiResponse::success(
-        serde_json::json!({"total": 0, "success": 0, "failed": 0, "errors": []}),
-        "导入完成",
+    };
+    // 该端点此前解析完文件就返回 {"total":0,"success":0} + 「导入完成」——一条都没写却报成功。
+    // 真正落库的导入在 /vouchers/import/{u8,legacy} 等分支，这里显形为未实现，别再假装完成。
+    ApiResponse::error(
+        501,
+        &format!(
+            "凭证导入暂未实现（X-Stub）：已收到 {} 字节，但未写入任何凭证，请使用 /vouchers/import/u8",
+            file_data.len()
+        ),
     )
 }
 
@@ -7204,7 +7291,7 @@ pub async fn get_opening_balances(
 
     match rows {
         Ok(items) => {
-            let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+            let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
                 "finance",
                 r#"SELECT COUNT(*) FROM finance.opening_balances
                    WHERE deleted_at IS NULL
@@ -7217,7 +7304,13 @@ pub async fn get_opening_balances(
             .bind(&subject_code)
             .fetch_one(&mut scope)
             .await
-            .unwrap_or(0);
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("[finance] 查询失败: {}", e);
+                    return crate::shared::err_resp(e);
+                }
+            };
 
             let list: Vec<serde_json::Value> = items
                 .into_iter()
@@ -8177,7 +8270,7 @@ pub async fn list_expense_approvals(
                     "updated_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("updated_at").ok().flatten(),
                 })
             }).collect();
-            let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+            let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
                 "finance",
                 r#"SELECT COUNT(*) FROM finance.expense_approvals
                    WHERE deleted_at IS NULL AND tenant_id = $3::uuid
@@ -8189,7 +8282,13 @@ pub async fn list_expense_approvals(
             .bind(tenant_id)
             .fetch_one(&mut scope)
             .await
-            .unwrap_or(0);
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("[finance] 查询失败: {}", e);
+                    return crate::shared::err_resp(e);
+                }
+            };
             ApiResponse::success(
                 serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
                 "查询成功",
@@ -9779,5 +9878,37 @@ mod voucher_route_perm_tests {
     #[test]
     fn approval_routes_merge_without_panic() {
         let _router = create_routes();
+    }
+}
+
+#[cfg(test)]
+mod query_error_ratchet {
+    /// 本文件里的统计/存在性查询曾用 `.await.unwrap_or(0)` 吞错：
+    /// `get_next_voucher_no` 查询失败会返回 `000001`（与既有凭证号撞号），
+    /// 模板存在性检查失败会被当成「模板不存在」404，列表 COUNT 失败会给出 `total: 0` 但 items 非空。
+    /// 此棘轮要求本文件不再出现「`.await` 后直接取默认值」。
+    #[test]
+    fn finance_module_handlers_do_not_swallow_query_errors() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/modules/mod.rs");
+        let src = std::fs::read_to_string(&path).expect("读取 modules/mod.rs 失败");
+        // 只扫到本测试模块之前：测试代码自身包含 ".unwrap_or" 字样，不能自匹配
+        let scan_end = src.find("mod query_error_ratchet").unwrap_or(src.len());
+        let src = &src[..scan_end];
+        let bytes = src.as_bytes();
+        for (idx, _) in src.match_indices(".unwrap_or") {
+            let window = String::from_utf8_lossy(&bytes[idx.saturating_sub(60)..idx]);
+            // 只判「.await 之后仅剩空白就直接取默认值」，避免误伤 `while let Ok(..) = x.await { ... .unwrap_or(..) }`
+            let swallows = match window.rfind(".await") {
+                Some(pos) => window[pos + ".await".len()..].trim().is_empty(),
+                None => false,
+            };
+            assert!(
+                !swallows,
+                "modules/mod.rs 里又出现「查询失败即取默认值」：\n{}",
+                String::from_utf8_lossy(
+                    &bytes[idx.saturating_sub(120)..(idx + 40).min(bytes.len())]
+                )
+            );
+        }
     }
 }
