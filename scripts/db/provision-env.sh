@@ -405,28 +405,29 @@ verify_key_data() {
 probe() { "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "$1" 2>/dev/null; }
 
 # 终态必需表（不按总表数断言：前向迁移允许合法 DROP/重命名）
+# 归属口径对齐 prod 现网：审计/会话/审批/文档迁 public，看板归 bi，检验项改名 qa_inspection_items。
 REQUIRED_TABLES=(
   public._sqlx_migrations
   public.core_tenants public.core_roles public.core_permissions public.core_role_permissions
   public.core_menus public.core_menu_groups public.core_dict_types public.core_dict_items
   public.core_tenant_settings public.core_tenant_users
-  iam.users iam.audit_logs iam.auth_sessions
+  iam.users public.audit_logs public.core_sessions
   hrm.departments hrm.positions
   erp.asset_categories erp.assets
   mes.production_orders
-  qms.inspection_items
+  qms.qa_inspection_items
   lims.inspection_records
   scm.demand_forecast
   wms.batches
   finance.budgets
-  analytics.analytics_dashboards
+  bi.analytics_dashboards
   communication.core_notification_deliveries
   portal.core_faqs
   pdm.pdm_boms
   ai.ai_models
   integration.async_tasks
-  flow.approvals
-  doc_service.core_doc_documents
+  public.approvals
+  public.core_doc_documents
 )
 
 verify_required_tables() {
