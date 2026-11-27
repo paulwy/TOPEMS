@@ -88,16 +88,16 @@ const CHART_TYPES: { value: ChartType; label: string; icon: React.ReactNode }[] 
   },
   {
     value: 'composed',
-    label: i18n.t('components.dashboard_editor.k6'),
+    label: i18n.t('components.dashboard_editor.type_composed'),
     icon: <BarChart3 size={20} />,
   },
-  { value: 'gauge', label: i18n.t('components.dashboard_editor.k7'), icon: <Target size={20} /> },
+  { value: 'gauge', label: i18n.t('components.dashboard_editor.type_gauge'), icon: <Target size={20} /> },
 ];
 
 const WIDGET_TYPES = [
   {
     value: 'chart',
-    label: i18n.t('components.dashboard_editor.k8'),
+    label: i18n.t('components.dashboard_editor.type_chart'),
     icon: <BarChart3 size={24} />,
   },
   { value: 'pivot', label: i18n.t('components.dashboard_editor.k9'), icon: <Table size={24} /> },
@@ -308,8 +308,8 @@ export const DashboardEditor: React.FC<{
             : i18n.t('components.dashboard_editor.k24'),
       x,
       y,
-      w: 2,
-      h: 2,
+      w: newWidgetType === 'metric' ? 2 : 4,
+      h: newWidgetType === 'metric' ? 2 : 3,
       config:
         newWidgetType === 'chart'
           ? { chartType: newWidgetChartType, data: [], xKey: 'name', yKey: 'value' }
@@ -397,7 +397,7 @@ export const DashboardEditor: React.FC<{
               onClick={undo}
               disabled={historyIndex === 0}
             >
-              {i18n.t('components.dashboard_editor.k6')}
+              {i18n.t('components.dashboard_editor.undo')}
             </Button>
             <Button
               variant='outlined'
@@ -406,7 +406,7 @@ export const DashboardEditor: React.FC<{
               onClick={redo}
               disabled={historyIndex >= history.length - 1}
             >
-              {i18n.t('components.dashboard_editor.k7')}
+              {i18n.t('components.dashboard_editor.redo')}
             </Button>
             <Button
               variant='outlined'
@@ -425,7 +425,7 @@ export const DashboardEditor: React.FC<{
               onClick={() => setShowAddWidgetModal(true)}
               disabled={isPreviewMode}
             >
-              {i18n.t('components.dashboard_editor.k8')}
+              {i18n.t('components.dashboard_editor.add_widget')}
             </Button>
             <Button
               variant='contained'
@@ -433,7 +433,7 @@ export const DashboardEditor: React.FC<{
               startIcon={<Save />}
               onClick={handleSave}
             >
-              {i18n.t('components.dashboard_editor.k9')}
+              {i18n.t('components.dashboard_editor.save')}
             </Button>
           </Box>
         </Box>
@@ -577,10 +577,25 @@ export const DashboardEditor: React.FC<{
                     />
                   </Box>
                 ) : (
-                  <Box sx={{ flex: 1 }}>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {!widget.config.data || widget.config.data.length === 0 ? (
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        {i18n.t('components.dashboard_editor.no_data')}
+                      </Typography>
+                    ) : (
                     <ChartComponent
                       type={widget.config.chartType || 'bar'}
-                      data={widget.config.data || []}
+                      data={widget.config.data}
                       xKey={widget.config.xKey}
                       yKey={widget.config.yKey}
                       yKeys={widget.config.yKeys}
@@ -589,6 +604,8 @@ export const DashboardEditor: React.FC<{
                       showLegend={widget.w >= 3}
                       showTooltip={true}
                     />
+                    )}
+
                   </Box>
                 )}
               </Box>
@@ -629,7 +646,7 @@ export const DashboardEditor: React.FC<{
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              {i18n.t('components.dashboard_editor.k10')}
+              {i18n.t('components.dashboard_editor.widget_settings')}
             </Typography>
           </Box>
 
@@ -647,7 +664,7 @@ export const DashboardEditor: React.FC<{
                 variant='body2'
                 sx={{ fontWeight: 500, mb: 1.5 }}
               >
-                {i18n.t('components.dashboard_editor.k11')}
+                {i18n.t('components.dashboard_editor.layout')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormControl
@@ -667,7 +684,7 @@ export const DashboardEditor: React.FC<{
                         key={i + 1}
                         value={i + 1}
                       >
-                        {i + 1} {i18n.t('components.dashboard_editor.k0')}
+                        {i + 1} {i18n.t('components.dashboard_editor.cols_unit')}
                       </MenuItem>
                     ))}
                   </Select>
@@ -689,7 +706,7 @@ export const DashboardEditor: React.FC<{
                         key={i + 1}
                         value={i + 1}
                       >
-                        {i + 1} {i18n.t('components.dashboard_editor.k1')}
+                        {i + 1} {i18n.t('components.dashboard_editor.rows_unit')}
                       </MenuItem>
                     ))}
                   </Select>
@@ -702,7 +719,7 @@ export const DashboardEditor: React.FC<{
                 variant='body2'
                 sx={{ fontWeight: 500, mb: 1.5 }}
               >
-                {i18n.t('components.dashboard_editor.k12')}
+                {i18n.t('components.dashboard_editor.position')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormControl
@@ -908,7 +925,7 @@ export const DashboardEditor: React.FC<{
             variant='contained'
             onClick={handleAddWidget}
           >
-            {i18n.t('components.dashboard_editor.k16')}
+            {i18n.t('components.dashboard_editor.add_confirm')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -3044,5 +3044,19 @@
   "components.mobileCardView.c9744f": "No",
   "components.pageHeader.105c8a": "Export completed",
   "components.pageHeader.4062b25e": "Exporting...",
-  "components.pageHeader.c7f0d5": "Export"
+  "components.pageHeader.c7f0d5": "Export",
+  "components.dashboard_editor.undo": "Undo",
+  "components.dashboard_editor.redo": "Redo",
+  "components.dashboard_editor.add_widget": "Add widget",
+  "components.dashboard_editor.save": "Save",
+  "components.dashboard_editor.type_composed": "Composed",
+  "components.dashboard_editor.type_gauge": "Gauge",
+  "components.dashboard_editor.type_chart": "Chart",
+  "components.dashboard_editor.add_confirm": "Add",
+  "components.dashboard_editor.widget_settings": "Widget settings",
+  "components.dashboard_editor.layout": "Layout",
+  "components.dashboard_editor.position": "Position",
+  "components.dashboard_editor.cols_unit": "cols",
+  "components.dashboard_editor.rows_unit": "rows",
+  "components.dashboard_editor.no_data": "No data"
 }
