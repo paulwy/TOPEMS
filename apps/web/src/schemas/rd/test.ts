@@ -88,7 +88,7 @@ export const testSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.priority ?? '');
         const color = PRIORITY_COLOR_MAP[val] || 'default';
         const label = PRIORITY_LABEL_MAP[val] || val;

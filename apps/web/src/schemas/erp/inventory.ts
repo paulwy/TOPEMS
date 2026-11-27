@@ -187,7 +187,7 @@ export const inventorySchema: EntitySchema = {
       type: 'number',
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => renderCostCell(row, 'unit_cost'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderCostCell(row, 'unit_cost'),
     },
     {
       name: 'total_cost',
@@ -195,7 +195,7 @@ export const inventorySchema: EntitySchema = {
       type: 'number',
       readonly: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => renderCostCell(row, 'total_cost'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderCostCell(row, 'total_cost'),
     },
     {
       name: 'batch_number',
@@ -210,7 +210,7 @@ export const inventorySchema: EntitySchema = {
       type: 'date',
       showInList: false,
       showInDetail: true,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'production_date'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'production_date'),
     },
     {
       name: 'expiry_date',
@@ -218,7 +218,7 @@ export const inventorySchema: EntitySchema = {
       type: 'date',
       showInList: false,
       showInDetail: true,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'expiry_date'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'expiry_date'),
     },
     {
       name: 'stock_status',
@@ -234,7 +234,7 @@ export const inventorySchema: EntitySchema = {
       type: 'date',
       readonly: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'created_at'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'created_at'),
     },
     {
       name: 'updated_at',
@@ -243,7 +243,7 @@ export const inventorySchema: EntitySchema = {
       readonly: true,
       showInList: false,
       showInDetail: true,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'updated_at'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'updated_at'),
     },
   ],
 

@@ -37,7 +37,7 @@ export const processSchema: EntitySchema = {
       sortable: true,
       listWidth: 100,
       readonly: true,
-      renderCell: (row: Record<string, unknown>): React.ReactNode => {
+      renderCell: (row: Record<string, unknown>, _index: number): React.ReactNode => {
         const steps = (row as Record<string, unknown>).steps as Array<unknown> | undefined;
         return steps?.length || 0;
       },

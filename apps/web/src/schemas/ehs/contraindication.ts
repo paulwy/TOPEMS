@@ -37,7 +37,7 @@ export const contraindicationSchema: EntitySchema = {
       label: i18n.t('ehs.contraindication.k4'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.hazard_factor as string | null | undefined;
         return v || '-';
       },
@@ -48,7 +48,7 @@ export const contraindicationSchema: EntitySchema = {
       label: i18n.t('ehs.contraindication.k5'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.diagnosed_at as string | null | undefined;
         return v || '-';
       },
@@ -58,7 +58,7 @@ export const contraindicationSchema: EntitySchema = {
       label: i18n.t('ehs.contraindication.k6'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.diagnosis_hospital as string | null | undefined;
         return v || '-';
       },

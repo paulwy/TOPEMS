@@ -59,7 +59,7 @@ export const workflowInstanceSchema: EntitySchema = {
       type: 'text',
       readonly: true,
       listMinWidth: 240,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1.5 } },
@@ -106,7 +106,7 @@ export const workflowInstanceSchema: EntitySchema = {
         type: 'static',
         options: typeOptions,
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const workflowType = (row.data as Record<string, unknown>)?.type as string;
         const typeConfig = TYPE_CONFIG[workflowType];
         return React.createElement(Chip, {
@@ -122,7 +122,7 @@ export const workflowInstanceSchema: EntitySchema = {
       label: i18n.t('shared.instance.k15'),
       type: 'text',
       readonly: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
@@ -148,7 +148,7 @@ export const workflowInstanceSchema: EntitySchema = {
       label: i18n.t('shared.instance.k16'),
       type: 'text',
       readonly: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
@@ -169,7 +169,7 @@ export const workflowInstanceSchema: EntitySchema = {
         type: 'static',
         options: statusOptions,
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const status = row.status as string;
         const statusConfig = STATUS_CONFIG[status];
         return React.createElement(Chip, {
@@ -185,7 +185,7 @@ export const workflowInstanceSchema: EntitySchema = {
       label: i18n.t('shared.instance.k18'),
       type: 'datetime',
       readonly: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },

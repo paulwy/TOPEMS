@@ -99,7 +99,7 @@ export const projectSchema: EntitySchema = {
       defaultValue: 'research',
       options: { type: 'static', options: PROJECT_TYPE_OPTIONS },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = String(row.project_type ?? '');
         if (!value) return '-';
         return PROJECT_TYPE_LABEL_MAP[value] || value;
@@ -121,7 +121,7 @@ export const projectSchema: EntitySchema = {
       type: 'number',
       defaultValue: 0,
       listWidth: 180,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = Number(row.progress ?? 0);
         return React.createElement(
           Box,
@@ -153,7 +153,7 @@ export const projectSchema: EntitySchema = {
       label: i18n.t('shared.project.k24'),
       type: 'number',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.budget as number | undefined;
         if (!val) return '-';
         return CURRENCY_FORMATTER.format(val);
@@ -172,14 +172,14 @@ export const projectSchema: EntitySchema = {
       label: i18n.t('shared.project.k26'),
       type: 'date',
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => formatDateCell(row.start_date),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatDateCell(row.start_date),
     },
     {
       name: 'end_date',
       label: i18n.t('shared.project.k27'),
       type: 'date',
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => formatDateCell(row.end_date),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatDateCell(row.end_date),
     },
     {
       name: 'description',

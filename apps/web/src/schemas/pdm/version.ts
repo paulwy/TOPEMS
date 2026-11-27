@@ -69,7 +69,7 @@ export const getVersionSchema = (): EntitySchema => {
           ],
         },
         listWidth: 120,
-        renderCell: (row: Record<string, unknown>) => {
+        renderCell: (row: Record<string, unknown>, _index: number) => {
           const val = String(row.type ?? '');
           const color = VERSION_TYPE_COLOR_MAP[val] || 'default';
           const label = VERSION_TYPE_LABEL_MAP[val] || val;

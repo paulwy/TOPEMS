@@ -52,7 +52,7 @@ export const testMethodSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return row.category_name ? String(row.category_name) : String(row.category_id || '-');
       },
     },

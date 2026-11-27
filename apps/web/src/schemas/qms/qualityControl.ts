@@ -96,7 +96,7 @@ export const qualityIssueSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.severity ?? '');
         const color = severityColorMap[val] || 'default';
         const label = severityLabelMap[val] || val;
@@ -256,7 +256,7 @@ export const auditPlanSchema: EntitySchema = {
       type: 'text',
       readonly: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.audit_type ?? '');
         const label =
           val === 'internal'
@@ -308,7 +308,7 @@ export const auditPlanSchema: EntitySchema = {
       type: 'text',
       readonly: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const depts = (row.departments as string[]) || [];
         return depts.join(', ') || '-';
       },

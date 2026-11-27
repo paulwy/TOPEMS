@@ -65,7 +65,7 @@ export const priceComparisonSchema: EntitySchema = {
       type: 'text',
       hideInForm: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => (row.result_supplier_name as string) || '-',
+      renderCell: (row: Record<string, unknown>, _index: number) => (row.result_supplier_name as string) || '-',
     },
     {
       name: 'result_price',
@@ -74,7 +74,7 @@ export const priceComparisonSchema: EntitySchema = {
       hideInForm: true,
       align: 'right',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.result_price as number | undefined;
         return val != null ? val.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '-';
       },
@@ -86,7 +86,7 @@ export const priceComparisonSchema: EntitySchema = {
       hideInForm: true,
       align: 'right',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.result_amount as number | undefined;
         return val != null ? val.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '-';
       },
@@ -108,7 +108,7 @@ export const priceComparisonSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = String(row.status ?? '');
         const config = statusConfig[value];
         return React.createElement(Chip, {
@@ -125,7 +125,7 @@ export const priceComparisonSchema: EntitySchema = {
       type: 'date',
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.deadline as string | undefined;
         return val ? new Date(val).toLocaleDateString('zh-CN') : '-';
       },

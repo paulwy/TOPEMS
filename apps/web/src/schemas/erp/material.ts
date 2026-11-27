@@ -95,7 +95,7 @@ export const materialSchema: EntitySchema = {
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const price = row.unit_price as number | undefined;
         return price ? `¥${price.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}` : '-';
       },

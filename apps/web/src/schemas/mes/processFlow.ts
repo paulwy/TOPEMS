@@ -44,7 +44,7 @@ export const processFlowSchema: EntitySchema = {
       label: i18n.t('mes.process_flow.k4'),
       type: 'number',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>): string => {
+      renderCell: (row: Record<string, unknown>, _index: number): string => {
         const cap = row.capacity as number | undefined;
         const unit = row.unit as string | undefined;
         return cap ? `${cap} ${unit || i18n.t('mes.process_flow.k5')}` : '-';

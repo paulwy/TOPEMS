@@ -104,7 +104,7 @@ export const assetSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const amount = row.purchase_amount as number | undefined;
         return amount ? `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}` : '-';
       },

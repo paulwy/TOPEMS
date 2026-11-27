@@ -38,7 +38,7 @@ export const approvalConfigSchema: EntitySchema = {
       required: true,
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = Number(row.amountThreshold ?? 0);
         return `¥${val.toLocaleString()}`;
       },
@@ -49,7 +49,7 @@ export const approvalConfigSchema: EntitySchema = {
       type: 'number',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.maxAmount;
         if (val === undefined || val === null) return i18n.t('finance.approval_config.k5');
         return `¥${Number(val).toLocaleString()}`;
@@ -92,7 +92,7 @@ export const approvalConfigSchema: EntitySchema = {
         ],
       },
       listWidth: 80,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const active = row.isActive !== false;
         return active
           ? i18n.t('finance.approval_config.k15')

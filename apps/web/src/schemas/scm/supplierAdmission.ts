@@ -175,7 +175,7 @@ export const supplierAdmissionSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = String(row.risk_level ?? 'medium');
         const config = riskLevelConfig[value] || riskLevelConfig.medium;
         return React.createElement(Chip, {

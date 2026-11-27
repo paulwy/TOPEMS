@@ -28,7 +28,7 @@ const paymentDetailFields = [
     required: true,
     defaultValue: 0,
     listWidth: 120,
-    renderCell: (row: Record<string, unknown>) => formatMoney(row.amount as number),
+    renderCell: (row: Record<string, unknown>, _index: number) => formatMoney(row.amount as number),
   },
   {
     name: 'method',
@@ -110,7 +110,7 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
       required: true,
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => formatMoney(row.amount as number),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatMoney(row.amount as number),
     },
     {
       name: 'tax_amount',
@@ -118,7 +118,7 @@ export const receivableSchema: EntitySchema & SchemaExtensions = {
       type: 'number',
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => formatMoney(row.tax_amount as number),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatMoney(row.tax_amount as number),
     },
     {
       name: 'invoice_date',
@@ -277,7 +277,7 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
       required: true,
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => formatMoney(row.amount as number),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatMoney(row.amount as number),
     },
     {
       name: 'tax_amount',
@@ -285,7 +285,7 @@ export const payableSchema: EntitySchema & SchemaExtensions = {
       type: 'number',
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => formatMoney(row.tax_amount as number),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatMoney(row.tax_amount as number),
     },
     {
       name: 'invoice_date',

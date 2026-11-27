@@ -60,7 +60,7 @@ const auditLogFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 180,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -74,7 +74,7 @@ const auditLogFields: SchemaField[] = [
     label: i18n.t('shared.audit_log.k12'),
     type: 'text',
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const name = (row.user_name || row.username || row.user_id || '-') as string;
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -109,7 +109,7 @@ const auditLogFields: SchemaField[] = [
     label: i18n.t('shared.audit_log.k13'),
     type: 'text',
     listWidth: 110,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography variant='body2'>{formatAction(row.action as string)}</Typography>
     ),
   },
@@ -118,7 +118,7 @@ const auditLogFields: SchemaField[] = [
     label: i18n.t('shared.audit_log.k14'),
     type: 'text',
     listWidth: 120,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -132,7 +132,7 @@ const auditLogFields: SchemaField[] = [
     label: i18n.t('shared.audit_log.ip_15'),
     type: 'text',
     listWidth: 130,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -146,7 +146,7 @@ const auditLogFields: SchemaField[] = [
     label: i18n.t('shared.audit_log.k16'),
     type: 'text',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const status =
         (row.status as string) ||
         (row.success === true ? 'success' : row.success === false ? 'error' : '');

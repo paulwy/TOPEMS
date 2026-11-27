@@ -53,7 +53,7 @@ export const reportSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 220,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const title = getConfig(row).title ?? '-';
         return React.createElement('span', null, title);
       },
@@ -66,7 +66,7 @@ export const reportSchema: EntitySchema = {
       defaultValue: 'rs_project_progress',
       options: { type: 'static', options: REPORT_TYPE_OPTIONS },
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const reportType = getConfig(row).report_type ?? '';
         const label = REPORT_TYPE_OPTIONS.find((o) => o.value === reportType)?.label || reportType;
         return React.createElement(Chip, {
@@ -84,7 +84,7 @@ export const reportSchema: EntitySchema = {
       sortable: true,
       listWidth: 100,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.row_count as number | undefined;
         return val != null ? String(val) : '-';
       },

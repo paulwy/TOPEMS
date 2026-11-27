@@ -99,7 +99,7 @@ export const getInstrumentMaintenanceSchema = (): EntitySchema => {
           options: MAINTENANCE_TYPE_OPTIONS,
         },
         listWidth: 120,
-        renderCell: (row: Record<string, unknown>) => {
+        renderCell: (row: Record<string, unknown>, _index: number) => {
           const type = String(row.maintenance_type || '');
           const label = getMaintenanceTypeLabels()[type] || type;
           const color = MAINTENANCE_TYPE_COLORS[type] || 'default';
@@ -140,7 +140,7 @@ export const getInstrumentMaintenanceSchema = (): EntitySchema => {
         label: i18n.t('lims.instrument_maintenance.k17'),
         type: 'number',
         listWidth: 110,
-        renderCell: (row: Record<string, unknown>) => {
+        renderCell: (row: Record<string, unknown>, _index: number) => {
           const cost = row.cost;
           if (cost === undefined || cost === null) return '-';
           return `¥${Number(cost).toFixed(2)}`;

@@ -28,7 +28,7 @@ export const migrationSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const name = String(row.name || '');
         return React.createElement('span', { style: { fontWeight: 500 } }, name);
       },
@@ -40,7 +40,7 @@ export const migrationSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return React.createElement(
           'span',
           {
@@ -64,7 +64,7 @@ export const migrationSchema: EntitySchema = {
       label: i18n.t('schema:admin.migration.tables.label'),
       type: 'number',
       listWidth: 90,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const tables = row.tables;
         if (tables === undefined || tables === null) return '-';
         return React.createElement('span', { style: { fontWeight: 500 } }, String(tables));

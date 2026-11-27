@@ -67,7 +67,7 @@ export const vehicleSchema: EntitySchema = {
       label: i18n.t('schema:erp.vehicle.mileage.label'),
       type: 'number',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const mileage = row.mileage as number | undefined;
         return mileage !== undefined ? mileage.toLocaleString() : '-';
       },

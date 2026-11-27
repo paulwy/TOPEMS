@@ -54,7 +54,7 @@ export const materialSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return React.createElement(
           Typography,
           { variant: 'body2', sx: { fontWeight: 'medium' } },
@@ -77,7 +77,7 @@ export const materialSchema: EntitySchema = {
       label: i18n.t('rd.material.k8'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.category ?? '');
         if (!val) return '-';
         return React.createElement(Chip, { label: val, size: 'small', variant: 'outlined' });
@@ -113,7 +113,7 @@ export const materialSchema: EntitySchema = {
       },
       sortable: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const status = getStockStatus(row);
         const label = STATUS_LABEL_MAP[status] || status;
         const color = STATUS_COLOR_MAP[status] || 'default';

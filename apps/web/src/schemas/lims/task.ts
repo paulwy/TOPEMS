@@ -81,7 +81,7 @@ export const taskSchema: EntitySchema = {
         ],
       },
       listWidth: 90,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const map: Record<string, string> = {
           high: i18n.t('lims.task.k14'),
           medium: i18n.t('lims.task.k15'),

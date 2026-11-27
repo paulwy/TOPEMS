@@ -172,7 +172,7 @@ export const getBudgetSchema = (): EntitySchema => ({
         type: 'api',
         loader: loadDepartments,
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         // 空值兜底：department_id / _department_name 均缺失时渲染 '-'，避免空值裸渲染告警
         const deptName = row._department_name as string | null | undefined;
         const deptId =
@@ -200,7 +200,7 @@ export const getBudgetSchema = (): EntitySchema => ({
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           null,
@@ -214,7 +214,7 @@ export const getBudgetSchema = (): EntitySchema => ({
       type: 'text',
       defaultValue: new Date().getFullYear().toString(),
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         // 空值兜底：fiscal_year 缺失时渲染 '-'，避免只渲染"年"后缀
         const fy = row.fiscal_year;
         if (fy === null || fy === undefined || fy === '') {
@@ -231,7 +231,7 @@ export const getBudgetSchema = (): EntitySchema => ({
       required: true,
       defaultValue: 0,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatMoney(
           row.total_budget as number | undefined,
           `var(--color-primary-main, ${designTokens.colors.primary.dark})`
@@ -244,7 +244,7 @@ export const getBudgetSchema = (): EntitySchema => ({
       defaultValue: 0,
       listWidth: 280,
       hideInForm: false,
-      renderCell: (row: Record<string, unknown>) => renderUsageBar(row),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderUsageBar(row),
     },
     {
       name: 'remaining_amount',
@@ -253,7 +253,7 @@ export const getBudgetSchema = (): EntitySchema => ({
       defaultValue: 0,
       listWidth: 140,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const remaining = Number(row.remaining_amount ?? 0);
         const total = Number(row.total_budget ?? 0);
         const color =
@@ -279,7 +279,7 @@ export const getBudgetSchema = (): EntitySchema => ({
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => renderStatusBadge(row),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderStatusBadge(row),
       validation: [{ type: 'maxLength', value: 50 }],
     },
   ],

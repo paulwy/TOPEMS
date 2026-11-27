@@ -14,6 +14,9 @@ export const REPORT_TYPE_CONFIG: Record<
   quarterly: { color: 'secondary', label: i18n.t('shared.report.k3') },
   annual: { color: 'primary', label: i18n.t('shared.report.k4') },
   custom: { color: 'default', label: i18n.t('shared.report.k5') },
+  // 后端存在 report_type='summary' 的报表（如系统自带 Smoke Report），
+  // 缺映射时列上会直接显示裸值 summary。
+  summary: { color: 'default', label: i18n.t('shared.report.k26') },
 };
 
 const REPORT_STATUS_CONFIG: Record<

@@ -85,7 +85,7 @@ export const bankAccountSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const balance = row.balance as number | undefined;
         return balance !== undefined
           ? `¥${balance.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`

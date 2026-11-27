@@ -26,7 +26,7 @@ export const productionRecordSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(Box, { sx: { fontWeight: 500 } }, String(row.order_id ?? '')),
     },
     {
@@ -48,7 +48,7 @@ export const productionRecordSchema: EntitySchema = {
       required: true,
       readonlyOnEdit: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Stack,
           { direction: 'row', spacing: 0.5, sx: { alignItems: 'center' } },
@@ -63,7 +63,7 @@ export const productionRecordSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Stack,
           { direction: 'row', spacing: 0.5, sx: { alignItems: 'center' } },
@@ -84,7 +84,7 @@ export const productionRecordSchema: EntitySchema = {
       required: true,
       readonlyOnEdit: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         row.start_time ? new Date(row.start_time as string).toLocaleString('zh-CN') : '-',
     },
     {
@@ -109,7 +109,7 @@ export const productionRecordSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           pending: {
             label: i18n.t('mes.production_record.k15'),

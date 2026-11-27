@@ -46,7 +46,7 @@ const mappingFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 200,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box>
         <Typography
           variant='body2'
@@ -82,7 +82,7 @@ const mappingFields: SchemaField[] = [
         label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const t = row.type as MappingType;
       return (
         <Chip
@@ -98,7 +98,7 @@ const mappingFields: SchemaField[] = [
     label: i18n.t('shared.mapping.k10'),
     type: 'text',
     listWidth: 140,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -112,7 +112,7 @@ const mappingFields: SchemaField[] = [
     label: i18n.t('shared.mapping.k11'),
     type: 'text',
     listWidth: 140,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -127,7 +127,7 @@ const mappingFields: SchemaField[] = [
     type: 'number',
     align: 'center',
     listWidth: 90,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         sx={{ fontWeight: 500 }}
@@ -148,7 +148,7 @@ const mappingFields: SchemaField[] = [
         label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const s = row.status as MappingStatus;
       return (
         <Chip
@@ -165,7 +165,7 @@ const mappingFields: SchemaField[] = [
     label: i18n.t('shared.mapping.k14'),
     type: 'datetime',
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'

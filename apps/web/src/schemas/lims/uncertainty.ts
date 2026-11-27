@@ -164,7 +164,7 @@ export const uncertaintyProjectSchema: EntitySchema = {
       type: 'date',
       showInList: false,
       showInDetail: true,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'evaluation_date'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'evaluation_date'),
     },
     {
       name: 'created_at',
@@ -173,7 +173,7 @@ export const uncertaintyProjectSchema: EntitySchema = {
       readonly: true,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'created_at'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'created_at'),
     },
     {
       name: 'notes',

@@ -23,7 +23,7 @@ export const mrpMaterialSummarySchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(Box, { sx: { fontWeight: 500 } }, String(row.material_code ?? '')),
     },
     {
@@ -37,7 +37,7 @@ export const mrpMaterialSummarySchema: EntitySchema = {
       label: i18n.t('scm.mrp_suggestion.k3'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         row.specification ? String(row.specification) : '-',
     },
     {
@@ -45,7 +45,7 @@ export const mrpMaterialSummarySchema: EntitySchema = {
       label: i18n.t('scm.mrp_suggestion.k4'),
       type: 'text',
       listWidth: 80,
-      renderCell: (row: Record<string, unknown>) => (row.unit ? String(row.unit) : '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => (row.unit ? String(row.unit) : '-'),
     },
     {
       name: 'total_required',
@@ -67,7 +67,7 @@ export const mrpMaterialSummarySchema: EntitySchema = {
       type: 'number',
       align: 'right',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.shortage as number | undefined;
         const color = (val ?? 0) > 0 ? 'error.main' : 'success.main';
         return React.createElement(Box, { sx: { fontWeight: 500, color } }, val ?? 0);
@@ -167,7 +167,7 @@ export const mrpSuggestionSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = String(row.suggestion_type ?? '');
         const config = suggestionTypeConfig[value];
         return React.createElement(Chip, {
@@ -185,7 +185,7 @@ export const mrpSuggestionSchema: EntitySchema = {
       hideInForm: true,
       align: 'right',
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const qty = row.required_quantity as number | undefined;
         const unit = (row.unit as string | undefined) || '';
         return `${qty ?? 0} ${unit}`.trim();
@@ -206,7 +206,7 @@ export const mrpSuggestionSchema: EntitySchema = {
       hideInForm: true,
       align: 'right',
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const qty = row.suggested_quantity as number | undefined;
         const unit = (row.unit as string | undefined) || '';
         return `${qty ?? 0} ${unit}`.trim();
@@ -219,7 +219,7 @@ export const mrpSuggestionSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.suggested_delivery_date as string | undefined;
         return val ? new Date(val).toLocaleDateString('zh-CN') : '-';
       },
@@ -248,7 +248,7 @@ export const mrpSuggestionSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = String(row.status ?? '');
         const config = statusColorConfig[value];
         return React.createElement(Chip, {

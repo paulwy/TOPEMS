@@ -40,7 +40,7 @@ export const locationSchema: EntitySchema = {
       name: 'warehouse_id',
       label: i18n.t('wms.location.k4'),
       type: 'text',
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return (row as Record<string, unknown>)._warehouse_name
           ? String((row as Record<string, unknown>)._warehouse_name)
           : String(row.warehouse_id || '-');
@@ -68,7 +68,7 @@ export const locationSchema: EntitySchema = {
           { value: 'returned', label: i18n.t('wms.location.k13') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const typeMap: Record<string, string> = {
           storage: i18n.t('wms.location.k14'),
           picking: i18n.t('wms.location.k15'),
@@ -87,7 +87,7 @@ export const locationSchema: EntitySchema = {
       label: i18n.t('wms.location.k21'),
       type: 'text',
       readonly: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const statusMap: Record<string, string> = {
           available: i18n.t('wms.location.k22'),
           partial: i18n.t('wms.location.k23'),

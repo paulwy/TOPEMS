@@ -101,7 +101,7 @@ export const planSchema: EntitySchema = {
       label: i18n.t('ehs.plan.k21'),
       type: 'number',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return React.createElement('span', null, `${row.progress || 0}%`);
       },
     },

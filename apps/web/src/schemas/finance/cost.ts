@@ -31,7 +31,7 @@ export const costSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {
@@ -51,7 +51,7 @@ export const costSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement('span', { style: { fontWeight: 500 } }, String(row.name || '')),
       validation: [{ type: 'maxLength', value: 255 }],
     },
@@ -61,7 +61,7 @@ export const costSchema: EntitySchema = {
       type: 'number',
       listWidth: 140,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatMoney(row.debit_balance as number | undefined),
     },
     {
@@ -70,7 +70,7 @@ export const costSchema: EntitySchema = {
       type: 'number',
       listWidth: 140,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatMoney(
           row.period_debit as number | undefined,
           `var(--color-success-main, ${designTokens.colors.success.dark})`
@@ -82,7 +82,7 @@ export const costSchema: EntitySchema = {
       type: 'number',
       listWidth: 140,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatMoney(
           row.period_credit as number | undefined,
           `var(--color-error-main, ${designTokens.colors.error['800']})`

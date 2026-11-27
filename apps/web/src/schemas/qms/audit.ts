@@ -51,7 +51,7 @@ export const auditSchema: EntitySchema = {
       label: i18n.t('qms.audit.k7'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.audit_type ?? '');
         const label =
           val === 'internal'
@@ -82,7 +82,7 @@ export const auditSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.status ?? '');
         const color = auditStatusColorMap[val] || 'default';
         const label = auditStatusLabelMap[val] || val;
@@ -112,7 +112,7 @@ export const auditSchema: EntitySchema = {
       label: i18n.t('qms.audit.k17'),
       type: 'text',
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const depts = (row.departments as string[]) || [];
         return depts.join(', ') || '-';
       },

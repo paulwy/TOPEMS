@@ -61,7 +61,7 @@ export const workflowMonitorSchema: EntitySchema = {
       type: 'text',
       readonly: true,
       listMinWidth: 200,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const exceptionType = row.exceptionType as ExceptionType;
         return React.createElement(
           Box,
@@ -116,7 +116,7 @@ export const workflowMonitorSchema: EntitySchema = {
       label: i18n.t('shared.monitor.k10'),
       type: 'text',
       readonly: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Typography,
           { variant: 'body2', color: 'text.secondary' },
@@ -132,7 +132,7 @@ export const workflowMonitorSchema: EntitySchema = {
         type: 'static',
         options: exceptionTypeOptions,
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const type = row.exceptionType as ExceptionType;
         return React.createElement(Chip, {
           size: 'small',
@@ -148,7 +148,7 @@ export const workflowMonitorSchema: EntitySchema = {
       type: 'text',
       readonly: true,
       listMinWidth: 280,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Typography,
           {
@@ -169,7 +169,7 @@ export const workflowMonitorSchema: EntitySchema = {
       label: i18n.t('shared.monitor.k13'),
       type: 'datetime',
       readonly: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Typography,
           { variant: 'body2', color: 'text.secondary' },
@@ -185,7 +185,7 @@ export const workflowMonitorSchema: EntitySchema = {
         type: 'static',
         options: statusOptions,
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const status = row.status as ExceptionStatus;
         return React.createElement(Chip, {
           size: 'small',

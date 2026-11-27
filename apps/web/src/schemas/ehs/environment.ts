@@ -54,7 +54,7 @@ export const environmentMonitorSchema: EntitySchema = {
       label: i18n.t('ehs.environment.k14'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.location as string | null | undefined;
         return v || '-';
       },
@@ -65,7 +65,7 @@ export const environmentMonitorSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.monitor_frequency as string | null | undefined;
         return v || '-';
       },
@@ -76,7 +76,7 @@ export const environmentMonitorSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.standard_value as string | null | undefined;
         return v || '-';
       },
@@ -88,7 +88,7 @@ export const environmentMonitorSchema: EntitySchema = {
       type: 'text',
       listWidth: 80,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.unit as string | null | undefined;
         return v || '-';
       },
@@ -100,7 +100,7 @@ export const environmentMonitorSchema: EntitySchema = {
       type: 'number',
       listWidth: 100,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.warning_threshold as number | null | undefined;
         return v != null ? String(v) : '-';
       },
@@ -111,7 +111,7 @@ export const environmentMonitorSchema: EntitySchema = {
       type: 'number',
       listWidth: 100,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.alarm_threshold as number | null | undefined;
         return v != null ? String(v) : '-';
       },

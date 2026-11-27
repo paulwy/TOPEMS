@@ -129,7 +129,7 @@ export const wipSchema: EntitySchema = {
       type: 'datetime',
       readonly: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         row.created_at ? new Date(row.created_at as string).toLocaleString('zh-CN') : '-',
     },
     {

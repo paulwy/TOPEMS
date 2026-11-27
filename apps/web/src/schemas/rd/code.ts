@@ -27,7 +27,7 @@ export const codeSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 220,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
@@ -59,7 +59,7 @@ export const codeSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.status ?? '');
         if (!val) return null;
         return React.createElement(Chip, {
@@ -75,7 +75,7 @@ export const codeSchema: EntitySchema = {
       type: 'number',
       listWidth: 100,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.progress;
         if (val === undefined || val === null) return null;
         return React.createElement(Typography, { variant: 'body2' }, `${Number(val)}%`);
@@ -94,7 +94,7 @@ export const codeSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.risklevel ?? '');
         if (!val) return null;
         return React.createElement(Chip, {

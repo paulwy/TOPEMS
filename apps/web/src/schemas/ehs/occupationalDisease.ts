@@ -22,7 +22,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
       readonlyOnEdit: true,
       listWidth: 150,
       showInForm: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.case_no as string | null | undefined;
         return v || '-';
       },
@@ -50,7 +50,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
       label: i18n.t('ehs.occupational_disease.k5'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.department as string | null | undefined;
         return v || '-';
       },
@@ -82,7 +82,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.hazard_factor as string | null | undefined;
         return v || '-';
       },
@@ -93,7 +93,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
       type: 'date',
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.diagnosis_date as string | null | undefined;
         return v ? new Date(v).toLocaleDateString('zh-CN') : '-';
       },
@@ -104,7 +104,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.disease_name as string | null | undefined;
         return v || '-';
       },
@@ -132,7 +132,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.severity as string;
         const map: Record<string, string> = {
           mild: i18n.t('ehs.occupational_disease.k23'),
@@ -160,7 +160,7 @@ export const occupationalDiseaseSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.status as string;
         const map: Record<string, string> = {
           suspected: i18n.t('ehs.occupational_disease.k33'),

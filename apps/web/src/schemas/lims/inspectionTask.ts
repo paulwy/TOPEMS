@@ -54,7 +54,7 @@ export const inspectionTaskSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => String(row.task_no || row.id || '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => String(row.task_no || row.id || '-'),
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
@@ -76,7 +76,7 @@ export const inspectionTaskSchema: EntitySchema = {
       label: i18n.t('lims.inspection_task.k15'),
       type: 'number',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const step = row.current_step;
         if (step === undefined || step === null) return '-';
         return `${i18n.t('shared.inspection_task.k0')}${step}${i18n.t('shared.inspection_task.k1')}`;
@@ -111,7 +111,7 @@ export const inspectionTaskSchema: EntitySchema = {
       label: i18n.t('lims.inspection_task.k29'),
       type: 'date',
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = row.started_at;
         if (!value) return '-';
         return new Date(value as string).toLocaleDateString('zh-CN');

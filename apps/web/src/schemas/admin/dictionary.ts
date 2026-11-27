@@ -16,7 +16,7 @@ const dictItemFields: SchemaField[] = [
     type: 'number',
     defaultValue: 0,
     listWidth: 70,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const order = row.sort_order ?? 0;
       return React.createElement(
         'span',
@@ -37,7 +37,7 @@ const dictItemFields: SchemaField[] = [
     required: true,
     validation: [{ type: 'required' }],
     listWidth: 120,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const code = String(row.code || '');
       return React.createElement('span', { style: { fontFamily: 'monospace' } }, code);
     },
@@ -50,7 +50,7 @@ const dictItemFields: SchemaField[] = [
     validation: [{ type: 'required' }],
     listWidth: 150,
     sortable: true,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const name = String(row.name || '');
       const hasParent = !!row.parentId;
       return React.createElement(
@@ -68,7 +68,7 @@ const dictItemFields: SchemaField[] = [
     label: i18n.t('schema:admin.dict_type.label'),
     type: 'text',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const value = String(row.value || '-');
       return React.createElement(
         'span',
@@ -88,7 +88,7 @@ const dictItemFields: SchemaField[] = [
     type: 'switch',
     defaultValue: 'active',
     listWidth: 80,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const status = String(row.status || 'active');
       const isActive = status === 'active';
       return React.createElement(

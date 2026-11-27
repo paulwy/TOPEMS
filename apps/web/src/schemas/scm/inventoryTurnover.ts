@@ -24,7 +24,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const style: React.CSSProperties = { fontWeight: 500 };
         return React.createElement('span', { style }, String(row.product_code ?? ''));
       },
@@ -40,7 +40,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
       label: i18n.t('scm.inventory_turnover.k4'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = row.category as string | undefined;
         if (!value) return '-';
         return React.createElement(Chip, {
@@ -57,7 +57,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
       align: 'right',
       sortable: true,
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.turnover_rate as number | undefined;
         if (val == null) return '-';
         const isLow = val < 3;
@@ -79,7 +79,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
       align: 'right',
       sortable: true,
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.turnover_days as number | undefined;
         if (val == null) return '-';
         const isHigh = val > 90;
@@ -99,7 +99,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
       type: 'number',
       align: 'right',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.average_inventory as number | null | undefined;
         return val != null ? val.toLocaleString() : '-';
       },
@@ -110,7 +110,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
       type: 'number',
       align: 'right',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.cost_of_goods_sold as number | null | undefined;
         if (val == null) return '-';
         return React.createElement(
@@ -125,7 +125,7 @@ export const inventoryTurnoverSchema: EntitySchema = {
       label: i18n.t('shared.inventory_turnover.abc_2'),
       type: 'text',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.abc_category as string | undefined;
         if (!val) return '-';
         const colorMap: Record<string, 'error' | 'warning' | 'success' | 'default'> = {

@@ -34,7 +34,7 @@ const eventFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 180,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         sx={{ fontFamily: 'monospace' }}
@@ -56,7 +56,7 @@ const eventFields: SchemaField[] = [
         { value: 'warning', label: i18n.t('shared.event.k10') },
       ],
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = EVENT_TYPE_CONFIG[row.event_type as string] || {
         label: String(row.event_type ?? ''),
         color: 'info' as const,
@@ -75,7 +75,7 @@ const eventFields: SchemaField[] = [
     label: i18n.t('shared.event.k11'),
     type: 'text',
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography variant='body2'>{String(row.connection_name ?? '')}</Typography>
     ),
   },
@@ -84,7 +84,7 @@ const eventFields: SchemaField[] = [
     label: i18n.t('shared.event.k12'),
     type: 'textarea',
     listWidth: 300,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -105,7 +105,7 @@ const eventFields: SchemaField[] = [
     type: 'number',
     align: 'right',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const count = row.records_count as number;
       return (
         <Typography
@@ -130,7 +130,7 @@ const eventFields: SchemaField[] = [
         { value: 'pending', label: i18n.t('shared.event.k17') },
       ],
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = EVENT_STATUS_CONFIG[row.status as string] || {
         label: String(row.status ?? ''),
         color: 'default' as const,

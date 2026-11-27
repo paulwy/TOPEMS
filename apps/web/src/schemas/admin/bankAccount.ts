@@ -58,7 +58,7 @@ export const bankAccountSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {
@@ -112,7 +112,7 @@ export const bankAccountSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const currency = String(row.currency || '');
         return CURRENCY_LABELS[currency] || currency;
       },
@@ -125,7 +125,7 @@ export const bankAccountSchema: EntitySchema = {
       hideInForm: true,
       listWidth: 140,
       align: 'right',
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {
@@ -155,7 +155,7 @@ export const bankAccountSchema: EntitySchema = {
         ],
       },
       listWidth: 90,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const status = String(row.status || 'active');
         const label = STATUS_LABELS[status] || status;
         const color = STATUS_COLORS[status] || 'default';
@@ -195,7 +195,7 @@ export const bankAccountSchema: EntitySchema = {
       type: 'switch',
       defaultValue: false,
       listWidth: 90,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const isPrimary = row.is_primary === true;
         if (!isPrimary) {
           return React.createElement(

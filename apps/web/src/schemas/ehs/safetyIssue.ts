@@ -48,7 +48,7 @@ export const safetyIssueSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.category as string;
         const map: Record<string, string> = {
           equipment: i18n.t('ehs.safety_issue.k13'),
@@ -79,7 +79,7 @@ export const safetyIssueSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.level as string;
         const map: Record<string, string> = {
           major: i18n.t('ehs.safety_issue.k26'),
@@ -107,7 +107,7 @@ export const safetyIssueSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.source as string;
         const map: Record<string, string> = {
           inspection: i18n.t('ehs.safety_issue.k36'),
@@ -124,7 +124,7 @@ export const safetyIssueSchema: EntitySchema = {
       label: i18n.t('ehs.safety_issue.k41'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.location as string | null | undefined;
         return v || '-';
       },
@@ -134,7 +134,7 @@ export const safetyIssueSchema: EntitySchema = {
       label: i18n.t('ehs.safety_issue.k42'),
       type: 'text',
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.reported_by as string | null | undefined;
         return v || '-';
       },
@@ -145,7 +145,7 @@ export const safetyIssueSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 160,
       showInForm: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.reported_at as string | null | undefined;
         return v ? new Date(v).toLocaleString('zh-CN') : '-';
       },

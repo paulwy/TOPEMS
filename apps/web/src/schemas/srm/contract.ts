@@ -75,7 +75,7 @@ export const contractSchema: EntitySchema = {
       type: 'number',
       sortable: true,
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const amount = row.total_amount as number | undefined;
         const currency = row.currency as string | undefined;
         if (amount == null) return '-';

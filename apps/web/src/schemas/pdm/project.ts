@@ -121,7 +121,7 @@ export const pdmProjectSchema: EntitySchema = {
       type: 'number',
       listWidth: 120,
       align: 'right',
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = row.budget as number;
         return value ? `¥${value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}` : '-';
       },
@@ -131,7 +131,7 @@ export const pdmProjectSchema: EntitySchema = {
       label: i18n.t('pdm.project.k29'),
       type: 'number',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => `${(row.progress as number) || 0}%`,
+      renderCell: (row: Record<string, unknown>, _index: number) => `${(row.progress as number) || 0}%`,
     },
     {
       name: 'member_count',

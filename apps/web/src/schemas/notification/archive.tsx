@@ -56,7 +56,7 @@ export const archiveNotificationSchema: EntitySchema = {
       label: i18n.t('shared.archive.k11'),
       type: 'text',
       listWidth: 280,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const n = row as unknown as ArchivedNotificationRow;
         return (
           <Box>
@@ -102,7 +102,7 @@ export const archiveNotificationSchema: EntitySchema = {
           { value: 'error', label: i18n.t('shared.archive.k21') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const type = (row as unknown as ArchivedNotificationRow).notification_type || 'info';
         const color = TYPE_COLORS[type] || 'default';
         const label = TYPE_LABELS[type] || type;
@@ -122,7 +122,7 @@ export const archiveNotificationSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => (
+      renderCell: (row: Record<string, unknown>, _index: number) => (
         <Typography
           variant='body2'
           color='text.secondary'
@@ -137,7 +137,7 @@ export const archiveNotificationSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => (
+      renderCell: (row: Record<string, unknown>, _index: number) => (
         <Typography
           variant='body2'
           color='text.secondary'

@@ -104,7 +104,7 @@ export const instrumentSchema: EntitySchema = {
       label: i18n.t('shared.instrument.k21'),
       type: 'date',
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = row.next_calibration_date;
         if (!value) return '-';
         const date = new Date(value as string);

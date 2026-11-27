@@ -55,7 +55,7 @@ export const evaluationSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.quality_score as number | undefined;
         return val != null ? val.toFixed(1) : '-';
       },
@@ -67,7 +67,7 @@ export const evaluationSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.delivery_score as number | undefined;
         return val != null ? val.toFixed(1) : '-';
       },
@@ -79,7 +79,7 @@ export const evaluationSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.service_score as number | undefined;
         return val != null ? val.toFixed(1) : '-';
       },
@@ -91,7 +91,7 @@ export const evaluationSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.price_score as number | undefined;
         return val != null ? val.toFixed(1) : '-';
       },
@@ -103,7 +103,7 @@ export const evaluationSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.overall_score as number | undefined;
         const style: React.CSSProperties = { fontWeight: 600 };
         return React.createElement('span', { style }, val != null ? val.toFixed(1) : '-');

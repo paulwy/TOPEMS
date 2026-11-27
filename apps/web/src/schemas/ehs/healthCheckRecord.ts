@@ -23,7 +23,7 @@ export const healthCheckRecordSchema: EntitySchema = {
       listWidth: 140,
       hideInForm: true,
       visibleWhen: () => false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.record_no as string | null | undefined;
         return v || '-';
       },
@@ -43,7 +43,7 @@ export const healthCheckRecordSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_record.k4'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.check_type as string | null | undefined;
         return v || '-';
       },
@@ -54,7 +54,7 @@ export const healthCheckRecordSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_record.k5'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.check_date as string | null | undefined;
         return v || '-';
       },
@@ -64,7 +64,7 @@ export const healthCheckRecordSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_record.k6'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.hospital as string | null | undefined;
         return v || '-';
       },
@@ -74,7 +74,7 @@ export const healthCheckRecordSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_record.k7'),
       type: 'textarea',
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.conclusion as string | null | undefined;
         return v || '-';
       },
@@ -84,7 +84,7 @@ export const healthCheckRecordSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_record.k8'),
       type: 'textarea',
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.abnormalitems;
         return Array.isArray(v) ? v.join(', ') || '-' : '-';
       },

@@ -69,7 +69,7 @@ export const receiptSchema: EntitySchema = {
       required: true,
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => formatMoney(row.amount as number),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatMoney(row.amount as number),
     },
     {
       name: 'receipt_date',

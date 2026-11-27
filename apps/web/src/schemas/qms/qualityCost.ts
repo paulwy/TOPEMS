@@ -53,7 +53,7 @@ export const qualityCostSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           { style: { fontWeight: 600, color: 'info.600' } },
@@ -76,7 +76,7 @@ export const qualityCostSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.costType ?? '');
         const color = costTypeColorMap[val] || 'default';
         const label = costTypeLabelMap[val] || val;
@@ -102,7 +102,7 @@ export const qualityCostSchema: EntitySchema = {
       type: 'number',
       required: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const currency = String(row.currency || '¥');
         const amount = Number(row.amount || 0).toLocaleString();
         return React.createElement('span', { style: { fontWeight: 500 } }, `${currency}${amount}`);
@@ -166,7 +166,7 @@ export const qualityCostSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.status ?? '');
         const color = costStatusColorMap[val] || 'default';
         const label = costStatusLabelMap[val] || val;

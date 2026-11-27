@@ -36,7 +36,7 @@ export const emergencyDrillSchema: EntitySchema = {
       label: i18n.t('ehs.emergency.k4'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.drill_date as string | null | undefined;
         return v || '-';
       },
@@ -47,7 +47,7 @@ export const emergencyDrillSchema: EntitySchema = {
       type: 'number',
       defaultValue: 0,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.duration_hours as number | null | undefined;
         return v != null ? String(v) : '-';
       },
@@ -57,7 +57,7 @@ export const emergencyDrillSchema: EntitySchema = {
       label: i18n.t('ehs.emergency.k6'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.location as string | null | undefined;
         return v || '-';
       },
@@ -70,7 +70,7 @@ export const emergencyDrillSchema: EntitySchema = {
       showInList: false,
       placeholder: i18n.t('ehs.emergency.k8'),
       colSpan: 2,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.participants;
         if (Array.isArray(v)) return v.join(', ') || '-';
         if (typeof v === 'string') return v || '-';

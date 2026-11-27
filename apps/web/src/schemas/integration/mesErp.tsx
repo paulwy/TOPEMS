@@ -19,7 +19,7 @@ const mesErpFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 220,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box>
         <Typography
           variant='body2'
@@ -50,7 +50,7 @@ const mesErpFields: SchemaField[] = [
     type: 'text',
     listWidth: 140,
     placeholder: i18n.t('shared.mes_erp.k7'),
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -66,7 +66,7 @@ const mesErpFields: SchemaField[] = [
     sortable: true,
     listWidth: 100,
     placeholder: i18n.t('shared.mes_erp.k9'),
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography variant='body2'>{String(row.quantity ?? '-')}</Typography>
     ),
   },
@@ -83,7 +83,7 @@ const mesErpFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = MES_ERP_STATUS_CONFIG[row.sync_status as string] || MES_ERP_STATUS_CONFIG.pending;
       return (
         <Chip
@@ -100,7 +100,7 @@ const mesErpFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -118,7 +118,7 @@ const mesErpFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     hideInForm: true,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'

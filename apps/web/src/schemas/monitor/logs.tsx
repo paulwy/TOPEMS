@@ -111,7 +111,7 @@ const getLogFields = (): SchemaField[] => [
     type: 'datetime',
     sortable: true,
     listWidth: 180,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const ts = row.timestamp as string;
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -138,14 +138,14 @@ const getLogFields = (): SchemaField[] => [
     label: i18n.t('shared.logs.k17'),
     type: 'select',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => getLevelChip(row.level as LogLevel),
+    renderCell: (row: Record<string, unknown>, _index: number) => getLevelChip(row.level as LogLevel),
   },
   {
     name: 'service',
     label: i18n.t('shared.logs.k18'),
     type: 'text',
     listWidth: 140,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Box
           sx={{
@@ -177,7 +177,7 @@ const getLogFields = (): SchemaField[] => [
     label: i18n.t('shared.logs.k19'),
     type: 'textarea',
     listWidth: 400,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const msg = row.message as string;
       const keyword = (row._searchQuery as string) || '';
       return (
@@ -205,7 +205,7 @@ const getLogFields = (): SchemaField[] => [
     label: 'Trace ID',
     type: 'text',
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
           variant='body2'
@@ -225,7 +225,7 @@ const getLogFields = (): SchemaField[] => [
     label: i18n.t('shared.logs.k20'),
     type: 'number',
     listWidth: 80,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const dur = row.duration_ms as number | undefined;
       if (!dur)
         return (
@@ -252,7 +252,7 @@ const getLogFields = (): SchemaField[] => [
     label: i18n.t('shared.logs.k21'),
     type: 'select',
     listWidth: 110,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const t = row.type as LogType;
       return (
         <Chip

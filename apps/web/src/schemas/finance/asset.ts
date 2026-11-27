@@ -25,7 +25,7 @@ export const assetSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {
@@ -45,7 +45,7 @@ export const assetSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 180,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement('span', { style: { fontWeight: 500 } }, String(row.name || '')),
       validation: [{ type: 'maxLength', value: 255 }],
     },
@@ -60,7 +60,7 @@ export const assetSchema: EntitySchema = {
         options: [{ value: 'asset', label: i18n.t('finance.asset.k5') }],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {
@@ -91,7 +91,7 @@ export const assetSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const direction = String(row.balance_direction || '');
         const label =
           direction === 'debit'
@@ -131,7 +131,7 @@ export const assetSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {
@@ -150,7 +150,7 @@ export const assetSchema: EntitySchema = {
       defaultValue: false,
       listWidth: 110,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const hasChildren = row.haschildren === true;
         return React.createElement(
           'span',
