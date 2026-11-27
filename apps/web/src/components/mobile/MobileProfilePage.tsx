@@ -58,7 +58,8 @@ const MobileSettingsPage: React.FC = () => {
           throw e;
         }),
   });
-  const displayName = profile?.full_name || user?.fullName || user?.username || '';
+  const displayName =
+    profile?.full_name || profile?.nickname || user?.fullName || user?.username || '';
   const displayEmail = profile?.email || user?.email || '';
   const displayRole =
     profile?.position ||

@@ -15,6 +15,8 @@ export interface UserProfile {
   id: string;
   username: string;
   full_name?: string;
+  /** 后端 GET /user/profile 实际下发字段（= IAM full_name） */
+  nickname?: string;
   email?: string;
   phone?: string;
   avatar_url?: string;
