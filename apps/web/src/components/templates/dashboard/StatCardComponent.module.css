@@ -3,17 +3,17 @@
 .il1 {
   width: 14px;
   height: 14px;
-  color: success.dark;
+  color: var(--success-text);
 }
 
 .il2 {
   width: 14px;
   height: 14px;
-  color: error.main;
+  color: var(--error-text);
 }
 
 .il3 {
   width: 14px;
   height: 14px;
-  color: text.disabled;
+  color: var(--text-disabled);
 }

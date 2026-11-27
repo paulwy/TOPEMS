@@ -3,5 +3,5 @@
 .il1 {
   width: 16px;
   height: 16px;
-  color: primary.main;
+  color: var(--color-primary);
 }

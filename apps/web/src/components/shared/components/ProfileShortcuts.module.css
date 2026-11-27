@@ -1,5 +1,5 @@
 /* ./pages/shared/components/ProfileShortcuts.tsx inline-style migration (auto) */
 
 .il1 {
-  color: common.white;
+  color: var(--on-solid);
 }

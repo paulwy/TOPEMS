@@ -2,5 +2,5 @@
 
 .il1 {
   margin-right: 8px;
-  color: text.secondary;
+  color: var(--text-secondary);
 }

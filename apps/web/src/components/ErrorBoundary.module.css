@@ -3,36 +3,36 @@
 .il1 {
   width: 32px;
   height: 32px;
-  color: error.main;
+  color: var(--error-text);
 }
 
 .il2 {
   width: 32px;
   height: 32px;
-  color: error.main;
+  color: var(--error-text);
 }
 
 .il3 {
   width: 32px;
   height: 32px;
-  color: error.main;
+  color: var(--error-text);
 }
 
 .il4 {
   width: 32px;
   height: 32px;
-  color: error.main;
+  color: var(--error-text);
 }
 
 .il5 {
   font-size: 20px;
-  font-weight: 700px;
-  color: text.primary;
+  font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: 2px;
 }
 
 .il6 {
-  color: text.secondary;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
@@ -48,7 +48,7 @@
 }
 
 .il9 {
-  font-weight: 600px;
+  font-weight: 600;
   font-size: 14px;
 }
 
@@ -58,7 +58,7 @@
 
 .il11 {
   font-size: 12px;
-  color: text.disabled;
+  color: var(--text-disabled);
   margin-bottom: 1px;
 }
 
@@ -73,7 +73,7 @@
 
 .il14 {
   font-size: 12px;
-  color: text.disabled;
+  color: var(--text-disabled);
   margin-bottom: 1px;
 }
 
@@ -88,7 +88,7 @@
 
 .il17 {
   font-size: 12px;
-  color: text.disabled;
+  color: var(--text-disabled);
   margin-bottom: 1px;
 }
 
@@ -103,7 +103,7 @@
 
 .il20 {
   font-size: 12px;
-  color: text.disabled;
+  color: var(--text-disabled);
   margin-bottom: 1px;
 }
 
@@ -118,7 +118,7 @@
 
 .il23 {
   font-size: 12px;
-  color: text.disabled;
+  color: var(--text-disabled);
   margin-bottom: 1px;
 }
 
@@ -134,7 +134,7 @@
 
 .il26 {
   font-size: 12px;
-  color: text.disabled;
+  color: var(--text-disabled);
   margin-bottom: 1px;
 }
 
@@ -145,7 +145,7 @@
 
 .il28 {
   font-size: 12px;
-  color: text.disabled;
+  color: var(--text-disabled);
   margin-bottom: 1px;
 }
 

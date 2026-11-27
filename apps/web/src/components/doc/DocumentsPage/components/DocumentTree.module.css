@@ -1,11 +1,11 @@
 /* ./pages/doc/DocumentsPage/components/DocumentTree.tsx inline-style migration (auto) */
 
 .il1 {
-  font-weight: 500px;
+  font-weight: 500;
 }
 
 .il2 {
-  font-weight: 500px;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

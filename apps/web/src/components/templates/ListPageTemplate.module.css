@@ -1,19 +1,19 @@
 /* ./components/templates/ListPageTemplate.tsx inline-style migration (auto) */
 
 .il1 {
-  color: text.disabled;
+  color: var(--text-disabled);
 }
 
 .il2 {
-  color: text.disabled;
+  color: var(--text-disabled);
 }
 
 .il3 {
-  color: error.main;
+  color: var(--error-text);
 }
 
 .il4 {
-  color: error.main;
+  color: var(--error-text);
 }
 
 .il5 {

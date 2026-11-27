@@ -1,7 +1,7 @@
 /* ./components/bi/ChartLibrary.tsx inline-style migration (auto) */
 
 .il1 {
-  font-weight: 600px;
+  font-weight: 600;
   color: var(--mui-palette-text-primary);
   margin-bottom: 2px;
 }

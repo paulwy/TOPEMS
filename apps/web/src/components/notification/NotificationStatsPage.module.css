@@ -1,7 +1,7 @@
 /* ./pages/notification/NotificationStatsPage.tsx inline-style migration (auto) */
 
 .il1 {
-  background-color: common.white;
+  background-color: var(--surface-1);
   border-radius: 8px;
   padding: 16px;
   display: flex;

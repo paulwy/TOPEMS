@@ -27,7 +27,7 @@
 }
 
 .il4 {
-  font-weight: 500px;
+  font-weight: 500;
   font-size: 14px;
   color: var(--text-primary);
 }
@@ -44,7 +44,7 @@
 
 .il7 {
   font-size: 12px;
-  font-weight: 600px;
+  font-weight: 600;
   color: var(--text-primary);
   margin-top: 4px;
 }
@@ -129,7 +129,7 @@
 }
 
 .il20 {
-  font-weight: 600px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -141,7 +141,7 @@
 
 .il22 {
   font-size: 14px;
-  font-weight: 600px;
+  font-weight: 600;
   color: var(--accent-primary-text);
 }
 
@@ -156,7 +156,7 @@
 }
 
 .il25 {
-  font-weight: 500px;
+  font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
@@ -214,7 +214,7 @@
 
 .il35 {
   font-size: 14px;
-  font-weight: 500px;
+  font-weight: 500;
   color: var(--text-primary);
 }
 

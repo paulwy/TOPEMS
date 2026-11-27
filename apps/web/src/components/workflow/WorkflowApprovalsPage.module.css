@@ -1,7 +1,7 @@
 /* ./pages/workflow/WorkflowApprovalsPage.tsx inline-style migration (auto) */
 
 .il1 {
-  font-weight: 500px;
+  font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 2px;
 }
@@ -27,7 +27,7 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 600px;
+  font-weight: 600;
 }
 
 .il5 {
@@ -140,7 +140,7 @@
 .il24 {
   font-size: 14px;
   color: var(--text-primary);
-  font-weight: 500px;
+  font-weight: 500;
 }
 
 .il25 {
@@ -160,7 +160,7 @@
 }
 
 .il28 {
-  font-weight: 500px;
+  font-weight: 500;
   color: var(--text-primary);
 }
 

@@ -3,29 +3,29 @@
 .il1 {
   width: 18px;
   height: 18px;
-  color: primary.main;
+  color: var(--color-primary);
 }
 
 .il2 {
   width: 18px;
   height: 18px;
-  color: success.main;
+  color: var(--success-text);
 }
 
 .il3 {
   width: 18px;
   height: 18px;
-  color: info.main;
+  color: var(--info-text);
 }
 
 .il4 {
   width: 18px;
   height: 18px;
-  color: warning.main;
+  color: var(--warning-text);
 }
 
 .il5 {
   width: 24px;
   height: 24px;
-  color: success.main;
+  color: var(--success-text);
 }

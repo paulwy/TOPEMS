@@ -8,7 +8,7 @@
 .il2 {
   width: 80px;
   height: 80px;
-  background: action.disabledBackground;
+  background: var(--surface-2);
   border-radius: 20px;
   display: flex;
   align-items: center;

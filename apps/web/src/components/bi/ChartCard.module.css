@@ -3,13 +3,13 @@
 .il1 {
   width: 16px;
   height: 16px;
-  color: success.main;
+  color: var(--success-text);
 }
 
 .il2 {
   width: 16px;
   height: 16px;
-  color: error.main;
+  color: var(--error-text);
   transform: rotate(180deg);
 }
 
@@ -28,7 +28,7 @@
 
 .il5 {
   font-size: 12px;
-  font-weight: 500px;
+  font-weight: 500;
 }
 
 .il6 {
@@ -49,7 +49,7 @@
 .il8 {
   width: 24px;
   height: 24px;
-  color: error.main;
+  color: var(--error-text);
 }
 
 .il9 {

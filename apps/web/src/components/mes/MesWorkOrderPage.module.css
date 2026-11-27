@@ -1,7 +1,7 @@
 /* src/pages/mes/MesWorkOrderPage.tsx 内联样式迁移（自动生成） */
 
 .il1 {
-  font-weight: 600px;
+  font-weight: 600;
   color: var(--accent-primary-text);
   margin-bottom: 2px;
 }
@@ -70,7 +70,7 @@
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  font-weight: 600px;
+  font-weight: 600;
 }
 
 .il13 {
@@ -128,7 +128,7 @@
 
 .il24 {
   font-size: 20px;
-  font-weight: 600px;
+  font-weight: 600;
   color: var(--accent-primary-text);
   margin-bottom: 4px;
 }
@@ -160,7 +160,7 @@
 
 .il30 {
   font-size: 13px;
-  font-weight: 600px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -204,5 +204,5 @@
 .il36 {
   font-size: 14px;
   color: var(--text-primary);
-  font-weight: 500px;
+  font-weight: 500;
 }
