@@ -46,8 +46,6 @@ export const DashboardPage: React.FC = () => {
       title: i18n.t('admin.dashboard_page.k27'),
       value: `${healthyCount}/${services.length || 0}`,
       icon: iconMap.Activity,
-      change: services.length ? Math.round((healthyCount / services.length) * 100) : 0,
-      changeLabel: '%',
       color: healthyCount === services.length && services.length > 0 ? 'success' : 'warning',
     },
     {

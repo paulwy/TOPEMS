@@ -94,26 +94,9 @@ export const DashboardPage: React.FC = () => {
         value: item.count,
       })) ?? [];
     return {
-      projectProgress:
-        projectProgress.length > 0
-          ? projectProgress
-          : [
-              { name: i18n.t('pm.dashboard_page.a_8'), value: 85 },
-              { name: i18n.t('pm.dashboard_page.b_9'), value: 60 },
-              { name: i18n.t('pm.dashboard_page.c_10'), value: 90 },
-              { name: i18n.t('pm.dashboard_page.d_11'), value: 45 },
-              { name: i18n.t('pm.dashboard_page.e_12'), value: 70 },
-            ],
+      projectProgress,
       taskTrend,
-      projectStatus:
-        projectStatus.length > 0
-          ? projectStatus
-          : [
-              { name: i18n.t('pm.dashboard_page.k13'), value: 40 },
-              { name: i18n.t('pm.dashboard_page.k14'), value: 25 },
-              { name: i18n.t('pm.dashboard_page.k15'), value: 20 },
-              { name: i18n.t('pm.dashboard_page.k16'), value: 15 },
-            ],
+      projectStatus,
     };
   }, [projectsQuery.data, trendData]);
   const loadStats = useCallback(() => {
@@ -127,8 +110,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('pm.dashboard_page.k17'),
         value: String(statsData.activeProjects),
         icon: <FolderKanban size={24} />,
-        change: 2,
-        changeLabel: i18n.t('pm.dashboard_page.k18'),
         color: 'primary',
       },
       {
@@ -136,8 +117,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('pm.dashboard_page.k19'),
         value: String(statsData.pendingTasks),
         icon: <CheckSquare size={24} />,
-        change: -15,
-        changeLabel: i18n.t('pm.dashboard_page.k20'),
         color: 'warning',
       },
       {
@@ -145,8 +124,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('pm.dashboard_page.k21'),
         value: String(statsData.completedTasks),
         icon: <Trophy size={24} />,
-        change: 8,
-        changeLabel: i18n.t('pm.dashboard_page.k22'),
         color: 'success',
       },
       {
@@ -154,8 +131,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('pm.dashboard_page.k23'),
         value: String(statsData.overdueRisks),
         icon: <AlertTriangle size={24} />,
-        change: -1,
-        changeLabel: i18n.t('pm.dashboard_page.k24'),
         color: 'error',
       },
     ],

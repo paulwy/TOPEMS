@@ -2282,5 +2282,6 @@
   "dashboard.dash_srm_desc": "Supplier Relationship Management System",
   "dashboard.dash_srm_name": "SRM Supplier Management",
   "bi.bi_index_page.empty": "No data",
-  "bi.data_analysis_page.avg_order_value": "Avg order value"
+  "bi.data_analysis_page.avg_order_value": "Avg order value",
+  "bi.bi_analytics_page.no_source": "No data source"
 }

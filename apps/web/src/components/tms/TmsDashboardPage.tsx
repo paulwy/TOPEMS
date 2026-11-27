@@ -84,8 +84,6 @@ const TmsDashboardPage: React.FC = () => {
         title: i18n.t('tms.tms_dashboard_page.k16'),
         value: dashboardData?.totalVehicles?.toLocaleString() ?? '-',
         icon: <Truck size={24} />,
-        change: 0,
-        changeLabel: i18n.t('tms.tms_dashboard_page.k17'),
         color: 'primary',
       },
       {
@@ -93,8 +91,6 @@ const TmsDashboardPage: React.FC = () => {
         title: i18n.t('tms.tms_dashboard_page.k18'),
         value: dashboardData?.totalDrivers?.toLocaleString() ?? '-',
         icon: <Users size={24} />,
-        change: 0,
-        changeLabel: i18n.t('tms.tms_dashboard_page.k19'),
         color: 'success',
       },
       {
@@ -102,8 +98,6 @@ const TmsDashboardPage: React.FC = () => {
         title: i18n.t('tms.tms_dashboard_page.k20'),
         value: dashboardData?.totalShipments?.toLocaleString() ?? '-',
         icon: <Package size={24} />,
-        change: 0,
-        changeLabel: i18n.t('tms.tms_dashboard_page.k21'),
         color: 'info',
       },
       {
@@ -111,8 +105,6 @@ const TmsDashboardPage: React.FC = () => {
         title: i18n.t('tms.tms_dashboard_page.k22'),
         value: dashboardData?.totalCarriers?.toLocaleString() ?? '-',
         icon: <CheckCircle size={24} />,
-        change: 0,
-        changeLabel: i18n.t('tms.tms_dashboard_page.k23'),
         color: 'warning',
       },
     ],

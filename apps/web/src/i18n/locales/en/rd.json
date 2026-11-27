@@ -2693,5 +2693,8 @@
   "rd.nav.rd-milestone_desc": "Milestones",
   "rd.nav.rd-doc_desc": "Documents",
   "rd.nav.rd-report_desc": "Reports",
-  "rd.nav.rd-settings_desc": "Settings"
+  "rd.nav.rd-settings_desc": "Settings",
+  "rd.rs_overview_page.builds_total": "Total builds",
+  "rd.rs_overview_page.bug_severity": "Bug severity",
+  "rd.rs_overview_page.status_unknown": "Unknown"
 }

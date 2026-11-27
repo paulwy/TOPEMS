@@ -163,26 +163,9 @@ export const DashboardPage: React.FC = () => {
     const monthlyTrend: { name: string; value: number }[] = [];
 
     return {
-      departmentDistribution:
-        departmentDistribution.length > 0
-          ? departmentDistribution
-          : [
-              { name: t('hrm.dashboard_page.tech_dept'), value: 85 },
-              { name: t('hrm.dashboard_page.product'), value: 45 },
-              { name: t('hrm.dashboard_page.marketing_dept'), value: 52 },
-              { name: t('hrm.dashboard_page.finance_dept'), value: 28 },
-              { name: t('hrm.dashboard_page.hr_department'), value: 18 },
-              { name: t('hrm.dashboard_page.operations_dept'), value: 28 },
-            ],
+      departmentDistribution,
       monthlyTrend,
-      statusDistribution:
-        statusDistribution.length > 0
-          ? statusDistribution
-          : [
-              { name: t('hrm.dashboard_page.probation_period'), value: 15 },
-              { name: t('hrm.dashboard_page.regular'), value: 75 },
-              { name: t('hrm.dashboard_page.internship'), value: 10 },
-            ],
+      statusDistribution,
     };
   }, [departmentsQuery.data, employeesQuery.data, t]);
 
@@ -193,8 +176,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('hrm.dashboard_page.total_employees'),
         value: String(statsData.totalEmployees),
         icon: <Users size={24} />,
-        change: 12,
-        changeLabel: i18n.t('hrm.dashboard_page.last_week'),
         color: 'primary',
       },
       {
@@ -202,8 +183,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('hrm.dashboard_page.this_month'),
         value: String(statsData.newHires),
         icon: <UserPlus size={24} />,
-        change: 3,
-        changeLabel: i18n.t('hrm.dashboard_page.last_week'),
         color: 'success',
       },
       {
@@ -211,8 +190,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('hrm.dashboard_page.training_course'),
         value: String(statsData.trainingCourses),
         icon: <GraduationCap size={24} />,
-        change: 5,
-        changeLabel: i18n.t('hrm.dashboard_page.last_week'),
         color: 'info',
       },
       {
@@ -220,8 +197,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('hrm.dashboard_page.performance_review'),
         value: String(statsData.performanceReviews),
         icon: <Award size={24} />,
-        change: 45,
-        changeLabel: i18n.t('hrm.dashboard_page.last_week'),
         color: 'warning',
       },
     ],

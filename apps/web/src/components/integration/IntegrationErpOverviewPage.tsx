@@ -190,8 +190,6 @@ export const IntegrationErpOverviewPage: React.FC = () => {
         title: i18n.t('integration.integration_erp_overview_page.k24'),
         value: String(total),
         icon: <GitMerge size={20} />,
-        change: 0,
-        changeLabel: i18n.t('integration.integration_erp_overview_page.k25'),
         color: 'primary',
       },
       {
@@ -199,8 +197,6 @@ export const IntegrationErpOverviewPage: React.FC = () => {
         title: i18n.t('integration.integration_erp_overview_page.k26'),
         value: `${successRate}%`,
         icon: <TrendingUp size={20} />,
-        change: 0,
-        changeLabel: i18n.t('integration.integration_erp_overview_page.k27'),
         color: 'success',
       },
       {
@@ -208,8 +204,6 @@ export const IntegrationErpOverviewPage: React.FC = () => {
         title: i18n.t('integration.integration_erp_overview_page.k28'),
         value: String(active),
         icon: <Database size={20} />,
-        change: 0,
-        changeLabel: i18n.t('integration.integration_erp_overview_page.k29'),
         color: 'info',
       },
       {
@@ -217,8 +211,6 @@ export const IntegrationErpOverviewPage: React.FC = () => {
         title: i18n.t('integration.integration_erp_overview_page.k30'),
         value: String(errors),
         icon: <AlertCircle size={20} />,
-        change: 0,
-        changeLabel: i18n.t('integration.integration_erp_overview_page.k31'),
         color: 'error',
       },
     ];

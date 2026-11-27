@@ -1,283 +1,195 @@
+/**
+ * 研发项目概览
+ *
+ * 数据全部来自 RD 真实列表端点：
+ *  - /api/rd/projects：项目总数 / 进行中 / 状态分布
+ *  - /api/rd/bugs：缺陷总数 / 严重度分布
+ *  - /api/rd/builds：构建总数 / 成功率 / 最近构建
+ * 原先写死的 24/12/67/1,842/94.2%/8、模块代码量 85000… 与五条示例动态已删除。
+ */
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import {
-  FolderKanban,
-  Activity,
-  Bug,
-  Code,
-  Hammer,
-  Rocket,
-  GitBranch,
-  FileCode,
-  Plus,
-  ShieldCheck,
-} from 'lucide-react';
+import { FolderKanban, Activity, Bug, Hammer, Rocket, GitBranch, ShieldCheck, Plus } from 'lucide-react';
 import i18n from '@/i18n';
-import { DashboardTemplate } from '@/components/templates';
-import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { DashboardTemplate, type StatCard, type ChartCard, type QuickAction, type RecentItem } from '@/components/templates';
 import { RD_PATHS } from '@/module-configs/rd/config';
-import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTheme } from '@mui/material';
+import { projectApi, bugApi, buildApi } from '@/api/rd';
+import type { Bug as BugRow, Build } from '@/api/rd/types';
 
-const projectStatusData = [
-  { name: i18n.t('rd.rs_overview_page.k12'), value: 12 },
-  { name: i18n.t('rd.rs_overview_page.k13'), value: 8 },
-  { name: i18n.t('rd.rs_overview_page.k14'), value: 3 },
-  { name: i18n.t('rd.rs_overview_page.k15'), value: 1 },
-];
+const PAGE_SIZE = 200;
 
-const monthlyBugTrendData = [
-  { name: i18n.t('pages.rs_overview_page.1_0'), value: 45 },
-  { name: i18n.t('pages.rs_overview_page.2_1'), value: 52 },
-  { name: i18n.t('pages.rs_overview_page.3_2'), value: 38 },
-  { name: i18n.t('pages.rs_overview_page.4_3'), value: 41 },
-  { name: i18n.t('pages.rs_overview_page.5_4'), value: 29 },
-  { name: i18n.t('pages.rs_overview_page.6_5'), value: 67 },
-];
+interface ProjectRow {
+  id: string;
+  name?: string;
+  status?: string;
+  created_at?: string;
+}
 
-const moduleCodeData = [
-  { name: i18n.t('rd.rs_overview_page.k16'), value: 85000 },
-  { name: i18n.t('rd.rs_overview_page.k17'), value: 120000 },
-  { name: i18n.t('rd.rs_overview_page.k18'), value: 45000 },
-  { name: i18n.t('rd.rs_overview_page.k19'), value: 32000 },
-  { name: i18n.t('rd.rs_overview_page.k20'), value: 18000 },
-];
+function groupBy<T>(rows: T[], key: (r: T) => string): Array<{ label: string; value: number }> {
+  const map = new Map<string, number>();
+  rows.forEach((r) => map.set(key(r), (map.get(key(r)) ?? 0) + 1));
+  return Array.from(map.entries()).map(([label, value]) => ({ label, value }));
+}
 
 const RsOverviewPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const loadingQuery = useQuery<boolean>({
-    queryKey: QUERY_KEYS.AD_HOC.RD_DASHBOARD_BASE,
-    queryFn: async () => true,
-    staleTime: Infinity,
+
+  const projectsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.RD_DASHBOARD_BASE, 'projects'],
+    queryFn: async () => {
+      const res = await projectApi.listProjects({ page: 1, page_size: PAGE_SIZE });
+      return res.success && res.data ? res.data : { projects: [], total: 0 };
+    },
   });
-  const loading = loadingQuery.isLoading;
+
+  const bugsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.RD_DASHBOARD_BASE, 'bugs'],
+    queryFn: async () => {
+      const res = await bugApi.listBugs({ page: 1, page_size: PAGE_SIZE });
+      return res.success && res.data ? res.data : { bugs: [], total: 0 };
+    },
+  });
+
+  const buildsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.RD_DASHBOARD_BASE, 'builds'],
+    queryFn: async () => {
+      const res = await buildApi.listBuilds({ page: 1, page_size: PAGE_SIZE });
+      return res.success && res.data ? res.data : { builds: [], total: 0 };
+    },
+  });
+
+  const loading = projectsQuery.isLoading || bugsQuery.isLoading || buildsQuery.isLoading;
+
+  const projects = ((projectsQuery.data as { projects?: ProjectRow[] })?.projects ?? []);
+  const bugs: BugRow[] = ((bugsQuery.data as { bugs?: BugRow[] })?.bugs ?? []);
+  const builds: Build[] = ((buildsQuery.data as { builds?: Build[] })?.builds ?? []);
+
+  const projectsTotal = Number((projectsQuery.data as { total?: number })?.total ?? 0);
+  const bugsTotal = Number((bugsQuery.data as { total?: number })?.total ?? 0);
+  const buildsTotal = Number((buildsQuery.data as { total?: number })?.total ?? 0);
+
+  const inProgress = projects.filter((p) =>
+    ['in_progress', 'active', 'running'].includes(String(p.status))
+  ).length;
+
+  const successRate = useMemo(() => {
+    if (!builds.length) return 0;
+    const ok = builds.filter((b) => ['success', 'succeeded', 'passed'].includes(String(b.status))).length;
+    return (ok / builds.length) * 100;
+  }, [builds]);
+
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'total-projects',
         title: i18n.t('rd.rs_overview_page.k0'),
-        value: '24',
+        value: String(projectsTotal),
         icon: <FolderKanban size={24} />,
-        change: 2,
-        changeLabel: i18n.t('rd.rs_overview_page.k1'),
         color: 'primary',
       },
       {
         id: 'in-progress',
         title: i18n.t('rd.rs_overview_page.k2'),
-        value: '12',
+        value: String(inProgress),
         icon: <Activity size={24} />,
-        change: 3,
-        changeLabel: i18n.t('rd.rs_overview_page.k3'),
         color: 'info',
       },
       {
         id: 'bug-count',
         title: i18n.t('rd.rs_overview_page.k4'),
-        value: '67',
+        value: String(bugsTotal),
         icon: <Bug size={24} />,
-        change: -15,
-        changeLabel: i18n.t('rd.rs_overview_page.k5'),
-        color: 'error',
+        color: 'warning',
       },
       {
-        id: 'code-commits',
-        title: i18n.t('rd.rs_overview_page.k6'),
-        value: '1,842',
-        icon: <Code size={24} />,
-        change: 28,
-        changeLabel: i18n.t('rd.rs_overview_page.k7'),
+        id: 'builds',
+        title: i18n.t('rd.rs_overview_page.builds_total'),
+        value: String(buildsTotal),
+        icon: <Hammer size={24} />,
         color: 'success',
       },
       {
         id: 'build-success',
         title: i18n.t('rd.rs_overview_page.k8'),
-        value: '94.2%',
-        icon: <Hammer size={24} />,
-        change: 2.1,
-        changeLabel: i18n.t('rd.rs_overview_page.k9'),
-        color: 'warning',
-      },
-      {
-        id: 'releases',
-        title: i18n.t('rd.rs_overview_page.k10'),
-        value: '8',
-        icon: <Rocket size={24} />,
-        change: 3,
-        changeLabel: i18n.t('rd.rs_overview_page.k11'),
-        color: 'success',
+        value: `${successRate.toFixed(1)}%`,
+        icon: <ShieldCheck size={24} />,
+        color: 'primary',
       },
     ],
-    []
+    [projectsTotal, inProgress, bugsTotal, buildsTotal, successRate]
   );
+
   const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'project-status',
         title: i18n.t('rd.rs_overview_page.k21'),
-        chart: (
-          <LazyChart
-            type='pie'
-            data={projectStatusData}
-          />
-        ),
-        height: 300,
+        type: 'pie',
+        data: groupBy(projects, (p) => String(p.status || i18n.t('rd.rs_overview_page.status_unknown'))),
       },
       {
-        id: 'bug-trend',
-        title: i18n.t('rd.rs_overview_page.k22'),
-        chart: (
-          <LazyChart
-            type='line'
-            data={monthlyBugTrendData}
-            xKey='name'
-            yKey='value'
-          />
-        ),
-        height: 300,
-      },
-      {
-        id: 'module-code',
-        title: i18n.t('rd.rs_overview_page.k23'),
-        chart: (
-          <LazyChart
-            type='bar'
-            data={moduleCodeData}
-            xKey='name'
-            yKey='value'
-          />
-        ),
-        height: 300,
+        id: 'bug-severity',
+        title: i18n.t('rd.rs_overview_page.bug_severity'),
+        type: 'bar',
+        data: groupBy(bugs, (b) => String(b.severity || i18n.t('rd.rs_overview_page.status_unknown'))),
       },
     ],
-    []
+    [projects, bugs]
   );
+
   const quickActions: QuickAction[] = useMemo(
     () => [
-      {
-        id: 'new-project',
-        label: i18n.t('rd.rs_overview_page.k24'),
-        icon: <Plus size={20} />,
-        onClick: () => navigate(RD_PATHS.projectCreate),
-        color: theme.palette.primary.dark,
-      },
-      {
-        id: 'bug-manage',
-        label: i18n.t('rd.rs_overview_page.k25'),
-        icon: <Bug size={20} />,
-        onClick: () => navigate(RD_PATHS.bug),
-        color: theme.palette.error.dark,
-      },
-      {
-        id: 'code-manage',
-        label: i18n.t('rd.rs_overview_page.k26'),
-        icon: <GitBranch size={20} />,
-        onClick: () => navigate(RD_PATHS.code),
-        color: theme.palette.secondary.dark,
-      },
-      {
-        id: 'build-manage',
-        label: i18n.t('rd.rs_overview_page.k27'),
-        icon: <Hammer size={20} />,
-        onClick: () => navigate(RD_PATHS.build),
-        color: theme.palette.warning.dark,
-      },
-      {
-        id: 'release',
-        label: i18n.t('rd.rs_overview_page.k28'),
-        icon: <Rocket size={20} />,
-        onClick: () => navigate(RD_PATHS.release),
-        color: theme.palette.teal[700],
-      },
-      {
-        id: 'review',
-        label: i18n.t('rd.rs_overview_page.k29'),
-        icon: <ShieldCheck size={20} />,
-        onClick: () => navigate(RD_PATHS.review),
-        color: theme.palette.success.dark,
-      },
+      { id: 'new-project', label: i18n.t('rd.rs_overview_page.k24'), icon: <Plus size={20} />, onClick: () => navigate(RD_PATHS.projectCreate), color: theme.palette.primary.dark },
+      { id: 'bug-manage', label: i18n.t('rd.rs_overview_page.k25'), icon: <Bug size={20} />, onClick: () => navigate(RD_PATHS.bug), color: theme.palette.error.dark },
+      { id: 'code-manage', label: i18n.t('rd.rs_overview_page.k26'), icon: <GitBranch size={20} />, onClick: () => navigate(RD_PATHS.code), color: theme.palette.secondary.dark },
+      { id: 'build-manage', label: i18n.t('rd.rs_overview_page.k27'), icon: <Hammer size={20} />, onClick: () => navigate(RD_PATHS.build), color: theme.palette.warning.dark },
+      { id: 'release', label: i18n.t('rd.rs_overview_page.k28'), icon: <Rocket size={20} />, onClick: () => navigate(RD_PATHS.release), color: theme.palette.teal[700] },
+      { id: 'review', label: i18n.t('rd.rs_overview_page.k29'), icon: <ShieldCheck size={20} />, onClick: () => navigate(RD_PATHS.review), color: theme.palette.success.dark },
     ],
-    [navigate]
+    [navigate, theme]
   );
+
   const recentItems: RecentItem[] = useMemo(
-    () => [
-      {
-        id: 'bug1',
-        title: 'BUG-2026-0142',
-        description: i18n.t('rd.rs_overview_page.k30'),
-        time: '2026-06-29 10:15',
-        icon: <Bug size={18} />,
-        status: 'error',
-        tags: [{ label: i18n.t('rd.rs_overview_page.k31'), color: theme.palette.error.dark }],
-        onClick: () => navigate(RD_PATHS.bug),
-      },
-      {
-        id: 'bug2',
-        title: 'BUG-2026-0141',
-        description: i18n.t('rd.rs_overview_page.k32'),
-        time: '2026-06-29 09:30',
-        icon: <Bug size={18} />,
-        status: 'warning',
-        tags: [{ label: i18n.t('rd.rs_overview_page.k33'), color: theme.palette.warning.dark }],
-        onClick: () => navigate(RD_PATHS.bug),
-      },
-      {
-        id: 'build1',
-        title: 'Build var(--color-secondary-900)',
-        description: i18n.t('rd.rs_overview_page.k34'),
-        time: '2026-06-29 08:00',
+    () =>
+      builds.slice(0, 5).map((b) => ({
+        id: b.id,
+        title: String((b as { build_number?: string; name?: string }).build_number || (b as { name?: string }).name || b.id),
+        description: String(b.status || ''),
+        time: (b as { created_at?: string }).created_at
+          ? new Date((b as { created_at: string }).created_at).toLocaleString('zh-CN', { hour12: false })
+          : '',
         icon: <Hammer size={18} />,
-        status: 'success',
+        status:
+          ['success', 'succeeded', 'passed'].includes(String(b.status))
+            ? ('success' as const)
+            : String(b.status).includes('fail')
+              ? ('error' as const)
+              : ('info' as const),
         onClick: () => navigate(RD_PATHS.build),
-      },
-      {
-        id: 'rel1',
-        title: 'v2.8.1',
-        description: i18n.t('rd.rs_overview_page.k35'),
-        time: '2026-06-28 18:30',
-        icon: <Rocket size={18} />,
-        status: 'success',
-        onClick: () => navigate(RD_PATHS.release),
-      },
-      {
-        id: 'commit1',
-        title: i18n.t('pages.rs_overview_page.feat_6'),
-        description: i18n.t('pages.rs_overview_page.main_7'),
-        time: '2026-06-28 17:45',
-        icon: <FileCode size={18} />,
-        status: 'info',
-        onClick: () => navigate(RD_PATHS.code),
-      },
-    ],
-    [navigate]
+      })),
+    [builds, navigate]
   );
+
   return (
-    <PageContainer
+    <DashboardTemplate
       title={i18n.t('rd.rs_overview_page.k36')}
-      padding={false}
-      maxWidth={false}
-    >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: i18n.t('rd.rs_overview_page.k38'), href: '/dashboard' },
-          { label: i18n.t('rd.rs_overview_page.k37') },
-        ]}
-        stats={stats}
-        charts={charts}
-        recentItems={recentItems}
-        recentTitle={i18n.t('rd.rs_overview_page.k39')}
-        quickActions={quickActions}
-        quickActionsTitle={i18n.t('rd.rs_overview_page.k40')}
-        loading={loading}
-      />
-    </PageContainer>
+      breadcrumbs={[
+        { label: i18n.t('rd.rs_overview_page.k38'), href: '/dashboard' },
+        { label: i18n.t('rd.rs_overview_page.k37') },
+      ]}
+      stats={stats}
+      charts={charts}
+      recentItems={recentItems}
+      recentTitle={i18n.t('rd.rs_overview_page.k39')}
+      quickActions={quickActions}
+      quickActionsTitle={i18n.t('rd.rs_overview_page.k40')}
+      loading={loading}
+    />
   );
 };
+
 export default RsOverviewPage;

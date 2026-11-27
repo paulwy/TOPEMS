@@ -64,8 +64,6 @@ const QmsDashboardPage: React.FC = () => {
       value: effectiveOverview?.totalInspections ?? 0,
       icon: <ClipboardCheck className={styles.il1} />,
       color: 'primary',
-      change: effectiveOverview?.totalInspections ? 5 : undefined,
-      changeLabel: i18n.t('qms.qms_dashboard_page.k2'),
     },
     {
       id: 'pass-rate',
@@ -74,8 +72,6 @@ const QmsDashboardPage: React.FC = () => {
         effectiveOverview?.passRate != null ? `${effectiveOverview.passRate.toFixed(1)}%` : '0%',
       icon: <CheckCircle className={styles.il2} />,
       color: 'success',
-      change: effectiveOverview?.passRate && effectiveOverview.passRate >= 95 ? 1.2 : -0.3,
-      changeLabel: i18n.t('qms.qms_dashboard_page.k4'),
     },
     {
       id: 'defect-count',
@@ -83,8 +79,6 @@ const QmsDashboardPage: React.FC = () => {
       value: effectiveOverview?.totalIssues ?? 0,
       icon: <XCircle className={styles.il3} />,
       color: 'error',
-      change: effectiveOverview?.totalIssues ? -2 : undefined,
-      changeLabel: i18n.t('qms.qms_dashboard_page.k6'),
     },
     {
       id: 'eightd-count',

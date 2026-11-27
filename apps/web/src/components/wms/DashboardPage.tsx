@@ -85,8 +85,6 @@ export const DashboardPage: React.FC = () => {
         title: t('wms.dashboard_page.stat_warehouses'),
         value: summary?.data?.warehouse_count?.toLocaleString() ?? '-',
         icon: <Warehouse size={24} />,
-        change: 0,
-        changeLabel: t('wms.dashboard_page.vs_last_period'),
         color: 'primary',
       },
       {
@@ -94,8 +92,6 @@ export const DashboardPage: React.FC = () => {
         title: t('wms.dashboard_page.stat_inventory'),
         value: summary?.data?.inventory_total?.toLocaleString() ?? '-',
         icon: <Package size={24} />,
-        change: 0,
-        changeLabel: t('wms.dashboard_page.vs_last_period'),
         color: 'success',
       },
       {
@@ -103,8 +99,6 @@ export const DashboardPage: React.FC = () => {
         title: t('wms.dashboard_page.stat_inbound_today'),
         value: summary?.data?.inbound_today?.toLocaleString() ?? '-',
         icon: <Truck size={24} />,
-        change: 0,
-        changeLabel: t('wms.dashboard_page.vs_last_period'),
         color: 'info',
       },
       {
@@ -112,8 +106,6 @@ export const DashboardPage: React.FC = () => {
         title: t('wms.dashboard_page.stat_alerts'),
         value: summary?.data?.alert_count?.toLocaleString() ?? '-',
         icon: <AlertCircle size={24} />,
-        change: summary?.data?.alert_critical ? -summary.data.alert_critical : 0,
-        changeLabel: t('wms.dashboard_page.vs_last_period'),
         color: 'warning',
       },
     ],

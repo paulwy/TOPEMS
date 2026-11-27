@@ -1513,5 +1513,8 @@
   "rd.nav.rd-formula-create": "配方管理新建",
   "rd.nav.rd-project-detail": "研发项目详情",
   "rd.nav.rd-experiment-detail": "实验管理详情",
-  "rd.nav.rd-formula-detail": "配方管理详情"
+  "rd.nav.rd-formula-detail": "配方管理详情",
+  "rd.rs_overview_page.builds_total": "构建总数",
+  "rd.rs_overview_page.bug_severity": "缺陷严重度分布",
+  "rd.rs_overview_page.status_unknown": "未知"
 }

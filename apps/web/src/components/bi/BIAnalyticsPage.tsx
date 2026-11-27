@@ -47,36 +47,15 @@ const ModuleCard = ({
   name,
   icon,
   stats,
-  trend,
   onSelect,
 }: {
   id: string;
   name: string;
   icon: string;
   stats: Record<string, string | number>;
-  trend: 'up' | 'down' | 'stable';
   onSelect: (id: string) => void;
   color: string;
 }) => {
-  const getTrendIcon = () => {
-    if (trend === 'up') return <TrendingUp sx={{ width: 16, height: 16, color: 'success.700' }} />;
-    if (trend === 'down')
-      return <TrendingDown sx={{ width: 16, height: 16, color: 'error.main' }} />;
-    return <Minus sx={{ width: 16, height: 16, color: 'text.disabled' }} />;
-  };
-
-  const getTrendValue = () => {
-    if (trend === 'up') return '+12.5%';
-    if (trend === 'down') return '-3.2%';
-    return '0%';
-  };
-
-  const getTrendTextColor = () => {
-    if (trend === 'up') return 'success.main';
-    if (trend === 'down') return 'error.main';
-    return 'text.secondary';
-  };
-
   return (
     <Box
       onClick={() => onSelect(id)}
@@ -139,25 +118,6 @@ const ModuleCard = ({
               >
                 {name}
               </Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  mt: 0.25,
-                }}
-              >
-                {getTrendIcon()}
-                <Typography
-                  variant='caption'
-                  sx={{
-                    fontWeight: 500,
-                    color: getTrendTextColor(),
-                  }}
-                >
-                  {getTrendValue()}
-                </Typography>
-              </Box>
             </Box>
           </Box>
           <ArrowRight
@@ -184,6 +144,11 @@ const ModuleCard = ({
             borderColor: 'divider',
           }}
         >
+          {Object.keys(stats).length === 0 && (
+            <Typography variant='caption' sx={{ color: 'text.secondary', gridColumn: '1 / -1', textAlign: 'center' }}>
+              暂无数据
+            </Typography>
+          )}
           {Object.entries(stats)
             .slice(0, 3)
             .map(([key, value]) => (
@@ -340,39 +305,8 @@ const BIAnalyticsPage = () => {
   const getModuleStats = (moduleId: string): Record<string, string | number> => {
     const data = modulesData[moduleId] as AnalyticsModuleData;
     if (!data) {
-      const fallbackStats: Record<string, Record<string, string | number>> = {
-        development: {
-          [i18n.t('bi.analytics.stats.total_projects')]: 120,
-          [i18n.t('bi.analytics.stats.in_progress')]: 45,
-          [i18n.t('bi.analytics.stats.completion_rate')]: '85%',
-        },
-        quality: {
-          [i18n.t('bi.analytics.stats.total_inspections')]: 3250,
-          [i18n.t('bi.analytics.stats.pass_rate')]: '97.8%',
-          [i18n.t('bi.analytics.stats.pending')]: 70,
-        },
-        production: {
-          [i18n.t('bi.analytics.stats.total_batches')]: 450,
-          [i18n.t('bi.analytics.stats.completed')]: 415,
-          [i18n.t('bi.analytics.stats.efficiency')]: '92%',
-        },
-        laboratory: {
-          [i18n.t('bi.analytics.stats.total_samples')]: 2450,
-          [i18n.t('bi.analytics.stats.completed_tests')]: 2150,
-          [i18n.t('bi.analytics.stats.instrument_usage')]: '87.5%',
-        },
-        ehs: {
-          [i18n.t('bi.analytics.stats.total_risks')]: 125,
-          [i18n.t('bi.analytics.stats.high_risks')]: 15,
-          [i18n.t('bi.analytics.stats.incidents')]: 18,
-        },
-        srm: {
-          [i18n.t('bi.analytics.stats.total_suppliers')]: 280,
-          [i18n.t('bi.analytics.stats.qualified')]: 220,
-          [i18n.t('bi.analytics.stats.avg_rating')]: 4.5,
-        },
-      };
-      return fallbackStats[moduleId] || {};
+      // 后端 analytics 明确返回 501（无真实数据源），不再编造模块 KPI
+      return {};
     }
 
     const statsMap: Record<string, Record<string, string | number>> = {
@@ -497,11 +431,6 @@ const BIAnalyticsPage = () => {
     );
   }
 
-  const fallbackChartData = modules.map((m) => ({
-    name: m.name,
-    value: (Object.values(m.stats)[0] as number) || 0,
-  }));
-
   const handleModuleSelect = (moduleId: string) => {
     navigate(BI_PATHS.module.replace(':moduleId', moduleId));
   };
@@ -511,9 +440,7 @@ const BIAnalyticsPage = () => {
     {
       id: 'total-projects',
       title: t('bi.bi_analytics_page.total_projects'),
-      value: (overview?.total_projects as number) ?? 120,
-      change: 12.5,
-      changeLabel: t('bi.bi_analytics_page.last_month'),
+      value: (overview?.total_projects as number) ?? 0,
       icon: <BarChart3 size={24} />,
       color: 'primary',
       onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'development')),
@@ -521,9 +448,7 @@ const BIAnalyticsPage = () => {
     {
       id: 'total-samples',
       title: t('bi.bi_analytics_page.total_samples'),
-      value: (overview?.total_samples as number) ?? 2450,
-      change: 8.3,
-      changeLabel: t('bi.bi_analytics_page.last_month'),
+      value: (overview?.total_samples as number) ?? 0,
       icon: <Database size={24} />,
       color: 'info',
       onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'laboratory')),
@@ -531,19 +456,15 @@ const BIAnalyticsPage = () => {
     {
       id: 'pass-rate',
       title: t('bi.bi_analytics_page.pass_rate'),
-      value: (overview?.pass_rate as string | number) ?? '97.8',
+      value: (overview?.pass_rate as string | number) ?? 0,
       unit: '%',
-      change: 0.5,
-      changeLabel: t('bi.bi_analytics_page.last_month'),
       icon: <CheckCircle size={24} />,
       color: 'success',
     },
     {
       id: 'active-risks',
       title: t('bi.bi_analytics_page.total_risks'),
-      value: (overview?.active_risks as number) ?? 15,
-      change: -3.2,
-      changeLabel: t('bi.bi_analytics_page.last_month'),
+      value: (overview?.active_risks as number) ?? 0,
       icon: <AlertCircle size={24} />,
       color: 'warning',
       onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'ehs')),
@@ -552,8 +473,7 @@ const BIAnalyticsPage = () => {
 
   // 构建图表数据
   const chartData =
-    (overview?.chartData as Array<{ name: string; value: number }> | undefined) ??
-    fallbackChartData;
+    (overview?.chartData as Array<{ name: string; value: number }> | undefined) ?? [];
 
   // 构建图表卡片
   const chartCards: ChartCardType[] = [
@@ -688,7 +608,6 @@ const BIAnalyticsPage = () => {
               name={module.name}
               icon={module.icon}
               stats={module.stats}
-              trend={module.trend}
               onSelect={handleModuleSelect}
               color={module.color}
             />
@@ -764,13 +683,13 @@ const BIAnalyticsPage = () => {
                 sx={{
                   px: 1.25,
                   py: 0.5,
-                  bgcolor: 'success.50',
-                  color: 'success.700',
+                  bgcolor: overview ? 'success.50' : 'warning.50',
+                  color: overview ? 'success.700' : 'warning.700',
                   fontWeight: 600,
                   borderRadius: 1,
                 }}
               >
-                {t('bi.bi_analytics_page.k8')}
+                {overview ? t('bi.bi_analytics_page.k8') : t('bi.bi_analytics_page.no_source')}
               </Typography>
             </Box>
             <Box
@@ -794,13 +713,13 @@ const BIAnalyticsPage = () => {
                 sx={{
                   px: 1.25,
                   py: 0.5,
-                  bgcolor: 'success.50',
-                  color: 'success.700',
+                  bgcolor: overview ? 'success.50' : 'warning.50',
+                  color: overview ? 'success.700' : 'warning.700',
                   fontWeight: 600,
                   borderRadius: 1,
                 }}
               >
-                {t('bi.bi_analytics_page.k10')}
+                {overview ? t('bi.bi_analytics_page.k10') : t('bi.bi_analytics_page.no_source')}
               </Typography>
             </Box>
           </Box>
