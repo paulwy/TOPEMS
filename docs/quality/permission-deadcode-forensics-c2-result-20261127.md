@@ -370,15 +370,19 @@
 - **边界与回退**：① 本轮仅覆盖 monitor 模块 11 个采样端点，未扩到其他模块写门；② reader 写端点全拦截于写门、未进 handler，admin 写端点未落业务库（acknowledge 空集合、其余参数校验失败），`monitor_thresholds` 等业务表无本轮新增行；③ 临时角色/用户为隔离库取证残留，收尾阶段随 `DELETE FROM iam.users WHERE username LIKE 'c2_%'` 级联，并清理 `core_roles` / `core_role_permissions` 对应临时行；④ 未造最小业务单据复核写门放行后落库/下游回传（仍属未立项扩面项）。
 - **产物**（`artifacts/audit/forensics-c2/` 与 `/tmp/topems-c2/`，gitignore）：`smoke-monitor-reader.json`（三档读/写端点状态码与响应体）；脚本 `smoke-monitor-reader.py`、建号 SQL `seed-monitor-reader.sql`；矩阵 `c2-matrix.json/.csv` 的 `monitor:admin` 行补 `c2_monitor_reader` 对照与三档注记；备份 `c2-matrix.v33-pre109.bak.json`。
 
-### 13.12 前端运行期动态菜单/按钮采集：环境搭建与产物侧交叉核验（#110，部分完成；浏览器 DOM 采集阻塞遗留）
+### 13.12 前端运行期动态菜单/按钮采集：浏览器登录闭环与三层消费点对账（#110）
 
-- **背景**：承接 §13.8 前端运行期对账盲区，计划登录隔离前端，按角色采集运行期动态菜单/按钮显隐与 SDK 鉴权点，与静态 `fe_refs` 对账。本轮先搭本地静态反代环境并完成不依赖浏览器登录的产物侧核验；浏览器渲染层 DOM 采集因登录阻塞未执行，记为遗留。
+- **背景**：承接 §13.8 前端运行期对账盲区，登录隔离前端，采集运行期动态菜单/按钮显隐与门控依据权限码，与静态 `fe_refs` 及 581 对账。采集口径：只读 `permissions` / `permission_cache` 与导航/按钮 DOM，不读取 `token` / `refresh_token`；不触 prod、不改鉴权、不注入令牌绕过。
 - **环境搭建（隔离，不触 prod）**：零依赖 Node 脚本 `/tmp/topems-c2/fe-proxy.mjs`（PID 73444，端口 4173）托管 `apps/web/dist`，`/api` 同源反代隔离实例 `127.0.0.1:8199`；首页 200、`/api/server/health` 200，未走 8099 / `topems_prod`。前端 `VITE_API_BASE_URL=/api`（相对路径），dist 未内嵌后端绝对地址。
-- **登录阻塞（未绕过、未代填）**：前端进入 `/login` 认证拦截页。后端脚本直连 `c2_admin` / `c2_tenant_admin` 登录 200（1158 / 1087 权），后备令牌调 `/api/core/menu/menus` 200，口令与授权面有效；浏览器表单两次 `POST /api/core/iam/auth/login` 返回 401，后端日志 `invalid password for user - c2_admin`。阻塞原因：口令文件 `/tmp/topems-c2/accounts.json` 在 macOS Finder 默认隐藏（realpath `/private/tmp/...`），且易把条目内 60 位 bcrypt `hash` 误当作 24 位顶层明文 `password`。按取证纪律未代填、未在会话中转述明文口令；前端无 URL 令牌旁路，会话仅从 localStorage 恢复，故未注入令牌绕过登录。
-- **产物侧交叉核验（本地静态，已完成）**：从 `apps/web/dist/assets/*.js` 编译产物提取权限码字面量与 581 对账，交集 **7** 个：`admin:dashboard:write`、`erp:general_ledger:read`、`finance:dashboard:write`、`lims:dashboard:write`、`rd:dashboard:write`、`report:dashboard:write`、`system:center:read`。逐码对照 #106 `fe-refs-recon.json`：7 码 `consumer_layers` / `consumer_refs` 均为空，命中全部落在 `catalog_def` / `catalog_list` 目录表与清单挂名层，**无组件守卫/按钮消费点**；与 §13.8 src 源码静态对账结论一致，编译后未引入静态扫描漏掉的拼接/字面量消费码。
-- **遗留待补（不据本轮静态/产物结论下死码定论）**：① 浏览器登录隔离前端后，采集渲染态导航菜单与 `PermissionGate` 受控按钮的实际显隐及所依据权限码，与 581 对账（采集口径：只读 `permissions` / `permission_cache` 与导航/按钮 DOM，不读取 `token` / `refresh_token`）；② SDK 远端动态注入菜单/按钮鉴权点；③ 多角色菜单面裁剪对比（#107 导航端点未按角色裁剪，仅 2 项 portal/erp）。
-- **口径结论**：本轮未改变矩阵主分类 活码 6 / 待复核 548 / 兜底 27；前端运行期渲染层是否存在 581 消费点，仍待浏览器登录后采集闭环。
-- **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`fe-bundle-crosscheck.json`（dist 字面量交集 7 码分层与目录挂名判定、口径注记）；反代脚本 `/tmp/topems-c2/fe-proxy.mjs`（取证收尾随 `/tmp/topems-c2/` 清理，进程停止）。
+- **登录阻塞与解除**：首轮前端落 `/login` 认证拦截，浏览器表单两次 401 `invalid password`。根因：口令文件 `/tmp/topems-c2/accounts.json` 中 `users.<name>.hash` 是 60 位 bcrypt 存根（不可逆、非口令），真正登录明文在文件**顶层 `password`**（24 位，全部 `c2_` 身份共用）；首轮误把 hash 当口令填入。用户在本机终端取顶层明文完成登录，进入主界面（`c2_admin`，1158 权，角色 `admin`）；全程未代填、未在会话转述明文，前端无 URL 令牌旁路。
+- **会话令牌覆盖（携带 ≠ 消费）**：当前会话 1158 权携带 581 候选码**全部**（581 ∩ 会话 = 581，含活码 6 / 待复核 548 / 兜底 27）。admin 令牌集整集覆盖候选集，故「令牌携带」对 admin 不具区分度，不构成前端/运行期消费证据；活码判定仍以后端运行期观测为准。
+- **后端运行期菜单面（复核 #107）**：后备令牌调隔离实例 `/api/core/menu/menus`，42 菜单节点、19 个权限码字段，**∩581 = 0**；运行期后端下发菜单面未挂任何候选死码。
+- **前端消费层精确扫描（源码层）**：排除 `config/permissions.ts` 权限目录字典与测试，提取门控直参与注册表绑定——`checkPermission` / `checkAnyPermission` / `checkAllPermissions` 直参、`requiredPermissions` 列表、registry `permission` 字段——共 **416** 个门控码，**∩581 = 0**。细粒度 `xxx:create/update/delete` 候选码在前端仅出现于 `permissions.ts` 目录表/清单挂名，未作为门控调用实参；模块级门控由 `canWriteModule(module)` 拼接 `:write/:create/:update`，不直引细粒度候选码。
+- **产物侧交叉核验（dist）**：`apps/web/dist/assets/*.js` 字面量 ∩581 = **7**：`admin:dashboard:write`、`erp:general_ledger:read`、`finance:dashboard:write`、`lims:dashboard:write`、`rd:dashboard:write`、`report:dashboard:write`、`system:center:read`。逐码对照 #106 `fe-refs-recon.json`：`consumer_layers` / `consumer_refs` 全空，命中均 `catalog_def` / `catalog_list` 目录挂名，无组件守卫/按钮消费点；编译后未引入静态扫描漏掉的拼接/字面量消费码。
+- **运行期 DOM 观测**：首屏与 `/mes/dashboard` 页面 DOM 内权限码字面量 0、门控属性（`data-permission` 等）命中 0；侧边可见 11 个一级域组，MES 看板页仅 3 枚通用按钮（首页/制造执行/刷新），无操作门控痕迹。无权限元素由 `ModuleGate` / `checkPermission` 判定后不渲染，DOM 不留 `data-permission` 或权限码痕迹，故被隐藏门控点无法从 DOM 反推，其绑定码以源码消费层扫描为准。
+- **三层对账结论**：后端菜单面、前端门控直参/绑定、dist 产物消费点三层均**无 581 码被实际门控消费**，与 #106 源码 `consumer_layers` 全空一致；矩阵主分类不变 **活码 6 / 待复核 548 / 兜底 27**。
+- **遗留待补（不据本轮结论下死码定论）**：① SDK 远端动态注入菜单/按钮鉴权点；② 多角色菜单面裁剪对比（本轮仅 admin 视图；#107 已记导航端点未按角色裁剪，仅 2 项 portal/erp）。
+- **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`fe-bundle-crosscheck.json`（dist 字面量交集 7 码分层与目录挂名判定）、`fe-runtime-consumer-recon.json`（前端门控直参/绑定 416 码与 ∩581 对账）、`fe-runtime-menu-button-recon.json`（本轮运行期三层对账汇总）；反代脚本 `/tmp/topems-c2/fe-proxy.mjs`（取证收尾随 `/tmp/topems-c2/` 清理，进程停止）。
 
 
 
