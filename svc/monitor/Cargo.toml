@@ -7,6 +7,7 @@ license.workspace = true
 description = "TOPEMS Monitor Service - Alerts, Metrics, SLO, Business Metrics, Health Checks (V68.1 A2.1 拆分)"
 
 [dependencies]
+num-traits = { workspace = true }
 axum = { workspace = true }
 tokio.workspace = true
 serde.workspace = true

@@ -7,11 +7,7 @@
 //! 注解（仅用于生成 OpenAPI spec，运行期不会被调用）。其余自由函数 handler
 //! 的注解保留在各自模块中。
 
-use crate::modules::{
-    accident, data_sync, ehs_plugin, emergency_drill, emergency_plan, environment,
-    environmental_compliance, hazard, hazardous_material, occupational_disease,
-    occupational_health, risk, safety, training,
-};
+use crate::modules::training;
 use utoipa::OpenApi;
 
 // =============================================================================

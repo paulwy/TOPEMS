@@ -826,7 +826,10 @@ pub async fn get_period_cost_report(
     let mut keys: Vec<(i32, u32)> = Vec::new();
     for _ in 0..6 {
         keys.push((cursor.year(), cursor.month()));
-        let first = cursor.date_naive().with_day(1).unwrap_or(cursor.date_naive());
+        let first = cursor
+            .date_naive()
+            .with_day(1)
+            .unwrap_or(cursor.date_naive());
         let prev_last = first - Duration::days(1);
         cursor = DateTime::<Utc>::from_naive_utc_and_offset(
             prev_last.and_hms_opt(12, 0, 0).unwrap_or_default(),
@@ -835,7 +838,8 @@ pub async fn get_period_cost_report(
     }
     keys.reverse();
     for (y, m) in keys {
-        let (material, labor, overhead) = month_costs.get(&(y, m)).copied().unwrap_or((0.0, 0.0, 0.0));
+        let (material, labor, overhead) =
+            month_costs.get(&(y, m)).copied().unwrap_or((0.0, 0.0, 0.0));
         monthly_costs.push(MonthlyCostItem {
             month: format!("{y}-{m:02}"),
             total_cost: material + labor + overhead,
