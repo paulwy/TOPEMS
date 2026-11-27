@@ -33,7 +33,7 @@ const reportFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 280,
-    renderCell: (row: Record<string, unknown>) =>
+    renderCell: (row: Record<string, unknown>, _index: number) =>
       React.createElement(
         Box,
         { sx: { display: 'flex', alignItems: 'center', gap: 1.5 } },
@@ -73,7 +73,7 @@ const reportFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = REPORT_TYPE_CONFIG[row.report_type as string] || {
         label: String(row.report_type ?? ''),
         color: 'default' as const,
@@ -91,7 +91,7 @@ const reportFields: SchemaField[] = [
     label: i18n.t('shared.report.k13'),
     type: 'text',
     listWidth: 120,
-    renderCell: (row: Record<string, unknown>) =>
+    renderCell: (row: Record<string, unknown>, _index: number) =>
       React.createElement(
         Box,
         { sx: { display: 'flex', alignItems: 'center', gap: 0.5 } },
@@ -109,7 +109,7 @@ const reportFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 140,
-    renderCell: (row: Record<string, unknown>) =>
+    renderCell: (row: Record<string, unknown>, _index: number) =>
       React.createElement(
         Box,
         { sx: { display: 'flex', alignItems: 'center', gap: 0.5 } },
@@ -133,7 +133,7 @@ const reportFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = REPORT_STATUS_CONFIG[row.status as string] || {
         label: String(row.status ?? ''),
         color: 'default' as const,
