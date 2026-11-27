@@ -416,9 +416,10 @@ pub async fn search_handler(
         };
         // 1) 用户级：ON CONFLICT DO UPDATE 刷新 searched_at
         let _ = sqlx::query(
-            "INSERT INTO public.search_recent (user_id, keyword, searched_at) VALUES ($1, $2, now()) \
+            "INSERT INTO public.search_recent (tenant_id, user_id, keyword, searched_at) VALUES ($1, $2, $3, now()) \
              ON CONFLICT (user_id, keyword) DO UPDATE SET searched_at = now()",
         )
+        .bind(recent_tenant_id)
         .bind(recent_user_id)
         .bind(recent_keyword.as_str())
         .execute(&mut scope)

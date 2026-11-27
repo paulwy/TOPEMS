@@ -3369,3 +3369,10 @@ pending_forward_patches:
     effect: "运行时目录发现候选（tenant_id 可空 + 该表 0 行 NULL + 策略名 tenant_isolation_*/rls_tenant_isolation + 标准 app.tenant_id 模板），仅 regexp 删除 ' OR (tenant_id IS NULL)' 片段；dev 收紧 48 条，生产纯空跑"
     destructive_scan: "无 DROP/UPDATE/DELETE；ALTER POLICY 重写判定表达式，改前快照 archive.rls_policy_before_20261127"
     note: "刻意豁免 *_public_read / rls_platform_read / rls_global_read / *_platform_maintain 四类平台共享策略；有 NULL 行的 34 张表与 fail-open 方言（current_setting(app.tenant_id,true) IS NULL）另批；rollback 从快照表原样还原"
+  # ===== 2026-11-27：B 组业务表 tenant_id 回填 + NOT NULL + 旁路收紧 =====
+  - version: "20261127240000"
+    file: "database/migrations/20261127240000_rls_business_tables_tenant_backfill.sql"
+    status: applied
+    effect: "18 张业务表：NULL 行快照到 archive.rls_backfill_tenant_before_20261127 → 归入默认租户 → ALTER COLUMN tenant_id SET NOT NULL → 同表策略删 OR (tenant_id IS NULL)；dev 处理 468 行、收紧 19 条策略，生产 6 张不存在其余 0 行纯空跑"
+    destructive_scan: "UPDATE 18 次（仅 tenant_id IS NULL 的行，最大单表 62 行，先落 jsonb 快照）；无 DELETE/DROP"
+    note: "配套代码修复：search_recent、core_user_roles（iam roles/user_permission/tenant handlers 三处）写入补 tenant_id 绑定；cargo check -p topems-search -p topems-unified-core --tests 通过"

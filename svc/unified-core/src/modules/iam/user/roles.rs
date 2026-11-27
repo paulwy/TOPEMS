@@ -597,10 +597,11 @@ pub async fn assign_user_role(
     };
 
     let result = sqlx::query(
-        "INSERT INTO public.core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        "INSERT INTO public.core_user_roles (user_id, role_id, tenant_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
     )
     .bind(user_uuid)
     .bind(role_uuid)
+    .bind(topems_shared_auth::get_tenant_id_from_claims(&claims))
     .execute(&mut rls_scope)
     .await;
 

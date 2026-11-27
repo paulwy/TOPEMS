@@ -195,7 +195,7 @@ pub async fn get_user_permissions(
 pub async fn update_user_permissions(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -304,10 +304,11 @@ pub async fn update_user_permissions(
     for role_id in &role_ids {
         let role_uuid = Uuid::parse_str(role_id).unwrap_or_default();
         if let Err(e) = sqlx::query(
-            "INSERT INTO public.core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            "INSERT INTO public.core_user_roles (user_id, role_id, tenant_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
         )
         .bind(user_uuid)
         .bind(role_uuid)
+        .bind(topems_shared_auth::get_tenant_id_from_claims(&claims))
         .execute(&mut *tx)
         .await
         {
