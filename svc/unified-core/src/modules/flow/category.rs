@@ -105,6 +105,13 @@ pub struct SortCategoriesRequest {
     pub ids: Vec<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/categories"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_categories(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -181,6 +188,16 @@ pub async fn list_categories(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/categories/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_category(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -218,6 +235,13 @@ pub async fn get_category(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/core/flow/categories"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_category(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -281,6 +305,16 @@ pub async fn create_category(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/core/flow/categories/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_category(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -354,6 +388,16 @@ pub async fn update_category(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /api/core/flow/categories/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_category(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -390,6 +434,13 @@ pub async fn delete_category(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories/active",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/categories/active"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_active_categories(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -427,6 +478,16 @@ pub async fn list_active_categories(
 
 /// 分类下的流程列表（预留：public.core_workflows 尚未含 category_id 列，先返回空列表；
 /// 待前端流程设计器落地、workflow 表加 category_id 后启用真实关联查询）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories/{id}/workflows",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/categories/{id}/workflows"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_category_workflows(
     State(_state): State<AppState>,
     Path(_id): Path<Uuid>,
@@ -446,6 +507,13 @@ pub async fn get_category_workflows(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories/tree",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/categories/tree"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_category_tree(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -501,6 +569,13 @@ pub async fn get_category_tree(
     ApiResponse::success(roots, "查询成功")
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/categories/sort",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/core/flow/categories/sort"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn sort_categories(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

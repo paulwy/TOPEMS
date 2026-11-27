@@ -311,6 +311,16 @@ async fn list_variables(
 
 // ===== instance 作用域 =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/instance/{instance_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("instance_id" = String, Path, description = "instance_id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/variables/instance/{instance_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_instance_variables(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -364,6 +374,17 @@ pub async fn list_instance_variables(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/instance/{instance_id}/{key}",
+    tag = "Auto-Backfill",
+    params(
+        ("instance_id" = String, Path, description = "instance_id"),
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/variables/instance/{instance_id}/{key}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_instance_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -392,6 +413,17 @@ pub async fn get_instance_variable(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/instance/{instance_id}/{key}",
+    tag = "Auto-Backfill",
+    params(
+        ("instance_id" = String, Path, description = "instance_id"),
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/variables/instance/{instance_id}/{key}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn set_instance_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -442,6 +474,16 @@ pub async fn set_instance_variable(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/instance/{instance_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("instance_id" = String, Path, description = "instance_id"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/variables/instance/{instance_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn set_instance_variables_batch(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -503,6 +545,17 @@ pub async fn set_instance_variables_batch(
     ApiResponse::success(serde_json::json!({"updated": updated}), "批量设置成功")
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/instance/{instance_id}/{key}",
+    tag = "Auto-Backfill",
+    params(
+        ("instance_id" = String, Path, description = "instance_id"),
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "delete /api/core/flow/variables/instance/{instance_id}/{key}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_instance_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -531,6 +584,17 @@ pub async fn delete_instance_variable(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/instance/{instance_id}/scope/{scope}",
+    tag = "Auto-Backfill",
+    params(
+        ("instance_id" = String, Path, description = "instance_id"),
+        ("scope" = String, Path, description = "scope"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/variables/instance/{instance_id}/scope/{scope}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_variables_by_scope(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -569,6 +633,17 @@ pub async fn get_variables_by_scope(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/instance/{instance_id}/{key}/history",
+    tag = "Auto-Backfill",
+    params(
+        ("instance_id" = String, Path, description = "instance_id"),
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/variables/instance/{instance_id}/{key}/history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_variable_history(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -628,6 +703,16 @@ pub async fn get_variable_history(
 
 // ===== task 作用域 =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/task/{task_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("task_id" = String, Path, description = "task_id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/variables/task/{task_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_task_variables(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -681,6 +766,17 @@ pub async fn list_task_variables(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/task/{task_id}/{key}",
+    tag = "Auto-Backfill",
+    params(
+        ("task_id" = String, Path, description = "task_id"),
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/variables/task/{task_id}/{key}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn set_task_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -786,6 +882,17 @@ pub async fn get_global_variables(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/variables/global/{workflow_id}/{key}",
+    tag = "Auto-Backfill",
+    params(
+        ("workflow_id" = String, Path, description = "workflow_id"),
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/variables/global/{workflow_id}/{key}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn set_global_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

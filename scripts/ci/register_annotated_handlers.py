@@ -11,20 +11,23 @@ ANN = re.compile(r'#\[utoipa::path\(\s*(get|post|put|delete|patch),', re.M)
 FN = re.compile(r'^(?:pub(?:\(crate\))? )?(?:async )?fn ([A-Za-z0-9_]+)', re.M)
 
 
-def module_path(root, fp):
+def module_path(root, fp, crate_prefix="crate::modules"):
     rel = os.path.relpath(fp, root).replace(".rs", "")
-    parts = rel.split(os.sep)
-    if parts[-1] == "mod":
+    parts = [x for x in rel.split(os.sep) if x]
+    if parts and parts[-1] == "mod":
         parts = parts[:-1]
-    if parts[0] != "modules":
-        return None
-    return "crate::" + "::".join(parts)
+    if os.path.basename(fp) == "mod.rs" and parts and parts[-1] == "mod":
+        parts = parts[:-1]
+    if not parts:
+        return crate_prefix
+    return crate_prefix + "::" + "::".join(parts)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--crate-root", required=True)
     ap.add_argument("--openapi", required=True)
+    ap.add_argument("--crate-prefix", default="crate::modules")
     ap.add_argument("--apply", action="store_true")
     args = ap.parse_args()
 
@@ -36,7 +39,7 @@ def main():
                 continue
             fp = os.path.join(d, name)
             src = open(fp).read()
-            mp = module_path(args.crate_root, fp)
+            mp = module_path(args.crate_root, fp, args.crate_prefix)
             if not mp:
                 continue
             for m in ANN.finditer(src):
@@ -58,12 +61,20 @@ def main():
 
     if not args.apply or not missing:
         return
-    marker = "\n),\n    tags("
-    if marker not in oi:
-        raise SystemExit("openapi.rs 里找不到 paths 块结束标记")
-    before, after = oi.split(marker, 1)
+    idx = oi.find("paths(")
+    if idx == -1:
+        raise SystemExit("openapi.rs 里找不到 paths(")
+    depth, i = 0, idx + len("paths")
+    while i < len(oi):
+        if oi[i] == "(":
+            depth += 1
+        elif oi[i] == ")":
+            depth -= 1
+            if depth == 0:
+                break
+        i += 1
     lines = "".join("\n        %s," % it[0] for it in missing)
-    open(args.openapi, "w").write(before + lines + marker + after)
+    open(args.openapi, "w").write(oi[:i] + lines + oi[i:])
     print("已登记 %d 条" % len(missing))
 
 

@@ -226,6 +226,13 @@ pub struct ForceActionRequest {
 // ─── Handlers: Instance lists by status ─────────────────────────────────────
 
 /// GET /monitor/instances — delegate to list_instances
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/instances",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/instances"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_monitor_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -242,6 +249,13 @@ pub async fn list_monitor_instances(
 }
 
 /// GET /monitor/instances/running
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/instances/running",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/instances/running"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn running_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -260,6 +274,13 @@ pub async fn running_instances(
 }
 
 /// GET /monitor/instances/completed
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/instances/completed",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/instances/completed"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn completed_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -278,6 +299,13 @@ pub async fn completed_instances(
 }
 
 /// GET /monitor/instances/rejected
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/instances/rejected",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/instances/rejected"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn rejected_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -296,6 +324,13 @@ pub async fn rejected_instances(
 }
 
 /// GET /monitor/instances/suspended
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/instances/suspended",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/instances/suspended"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn suspended_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -317,6 +352,13 @@ pub async fn suspended_instances(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/statistics
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/statistics",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/statistics"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_monitor_statistics(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -429,6 +471,13 @@ pub async fn get_monitor_statistics(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/analysis/{workflow_id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/analysis",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/analysis"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_workflow_analysis(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -540,6 +589,13 @@ pub async fn get_workflow_analysis(
 }
 
 /// GET /monitor/analysis/{workflow_id}/nodes
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/analysis/nodes",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/analysis/nodes"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_node_statistics(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -576,6 +632,13 @@ pub async fn get_node_statistics(
 }
 
 /// GET /monitor/analysis/{workflow_id}/bottlenecks
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/analysis/bottleneck",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/analysis/bottleneck"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_bottleneck_analysis(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -629,6 +692,13 @@ pub async fn get_bottleneck_analysis(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/analysis/efficiency
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/analysis/efficiency",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/analysis/efficiency"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_efficiency_analysis(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -710,6 +780,13 @@ pub async fn get_efficiency_analysis(
 }
 
 /// GET /monitor/analysis/trend
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/trends",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/trends"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_trend_data(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -757,6 +834,13 @@ pub async fn get_trend_data(
 }
 
 /// GET /monitor/analysis/users
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/users",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/users"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_user_stats(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -791,6 +875,13 @@ pub async fn get_user_stats(
 }
 
 /// GET /monitor/analysis/departments
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/departments",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/departments"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_department_stats(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -831,6 +922,13 @@ pub async fn get_department_stats(
 // ─── Handlers: Logs ──────────────────────────────────────────────────────────
 
 /// GET /monitor/logs — query from public.core_workflow_tasks as process log proxy
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/logs",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/logs"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_logs(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -902,6 +1000,16 @@ pub async fn list_logs(
 }
 
 /// GET /monitor/logs/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/logs/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/monitor/logs/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_log(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -964,6 +1072,16 @@ pub async fn get_log(
 }
 
 /// GET /monitor/logs/instance/{instance_id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/logs/instance/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/monitor/logs/instance/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_logs_by_instance(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1038,6 +1156,16 @@ pub async fn get_logs_by_instance(
 }
 
 /// GET /monitor/logs/workflow/{workflow_id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/logs/workflow/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/monitor/logs/workflow/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_logs_by_workflow(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1114,6 +1242,16 @@ pub async fn get_logs_by_workflow(
 }
 
 /// GET /monitor/logs/node/{workflow_id}/{node_id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/logs/node/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/monitor/logs/node/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_logs_by_node(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1192,6 +1330,16 @@ pub async fn get_logs_by_node(
 }
 
 /// GET /monitor/logs/user/{user_id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/logs/user/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/monitor/logs/user/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_logs_by_user(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1268,6 +1416,13 @@ pub async fn get_logs_by_user(
 // ─── Handlers: Realtime / Dashboard / Performance / SLA ─────────────────────
 
 /// GET /monitor/realtime
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/realtime",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/realtime"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_realtime_stats(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1347,6 +1502,13 @@ pub async fn get_realtime_stats(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/dashboard
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/dashboard",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/dashboard"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_dashboard_data(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1532,6 +1694,13 @@ pub async fn get_dashboard_data(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/performance
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/performance",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/performance"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_performance_metrics(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1639,6 +1808,13 @@ pub async fn get_performance_metrics(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/sla-compliance
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/sla",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/monitor/sla"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_sla_compliance(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1787,6 +1963,16 @@ async fn insert_force_audit(
 }
 
 /// POST /monitor/instances/{id}/skip
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/instances/{id}/skip",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/monitor/instances/{id}/skip"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn skip_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1864,6 +2050,16 @@ pub async fn skip_node(
 }
 
 /// POST /monitor/instances/{id}/force-complete
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/instances/{id}/complete",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/monitor/instances/{id}/complete"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn force_complete(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1940,6 +2136,16 @@ pub async fn force_complete(
 }
 
 /// POST /monitor/instances/{id}/force-terminate
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/monitor/instances/{id}/terminate",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/monitor/instances/{id}/terminate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn force_terminate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

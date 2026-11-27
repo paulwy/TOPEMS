@@ -12,15 +12,11 @@ METHODS = ("get", "post", "put", "delete", "patch")
 
 
 def norm(p, domain):
-    """注解 path 的归一化：/api/... 原样，其余相对路径挂到 /api/<domain> 下。"""
-    if p.startswith("/api"):
+    if p.startswith("/api/"):
         return p
+    if p.startswith("/" + domain):
+        return "/api" + p
     return "/api/%s%s" % (domain, p)
-
-
-def live(route_path, domain):
-    """路由相对 finance router 的真实路径。"""
-    return "/api/%s%s" % (domain, route_path)
 
 
 def iter_routes(crate_root):
@@ -75,9 +71,7 @@ def main():
 
     done, fixes, inserts = set(), [], []
     for fp, route_path, method, fn in iter_routes(args.crate_root):
-        want = live(route_path, args.domain)
-        if "cqrs_routes" in fp:
-            continue
+        want = norm(route_path, args.domain)
         found = find_fn(args.crate_root, fp, fn)
         if not found:
             continue
@@ -87,12 +81,7 @@ def main():
             continue
         done.add(key)
         idx = src.rfind("#[utoipa::path(", 0, pos)
-        has = False
-        if idx != -1:
-            end = src.find(")]", idx)
-            gap = src[end + 2:pos] if end != -1 else ""
-            if end != -1 and "fn " not in gap and "struct " not in gap and "impl " not in gap:
-                has = True
+        has = idx != -1 and "\n\n\n" not in src[idx:pos] and "fn " + fn in src[idx:pos + 20]
         if not has:
             inserts.append((f2, fn, want, method, pos))
             continue

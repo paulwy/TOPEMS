@@ -115,18 +115,6 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             get(modules::flow::monitor::get_monitor_statistics),
         )
         .route(
-            "/monitor/analysis",
-            get(modules::flow::monitor::get_workflow_analysis),
-        )
-        .route(
-            "/monitor/analysis/nodes",
-            get(modules::flow::monitor::get_node_statistics),
-        )
-        .route(
-            "/monitor/analysis/bottleneck",
-            get(modules::flow::monitor::get_bottleneck_analysis),
-        )
-        .route(
             "/monitor/analysis/efficiency",
             get(modules::flow::monitor::get_efficiency_analysis),
         )

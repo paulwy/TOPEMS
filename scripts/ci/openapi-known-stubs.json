@@ -256,6 +256,356 @@
     {
       "method": "GET",
       "path": "/api/core/file/attachments/{id}/download"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/flow/form-definitions/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/flow/form-instances/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/core/flow/tasks/{id}/attachments/{sub}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-definitions/categories",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-definitions/workflow/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-definitions/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-definitions/{id}/export",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-definitions/{id}/versions",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-definitions/{id}/versions/{sub}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/form-definition/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/my",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/my/drafts",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/workflow-instance/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/{id}/data",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/{id}/export",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances/{id}/history",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/health",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/instances/{id}/diagram",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/instances/{id}/history",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/instances/{id}/logs",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/instances/{id}/tasks",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/instances/{id}/variables",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/monitor/instances/{id}/diagram",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/monitor/instances/{id}/history",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/monitor/instances/{id}/tasks",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/monitor/instances/{id}/variables",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/monitor/logs/node/{id}/{sub}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/performance",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/tasks/{id}/attachments",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/tasks/{id}/comments",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/tasks/{id}/form",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/tasks/{id}/history",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/tasks/{id}/timeline",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/tasks/{id}/variables",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/workflows/{id}/compare/{sub}/{extra}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/workflows/{id}/export",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/import",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/activate",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/copy",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/deactivate",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/preview",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/publish",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/validate",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-definitions/{id}/versions/{sub}/rollback",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-instances",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-instances/{id}/draft",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/form-instances/{id}/submit",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/instances/{id}/activate",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/instances/{id}/terminate",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/instances/{id}/variables",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/performance/reset",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/rules/{id}/test",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/add-sign",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/attachments",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/comments",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/counter-sign",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/form",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/jump",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/reassign",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/return",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/transfer",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/urge",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/variables",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/tasks/{id}/withdraw",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/flow/workflows/{id}/copy",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/flow/form-definitions/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/flow/form-instances/{id}",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/flow/form-instances/{id}/data",
+      "note": "flow 前端契约兜底桩（返回空壳/成功回执，待上游真实能力）"
     }
   ]
 }

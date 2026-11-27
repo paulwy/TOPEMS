@@ -633,3 +633,38 @@ finance 起于 285 条前端调用、命中 95、缺口 190。结构结论全部
 - `POST /api/finance/voucher-templates/{template_id}/export`：后端 `export` 是 **GET**，前端按 POST 调，方法不一致。
 
 这 4 条要么补后端路由，要么改前端调用，属于功能口径决策，不在"补文档"范围内，先如实留缺口，不用别名糊过去。
+
+## 第 26 轮：workflow / flow（登记错文件 + 别名克隆 + 桩白名单）
+
+workflow 命名空间 211 条调用、命中 81、缺口 130。第一层原因不是缺注解，而是**注解写在一个没人引用的 openapi.rs 里**。
+
+### 关键发现：`modules/flow/openapi.rs` 是死文件
+
+`svc/unified-core/src/modules/flow/` 下有 131 条 `Auto-Backfill` 注解，看起来覆盖率不低；但 `flow/openapi.rs` 的 `FlowApiDoc` 在整个仓库里没有任何引用（`grep FlowApiDoc` 零命中）。真正被合并进单体 spec 的是 `svc/unified-core/src/modules/openapi.rs` 里的 86 条 `crate::modules::flow::*` 登记。往死文件里补登记的第一次尝试完全无效——spec 里 flow 路径数不升反降（83→73，因为偏好用别处的旧版本覆盖）。
+
+判断"哪个 openapi.rs 是真身"的方法：**grep 该 `OpenApi` 派生结构名**，有引用才是活的；只看目录结构会被同名文件骗。
+
+### 做法
+
+1. `register_annotated_handlers.py --crate-root svc/unified-core/src/modules/flow --crate-prefix crate::modules::flow --openapi svc/unified-core/src/modules/openapi.rs --apply`：补登记 62 条（另 84 条本就在册）。
+2. 新增 `scripts/ci/clone_route_aliases.py`：一个 handler 常挂在多个路由上（`/tasks/my` 同时是 `/tasks/my/involved|created|cc`），utoipa 只能声明一个 path，别名只能克隆。按"路由 → handler → 已登记注解 path"反查，把 operation 原样克隆到真实路径并写 `x-alias-of`。本轮克隆 16 条。
+3. 72 条 `stub_list/stub_action/stub_detail` 兜底路由写进 `scripts/ci/openapi-known-stubs.json`（64→134 条），对账时单列为"桩豁免"，不硬塞进 spec。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 3190 | **3243** |
+| spec 内 flow 路径 | 73 | **126** |
+| workflow 契约 调用/匹配/缺口 | 211/81/130 | **211/144/5** |
+| workflow 桩豁免 | 0 | **62** |
+| flow 无参 GET 实测 | — | **55 条 0 404** |
+
+### 剩下 5 条
+
+- `POST /api/core/flow/workflows/import`、`POST /api/core/flow/rules/batch`：后端没有这两个 POST。它们被 `/workflows/{id}`、`/rules/{id}` 的 GET/PUT/DELETE 参数路由吸住，所以 `OPTIONS` 返回 `allow: GET,HEAD,PUT,DELETE`、POST 直接 405。后端实际是 `/templates/import` 和 `/rules/batch-update`，属前后端命名不一致。
+- `GET|PUT|DELETE /api/core/flow/*/*`：前端 `utils.ts` 的通用 CRUD 模板字符串（`${endpoint}/${id}`），静态分析归一成 `*/*`，是工具口径假阴性。
+
+### 复用到其他命名空间的顺序
+
+`annotate_missing_routes.py`（补注解）→ `register_annotated_handlers.py`（补登记，注意选对真身 openapi.rs）→ `clone_route_aliases.py`（别名克隆）→ 桩分流到 `openapi-known-stubs.json` → HTTP 实测无参 GET。

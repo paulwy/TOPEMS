@@ -113,6 +113,13 @@ pub struct UpdateDelegateRequest {
 
 const COLUMNS: &str = "id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at";
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/delegates"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_delegates(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -196,6 +203,16 @@ pub async fn list_delegates(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/delegates/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_delegate(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -234,6 +251,13 @@ pub async fn get_delegate(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/core/flow/delegates"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_delegate(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -292,6 +316,16 @@ pub async fn create_delegate(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/core/flow/delegates/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_delegate(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -348,6 +382,16 @@ pub async fn update_delegate(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /api/core/flow/delegates/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_delegate(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -422,6 +466,16 @@ pub async fn set_delegate_status(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/{id}/activate",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/delegates/{id}/activate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn activate_delegate(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -443,6 +497,16 @@ pub async fn activate_delegate(
     set_delegate_status(&mut scope, id, "active").await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/{id}/deactivate",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/delegates/{id}/deactivate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn deactivate_delegate(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -464,6 +528,13 @@ pub async fn deactivate_delegate(
     set_delegate_status(&mut scope, id, "inactive").await
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/my",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/delegates/my"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_my_delegates(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -486,6 +557,13 @@ pub async fn get_my_delegates(
     .await
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/my/attorneys",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/delegates/my/attorneys"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_my_attorneys(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -508,6 +586,13 @@ pub async fn get_my_attorneys(
     .await
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/active",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/delegates/active"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_active_delegate(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -552,6 +637,16 @@ pub async fn get_active_delegate(
     ApiResponse::success(items, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/{id}/workflows",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/delegates/{id}/workflows"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_delegate_workflows(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -627,6 +722,16 @@ pub async fn get_delegate_workflows(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/delegates/check/{workflowId}",
+    tag = "Auto-Backfill",
+    params(
+        ("workflowId" = String, Path, description = "workflowId"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/delegates/check/{workflowId}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn check_delegation(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -411,6 +411,16 @@ pub async fn delete_rule(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/rules/workflow/{workflowId}",
+    tag = "Auto-Backfill",
+    params(
+        ("workflowId" = String, Path, description = "workflowId"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/rules/workflow/{workflowId}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_rules_by_workflow(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -454,6 +464,17 @@ pub async fn get_rules_by_workflow(
     ApiResponse::success(items, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/rules/node/{workflowId}/{nodeId}",
+    tag = "Auto-Backfill",
+    params(
+        ("workflowId" = String, Path, description = "workflowId"),
+        ("nodeId" = String, Path, description = "nodeId"),
+    ),
+    responses((status = 200, description = "get /api/core/flow/rules/node/{workflowId}/{nodeId}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_rules_by_node(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -494,6 +515,13 @@ pub async fn get_rules_by_node(
     ApiResponse::success(items, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/rules/type",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/core/flow/rules/type"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_rules_by_type(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -539,6 +567,16 @@ pub async fn set_rule_status(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/rules/{id}/activate",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/rules/{id}/activate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn activate_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -560,6 +598,16 @@ pub async fn activate_rule(
     set_rule_status(&mut scope, id, "active").await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/core/flow/rules/{id}/deactivate",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/core/flow/rules/{id}/deactivate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn deactivate_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
