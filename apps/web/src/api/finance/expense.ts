@@ -52,6 +52,16 @@ export const expenseApi = {
   delete: (id: string): Promise<ApiResponse<void>> => {
     return apiClient.finance.delete(`/expenses/${id}`);
   },
+
+  /**
+   * B357：支付专用动作（approved → paid）。
+   *
+   * 只写 status / reimbursed_at / updated_at，不接受金额等字段改写；
+   * 非 approved 记录服务端返回 409，前端仅在 status=approved 时展示入口。
+   */
+  pay: (id: string): Promise<ApiResponse<Expense>> => {
+    return apiClient.finance.post(`/expenses/${id}/pay`, {});
+  },
 };
 
 export default expenseApi;
