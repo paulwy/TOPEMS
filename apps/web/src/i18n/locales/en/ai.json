@@ -1340,5 +1340,8 @@
   "ai.ai_prompt_library_page.columns.name": "Name",
   "ai.ai_prompt_library_page.columns.category": "Category",
   "ai.ai_prompt_library_page.columns.usage_count": "Usage Count",
-  "ai.ai_prompt_library_page.columns.created_by": "Created By"
+  "ai.ai_prompt_library_page.columns.created_by": "Created By",
+  "ai.dashboard.stat.messages": "Messages",
+  "ai.dashboard.stat.active_users": "Active users",
+  "ai.dashboard.trend.empty": "No daily series yet"
 }

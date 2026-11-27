@@ -1,141 +1,139 @@
+/**
+ * APS 高级计划排程概览
+ *
+ * 数据来源（全部 MES 真实端点，APS 无独立服务）：
+ *  - GET /api/mes/production-plans：计划总数 / 目标总量 / 计划状态分布
+ *  - GET /api/mes/schedules：排程总数 / 排程状态分布
+ * 原先写死的 78.5%/92.3% 与两张 12/18/15… 假趋势图已删除：
+ * 利用率、预测准确率后端无口径（无产能采集），改为计划/排程真实状态分布。
+ */
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, CalendarCheck, Gauge, TrendingUp, ArrowRight } from 'lucide-react';
-import { PageContainer } from '@/components/common';
-import {
-  DashboardTemplate,
-  type StatCard,
-  type ChartCard,
-  type QuickAction,
-} from '@/components/templates';
+import { ClipboardList, CalendarCheck, Package, CalendarDays, ArrowRight } from 'lucide-react';
+import { DashboardTemplate, type StatCard, type ChartCard, type QuickAction } from '@/components/templates';
 import i18n from '@/i18n';
-import { LazyChart } from '@/components/charts';
 import { APS_PATHS } from '@/module-configs/aps/config';
 import { productionPlanApi, scheduleApi } from '@/api/aps';
+import type { ProductionPlan, Schedule } from '@/api/aps';
+
+const PAGE_SIZE = 200;
+
+function groupByStatus<T extends { status?: string }>(
+  rows: T[],
+  labels?: Record<string, string>
+): Array<{ label: string; value: number }> {
+  const map = new Map<string, number>();
+  rows.forEach((r) => {
+    const key = r.status || 'unknown';
+    map.set(key, (map.get(key) ?? 0) + 1);
+  });
+  return Array.from(map.entries()).map(([k, v]) => ({
+    label: labels?.[k] ?? k,
+    value: v,
+  }));
+}
 
 const ApsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+
   const plansQuery = useQuery({
-    queryKey: ['aps-dashboard-plans'],
+    queryKey: ['aps-dashboard-plans', PAGE_SIZE],
     queryFn: async () => {
-      const res = await productionPlanApi.list({ page: 1, pageSize: 1 });
-      return res.success && res.data ? res.data.total : 0;
+      const res = await productionPlanApi.list({ page: 1, pageSize: PAGE_SIZE });
+      return res.success && res.data ? res.data : { plans: [], total: 0 };
     },
     staleTime: 60 * 1000,
   });
+
   const schedulesQuery = useQuery({
-    queryKey: ['aps-dashboard-schedules'],
+    queryKey: ['aps-dashboard-schedules', PAGE_SIZE],
     queryFn: async () => {
-      const res = await scheduleApi.list({ page: 1, pageSize: 1 });
-      return res.success && res.data ? res.data.total : 0;
+      const res = await scheduleApi.list({ page: 1, pageSize: PAGE_SIZE });
+      return res.success && res.data ? res.data : { schedules: [], total: 0 };
     },
     staleTime: 60 * 1000,
   });
-  const loadingQuery = useQuery<boolean>({
-    queryKey: ['aps-dashboard-loading'],
-    queryFn: async () => true,
-    staleTime: Infinity,
-  });
-  const loading = loadingQuery.isLoading || plansQuery.isLoading || schedulesQuery.isLoading;
-  const lineData = useMemo(
-    () => [
-      { name: i18n.t('aps.aps_dashboard_page.k0'), value: 12 },
-      { name: i18n.t('aps.aps_dashboard_page.k1'), value: 18 },
-      { name: i18n.t('aps.aps_dashboard_page.k2'), value: 15 },
-      { name: i18n.t('aps.aps_dashboard_page.k3'), value: 22 },
-      { name: i18n.t('aps.aps_dashboard_page.k4'), value: 19 },
-      { name: i18n.t('aps.aps_dashboard_page.k5'), value: 8 },
-      { name: i18n.t('aps.aps_dashboard_page.k6'), value: 5 },
-    ],
-    []
+
+  const loading = plansQuery.isLoading || schedulesQuery.isLoading;
+
+  const plans: ProductionPlan[] = (plansQuery.data as { plans?: ProductionPlan[] })?.plans ?? [];
+  const schedules: Schedule[] =
+    (schedulesQuery.data as { schedules?: Schedule[] })?.schedules ?? [];
+  const plansTotal = Number((plansQuery.data as { total?: number })?.total ?? 0);
+  const schedulesTotal = Number((schedulesQuery.data as { total?: number })?.total ?? 0);
+
+  const targetQty = useMemo(
+    () => plans.reduce((sum, p) => sum + (Number(p.target_quantity) || 0), 0),
+    [plans]
   );
-  const barData = useMemo(
-    () => [
-      { name: i18n.t('aps.aps_dashboard_page.a_7'), value: 78 },
-      { name: i18n.t('aps.aps_dashboard_page.b_8'), value: 92 },
-      { name: i18n.t('aps.aps_dashboard_page.c_9'), value: 65 },
-      { name: i18n.t('aps.aps_dashboard_page.d_10'), value: 88 },
-      { name: i18n.t('aps.aps_dashboard_page.e_11'), value: 54 },
-    ],
-    []
-  );
+
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'plans',
         title: i18n.t('aps.aps_dashboard_page.k12'),
-        value: String(plansQuery.data ?? 0),
+        value: String(plansTotal),
         icon: <ClipboardList size={24} />,
-        change: 4,
-        changeLabel: i18n.t('aps.aps_dashboard_page.k13'),
         color: 'primary',
       },
       {
         id: 'schedules',
         title: i18n.t('aps.aps_dashboard_page.k14'),
-        value: String(schedulesQuery.data ?? 0),
+        value: String(schedulesTotal),
         icon: <CalendarCheck size={24} />,
-        change: 12,
-        changeLabel: i18n.t('aps.aps_dashboard_page.k15'),
         color: 'info',
       },
       {
-        id: 'utilization',
-        title: i18n.t('aps.aps_dashboard_page.k16'),
-        value: '78.5%',
-        icon: <Gauge size={24} />,
-        change: 3,
-        changeLabel: i18n.t('aps.aps_dashboard_page.k17'),
+        id: 'target-qty',
+        title: i18n.t('aps.aps_dashboard_page.target_quantity'),
+        value: targetQty.toLocaleString('zh-CN'),
+        icon: <Package size={24} />,
         color: 'success',
       },
       {
-        id: 'accuracy',
-        title: i18n.t('aps.aps_dashboard_page.k18'),
-        value: '92.3%',
-        icon: <TrendingUp size={24} />,
-        change: -2,
-        changeLabel: i18n.t('aps.aps_dashboard_page.k19'),
+        id: 'plan-periods',
+        title: i18n.t('aps.aps_dashboard_page.plan_periods'),
+        value: String(
+          new Set(plans.map((p) => p.start_date?.slice(0, 7)).filter(Boolean)).size
+        ),
+        icon: <CalendarDays size={24} />,
         color: 'warning',
       },
     ],
-    [plansQuery.data, schedulesQuery.data]
+    [plansTotal, schedulesTotal, targetQty, plans]
   );
+
+  const planStatusLabels = useMemo(
+    () => ({
+      draft: i18n.t('aps.aps_dashboard_page.status_draft'),
+      submitted: i18n.t('aps.aps_dashboard_page.status_submitted'),
+      approved: i18n.t('aps.aps_dashboard_page.status_approved'),
+      rejected: i18n.t('aps.aps_dashboard_page.status_rejected'),
+      released: i18n.t('aps.aps_dashboard_page.status_released'),
+      completed: i18n.t('aps.aps_dashboard_page.status_completed'),
+    }),
+    []
+  );
+
   const charts: ChartCard[] = useMemo(
     () => [
       {
-        id: 'schedule-trend',
-        title: i18n.t('aps.aps_dashboard_page.k20'),
-        chart: (
-          <LazyChart
-            type='line'
-            data={lineData}
-            xKey='name'
-            yKey='value'
-            height={300}
-          />
-        ),
-        height: 300,
-        type: 'line',
+        id: 'plan-status',
+        title: i18n.t('aps.aps_dashboard_page.k29'),
+        type: 'pie',
+        data: groupByStatus(plans, planStatusLabels),
       },
       {
-        id: 'capacity-utilization',
-        title: i18n.t('aps.aps_dashboard_page.k21'),
-        chart: (
-          <LazyChart
-            type='bar'
-            data={barData}
-            xKey='name'
-            yKey='value'
-            height={300}
-          />
-        ),
-        height: 300,
+        id: 'schedule-status',
+        title: i18n.t('aps.aps_dashboard_page.k30'),
         type: 'bar',
+        data: groupByStatus(schedules),
       },
     ],
-    [lineData, barData]
+    [plans, schedules, planStatusLabels]
   );
+
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
@@ -153,28 +151,22 @@ const ApsDashboardPage: React.FC = () => {
     ],
     [navigate]
   );
+
   return (
-    <PageContainer
+    <DashboardTemplate
       title={i18n.t('aps.aps_dashboard_page.k24')}
       subtitle={i18n.t('aps.aps_dashboard_page.k25')}
-      padding={false}
-      maxWidth={false}
-    >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: i18n.t('aps.aps_dashboard_page.k26'), href: '/dashboard' },
-          { label: i18n.t('aps.aps_dashboard_page.k27') },
-        ]}
-        stats={stats}
-        charts={charts}
-        quickActions={quickActions}
-        quickActionsTitle={i18n.t('aps.aps_dashboard_page.k28')}
-        loading={loading}
-      />
-    </PageContainer>
+      breadcrumbs={[
+        { label: i18n.t('aps.aps_dashboard_page.k26'), href: '/dashboard' },
+        { label: i18n.t('aps.aps_dashboard_page.k27') },
+      ]}
+      stats={stats}
+      charts={charts}
+      quickActions={quickActions}
+      quickActionsTitle={i18n.t('aps.aps_dashboard_page.k28')}
+      loading={loading}
+    />
   );
 };
+
 export default ApsDashboardPage;

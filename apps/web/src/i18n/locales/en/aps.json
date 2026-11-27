@@ -536,5 +536,15 @@
   "aps.nav.aps-analytics-capacity-utilization_desc": "Capacity Utilization",
   "aps.nav.aps-analytics-material-shortage_desc": "Material Shortage",
   "aps.nav.aps-analytics-forecast-accuracy_desc": "Forecast Accuracy",
-  "aps.nav.aps-analytics-oee-dashboard_desc": "OEE Dashboard"
+  "aps.nav.aps-analytics-oee-dashboard_desc": "OEE Dashboard",
+  "aps.aps_dashboard_page.target_quantity": "Total target qty",
+  "aps.aps_dashboard_page.plan_periods": "Plan periods",
+  "aps.aps_dashboard_page.status_draft": "Draft",
+  "aps.aps_dashboard_page.status_submitted": "Submitted",
+  "aps.aps_dashboard_page.status_approved": "Approved",
+  "aps.aps_dashboard_page.status_rejected": "Rejected",
+  "aps.aps_dashboard_page.status_released": "Released",
+  "aps.aps_dashboard_page.status_completed": "Completed",
+  "aps.aps_dashboard_page.k29": "Plan status",
+  "aps.aps_dashboard_page.k30": "Schedule status"
 }

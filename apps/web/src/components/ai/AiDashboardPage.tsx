@@ -36,6 +36,7 @@ import { useAIContext } from '@/hooks';
 import { writeAICopilotContext } from '@/lib/ai/copilotContext';
 import type { AIRecommendation } from '@/lib/ai/recommendations';
 import { aiApi } from '@/api/ai';
+import apiClient from '@/api/client';
 
 interface QuickActionProps {
   id: string;
@@ -356,13 +357,27 @@ const MiniChart: React.FC<{ data: number[]; color: string }> = ({ data, color })
 };
 
 export const AiDashboardPage: React.FC = () => {
-  useQuery({
+  const statsQuery = useQuery({
     queryKey: ['ai', 'dashboard'],
     queryFn: async () => {
       try {
-        return await aiApi.getDashboardStats();
+        const res = await aiApi.getDashboardStats();
+        return res.success ? res.data : null;
       } catch {
-        return {};
+        return null;
+      }
+    },
+  });
+  const recentConvQuery = useQuery({
+    queryKey: ['ai', 'dashboard', 'conversations'],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.ai.get('/conversations', { params: { page: 1, page_size: 5 } });
+        const data = res?.data as unknown;
+        if (Array.isArray(data)) return data as Array<{ id: string; title?: string; created_at?: string }>;
+        return ((data as { items?: Array<{ id: string; title?: string; created_at?: string }> })?.items ?? []);
+      } catch {
+        return [];
       }
     },
   });
@@ -374,62 +389,55 @@ export const AiDashboardPage: React.FC = () => {
   const { t } = useTranslation();
   const { topRecommendations } = useAIContext();
 
+  const stats = statsQuery.data;
   const statCards: StatCard[] = useMemo(
     () => [
       {
         id: 'chat-count',
         title: t('ai.dashboard.stat.chat_count'),
-        value: '1,256',
+        value: String(stats?.total_conversations ?? 0),
         icon: <MessageSquare size={22} />,
         color: 'primary',
         onClick: () => navigate(AI_PATHS.chat),
-        trend: { value: 23, direction: 'up', label: t('ai.dashboard.stat.vs_last_month') },
       },
       {
-        id: 'doc-analysis',
-        title: t('ai.dashboard.stat.doc_analysis'),
-        value: '89',
+        id: 'messages',
+        title: t('ai.dashboard.stat.messages'),
+        value: String(stats?.total_messages ?? 0),
         icon: <FileText size={22} />,
         color: 'info',
-        onClick: () => navigate(AI_PATHS.document),
-        trend: { value: 15, direction: 'up', label: t('ai.dashboard.stat.vs_last_month') },
       },
       {
-        id: 'code-gen',
-        title: t('ai.dashboard.stat.code_gen'),
-        value: '456',
-        icon: <Code size={22} />,
+        id: 'documents',
+        title: t('ai.dashboard.stat.doc_analysis'),
+        value: String(stats?.total_documents ?? 0),
+        icon: <BookOpen size={22} />,
         color: 'success',
-        onClick: () => navigate(AI_PATHS.code),
-        trend: { value: 45, direction: 'up', label: t('ai.dashboard.stat.vs_last_month') },
+        onClick: () => navigate(AI_PATHS.document),
       },
       {
         id: 'token-usage',
         title: t('ai.dashboard.stat.token_usage'),
-        value: '12.5M',
+        value: Number(stats?.total_tokens ?? 0).toLocaleString('zh-CN'),
         icon: <Zap size={22} />,
         color: 'warning',
-        trend: { value: 8, direction: 'up', label: t('ai.dashboard.stat.vs_last_month') },
       },
       {
-        id: 'avg-response',
-        title: t('ai.dashboard.stat.avg_response'),
-        value: '1.2s',
+        id: 'active-users',
+        title: t('ai.dashboard.stat.active_users'),
+        value: String(stats?.active_users ?? 0),
         icon: <Clock size={22} />,
         color: 'secondary',
-        trend: { value: -0.3, direction: 'down', label: t('ai.dashboard.stat.seconds_down') },
       },
       {
         id: 'satisfaction',
         title: t('ai.dashboard.stat.satisfaction'),
-        value: '96.5%',
+        value: `${Number(stats?.satisfaction_rate ?? 0).toFixed(1)}%`,
         icon: <Sparkles size={22} />,
         color: 'success',
-        onClick: () => navigate(AI_PATHS.chat),
-        trend: { value: 2.1, direction: 'up', label: t('ai.dashboard.stat.percent_improvement') },
       },
     ],
-    [navigate, t]
+    [navigate, t, stats]
   );
 
   const quickActions: QuickActionProps[] = useMemo(
@@ -471,49 +479,16 @@ export const AiDashboardPage: React.FC = () => {
   );
 
   const recentItems: RecentItemProps[] = useMemo(
-    () => [
-      {
-        id: '1',
-        title: t('ai.dashboard.recent.item_1_title'),
-        description: t('ai.dashboard.recent.item_1_desc'),
-        status: 'success',
-        type: 'chat',
+    () =>
+      (recentConvQuery.data ?? []).map((c) => ({
+        id: c.id,
+        title: c.title || c.id,
+        description: c.created_at ? new Date(c.created_at).toLocaleString('zh-CN', { hour12: false }) : '',
+        status: 'success' as const,
+        type: 'chat' as const,
         onClick: () => navigate(AI_PATHS.chat),
-      },
-      {
-        id: '2',
-        title: t('ai.dashboard.recent.item_2_title'),
-        description: t('ai.dashboard.recent.item_2_desc'),
-        status: 'success',
-        type: 'code',
-        onClick: () => navigate(AI_PATHS.code),
-      },
-      {
-        id: '3',
-        title: t('ai.dashboard.recent.item_3_title'),
-        description: t('ai.dashboard.recent.item_3_desc'),
-        status: 'success',
-        type: 'document',
-        onClick: () => navigate(AI_PATHS.document),
-      },
-      {
-        id: '4',
-        title: t('ai.dashboard.recent.item_4_title'),
-        description: t('ai.dashboard.recent.item_4_desc'),
-        status: 'info',
-        type: 'chat',
-        onClick: () => navigate(AI_PATHS.chat),
-      },
-      {
-        id: '5',
-        title: t('ai.dashboard.recent.item_5_title'),
-        description: t('ai.dashboard.recent.item_5_desc'),
-        status: 'success',
-        type: 'code',
-        onClick: () => navigate(AI_PATHS.code),
-      },
-    ],
-    [navigate, t]
+      })),
+    [navigate, recentConvQuery.data]
   );
 
   const features: FeatureCardProps[] = useMemo(
@@ -524,10 +499,6 @@ export const AiDashboardPage: React.FC = () => {
         description: t('ai.dashboard.feature.qa_desc'),
         icon: <Lightbulb />,
         color: theme.palette.primary.main,
-        stats: [
-          { label: t('ai.dashboard.feature.stat_accuracy'), value: '92%' },
-          { label: t('ai.dashboard.feature.stat_response_time'), value: '<2s' },
-        ],
         action: {
           label: t('ai.dashboard.feature.qa_action'),
           onClick: () => navigate(AI_PATHS.chat),
@@ -539,10 +510,6 @@ export const AiDashboardPage: React.FC = () => {
         description: t('ai.dashboard.feature.summary_desc'),
         icon: <FileText />,
         color: theme.palette.info[700],
-        stats: [
-          { label: t('ai.dashboard.feature.stat_support_format'), value: '10+' },
-          { label: t('ai.dashboard.feature.stat_process_speed'), value: '<30s' },
-        ],
         action: {
           label: t('ai.dashboard.feature.summary_action'),
           onClick: () => navigate(AI_PATHS.document),
@@ -554,13 +521,6 @@ export const AiDashboardPage: React.FC = () => {
         description: t('ai.dashboard.feature.code_desc'),
         icon: <Code />,
         color: theme.palette.success[700],
-        stats: [
-          { label: t('ai.dashboard.feature.stat_support_language'), value: '20+' },
-          {
-            label: t('ai.dashboard.feature.stat_code_quality'),
-            value: t('ai.dashboard.feature.code_quality_excellent'),
-          },
-        ],
         action: {
           label: t('ai.dashboard.feature.code_action'),
           onClick: () => navigate(AI_PATHS.code),
@@ -595,7 +555,6 @@ export const AiDashboardPage: React.FC = () => {
     [navigate]
   );
 
-  const usageData = [120, 150, 130, 180, 160, 200, 190];
 
   const refreshToolbar = (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
@@ -742,10 +701,9 @@ export const AiDashboardPage: React.FC = () => {
                 size='small'
               />
             </Box>
-            <MiniChart
-              data={usageData}
-              color={theme.palette.primary.main}
-            />
+            <Typography variant='body2' color='text.secondary' sx={{ py: 4, textAlign: 'center' }}>
+              {t('ai.dashboard.trend.empty')}
+            </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
               {[
                 t('ai.dashboard.day.mon'),

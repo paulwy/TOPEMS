@@ -504,7 +504,6 @@
   "scm.mrp_suggestion.k47": "全部状态",
   "scm.mrp_suggestion.k48": "待确认",
   "scm.mrp_suggestion.k49": "已确认",
-  "scm.mrp_suggestion.k50": "草稿",
   "scm.mrp_suggestion.k50": "已拒绝",
   "scm.mrp_suggestion.k51": "已完成",
   "scm.price_comparison.k0": "询价中",
@@ -1010,5 +1009,14 @@
   "scm.dashboard_page.k37": "库存周转天数",
   "scm.dashboard_page.k38": "周转率",
   "scm.dashboard_page.k39": "天",
-  "scm.purchase_order.k53": "备注"
+  "scm.purchase_order.k53": "备注",
+  "scm.scm_overview_page.inventory_value": "库存总值",
+  "scm.scm_overview_page.status_pending": "待审批",
+  "scm.scm_overview_page.status_approved": "已审批",
+  "scm.scm_overview_page.status_rejected": "已驳回",
+  "scm.scm_overview_page.status_completed": "已完成",
+  "scm.scm_overview_page.inventory_skus": "库存 SKU 数",
+  "scm.scm_overview_page.inventory_low": "低库存 SKU 数",
+  "scm.scm_overview_page.k39": "采购订单状态",
+  "scm.scm_overview_page.k40": "库存概览"
 }

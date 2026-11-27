@@ -24,54 +24,11 @@ import {
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ChartComponent } from '@/components/bi/ChartLibrary';
-import { FilterBar } from '@/components/bi/FilterBar';
-import type { FilterConfig } from '@/api/bi';
+
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-const filters: FilterConfig[] = [
-  {
-    id: 'timeRange',
-    type: 'select',
-    label: i18n.t('bi.data_analysis_page.k9'),
-    field: 'time_range',
-    options: [
-      { label: i18n.t('bi.data_analysis_page.k10'), value: 'this_month' },
-      { label: i18n.t('bi.data_analysis_page.k11'), value: 'last_month' },
-      { label: i18n.t('bi.data_analysis_page.3_12'), value: 'last_3_months' },
-      { label: i18n.t('bi.data_analysis_page.6_13'), value: 'last_6_months' },
-      { label: i18n.t('bi.data_analysis_page.k14'), value: 'this_year' },
-    ],
-    default_value: 'last_6_months',
-  },
-  {
-    id: 'region',
-    type: 'select',
-    label: i18n.t('bi.data_analysis_page.k15'),
-    field: 'region',
-    options: [
-      { label: i18n.t('bi.data_analysis_page.k16'), value: 'all' },
-      { label: i18n.t('bi.data_analysis_page.k0'), value: 'east' },
-      { label: i18n.t('bi.data_analysis_page.k1'), value: 'south' },
-      { label: i18n.t('bi.data_analysis_page.k2'), value: 'north' },
-    ],
-    default_value: 'all',
-  },
-  {
-    id: 'category',
-    type: 'select',
-    label: i18n.t('bi.data_analysis_page.k20'),
-    field: 'category',
-    options: [
-      { label: i18n.t('bi.data_analysis_page.k21'), value: 'all' },
-      { label: i18n.t('bi.data_analysis_page.k5'), value: 'electronics' },
-      { label: i18n.t('bi.data_analysis_page.k6'), value: 'clothing' },
-      { label: i18n.t('bi.data_analysis_page.k7'), value: 'home' },
-    ],
-    default_value: 'all',
-  },
-];
 
 const DataAnalysisPage = () => {
   const theme = useTheme();
@@ -94,6 +51,21 @@ const DataAnalysisPage = () => {
       }>;
     },
   });
+
+  const totals = useMemo(() => {
+    const rows = ordersData || [];
+    const totalAmount = rows.reduce((s2, o) => s2 + (Number(o.total_amount) || 0), 0);
+    const orderCount = rows.length;
+    const customerCount = new Set(rows.map((o) => o.customer_name).filter(Boolean)).size;
+    return {
+      totalAmount,
+      orderCount,
+      customerCount,
+      avgOrderAmount: orderCount ? totalAmount / orderCount : 0,
+    };
+  }, [ordersData]);
+
+  const { totalAmount, orderCount, customerCount, avgOrderAmount } = totals;
 
   const salesTrend = useMemo(() => {
     const byMonth: Record<string, { amount: number; count: number }> = {};
@@ -157,16 +129,8 @@ const DataAnalysisPage = () => {
 
   const [activeTab, setActiveTab] = useState(0);
   const [chartType, setChartType] = useState<'bar' | 'line' | 'area' | 'pie'>('bar');
-  const [filterValues, setFilterValues] = useState<Record<string, unknown>>({
-    timeRange: 'last_6_months',
-    region: 'all',
-    category: 'all',
-  });
   const [drillLevel, setDrillLevel] = useState(0);
 
-  const handleFilterChange = (values: Record<string, unknown>) => {
-    setFilterValues(values);
-  };
 
   const handleDrillDown = () => {
     if (drillLevel < 2) {
@@ -347,26 +311,22 @@ const DataAnalysisPage = () => {
                 {[
                   {
                     label: t('bi.data_analysis_page.k32'),
-                    value: '¥913,000',
-                    change: '+12.5%',
+                    value: `¥${Math.round(totalAmount).toLocaleString('zh-CN')}`,
                     color: 'var(--success-text)',
                   },
                   {
                     label: t('bi.data_analysis_page.k33'),
-                    value: '3,130',
-                    change: '+8.3%',
+                    value: String(orderCount),
                     color: 'var(--accent-primary-text)',
                   },
                   {
                     label: t('bi.data_analysis_page.k34'),
-                    value: '1,270',
-                    change: '+15.2%',
+                    value: String(customerCount),
                     color: 'var(--accent-secondary-text)',
                   },
                   {
                     label: t('bi.data_analysis_page.sales_amount_axis'),
-                    value: '¥291.7',
-                    change: '+3.8%',
+                    value: `¥${Math.round(avgOrderAmount).toLocaleString('zh-CN')}`,
                     color: 'var(--warning-text)',
                   },
                 ].map((metric, idx) => (
@@ -385,12 +345,6 @@ const DataAnalysisPage = () => {
                       sx={{ fontWeight: 700, my: 0.5 }}
                     >
                       {metric.value}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      sx={{ color: metric.color, fontWeight: 600 }}
-                    >
-                      {metric.change}
                     </Typography>
                   </Box>
                 ))}
@@ -643,19 +597,6 @@ const DataAnalysisPage = () => {
           >
             {t('bi.data_analysis_page.k46')}
           </Typography>
-
-          <FilterBar
-            filters={filters}
-            values={filterValues}
-            onChange={handleFilterChange}
-            onReset={() =>
-              setFilterValues({
-                timeRange: 'last_6_months',
-                region: 'all',
-                category: 'all',
-              })
-            }
-          />
 
           <Card
             elevation={0}

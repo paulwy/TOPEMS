@@ -1,147 +1,143 @@
+/**
+ * SCM 供应链概览
+ *
+ * 数据来源：
+ *  - GET /api/scm/dashboard/overview：供应商/采购/库存真实统计
+ *  - GET /api/scm/mrp/suggestions：MRP 建议数
+ *  - GET /api/scm/purchase-orders：最近采购订单
+ * 原先写死的 128/56/13/8/92.5 与三张假趋势、五条示例动态已删除。
+ */
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Users, ShoppingCart, Clock, Calculator, Award, Truck, Star } from 'lucide-react';
+import { Users, ShoppingCart, Clock, Calculator, Package, Truck } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
-import { PageContainer } from '@/components/common';
 import { SCM_PATHS } from '@/module-configs/scm/config';
-import { LazyChart } from '@/components/charts';
-
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { useTheme } from '@mui/material';
+import { supplyChainDashboardApi, mrpPlanApi, purchaseOrderApi } from '@/api/scm';
+import type { PurchaseOrder } from '@/api/scm/types';
 
-const orderTrendData = [
-  { name: i18n.t('scm.scm_overview_page.m2'), value: 32 },
-  { name: i18n.t('scm.scm_overview_page.m3'), value: 28 },
-  { name: i18n.t('scm.scm_overview_page.m4'), value: 45 },
-  { name: i18n.t('scm.scm_overview_page.m5'), value: 38 },
-  { name: i18n.t('scm.scm_overview_page.m6'), value: 52 },
-  { name: i18n.t('scm.scm_overview_page.m7'), value: 56 },
-];
-
-const supplierRatingData = [
-  { name: i18n.t('scm.scm_overview_page.a_9'), value: 45 },
-  { name: i18n.t('scm.scm_overview_page.b_10'), value: 35 },
-  { name: i18n.t('scm.scm_overview_page.c_11'), value: 15 },
-  { name: i18n.t('scm.scm_overview_page.d_12'), value: 5 },
-];
-
-const mrpStatusData = [
-  { name: i18n.t('scm.scm_overview_page.1_13'), value: 5 },
-  { name: i18n.t('scm.scm_overview_page.2_14'), value: 8 },
-  { name: i18n.t('scm.scm_overview_page.3_15'), value: 6 },
-  { name: i18n.t('scm.scm_overview_page.4_16'), value: 10 },
-  { name: i18n.t('scm.scm_overview_page.5_17'), value: 7 },
-  { name: i18n.t('scm.scm_overview_page.6_18'), value: 12 },
-];
+interface ScmOverview {
+  period?: { start_date?: string; end_date?: string };
+  purchase?: {
+    total_orders?: number;
+    pending_orders?: number;
+    approved_orders?: number;
+    rejected_orders?: number;
+    completed_orders?: number;
+    total_amount?: number;
+  };
+  suppliers?: { active_count?: number };
+  inventory?: { total_skus?: number; total_value?: number; low_stock_count?: number };
+}
 
 const ScmOverviewPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation('scm');
   const navigate = useNavigate();
 
-  const loadingQuery = useQuery<boolean>({
+  const overviewQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.SCM_DASHBOARD_BASE,
-    queryFn: async () => true,
-    staleTime: Infinity,
+    queryFn: async () => {
+      const res = await supplyChainDashboardApi.overview();
+      return res.success && res.data ? (res.data as unknown as ScmOverview) : null;
+    },
+    staleTime: 60 * 1000,
   });
-  const loading = loadingQuery.isLoading;
+
+  const mrpQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.SCM_DASHBOARD_BASE, 'mrp'],
+    queryFn: async () => {
+      const res = await mrpPlanApi.list({ page: 1, pageSize: 1 });
+      return res.success && res.data ? Number(res.data.total ?? 0) : 0;
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const recentQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.SCM_DASHBOARD_BASE, 'recent-po'],
+    queryFn: async () => {
+      const res = await purchaseOrderApi.list({ page: 1, pageSize: 5 });
+      return res.success && res.data ? (res.data.items ?? []) : [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const loading = overviewQuery.isLoading || mrpQuery.isLoading || recentQuery.isLoading;
+  const overview = overviewQuery.data;
+  const purchase = overview?.purchase;
 
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'supplier-total',
         title: i18n.t('scm.scm_overview_page.k0'),
-        value: '128',
+        value: String(overview?.suppliers?.active_count ?? 0),
         icon: <Users size={24} />,
-        change: 8,
-        changeLabel: i18n.t('scm.scm_overview_page.k1'),
         color: 'primary',
       },
       {
         id: 'purchase-orders',
         title: i18n.t('scm.scm_overview_page.k2'),
-        value: '56',
+        value: String(purchase?.total_orders ?? 0),
         icon: <ShoppingCart size={24} />,
-        change: 12,
-        changeLabel: i18n.t('scm.scm_overview_page.k3'),
         color: 'info',
       },
       {
         id: 'pending-approval',
         title: i18n.t('scm.scm_overview_page.k4'),
-        value: '13',
+        value: String(purchase?.pending_orders ?? 0),
         icon: <Clock size={24} />,
-        change: 5,
-        changeLabel: i18n.t('scm.scm_overview_page.k5'),
         color: 'warning',
       },
       {
         id: 'mrp-plans',
         title: i18n.t('scm.mrp_plan_page.m3'),
-        value: '8',
+        value: String(mrpQuery.data ?? 0),
         icon: <Calculator size={24} />,
-        change: 3,
-        changeLabel: i18n.t('scm.scm_overview_page.k6'),
         color: 'success',
       },
       {
-        id: 'supplier-rating',
-        title: i18n.t('scm.scm_overview_page.k7'),
-        value: '92.5',
-        icon: <Award size={24} />,
-        change: 1.2,
-        changeLabel: i18n.t('scm.scm_overview_page.k8'),
+        id: 'inventory-value',
+        title: i18n.t('scm.scm_overview_page.inventory_value'),
+        value: Number(overview?.inventory?.total_value ?? 0).toLocaleString('zh-CN', {
+          maximumFractionDigits: 2,
+        }),
+        icon: <Package size={24} />,
         color: 'primary',
       },
     ],
-    []
+    [overview, purchase, mrpQuery.data]
+  );
+
+  const statusData = useMemo(
+    () => [
+      { label: i18n.t('scm.scm_overview_page.status_pending'), value: purchase?.pending_orders ?? 0 },
+      { label: i18n.t('scm.scm_overview_page.status_approved'), value: purchase?.approved_orders ?? 0 },
+      { label: i18n.t('scm.scm_overview_page.status_rejected'), value: purchase?.rejected_orders ?? 0 },
+      { label: i18n.t('scm.scm_overview_page.status_completed'), value: purchase?.completed_orders ?? 0 },
+    ],
+    [purchase]
+  );
+
+  const inventoryData = useMemo(
+    () => [
+      { label: i18n.t('scm.scm_overview_page.inventory_skus'), value: overview?.inventory?.total_skus ?? 0 },
+      { label: i18n.t('scm.scm_overview_page.inventory_low'), value: overview?.inventory?.low_stock_count ?? 0 },
+    ],
+    [overview]
   );
 
   const charts: ChartCard[] = useMemo(
     () => [
-      {
-        id: 'order-trend',
-        title: i18n.t('scm.scm_overview_page.k19'),
-        chart: (
-          <LazyChart
-            type='bar'
-            data={orderTrendData}
-            xKey='name'
-            yKey='value'
-          />
-        ),
-        height: 300,
-      },
-      {
-        id: 'supplier-rating',
-        title: i18n.t('scm.scm_overview_page.k20'),
-        chart: (
-          <LazyChart
-            type='pie'
-            data={supplierRatingData}
-          />
-        ),
-        height: 300,
-      },
-      {
-        id: 'mrp-suggestion',
-        title: i18n.t('scm.scm_overview_page.m8'),
-        chart: (
-          <LazyChart
-            type='line'
-            data={mrpStatusData}
-            xKey='name'
-            yKey='value'
-          />
-        ),
-        height: 300,
-      },
+      { id: 'po-status', title: i18n.t('scm.scm_overview_page.k39'), type: 'bar', data: statusData },
+      { id: 'inventory', title: i18n.t('scm.scm_overview_page.k40'), type: 'pie', data: inventoryData },
     ],
-    []
+    [statusData, inventoryData]
   );
 
   const quickActions: QuickAction[] = useMemo(
@@ -170,7 +166,7 @@ const ScmOverviewPage: React.FC = () => {
       {
         id: 'supplier-eval',
         label: i18n.t('scm.scm_overview_page.k23'),
-        icon: <Award size={20} />,
+        icon: <Users size={20} />,
         onClick: () => navigate(SCM_PATHS.supplierEvaluation),
         color: theme.palette.warning[700],
       },
@@ -182,87 +178,44 @@ const ScmOverviewPage: React.FC = () => {
         color: theme.palette.teal[700],
       },
     ],
-    [navigate]
+    [navigate, theme]
   );
 
-  const recentItems: RecentItem[] = useMemo(
-    () => [
-      {
-        id: 'po1',
-        title: 'PO-2026-0098',
-        description: i18n.t('scm.scm_overview_page.a_25'),
-        time: '2026-06-29 09:00',
-        icon: <ShoppingCart size={18} />,
-        status: 'warning',
-        tags: [{ label: i18n.t('scm.scm_overview_page.k26'), color: theme.palette.warning[700] }],
-        onClick: () => navigate(SCM_PATHS.purchaseOrders),
-      },
-      {
-        id: 'sup1',
-        title: i18n.t('scm.scm_overview_page.b_27'),
-        description: i18n.t('scm.scm_overview_page.m10'),
-        time: '2026-06-28 16:30',
-        icon: <Star size={18} />,
-        status: 'success',
-        onClick: () => navigate(SCM_PATHS.supplierEvaluation),
-      },
-      {
-        id: 'mrp1',
-        title: 'MRP-2026-0012',
-        description: i18n.t('scm.scm_overview_page.m11'),
-        time: '2026-06-28 14:00',
-        icon: <Calculator size={18} />,
-        status: 'info',
-        tags: [{ label: i18n.t('scm.scm_overview_page.k28'), color: theme.palette.primary.dark }],
-        onClick: () => navigate(SCM_PATHS.mrpPlan),
-      },
-      {
-        id: 'po2',
-        title: 'PO-2026-0097',
-        description: i18n.t('scm.scm_overview_page.k29'),
-        time: '2026-06-28 11:20',
-        icon: <ShoppingCart size={18} />,
-        status: 'success',
-        tags: [{ label: i18n.t('scm.scm_overview_page.k30'), color: theme.palette.success[700] }],
-        onClick: () => navigate(SCM_PATHS.purchaseOrders),
-      },
-      {
-        id: 'del1',
-        title: i18n.t('scm.scm_overview_page.dl20260035_31'),
-        description: i18n.t('scm.scm_overview_page.c630_32'),
-        time: '2026-06-27 10:00',
-        icon: <Truck size={18} />,
-        status: 'default',
-        tags: [{ label: i18n.t('scm.scm_overview_page.k33'), color: theme.palette.grey[600] }],
-        onClick: () => navigate(SCM_PATHS.deliveryAppointment),
-      },
-    ],
-    [navigate]
-  );
+  const recentItems: RecentItem[] = useMemo(() => {
+    const rows: PurchaseOrder[] = recentQuery.data ?? [];
+    return rows.map((po) => ({
+      id: po.id,
+      title: po.order_number,
+      description: po.total_amount != null ? `¥${Number(po.total_amount).toLocaleString('zh-CN')}` : '',
+      time: po.order_date || '',
+      icon: <ShoppingCart size={18} />,
+      status:
+        po.status === 'completed'
+          ? ('success' as const)
+          : po.status === 'pending'
+            ? ('warning' as const)
+            : po.status === 'rejected'
+              ? ('error' as const)
+              : ('info' as const),
+      onClick: () => navigate(SCM_PATHS.purchaseOrders),
+    }));
+  }, [recentQuery.data, navigate]);
 
   return (
-    <PageContainer
+    <DashboardTemplate
       title={t('scm.scm_overview_page.k34')}
-      padding={false}
-      maxWidth={false}
-    >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: t('scm.scm_overview_page.k36'), href: '/dashboard' },
-          { label: t('scm.scm_overview_page.k35') },
-        ]}
-        stats={stats}
-        charts={charts}
-        recentItems={recentItems}
-        recentTitle={t('scm.scm_overview_page.k37')}
-        quickActions={quickActions}
-        quickActionsTitle={t('scm.scm_overview_page.k38')}
-        loading={loading}
-      />
-    </PageContainer>
+      breadcrumbs={[
+        { label: t('scm.scm_overview_page.k36'), href: '/dashboard' },
+        { label: t('scm.scm_overview_page.k35') },
+      ]}
+      stats={stats}
+      charts={charts}
+      recentItems={recentItems}
+      recentTitle={t('scm.scm_overview_page.k37')}
+      quickActions={quickActions}
+      quickActionsTitle={t('scm.scm_overview_page.k38')}
+      loading={loading}
+    />
   );
 };
 

@@ -1163,5 +1163,8 @@
   "ai.ai_prompt_library_page.error_load": "提示词模板加载失败，请重试",
   "ai.ai_prompt_library_page.error_favorite": "收藏操作失败，请重试",
   "ai.ai_prompt_library_page.error_delete": "删除提示词失败，请重试",
-  "ai.ai_prompt_library_page.error_generate": "提示词执行失败，请重试"
+  "ai.ai_prompt_library_page.error_generate": "提示词执行失败，请重试",
+  "ai.dashboard.stat.messages": "问答消息数",
+  "ai.dashboard.stat.active_users": "活跃用户",
+  "ai.dashboard.trend.empty": "暂无按天问答数据（后端未采集日粒度序列）"
 }

@@ -264,5 +264,15 @@
   "aps.nav.aps-capacity-detail": "详情",
   "aps.nav.aps-material-plan-detail": "物料计划详情",
   "aps.nav.aps-forecast-detail": "需求预测详情",
-  "aps.nav.aps-plan-comparison": "计划对比"
+  "aps.nav.aps-plan-comparison": "计划对比",
+  "aps.aps_dashboard_page.target_quantity": "计划目标总量",
+  "aps.aps_dashboard_page.plan_periods": "计划周期数",
+  "aps.aps_dashboard_page.status_draft": "草稿",
+  "aps.aps_dashboard_page.status_submitted": "已提交",
+  "aps.aps_dashboard_page.status_approved": "已审批",
+  "aps.aps_dashboard_page.status_rejected": "已驳回",
+  "aps.aps_dashboard_page.status_released": "已下达",
+  "aps.aps_dashboard_page.status_completed": "已完成",
+  "aps.aps_dashboard_page.k29": "计划状态分布",
+  "aps.aps_dashboard_page.k30": "排程状态分布"
 }
