@@ -168,17 +168,6 @@ export const templateAssignmentApi = {
     return apiClient.doc.post(`/templates/${templateId}/export`, data || {});
   },
 
-  importTemplate: async (data: {
-    file: File;
-    category_id?: string;
-  }): Promise<ApiResponse<{ id: string; name: string }>> => {
-    const formData = new FormData();
-    formData.append('file', data.file);
-    if (data.category_id) formData.append('category_id', data.category_id);
-    return apiClient.doc.post('/templates/import', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
 
   // ==================== 依赖管理 ====================
 

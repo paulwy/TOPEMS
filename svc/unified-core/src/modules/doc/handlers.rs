@@ -1191,6 +1191,12 @@ fn empty_paged() -> PaginatedResponse<serde_json::Value> {
 
 // ---------- health ----------
 
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/health",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn doc_health() -> ApiResponse<String> {
     ApiResponse::success("ok".to_string(), "服务正常")
 }
@@ -1198,11 +1204,23 @@ pub async fn doc_health() -> ApiResponse<String> {
 // ---------- 协作：协作者 ----------
 
 /// 待上游支持：协作者列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{document_id}/collaborators",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_collaborators_stub() -> ApiResponse<Vec<serde_json::Value>> {
     ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：添加协作者
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/documents/{document_id}/collaborators",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn add_collaborators_stub() -> ApiResponse<Vec<serde_json::Value>> {
     ApiResponse::success(vec![], "操作成功")
 }
@@ -1213,6 +1231,12 @@ pub async fn update_collaborator_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：移除协作者
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/documents/{document_id}/collaborators/{user_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn remove_collaborator_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("删除成功")
 }
@@ -1220,6 +1244,12 @@ pub async fn remove_collaborator_stub() -> ApiResponse<()> {
 // ---------- 协作：评论 ----------
 
 /// 待上游支持：评论列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{document_id}/comments",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_comments_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
@@ -1235,6 +1265,12 @@ pub async fn update_comment_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：删除评论
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/documents/{document_id}/comments/{comment_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_comment_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("删除成功")
 }
@@ -1242,6 +1278,12 @@ pub async fn delete_comment_stub() -> ApiResponse<()> {
 // ---------- 协作：活动记录 ----------
 
 /// 待上游支持：文档活动记录
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{document_id}/activities",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_activities_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
@@ -1254,11 +1296,23 @@ pub async fn create_share_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：分享链接列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{document_id}/share",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_shares_stub() -> ApiResponse<Vec<serde_json::Value>> {
     ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：删除分享链接
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/documents/{document_id}/share/{share_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_share_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("删除成功")
 }
@@ -1281,6 +1335,12 @@ pub async fn diff_versions_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：获取文档锁
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/documents/{document_id}/lock",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_lock_stub() -> ApiResponse<Option<serde_json::Value>> {
     ApiResponse::success(None, "查询成功")
 }
@@ -1291,6 +1351,12 @@ pub async fn acquire_lock_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：解锁
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/documents/{document_id}/lock",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn release_lock_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("解锁成功")
 }
@@ -1298,6 +1364,12 @@ pub async fn release_lock_stub() -> ApiResponse<()> {
 // ---------- 工作区 ----------
 
 /// 待上游支持：工作区列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/workspaces",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_workspaces_stub() -> ApiResponse<Vec<serde_json::Value>> {
     ApiResponse::success(vec![], "查询成功")
 }
@@ -1318,31 +1390,67 @@ pub async fn update_workspace_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：删除工作区
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/workspaces/{workspace_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_workspace_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("删除成功")
 }
 
 /// 待上游支持：工作区目录树
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/workspaces/{workspace_id}/tree",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_workspace_tree_stub() -> ApiResponse<Vec<serde_json::Value>> {
     ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：移动项目
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/workspaces/{workspace_id}/move",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn move_items_stub() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(serde_json::json!({"moved": 0}), "操作成功")
 }
 
 /// 待上游支持：复制项目
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/workspaces/{workspace_id}/copy",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn copy_items_stub() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(serde_json::json!({"copied": 0}), "操作成功")
 }
 
 /// 待上游支持：排序
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/workspaces/{workspace_id}/sort",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn sort_items_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("排序成功")
 }
 
 /// 待上游支持：回收站列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/workspaces/{workspace_id}/trash",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_trash_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
@@ -1353,21 +1461,45 @@ pub async fn restore_from_trash_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：彻底删除回收站项目
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/workspaces/{workspace_id}/trash/{item_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_from_trash_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("删除成功")
 }
 
 /// 待上游支持：清空回收站
+#[utoipa::path(
+    post,
+    path = "/api/core/doc/workspaces/{workspace_id}/empty-trash",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn empty_trash_stub() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(serde_json::json!({"deleted": 0}), "操作成功")
 }
 
 /// 待上游支持：搜索工作区
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/workspaces/{workspace_id}/search",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn search_workspace_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：工作区统计
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/workspaces/{workspace_id}/stats",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_workspace_stats_stub() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(
         serde_json::json!({
@@ -1386,6 +1518,12 @@ pub async fn get_workspace_stats_stub() -> ApiResponse<serde_json::Value> {
 // ---------- 模板审批 ----------
 
 /// 待上游支持：模板审批列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/{template_id}/approvals",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_template_approvals_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
@@ -1421,21 +1559,45 @@ pub async fn cancel_approval_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：待审批列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/approvals/pending",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_pending_approvals_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：我的待审批
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/approvals/my-pending",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_my_pending_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：我提交的
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/approvals/my-submitted",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_my_submitted_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：我的历史
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/approvals/my-history",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_my_history_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
@@ -1443,6 +1605,12 @@ pub async fn list_my_history_stub() -> ApiResponse<PaginatedResponse<serde_json:
 // ---------- 模板分配与统计 ----------
 
 /// 待上游支持：模板分配列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/{template_id}/assignments",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_assignments_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
@@ -1453,6 +1621,12 @@ pub async fn create_assignment_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：删除分配
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/templates/{template_id}/assignments/{assignment_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_assignment_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("删除成功")
 }
@@ -1463,6 +1637,12 @@ pub async fn get_template_usage_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：全局使用统计
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/usage/stats",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_usage_stats_stub() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(
         serde_json::json!({
@@ -1476,6 +1656,12 @@ pub async fn get_usage_stats_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：热门模板
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/usage/top",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_top_templates_stub() -> ApiResponse<Vec<serde_json::Value>> {
     ApiResponse::success(vec![], "查询成功")
 }
@@ -1491,6 +1677,12 @@ pub async fn export_template_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：依赖列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/{template_id}/dependencies",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_dependencies_stub() -> ApiResponse<Vec<serde_json::Value>> {
     ApiResponse::success(vec![], "查询成功")
 }
@@ -1501,6 +1693,12 @@ pub async fn add_dependency_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：移除依赖
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/templates/{template_id}/dependencies/{dep_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn remove_dependency_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("删除成功")
 }
@@ -1525,6 +1723,12 @@ pub async fn toggle_template_status_stub() -> ApiResponse<serde_json::Value> {
 // ---------- 模板版本 ----------
 
 /// 待上游支持：模板版本列表
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/{template_id}/versions",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_template_versions_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
@@ -1545,6 +1749,12 @@ pub async fn update_template_version_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：删除模板版本
+#[utoipa::path(
+    delete,
+    path = "/api/core/doc/templates/{template_id}/versions/{version}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_template_version_stub() -> ApiResponse<()> {
     ApiResponse::success_no_data("删除成功")
 }
@@ -1575,11 +1785,23 @@ pub async fn compare_versions_stub() -> ApiResponse<serde_json::Value> {
 }
 
 /// 待上游支持：版本历史
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/{template_id}/versions/history",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_version_history_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
     ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：更新日志
+#[utoipa::path(
+    get,
+    path = "/api/core/doc/templates/{template_id}/versions/changelog",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_changelog_stub() -> ApiResponse<Vec<serde_json::Value>> {
     ApiResponse::success(vec![], "查询成功")
 }

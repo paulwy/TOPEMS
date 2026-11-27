@@ -866,3 +866,17 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 6. 三个前端函数无后端路由且全仓库零引用 → 删函数（`businessCopilot.getSessionMessages`、`businessIntelligence.generateDocument`、`governanceDashboard.recordSecurityEvent`），不留给"契约匹配"当假象。
 
 **结果**：ai **180/180/0**；ai spec 内 54 条无参 GET 实测 0 404；spec 3481 → 3522；全量冒烟 **1260 条 OK=1177 SOFT=82 SKIP=1 FAIL=0**。
+
+## 第 33 轮 · doc（72 → 34，只做到"如实留缺口"）
+
+**基线**：doc 98 调用 / 26 匹配 / 72 缺口，路径前缀 `/api/core/doc`（`unified-core` 的 `embedded.rs` 里 `api_prefix=/api/core` + `routes::doc` 再 `.nest("/doc")`）。
+
+**做法**
+1. 路由真源 `svc/unified-core/src/modules/doc/handlers.rs`（92 条 `.route(...)`），注册真身 `svc/unified-core/src/modules/openapi.rs`（原本只登记 18 条）。
+2. 71 个 handler 无注解 → 按全路径 `/api/core/doc+路由` 插注解（不能写裸路径：`normalize_path` 会按 domain 拼成 `/api/doc/...` 幻影）；`register_annotated_handlers.py --crate-root svc/unified-core/src --crate-prefix crate` 登记 73 条。
+3. **分流**：71 个 handler 里 36 个返回 200（空数据兜底），34 个直接 `ApiResponse::not_found("待上游支持")`。后者**退回注解、撤登记、从 spec 删 op**，不拿"文档化"当闭环——它们是真缺口，保留在契约里计数。
+4. 删前端死函数 `template/assignment.ts::importTemplate`（后端无 `/templates/import` 路由，全仓库零调用方）。
+
+**结果**：doc **97/63/34**（较 72 降 38），spec 3522 → 3557，doc 46 条 path；doc 13 条无参 GET 实测 0 404。**剩 34 条后端未实现**（明细见 `/tmp/doc_404_list.txt` 与提交说明）：模板审批流程（submit/approve/reject/cancel）、模板版本（create/update/activate/rollback/fork/diff/compare）、模板克隆/复制/导出/渲染/依赖、文档版本发布/回滚、文档锁、评论增改、协作者增改、工作区 CRUD/移入回收站/恢复。这些需要产品口径（真做还是前端下掉），不是契约层能补的。
+
+附：本轮冒烟顺带暴露 `GET /api/scm/purchase-items` 500（`quantity` NUMERIC 按 f64 解码）。查证 **main 早已修**（`193a1c695` 把 `PurchaseItem.quantity` 改 `Decimal`），本机工作区该文件落后才复现；已从 `origin/main` 取回两个文件、重编译后实测 200，本轮不重复提交该修复。
