@@ -8,6 +8,18 @@
     {
       "path": "/api/communication/notify/list",
       "reason": "实测 404：list_notifications 真实路径是 /api/communication/notification/notify/list（多一层 notification）"
+    },
+    {
+      "path": "/api/ehs/hazardous-materials/stock-records",
+      "reason": "实测 404：真实路由是 /api/ehs/hazardous-materials/movements（list_stock_records 挂在 movements）"
+    },
+    {
+      "path": "/api/ehs/occupational-health/exam-plans",
+      "reason": "实测 404：occupational_health.rs 只挂 contraindications/statistics/check-plans/check-records/records，没有 exam-plans"
+    },
+    {
+      "path": "/api/ehs/occupational-health/exam-records",
+      "reason": "实测 404：同上，exam-records 从未挂载"
     }
   ]
 }

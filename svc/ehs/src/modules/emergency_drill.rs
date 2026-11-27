@@ -593,6 +593,12 @@ pub async fn create_drill_plan(
     }
     ApiResponse::success(plan, "创建演练计划成功")
 }
+#[utoipa::path(
+    post,
+    path = "/drills/records/{id}/evaluation",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn submit_drill_evaluation(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

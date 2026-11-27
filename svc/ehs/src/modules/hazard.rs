@@ -1068,6 +1068,12 @@ pub async fn close_hazard(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/issues/{id}/rectification",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_rectification(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1188,6 +1194,12 @@ pub async fn create_rectification(
     )
 }
 
+#[utoipa::path(
+    put,
+    path = "/issues/{id}/rectification",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_rectification(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1350,6 +1362,12 @@ pub async fn update_rectification(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/issues/{id}/rectification/submit",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn submit_rectification(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1448,6 +1466,12 @@ pub async fn submit_rectification(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/issues/{id}/verification",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn verify_hazard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

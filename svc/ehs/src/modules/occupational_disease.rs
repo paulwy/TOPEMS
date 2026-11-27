@@ -1436,6 +1436,12 @@ pub async fn get_disease_statistics(
     ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
+#[utoipa::path(
+    put,
+    path = "/occupational-diseases/detection-records/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_detection_record(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,

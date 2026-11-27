@@ -186,6 +186,12 @@ pub struct UpdateInspectionRecordRequest {
     pub issues: Option<Vec<String>>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/checks/plans/{plan_id}/items",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_plan_item(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -294,6 +300,12 @@ pub async fn create_plan_item(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/checks/plans/{plan_id}/items/{item_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_plan_item(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -379,6 +391,12 @@ pub struct CreateSafetyCheckRequest {
     pub status: String,
 }
 
+#[utoipa::path(
+    post,
+    path = "/checks",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_safety_check(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

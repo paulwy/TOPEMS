@@ -756,3 +756,33 @@ wms 262 条调用、命中 159、缺口 103。这一轮是"纯机械缺口"最�
 ### 沉淀
 
 新增 `scripts/ci/restore_pruned_ops.py`：`--base <ref> --apply`，干跑只报告、加 `--apply` 才写回；把"清理前必须先用真实请求验证"固化成可复跑脚本。今后任何人做 spec 裁剪，先跑一遍这个脚本，能直接挡住"清理把活接口删掉"这一类回退。
+
+## 第 29 轮：ehs（路由链式注册漏扫 + 120 条未登记 + 20 条别名克隆）
+
+ehs 203 条调用、命中 105、缺口 98。根因有两个：
+
+1. **`openapi.rs` 里注册用的是裸模块名**（`accident::list_accidents`），不是 `crate::modules::…`；而且这个 crate 的 handler 绝大多数压根没登记（123 条路由里 120 条不在册）。
+2. **路由用链式方法**（`.route("/drills", get(list).post(create))`），只扫 `get(x)` 单方法的解析会漏掉一半 handler，`create_drill_record`/`create_record`/`create_plan` 这类都在漏网名单里。
+
+### 做法
+
+1. 用括号配对解析 `.route("path", <expr>)`，把 expr 里所有 `get|post|put|delete|patch(handler)` 都收进来（229 个 route↔handler 对，比旧解析多 106 个）。
+2. 29 个 handler 没有任何注解 → 按真实路由插最小注解。
+3. `register_annotated_handlers.py --crate-prefix super` 补登记 83 条；裸模块名要改成 `super::<mod>::<fn>` 才能编译（`self::` 不行，`openapi.rs` 的 `self` 是它自己这个模块）。
+4. 20 条前端路径与注解路径不一致的走别名克隆（`/environmental-compliance/assessments` ↔ `evaluations`、`/drills` ↔ `/drills/records`、`/hazardous-materials/inventory` ↔ `/hazardous-materials`、`/accidents` ↔ `/incidents`、`/emergency-plans` ↔ `/checks/plans`、`/sync` ↔ `/sync-records`、`/sync/to-qms` ↔ `/sync/hazard-to-qms` 等），全部先用真实请求确认线上 200/422 再克隆。
+5. 3 条孤儿注解路径实测 404，清掉并登记到 `spec-prune-allowlist.json`（`stock-records` 真实名是 `movements`；`occupational-health/exam-plans|exam-records` 从未挂载）。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| ehs 契约 调用/匹配/缺口 | 203/105/98 | **203/202/0** |
+| ehs 注解 handler | 185 | **215**（0 未登记） |
+| ehs 桩豁免 | 0 | **1**（`GET /api/ehs/health` 是 bootstrap 内建健康检查，非业务 API） |
+| spec paths | 3339 | **3385** |
+| ehs 无参 GET 实测 | — | **48 条 0 404** |
+
+### 值得复用的两条规则
+
+- 遇到 `[...] openapi.rs` 里用裸模块名注册的 crate，`--crate-prefix` 要传 **`super`**，不是 `crate::modules`。
+- 扫路由必须做括号配对 + 多方法链解析，否则 `.route(a, get(x).post(y))` 会静默漏掉写接口——ehs 的 98 条缺口里有一多半是这个解析 bug 造成的。

@@ -1341,6 +1341,12 @@ pub async fn delete_certificate(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[utoipa::path(
+    get,
+    path = "/training/statistics",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_training_statistics(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

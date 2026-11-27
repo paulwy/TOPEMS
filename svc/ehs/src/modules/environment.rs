@@ -309,6 +309,12 @@ pub async fn create_record(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/environment/monitors/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -405,6 +411,12 @@ pub async fn get_record(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/environment/monitors/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -552,6 +564,12 @@ pub async fn update_record(
     )
 }
 
+#[utoipa::path(
+    delete,
+    path = "/environment/monitors/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

@@ -100,6 +100,12 @@ pub struct HealthStatistics {
     pub by_department: Vec<serde_json::Value>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/health-monitor",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_records(
     State(state): State<crate::shared::AppState>,
     // 防御：若中间件误将本路由判为 public 而不注入 Claims，仍 fail-closed 拒读/拒写
@@ -200,6 +206,12 @@ pub async fn list_records(
     ApiResponse::success(records, "获取健康监测记录列表成功")
 }
 
+#[utoipa::path(
+    post,
+    path = "/health-monitor",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_record(
     State(state): State<crate::shared::AppState>,
     // 防御：若中间件误将本路由判为 public 而不注入 Claims，仍 fail-closed 拒读/拒写
@@ -277,6 +289,12 @@ pub async fn create_record(
     ApiResponse::success(health_record_from_row(&row), "创建健康监测记录成功")
 }
 
+#[utoipa::path(
+    get,
+    path = "/health-monitor/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -328,6 +346,12 @@ pub async fn get_record(
     };
     ApiResponse::success(health_record_from_row(&row), "获取健康记录成功")
 }
+#[utoipa::path(
+    put,
+    path = "/health-monitor/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -414,6 +438,12 @@ pub async fn update_record(
     }
     ApiResponse::success(health_record_from_row(&row), "更新健康记录成功")
 }
+#[utoipa::path(
+    delete,
+    path = "/health-monitor/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -465,6 +495,12 @@ pub async fn delete_record(
         }
     }
 }
+#[utoipa::path(
+    get,
+    path = "/health-monitor/statistics",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_statistics(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

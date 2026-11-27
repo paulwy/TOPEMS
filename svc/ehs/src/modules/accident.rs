@@ -1433,6 +1433,12 @@ pub async fn create_review(
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/incidents/{id}/actions",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn list_incident_actions(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1492,6 +1498,12 @@ pub async fn list_incident_actions(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/incidents/{id}/actions",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn create_incident_action(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1550,6 +1562,12 @@ pub async fn create_incident_action(
     )
 }
 
+#[utoipa::path(
+    put,
+    path = "/incidents/{id}/actions/{action_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_incident_action(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

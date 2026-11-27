@@ -20,7 +20,8 @@ def module_path(root, fp, crate_prefix="crate::modules"):
         parts = parts[:-1]
     if not parts:
         return crate_prefix
-    return crate_prefix + "::" + "::".join(parts)
+    tail = "::".join(parts)
+    return f"{crate_prefix}::{tail}" if crate_prefix else tail
 
 
 def main():

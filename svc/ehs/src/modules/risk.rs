@@ -878,6 +878,12 @@ pub async fn assess_risk(
 /// PUT /hazards/{id}/assessments/{assessment_id}
 /// 待上游支持：当前风险评估与风险记录内联（无独立 assessment 表），
 /// 该端点复用 assess_risk 的更新语义，assessment_id 仅用于路径对齐。
+#[utoipa::path(
+    put,
+    path = "/hazards/{id}/assessments/{assessment_id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_assessment(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

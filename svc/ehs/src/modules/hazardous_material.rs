@@ -718,7 +718,7 @@ pub async fn delete_material(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/hazardous-materials/stock-records",
+    path = "/api/ehs/hazardous-materials/movements",
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -798,7 +798,7 @@ pub async fn list_stock_records(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/hazardous-materials/stock-records/{id}",
+    path = "/api/ehs/hazardous-materials/movements/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
@@ -1227,6 +1227,12 @@ pub fn storage_compatibility(classes: &[&str]) -> bool {
 // 以下端点为前端契约已调用、但后端尚未建表的资源；
 // 详情类 GET 返回 200 + 内层 404，PUT/DELETE 返回成功（幂等）。
 
+#[utoipa::path(
+    put,
+    path = "/hazardous-materials/movements/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_stock_record(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1238,6 +1244,12 @@ pub async fn update_stock_record(
     ApiResponse::not_implemented("出入库记录数据源尚未启用")
 }
 
+#[utoipa::path(
+    delete,
+    path = "/hazardous-materials/movements/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_stock_record(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1248,6 +1260,12 @@ pub async fn delete_stock_record(
     ApiResponse::not_implemented("出入库记录数据源尚未启用，删除操作暂不可用")
 }
 
+#[utoipa::path(
+    get,
+    path = "/hazardous-materials/msds/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn get_msds_by_id(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1264,6 +1282,12 @@ pub async fn get_msds_by_id(
     .await
 }
 
+#[utoipa::path(
+    put,
+    path = "/hazardous-materials/msds/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_msds_by_id(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1276,6 +1300,12 @@ pub async fn update_msds_by_id(
     ApiResponse::not_found("MSDS 不存在")
 }
 
+#[utoipa::path(
+    delete,
+    path = "/hazardous-materials/msds/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_msds_by_id(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1286,6 +1316,12 @@ pub async fn delete_msds_by_id(
     ApiResponse::not_implemented("MSDS 数据源尚未启用，删除操作暂不可用")
 }
 
+#[utoipa::path(
+    put,
+    path = "/hazardous-materials/categories/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn update_material_category(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1297,6 +1333,12 @@ pub async fn update_material_category(
     ApiResponse::not_implemented("危险品分类数据源尚未启用，更新操作暂不可用")
 }
 
+#[utoipa::path(
+    delete,
+    path = "/hazardous-materials/categories/{id}",
+    tag = "ehs",
+    responses((status = 200, description = "OK"))
+)]
 pub async fn delete_material_category(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
