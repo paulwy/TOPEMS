@@ -739,3 +739,20 @@ wms 262 条调用、命中 159、缺口 103。这一轮是"纯机械缺口"最�
 ### 复用到其他命名空间的顺序
 
 `annotate_missing_routes.py`（补注解）→ `register_annotated_handlers.py`（补登记，注意选对真身 openapi.rs）→ `clone_route_aliases.py`（别名克隆）→ 桩分流到 `openapi-known-stubs.json` → HTTP 实测无参 GET。
+
+## 第 28.5 轮：修回 `fd5197008` 的过度清理（main 上 296 条活接口被删）
+
+第 28 轮提交前 rebase 时撞上别人刚推的 `fd5197008 fix(ci): … OpenAPI 清理 370 条并补 notify/list 别名`，spec 从 3265 掉到 2962，finance 命名空间的对账从 4 缺口反弹到 161，wms 的新增也被打乱。查下来这不是"清理幻影"，而是**把线上还活着的接口一起删了**，并且有的 path 只留下了部分 method。
+
+### 判定方法：不看文档、打真请求
+
+对 `c0bc69540`（清理前）与清理后的 main 做 operation 级差集，逐条打真实请求（GET 直发，POST/PUT/DELETE 发 `{}`，带 token 与 `X-Tenant-Id`），只有 **404 / 405** 才算真删。
+
+- 差集 304 条 path：**296 条线上存活**，只有 8 条确实打不通（还都是带路径参数的，无法用占位符判别）。
+- 再按 method 级差集补一轮：**33 个 operation 是"path 留着、method 被删"**（如 `/api/finance/accounts` 只剩 POST，GET 被删）。
+
+全部恢复后：spec 3035 → **3339**，全量对账 **匹配 3345 → 3517**，finance 回到 **285/281/4**（4 条是第 25 轮就认定的后端真缺）。
+
+### 沉淀
+
+新增 `scripts/ci/restore_pruned_ops.py`：`--base <ref> --apply`，干跑只报告、加 `--apply` 才写回；把"清理前必须先用真实请求验证"固化成可复跑脚本。今后任何人做 spec 裁剪，先跑一遍这个脚本，能直接挡住"清理把活接口删掉"这一类回退。
