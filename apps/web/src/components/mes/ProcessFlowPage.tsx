@@ -62,7 +62,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
     active: {
       label: i18n.t('mes.process_flow_page.k0'),
       bg: 'success.50',
-      color: 'success.dark',
+      color:'success.700',
     },
     inactive: {
       label: i18n.t('mes.process_flow_page.k1'),
@@ -72,7 +72,7 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
     draft: {
       label: i18n.t('mes.process_flow_page.k2'),
       bg: 'warning.50',
-      color: 'warning.dark',
+      color:'warning.700',
     },
   };
   const status = statusMap[String(row.status)] || statusMap.inactive;

@@ -63,7 +63,7 @@ const MailPage: React.FC = () => {
                   >
                     <Mail
                       size={28}
-                      color='primary.dark'
+                      color='primary.700'
                       className={styles.il1}
                     />
                     {t('im.mail_page_index.e1')}

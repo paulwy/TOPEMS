@@ -228,7 +228,7 @@ const LimsTaskDetailPage: React.FC = () => {
           >
             <Box
               component={CheckCircle}
-              sx={{ fontSize: 20, color: 'success.dark' }}
+              sx={{ fontSize: 20, color:'success.700' }}
             />
             {i18n.t('pages.lims_task_detail_page.k2')}
           </Typography>
@@ -463,7 +463,7 @@ const LimsTaskDetailPage: React.FC = () => {
         backHref={LIMS_PATHS.root}
         loading={loading}
         infoCard={{
-          avatar: <ClipboardCheck sx={{ fontSize: 40, color: 'secondary.dark' }} />,
+          avatar: <ClipboardCheck sx={{ fontSize: 40, color:'secondary.700' }} />,
           title: task.task_no || task.id,
           subtitle: task.sample_name || i18n.t('pages.lims_task_detail_page.k29'),
           tags: [task.status],

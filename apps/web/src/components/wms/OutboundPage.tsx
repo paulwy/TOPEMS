@@ -77,36 +77,36 @@ const OutboundStats: React.FC = () => {
     {
       label: i18n.t('pages.outbound_page.k1'),
       value: stats.pending,
-      color: 'warning.dark',
+      color:'warning.700',
       bgColor: 'warning.light',
       icon: (
         <Check
           size={20}
-          color='warning.dark'
+          color='warning.700'
         />
       ),
     },
     {
       label: i18n.t('pages.outbound_page.k2'),
       value: stats.picking,
-      color: 'info.dark',
+      color:'info.700',
       bgColor: 'info.light',
       icon: (
         <ClipboardList
           size={20}
-          color='info.dark'
+          color='info.700'
         />
       ),
     },
     {
       label: i18n.t('pages.outbound_page.k3'),
       value: stats.completed,
-      color: 'success.dark',
+      color:'success.700',
       bgColor: 'success.light',
       icon: (
         <Package
           size={20}
-          color='success.dark'
+          color='success.700'
         />
       ),
     },

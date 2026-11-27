@@ -46,7 +46,7 @@ const SrmOrderStats: React.FC = () => {
       icon: (
         <ClipboardList
           size={20}
-          color='primary.dark'
+          color='primary.700'
         />
       ),
     },
@@ -58,7 +58,7 @@ const SrmOrderStats: React.FC = () => {
       icon: (
         <ClipboardList
           size={20}
-          color='warning.dark'
+          color='warning.700'
         />
       ),
     },
@@ -70,7 +70,7 @@ const SrmOrderStats: React.FC = () => {
       icon: (
         <ClipboardList
           size={20}
-          color='primary.dark'
+          color='primary.700'
         />
       ),
     },
@@ -82,7 +82,7 @@ const SrmOrderStats: React.FC = () => {
       icon: (
         <ClipboardList
           size={20}
-          color='success.dark'
+          color='success.700'
         />
       ),
     },

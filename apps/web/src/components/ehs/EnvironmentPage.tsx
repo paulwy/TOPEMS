@@ -82,7 +82,7 @@ const EnvironmentPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
+                <FileText sx={{ width: 20, height: 20, color:'success.700' }} />
               </Box>
               <Box>
                 <Typography
@@ -118,7 +118,7 @@ const EnvironmentPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Activity sx={{ width: 20, height: 20, color: 'success.dark' }} />
+                <Activity sx={{ width: 20, height: 20, color:'success.700' }} />
               </Box>
               <Box>
                 <Typography
@@ -154,7 +154,7 @@ const EnvironmentPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <AlertTriangle sx={{ width: 20, height: 20, color: 'warning.dark' }} />
+                <AlertTriangle sx={{ width: 20, height: 20, color:'warning.700' }} />
               </Box>
               <Box>
                 <Typography

@@ -219,7 +219,7 @@ export default function EquipmentManagementPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <AlertTriangle
               size={18}
-              sx={{ color: 'error.dark' }}
+              sx={{ color:'error.700' }}
             />
             <Typography
               variant='body2'
@@ -230,7 +230,7 @@ export default function EquipmentManagementPage() {
           </Box>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 700, color: 'error.dark' }}
+            sx={{ fontWeight: 700, color:'error.700' }}
           >
             {rows.filter((e) => e.status === 'fault').length}
           </Typography>

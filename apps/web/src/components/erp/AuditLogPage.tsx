@@ -58,7 +58,7 @@ const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
     {
       label: i18n.t('pages.audit_log_page.k11'),
       value: stats.total,
-      color: 'primary.dark' as const,
+      color:'primary.700' as const,
       bgColor: 'primary.light' as const,
       icon: (
         <FileText
@@ -70,7 +70,7 @@ const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
     {
       label: i18n.t('pages.audit_log_page.k12'),
       value: stats.success,
-      color: 'success.dark' as const,
+      color:'success.700' as const,
       bgColor: 'success.light' as const,
       icon: (
         <CheckCircle
@@ -82,7 +82,7 @@ const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
     {
       label: i18n.t('pages.audit_log_page.k13'),
       value: stats.failed,
-      color: 'error.dark' as const,
+      color:'error.700' as const,
       bgColor: 'error.light' as const,
       icon: (
         <XCircle
@@ -94,7 +94,7 @@ const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
     {
       label: i18n.t('pages.audit_log_page.k14'),
       value: stats.warning,
-      color: 'warning.dark' as const,
+      color:'warning.700' as const,
       bgColor: 'warning.light' as const,
       icon: (
         <AlertCircle

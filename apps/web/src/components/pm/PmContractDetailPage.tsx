@@ -378,7 +378,7 @@ const PmContractDetailPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='body2'
-                        sx={{ color: 'secondary.dark', mt: 0.5 }}
+                        sx={{ color:'secondary.700', mt: 0.5 }}
                       >
                         {formatCurrency(milestone.payment_amount)}
                       </Typography>

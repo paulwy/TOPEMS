@@ -165,7 +165,7 @@ const ReceivablePayablePage: React.FC = () => {
           <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 1 }}>
             {i18n.t('erp.receivable_payable_page.k6')}
           </Box>
-          <Box sx={{ fontWeight: 700, fontSize: 24, color: 'error.dark' }}>{overdueCount}</Box>
+          <Box sx={{ fontWeight: 700, fontSize: 24, color:'error.700' }}>{overdueCount}</Box>
         </Box>
       </Box>
     );

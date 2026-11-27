@@ -154,7 +154,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                 }}
               >
                 <Users
-                  sx={{ color: 'warning.dark' }}
+                  sx={{ color:'warning.700' }}
                   size={24}
                 />
               </Box>

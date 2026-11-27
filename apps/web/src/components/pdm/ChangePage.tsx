@@ -30,12 +30,12 @@ const changeAdapter: CrudApiAdapter<Record<string, unknown>> = {
 };
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  pending: { bg: 'warning.50', color: 'warning.dark' },
+  pending: { bg: 'warning.50', color:'warning.700' },
 
-  reviewing: { bg: 'info.50', color: 'info.dark' },
-  approved: { bg: 'success.50', color: 'success.dark' },
-  rejected: { bg: 'error.50', color: 'error.dark' },
-  implemented: { bg: 'primary.50', color: 'primary.dark' },
+  reviewing: { bg: 'info.50', color:'info.700' },
+  approved: { bg: 'success.50', color:'success.700' },
+  rejected: { bg: 'error.50', color:'error.700' },
+  implemented: { bg: 'primary.50', color:'primary.700' },
   closed: { bg: 'grey.100', color: 'text.secondary' },
 };
 
@@ -190,7 +190,7 @@ export const ChangePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FileWarning sx={{ width: 20, height: 20, color: 'warning.dark' }} />
+              <FileWarning sx={{ width: 20, height: 20, color:'warning.700' }} />
             </Box>
             <Box>
               <Typography
@@ -226,7 +226,7 @@ export const ChangePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle sx={{ width: 20, height: 20, color: 'warning.dark' }} />
+              <AlertTriangle sx={{ width: 20, height: 20, color:'warning.700' }} />
             </Box>
             <Box>
               <Typography
@@ -262,7 +262,7 @@ export const ChangePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />
             </Box>
             <Box>
               <Typography
@@ -298,7 +298,7 @@ export const ChangePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color: 'primary.dark' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color:'primary.700' }} />
             </Box>
             <Box>
               <Typography

@@ -571,7 +571,7 @@ const DocumentCenterPage: React.FC = () => {
               sx={{
                 color: 'primary.main',
                 cursor: 'pointer',
-                '&:hover': { color: 'primary.dark' },
+                '&:hover': { color:'primary.700' },
               }}
             >
               {i18n.t('pages.document_center_page.k0')}
@@ -587,7 +587,7 @@ const DocumentCenterPage: React.FC = () => {
                       : {
                           color: 'primary.main',
                           cursor: 'pointer',
-                          '&:hover': { color: 'primary.dark' },
+                          '&:hover': { color:'primary.700' },
                         }
                   }
                 >

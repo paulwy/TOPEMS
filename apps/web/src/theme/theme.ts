@@ -239,7 +239,9 @@ const LIGHT_PALETTE = {
   },
   text: {
     primary: designTokens.colors.text.primary,
-    secondary: designTokens.colors.text.secondary,
+    // 亮色次要文字压到 grey.600：原先 #64748b 在浅底瓦片（grey.100 / 语义 50）
+    // 上只有 4.0–4.35:1，正文 4.5 不达标；暗色另有 grey[300] 覆盖，不受影响
+    secondary: designTokens.colors.grey[600],
     muted: designTokens.colors.text.muted,
   },
   divider: designTokens.colors.border.default,

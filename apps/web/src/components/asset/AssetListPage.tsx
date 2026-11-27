@@ -57,12 +57,12 @@ const baseAdapter = createCrudPageAdapter<Asset>({
 });
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  active: { bg: 'success.50', color: 'success.dark' },
-  idle: { bg: 'info.50', color: 'info.dark' },
-  in_use: { bg: 'primary.50', color: 'primary.dark' },
-  maintenance: { bg: 'warning.50', color: 'warning.dark' },
+  active: { bg: 'success.50', color:'success.700' },
+  idle: { bg: 'info.50', color:'info.700' },
+  in_use: { bg: 'primary.50', color:'primary.700' },
+  maintenance: { bg: 'warning.50', color:'warning.700' },
   retired: { bg: 'grey.100', color: 'text.secondary' },
-  disposed: { bg: 'error.50', color: 'error.dark' },
+  disposed: { bg: 'error.50', color:'error.700' },
 };
 
 function extractListData(response: unknown): AssetRow[] {
@@ -215,7 +215,7 @@ export const AssetListPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Package sx={{ width: 20, height: 20, color: 'primary.dark' }} />
+              <Package sx={{ width: 20, height: 20, color:'primary.700' }} />
             </Box>
             <Box>
               <Typography
@@ -251,7 +251,7 @@ export const AssetListPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color:'success.700' }} />
             </Box>
             <Box>
               <Typography
@@ -287,7 +287,7 @@ export const AssetListPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Wrench sx={{ width: 20, height: 20, color: 'warning.dark' }} />
+              <Wrench sx={{ width: 20, height: 20, color:'warning.700' }} />
             </Box>
             <Box>
               <Typography
@@ -323,7 +323,7 @@ export const AssetListPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <DollarSign sx={{ width: 20, height: 20, color: 'secondary.dark' }} />
+              <DollarSign sx={{ width: 20, height: 20, color:'secondary.700' }} />
             </Box>
             <Box>
               <Typography
@@ -364,7 +364,7 @@ export const AssetListPage: React.FC = () => {
               width: 64,
               height: 64,
               bgcolor: 'primary.50',
-              color: 'primary.dark',
+              color:'primary.700',
             }}
           >
             <Package size={32} />

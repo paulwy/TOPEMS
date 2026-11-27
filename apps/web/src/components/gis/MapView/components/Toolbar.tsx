@@ -260,7 +260,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               alignItems: 'center',
               gap: 1,
               backgroundColor: 'error.50',
-              color: 'error.dark',
+              color:'error.700',
               '&:hover': {
                 backgroundColor: 'error.50',
               },
@@ -283,7 +283,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               alignItems: 'center',
               gap: 1,
               backgroundColor: 'success.50',
-              color: 'success.dark',
+              color:'success.700',
               '&:hover': {
                 backgroundColor: 'success.50',
               },
@@ -330,7 +330,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             alignItems: 'center',
             gap: 1,
             backgroundColor: 'primary.100',
-            color: 'primary.dark',
+            color:'primary.700',
             '&:hover': {
               backgroundColor: 'primary.50',
             },

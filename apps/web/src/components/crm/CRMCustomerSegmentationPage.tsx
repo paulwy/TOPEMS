@@ -394,7 +394,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     left: 8,
                     top: 8,
                     fontSize: 12,
-                    color: 'success.main',
+                    color: 'success.700',
                     fontWeight: 600,
                   }}
                 >
@@ -407,7 +407,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     right: 8,
                     top: 8,
                     fontSize: 12,
-                    color: 'primary.main',
+                    color: 'primary.700',
                     fontWeight: 600,
                   }}
                 >
@@ -420,7 +420,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     left: 8,
                     bottom: 8,
                     fontSize: 12,
-                    color: 'warning.main',
+                    color: 'warning.700',
                     fontWeight: 600,
                   }}
                 >
@@ -433,7 +433,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     right: 8,
                     bottom: 8,
                     fontSize: 12,
-                    color: 'error.main',
+                    color: 'error.700',
                     fontWeight: 600,
                   }}
                 >
@@ -446,14 +446,16 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     const activityHigh = row.activity_band === 'high_activity';
                     const left = activityHigh ? '75%' : '25%';
                     const top = valueHigh ? '25%' : '75%';
+                    // 气泡是"彩色底 + 反白字"：底色走 saturated main，
+                    // 字色走同名 contrastText（两套方案各自保证 4.5:1）
                     const color =
                       valueHigh && activityHigh
-                        ? 'success.main'
+                        ? 'success'
                         : valueHigh
-                          ? 'primary.main'
+                          ? 'primary'
                           : activityHigh
-                            ? 'warning.main'
-                            : 'error.main';
+                            ? 'warning'
+                            : 'error';
                     const size = 20 + Math.min(row.customer_count, 40);
                     return (
                       <Box
@@ -466,15 +468,13 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                           width: size,
                           height: size,
                           borderRadius: '50%',
-                          bgcolor: color,
-                          opacity: 0.7,
+                          bgcolor: `${color}.main`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: 'var(--color-primary-foreground)',
+                          color: `${color}.contrastText`,
                           fontSize: 10,
                           fontWeight: 600,
-                          border: '2px solid var(--color-primary-foreground)',
                           boxShadow: 1,
                         }}
                         title={`${row.value_band}/${row.activity_band}: ${row.customer_count}`}

@@ -131,7 +131,7 @@ const TrainingPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color: 'primary.dark' }} />
+              <FileText sx={{ width: 20, height: 20, color:'primary.700' }} />
             </Box>
             <Box>
               <Typography
@@ -167,7 +167,7 @@ const TrainingPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <GraduationCap sx={{ width: 20, height: 20, color: 'warning.dark' }} />
+              <GraduationCap sx={{ width: 20, height: 20, color:'warning.700' }} />
             </Box>
             <Box>
               <Typography
@@ -203,7 +203,7 @@ const TrainingPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
+              <FileText sx={{ width: 20, height: 20, color:'success.700' }} />
             </Box>
             <Box>
               <Typography
@@ -239,7 +239,7 @@ const TrainingPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Award sx={{ width: 20, height: 20, color: 'info.dark' }} />
+              <Award sx={{ width: 20, height: 20, color:'info.700' }} />
             </Box>
             <Box>
               <Typography

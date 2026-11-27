@@ -186,7 +186,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
 };
 
 const _getPriorityColor = (priority: number) => {
-  if (priority >= 4) return { color: 'error.dark' };
+  if (priority >= 4) return { color:'error.700' };
   if (priority >= 3) return { color: 'warning.600' };
   if (priority >= 2) return { color: 'yellow.600' };
   return { color: 'text.secondary' };

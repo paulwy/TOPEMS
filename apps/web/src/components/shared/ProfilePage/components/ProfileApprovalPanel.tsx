@@ -201,7 +201,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: Mail,
               label: i18n.t('pages.profile_approval_panel.k1'),
               desc: i18n.t('pages.profile_approval_panel.k2'),
-              color: 'primary.dark',
+              color:'primary.700',
             },
             {
               key: 'system_enabled' as const,
@@ -215,7 +215,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: Activity,
               label: i18n.t('pages.profile_approval_panel.k5'),
               desc: i18n.t('pages.profile_approval_panel.k6'),
-              color: 'success.dark',
+              color:'success.700',
             },
             {
               key: 'document_enabled' as const,
@@ -229,7 +229,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: Shield,
               label: i18n.t('pages.profile_approval_panel.k9'),
               desc: i18n.t('pages.profile_approval_panel.k10'),
-              color: 'error.dark',
+              color:'error.700',
             },
           ].map(({ key, icon: Icon, label, desc, color }) => (
             <Box
@@ -321,7 +321,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: FileText,
               iconName: 'FileText',
               path: '/documents',
-              color: 'success.dark',
+              color:'success.700',
             },
             {
               id: '3',

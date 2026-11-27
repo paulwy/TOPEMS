@@ -100,19 +100,19 @@ const CategoryStats: React.FC<{ rows: SupplierCategory[] }> = ({ rows }) => {
     {
       label: i18n.t('pages.srm_category_page.k18'),
       value: stats.active,
-      color: 'success.dark',
+      color:'success.700',
       bgColor: 'success.50',
     },
     {
       label: i18n.t('pages.srm_category_page.k19'),
       value: stats.withSuppliers,
-      color: 'info.dark',
+      color:'info.700',
       bgColor: 'info.50',
     },
     {
       label: i18n.t('pages.srm_category_page.k20'),
       value: stats.totalSuppliers,
-      color: 'primary.dark',
+      color:'primary.700',
       bgColor: 'primary.50',
     },
   ];

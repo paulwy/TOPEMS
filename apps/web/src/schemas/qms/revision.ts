@@ -8,7 +8,7 @@ function renderVersionCell(row: Record<string, unknown>) {
   return React.createElement(Chip, {
     label: `v${version || ''}`,
     size: 'small',
-    sx: { backgroundColor: 'secondary.100', color: 'secondary.dark' },
+    sx: { backgroundColor: 'secondary.100', color:'secondary.700' },
   });
 }
 

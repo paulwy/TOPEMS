@@ -78,7 +78,7 @@ const ProcessRoutePage: React.FC = () => {
       active: {
         label: i18n.t('mes.process_route_page.active'),
         bg: 'success.50',
-        color: 'success.dark',
+        color:'success.700',
       },
       inactive: {
         label: i18n.t('mes.process_route_page.inactive'),
@@ -88,7 +88,7 @@ const ProcessRoutePage: React.FC = () => {
       draft: {
         label: i18n.t('mes.process_route_page.status_draft'),
         bg: 'warning.50',
-        color: 'warning.dark',
+        color:'warning.700',
       },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };

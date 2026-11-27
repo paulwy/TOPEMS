@@ -88,12 +88,12 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
       normal: {
         bg: 'success.50',
-        color: 'success.dark',
+        color:'success.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k4'),
       },
       in_use: {
         bg: 'success.50',
-        color: 'success.dark',
+        color:'success.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k5'),
       },
       calibration: {
@@ -103,17 +103,17 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       },
       calibrated: {
         bg: 'info.100',
-        color: 'info.dark',
+        color:'info.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k7'),
       },
       maintenance: {
         bg: 'error.50',
-        color: 'error.dark',
+        color:'error.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k8'),
       },
       under_maintenance: {
         bg: 'warning.50',
-        color: 'warning.dark',
+        color:'warning.700',
         label: i18n.t('lims.lims_instrument_maintenance_page.k9'),
       },
       disabled: {
@@ -327,7 +327,7 @@ const MaintenanceStatsCard: React.FC = () => {
         >
           <Box
             component={DollarSign}
-            sx={{ fontSize: 20, color: 'success.dark' }}
+            sx={{ fontSize: 20, color:'success.700' }}
           />
           {i18n.t('pages.lims_instrument_maintenance_page.k9')}
         </Typography>
@@ -344,13 +344,13 @@ const MaintenanceStatsCard: React.FC = () => {
           >
             <Typography
               variant='body2'
-              color='success.dark'
+              color='success.700'
             >
               {i18n.t('pages.lims_instrument_maintenance_page.k10')}
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color: 'success.dark' }}
+              sx={{ fontWeight: 700, color:'success.700' }}
             >
               -
             </Typography>
@@ -365,13 +365,13 @@ const MaintenanceStatsCard: React.FC = () => {
           >
             <Typography
               variant='body2'
-              color='primary.dark'
+              color='primary.700'
             >
               {i18n.t('pages.lims_instrument_maintenance_page.k11')}
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color: 'primary.dark' }}
+              sx={{ fontWeight: 700, color:'primary.700' }}
             >
               ¥-
             </Typography>
@@ -386,13 +386,13 @@ const MaintenanceStatsCard: React.FC = () => {
           >
             <Typography
               variant='body2'
-              color='info.dark'
+              color='info.700'
             >
               {i18n.t('pages.lims_instrument_maintenance_page.k12')}
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color: 'info.dark' }}
+              sx={{ fontWeight: 700, color:'info.700' }}
             >
               -
             </Typography>
@@ -407,13 +407,13 @@ const MaintenanceStatsCard: React.FC = () => {
           >
             <Typography
               variant='body2'
-              color='warning.dark'
+              color='warning.700'
             >
               {i18n.t('pages.lims_instrument_maintenance_page.k13')}
             </Typography>
             <Typography
               variant='h4'
-              sx={{ fontWeight: 700, color: 'warning.dark' }}
+              sx={{ fontWeight: 700, color:'warning.700' }}
             >
               -
             </Typography>

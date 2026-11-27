@@ -143,7 +143,7 @@ interface AlertCardProps {
 const LEVEL_CONFIG = {
   success: {
     icon: CheckCircle,
-    color: 'success.dark',
+    color:'success.700',
     bgColor: 'success.light',
     borderColor: 'success.light',
     titleColor: 'success.800',

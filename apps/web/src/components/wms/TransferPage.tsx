@@ -45,19 +45,19 @@ const TransferStats: React.FC = () => {
     {
       label: i18n.t('pages.transfer_page.k1'),
       value: stats.pending,
-      color: 'warning.dark',
+      color:'warning.700',
       bgColor: 'warning.light',
     },
     {
       label: i18n.t('pages.transfer_page.k2'),
       value: stats.shipped,
-      color: 'info.dark',
+      color:'info.700',
       bgColor: 'info.light',
     },
     {
       label: i18n.t('pages.transfer_page.k3'),
       value: stats.completed,
-      color: 'success.dark',
+      color:'success.700',
       bgColor: 'success.light',
     },
   ];

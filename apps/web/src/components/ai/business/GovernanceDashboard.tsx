@@ -262,7 +262,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             title={t('ai.governance_dashboard.stat_success_rate')}
             value={`${data.key_metrics.success_rate.toFixed(1)}%`}
             icon={<CheckCircle size={18} />}
-            color='success.dark'
+            color='success.700'
             progress={data.key_metrics.success_rate}
           />
         </Grid>

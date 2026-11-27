@@ -137,7 +137,7 @@ export const workReportSchema: EntitySchema = {
           submitted: {
             label: i18n.t('mes.work_report.k22'),
             bg: 'primary.100',
-            color: 'primary.dark',
+            color:'primary.700',
           },
           approved: {
             label: i18n.t('mes.work_report.k23'),
@@ -147,12 +147,12 @@ export const workReportSchema: EntitySchema = {
           rejected: {
             label: i18n.t('mes.work_report.k24'),
             bg: 'error.50',
-            color: 'error.dark',
+            color:'error.700',
           },
           reworking: {
             label: i18n.t('mes.work_report.k45'),
             bg: 'warning.50',
-            color: 'warning.dark',
+            color:'warning.700',
           },
           archived: {
             label: i18n.t('mes.work_report.k46'),

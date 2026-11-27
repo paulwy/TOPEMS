@@ -3,14 +3,14 @@ import React from 'react';
 import i18n from '@/i18n';
 
 const colorMap: Record<string, { bg: string; color: string }> = {
-  'bg-red-100': { bg: 'error.50', color: 'error.dark' },
+  'bg-red-100': { bg: 'error.50', color:'error.700' },
   'bg-yellow-100': { bg: 'warning.100', color: 'yellow.600' },
-  'bg-green-100': { bg: 'success.50', color: 'success.dark' },
+  'bg-green-100': { bg: 'success.50', color:'success.700' },
   'bg-gray-100': { bg: 'grey.100', color: 'text.secondary' },
-  'bg-blue-100': { bg: 'primary.100', color: 'primary.dark' },
+  'bg-blue-100': { bg: 'primary.100', color:'primary.700' },
   'bg-orange-100': { bg: 'orange.100', color: 'warning.600' },
-  'bg-purple-100': { bg: 'secondary.100', color: 'secondary.dark' },
-  'bg-emerald-100': { bg: 'success.50', color: 'success.dark' },
+  'bg-purple-100': { bg: 'secondary.100', color:'secondary.700' },
+  'bg-emerald-100': { bg: 'success.50', color:'success.700' },
 };
 
 // EHS Hazard Status Types

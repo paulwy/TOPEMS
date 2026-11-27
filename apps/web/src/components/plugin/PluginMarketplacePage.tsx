@@ -1183,7 +1183,7 @@ const PluginMarketplacePage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Package sx={{ width: 28, height: 28, color: 'primary.dark' }} />
+                  <Package sx={{ width: 28, height: 28, color:'primary.700' }} />
                 </Box>
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography

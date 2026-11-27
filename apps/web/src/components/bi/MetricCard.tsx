@@ -238,9 +238,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   const getTrendColor = () => {
+    // 涨跌是"小字正文"，不能直接用 main（亮色主色在白底只有 2.2:1）；
+    // .700 在亮色是深色、在暗色反相后是浅色，两种模式都可读。
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable')
-      return `${designTokens.colors.grey['500']}`;
-    return computedTrend === 'up' ? 'success.main' : 'error.main';
+      return 'text.secondary';
+    return computedTrend === 'up' ? 'success.700' : 'error.700';
   };
 
   const renderIcon = () => {
@@ -472,10 +474,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 justifyContent: 'center',
                 backgroundColor:
                   computedTrend === 'up'
-                    ? designTokens.colors.success[100]
+                    ? 'success.100'
                     : computedTrend === 'down'
                       ? 'error.100'
-                      : designTokens.colors.grey[100],
+                      : 'grey.100',
                 transition: 'all 0.3s',
                 transform: isHovered ? 'scale(1.1)' : 'scale(1)',
               }}

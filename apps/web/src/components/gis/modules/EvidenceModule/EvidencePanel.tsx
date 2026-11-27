@@ -244,7 +244,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
             <Box sx={{ p: 12, bgcolor: 'primary.lightest', borderRadius: 'full' }}>
               <Camera
                 size={24}
-                sx={{ color: 'primary.dark' }}
+                sx={{ color:'primary.700' }}
               />
             </Box>
             <Typography
@@ -310,7 +310,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
             <Box sx={{ p: 12, bgcolor: 'secondary.lightest', borderRadius: 'full' }}>
               <Video
                 size={24}
-                sx={{ color: 'secondary.dark' }}
+                sx={{ color:'secondary.700' }}
               />
             </Box>
             <Typography
