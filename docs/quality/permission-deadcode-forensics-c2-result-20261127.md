@@ -427,6 +427,17 @@
 
 - **结论**：5 个 read 码后端均无裸码门控引用、前端无 read 消费点；2 条 trace 触达为 admin 全量令牌放行、鉴别力不足，不改判。矩阵主分类不变 **6 / 548 / 27**；产物 `read-codes-crosscheck.json`（gitignore），矩阵 3 码补 `read_code_note`，备份 `c2-matrix.v33-pre112.bak.json`。
 
+### 13.15 待复核/兜底小集合跨产物专项复核（#113，静态只读；不改判）
+
+- **范围**：动作分布中非 read 的小集合——待复核 write 9、`workflow:approve`、待复核 `workflow:admin`，并补核兜底 27 中 2 码（`system:center:read`、`admin:dashboard:write`，#104 已覆盖），共 12 码。
+- **后端口径**：裸码门控引用 = 0；grep 命中的带前缀真实码子串不计裸码消费：
+  - `master-data:write` 后端注解真实码 `erp:master-data:write`（三段，非候选）；
+  - `workflow:admin` 后端注解真实码 `unified-core:flow:workflow:admin`（五段，非候选）；
+  - `workflow:approve` 后端仅测试断言与注释计数，无运行期门控注解。
+- **前端口径**：门控直参/绑定 = 0；命中均在 `config/permissions.ts` 目录字典。唯一 config 引用为 `finance/config.ts` 注释——`finance:dashboard:write` 路由门控批 26 已切 `finance:voucher:create`，本码仅目录挂名。
+- **逐码画像**：12 码 inline-trace 触达均为 0；后端无裸码门控、前端无消费点。其中 10 码维持待复核，2 码维持兜底（#104 口径）。
+- **结论**：矩阵主分类不变 **6 / 548 / 27**；产物 `small-set-crosscheck.json`（gitignore），矩阵 10 码补 `small_set_note`，备份 `c2-matrix.v33-pre113.bak.json`。
+
 
 
 
