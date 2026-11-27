@@ -74,7 +74,7 @@ export const officeSuppliesSchema: EntitySchema = {
       label: i18n.t('schema:erp.office_supply.price.label'),
       type: 'number',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const price = row.price as number | undefined;
         return price ? `¥${price.toFixed(2)}` : '-';
       },

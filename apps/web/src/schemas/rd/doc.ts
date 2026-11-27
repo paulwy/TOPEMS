@@ -55,7 +55,7 @@ export const docSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 250,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const type = String(row.doc_type ?? '');
         return React.createElement(
           Box,
@@ -79,7 +79,7 @@ export const docSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(Chip, {
           label: String(row.version ?? ''),
           size: 'small',

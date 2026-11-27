@@ -75,7 +75,7 @@ export const regulationSchema: EntitySchema = {
       label: i18n.t('ehs.compliance.k15'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         row.issuing_authority ? String(row.issuing_authority) : '-',
       validation: [{ type: 'maxLength', value: 256 }],
     },
@@ -84,7 +84,7 @@ export const regulationSchema: EntitySchema = {
       label: i18n.t('ehs.compliance.k16'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => (row.issue_date ? String(row.issue_date) : '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => (row.issue_date ? String(row.issue_date) : '-'),
     },
     {
       name: 'effective_date',
@@ -242,14 +242,14 @@ export const assessmentSchema: EntitySchema = {
       label: i18n.t('ehs.compliance.k54'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => (row.assessor ? String(row.assessor) : '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => (row.assessor ? String(row.assessor) : '-'),
     },
     {
       name: 'assessment_date',
       label: i18n.t('ehs.compliance.k55'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         row.assessment_date ? String(row.assessment_date) : '-',
     },
     {
@@ -411,7 +411,7 @@ export const permitSchema: EntitySchema = {
       label: i18n.t('ehs.compliance.k90'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => (row.holder ? String(row.holder) : '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => (row.holder ? String(row.holder) : '-'),
       validation: [{ type: 'maxLength', value: 256 }],
     },
     {
@@ -419,7 +419,7 @@ export const permitSchema: EntitySchema = {
       label: i18n.t('ehs.compliance.k91'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         row.expiry_date ? String(row.expiry_date) : '-',
     },
     {

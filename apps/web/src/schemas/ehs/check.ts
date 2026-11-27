@@ -47,7 +47,7 @@ export const inspectionPlanSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.inspection_type as string;
         const map: Record<string, string> = {
           daily: i18n.t('ehs.check.k11'),
@@ -78,7 +78,7 @@ export const inspectionPlanSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.frequency as string;
         const map: Record<string, string> = {
           daily: i18n.t('ehs.check.k23'),
@@ -96,7 +96,7 @@ export const inspectionPlanSchema: EntitySchema = {
       label: i18n.t('ehs.check.k28'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.inspector as string | null | undefined;
         return v || '-';
       },
@@ -108,7 +108,7 @@ export const inspectionPlanSchema: EntitySchema = {
       type: 'date',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.start_date as string | null | undefined;
         return v || '-';
       },
@@ -119,7 +119,7 @@ export const inspectionPlanSchema: EntitySchema = {
       type: 'date',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.end_date as string | null | undefined;
         return v || '-';
       },
@@ -242,7 +242,7 @@ export const inspectionRecordSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.inspection_type as string;
         const map: Record<string, string> = {
           daily: i18n.t('ehs.check.k57'),
@@ -261,7 +261,7 @@ export const inspectionRecordSchema: EntitySchema = {
       label: i18n.t('ehs.check.k63'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.location as string | null | undefined;
         return v || '-';
       },
@@ -272,7 +272,7 @@ export const inspectionRecordSchema: EntitySchema = {
       label: i18n.t('ehs.check.k64'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.inspector as string | null | undefined;
         return v || '-';
       },
@@ -283,7 +283,7 @@ export const inspectionRecordSchema: EntitySchema = {
       label: i18n.t('ehs.check.k65'),
       type: 'date',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.inspected_at as string | null | undefined;
         return v || '-';
       },
@@ -294,7 +294,7 @@ export const inspectionRecordSchema: EntitySchema = {
       type: 'text',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.result as string | null | undefined;
         return v || '-';
       },

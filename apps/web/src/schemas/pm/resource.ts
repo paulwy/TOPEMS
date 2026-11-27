@@ -82,7 +82,7 @@ export const resourceSchema: EntitySchema = {
       type: 'number',
       defaultValue: 100,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.allocation_percent as number | undefined;
         if (val === undefined || val === null) return '-';
         return `${val}%`;

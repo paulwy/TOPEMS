@@ -132,7 +132,7 @@ export const ticketSchema: EntitySchema = {
       defaultValue: 'user_request',
       options: { type: 'static', options: TICKET_TYPE_OPTIONS },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.ticket_type ?? '');
         const label = TICKET_TYPE_OPTIONS.find((o) => o.value === val)?.label || val;
         return React.createElement(Chip, {
@@ -149,7 +149,7 @@ export const ticketSchema: EntitySchema = {
       defaultValue: 'medium',
       options: { type: 'static', options: SEVERITY_OPTIONS },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.severity ?? '');
         const label = SEVERITY_LABEL_MAP[val] || val;
         const color = (SEVERITY_COLOR_MAP[val] || 'default') as
@@ -184,7 +184,7 @@ export const ticketSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 120,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const dueAt = row.sla_due_at as string | undefined;
         const status = String(row.status ?? '');
         if (!dueAt || ['resolved', 'closed', 'cancelled'].includes(status)) {

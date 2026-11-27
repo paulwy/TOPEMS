@@ -131,7 +131,7 @@ export const workReportSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           draft: { label: i18n.t('mes.work_report.k21'), bg: 'grey.100', color: 'text.secondary' },
           submitted: {

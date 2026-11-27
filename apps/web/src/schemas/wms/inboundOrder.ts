@@ -46,7 +46,7 @@ export const inboundOrderSchema: EntitySchema = {
           { value: 'other_in', label: i18n.t('wms.inbound_order.k7') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const map: Record<string, string> = {
           purchase_in: i18n.t('wms.inbound_order.k8'),
           return_in: i18n.t('wms.inbound_order.k9'),
@@ -79,7 +79,7 @@ export const inboundOrderSchema: EntitySchema = {
       name: 'expected_date',
       label: i18n.t('wms.inbound_order.k15'),
       type: 'date',
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         row.expected_date ? new Date(row.expected_date as string).toLocaleDateString('zh-CN') : '-',
     },
     {

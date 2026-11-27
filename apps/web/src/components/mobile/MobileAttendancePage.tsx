@@ -20,6 +20,7 @@ import {
   DialogActions,
   MenuItem,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import i18n from '@/i18n';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -516,7 +517,10 @@ const MobileAttendancePage: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      bgcolor: 'action.disabledBackground',
+                      bgcolor:
+                        todayStatus === 'not_checked_in' || todayStatus === 'checked_in'
+                          ? alpha(theme.palette.primary.main, 0.12)
+                          : 'action.disabledBackground',
                       cursor: checkingIn ? 'not-allowed' : 'pointer',
                       transition: 'transform 0.2s',
                       '&:active': {
@@ -531,7 +535,15 @@ const MobileAttendancePage: React.FC = () => {
                       }
                     }}
                   >
-                    <Box sx={{ textAlign: 'center' }}>
+                    <Box
+                      sx={{
+                        textAlign: 'center',
+                        color:
+                          todayStatus === 'not_checked_in' || todayStatus === 'checked_in'
+                            ? 'primary.main'
+                            : 'text.secondary',
+                      }}
+                    >
                       <CalendarCheck
                         style={{
                           width: 40,

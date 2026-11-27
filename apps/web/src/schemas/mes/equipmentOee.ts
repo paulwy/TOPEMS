@@ -73,7 +73,7 @@ export const equipmentOeeSchema: EntitySchema = {
       type: 'number',
       readonly: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(Chip, {
           size: 'small',
           label: formatPercent(row.availability as number),
@@ -90,7 +90,7 @@ export const equipmentOeeSchema: EntitySchema = {
       type: 'number',
       readonly: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(Chip, {
           size: 'small',
           label: formatPercent(row.performance as number),
@@ -107,7 +107,7 @@ export const equipmentOeeSchema: EntitySchema = {
       type: 'number',
       readonly: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(Chip, {
           size: 'small',
           label: formatPercent(row.quality as number),
@@ -124,7 +124,7 @@ export const equipmentOeeSchema: EntitySchema = {
       type: 'number',
       readonly: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(Chip, {
           size: 'small',
           label: formatPercent(row.oee as number),

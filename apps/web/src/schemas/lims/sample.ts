@@ -25,7 +25,7 @@ export const sampleSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => String(row.sample_no || row.id || '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => String(row.sample_no || row.id || '-'),
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
@@ -41,7 +41,7 @@ export const sampleSchema: EntitySchema = {
       label: i18n.t('lims.sample.k4'),
       type: 'textarea',
       listWidth: 180,
-      renderCell: (row: Record<string, unknown>) => String(row.description || '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => String(row.description || '-'),
     },
     {
       name: 'status',

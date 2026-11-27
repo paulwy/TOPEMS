@@ -56,7 +56,7 @@ export const materialBomSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           draft: { label: i18n.t('mes.material_bom.k10'), bg: 'grey.100', color: 'text.secondary' },
           active: {
@@ -94,7 +94,7 @@ export const materialBomSchema: EntitySchema = {
       type: 'number',
       readonly: true,
       listWidth: 80,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         (row.items as unknown[] | undefined)?.length || 0,
     },
     {

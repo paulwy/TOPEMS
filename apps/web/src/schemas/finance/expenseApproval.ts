@@ -215,7 +215,7 @@ export const expenseApprovalSchema: EntitySchema & {
       defaultValue: 0,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const amount = row.total_amount as number | undefined;
         return React.createElement(
           'span',

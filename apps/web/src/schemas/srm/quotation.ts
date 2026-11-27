@@ -41,7 +41,7 @@ const quotationItemFields: SchemaField[] = [
     required: true,
     defaultValue: 0,
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const val = row.unit_price as number | undefined;
       return val != null ? val.toFixed(2) : '-';
     },
@@ -52,7 +52,7 @@ const quotationItemFields: SchemaField[] = [
     type: 'number',
     defaultValue: 0,
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const val = row.subtotal as number | undefined;
       return val != null ? val.toFixed(2) : '-';
     },
@@ -130,7 +130,7 @@ export const quotationSchema: EntitySchema & { nestedTables: NestedTableConfig[]
       defaultValue: 0,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const amount = row.total_amount as number | undefined;
         const currency = row.currency as string | undefined;
         const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '¥';

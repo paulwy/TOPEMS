@@ -53,7 +53,7 @@ export const financeSchema: EntitySchema = {
       type: 'number',
       listWidth: 140,
       align: 'right',
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const amount = (row as Record<string, unknown>).amount as number | undefined;
         const style: React.CSSProperties = { fontWeight: 600, color: 'grey.800' };
         return React.createElement('span', { style }, `¥${(amount || 0).toLocaleString()}`);

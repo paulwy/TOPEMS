@@ -131,7 +131,7 @@ export const materialRequirementSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const priorityMap: Record<string, { label: string; bg: string; color: string }> = {
           urgent: {
             label: i18n.t('mes.material_requirement.k19'),
@@ -179,7 +179,7 @@ export const materialRequirementSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           draft: {
             label: i18n.t('mes.material_requirement.k29'),

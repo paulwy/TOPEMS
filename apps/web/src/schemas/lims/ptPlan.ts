@@ -138,7 +138,7 @@ export const ptPlanSchema: EntitySchema = {
       label: i18n.t('lims.pt_plan.k35'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'registration_date'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'registration_date'),
     },
     {
       name: 'test_deadline',
@@ -146,14 +146,14 @@ export const ptPlanSchema: EntitySchema = {
       type: 'date',
       showInList: false,
       showInDetail: true,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'test_deadline'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'test_deadline'),
     },
     {
       name: 'report_deadline',
       label: i18n.t('lims.pt_plan.k37'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'report_deadline'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'report_deadline'),
     },
     {
       name: 'contact_person',
@@ -185,7 +185,7 @@ export const ptPlanSchema: EntitySchema = {
       readonly: true,
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'created_at'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'created_at'),
     },
     {
       name: 'updated_at',
@@ -194,7 +194,7 @@ export const ptPlanSchema: EntitySchema = {
       readonly: true,
       showInList: false,
       showInDetail: true,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'updated_at'),
+      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'updated_at'),
     },
   ],
 

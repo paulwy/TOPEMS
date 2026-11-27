@@ -82,7 +82,7 @@ export const voucherSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatCurrency(row.total_debit as number, designTokens.colors.error.dark),
     },
     {
@@ -93,7 +93,7 @@ export const voucherSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatCurrency(row.total_credit as number, designTokens.colors.success.dark),
     },
     {

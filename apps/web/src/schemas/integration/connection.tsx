@@ -40,7 +40,7 @@ const connectionFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 240,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Box
           sx={{
@@ -94,7 +94,7 @@ const connectionFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = CONNECTION_TYPE_CONFIG[row.type as string] || {
         label: String(row.type ?? ''),
         color: 'default' as const,
@@ -121,7 +121,7 @@ const connectionFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = CONNECTION_STATUS_CONFIG[row.status as string] || {
         label: String(row.status ?? ''),
         color: 'default' as const,
@@ -140,7 +140,7 @@ const connectionFields: SchemaField[] = [
     label: i18n.t('shared.connection.k8'),
     type: 'text',
     listWidth: 120,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -154,7 +154,7 @@ const connectionFields: SchemaField[] = [
     label: i18n.t('shared.connection.k9'),
     type: 'datetime',
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -183,7 +183,7 @@ const connectionFields: SchemaField[] = [
     type: 'text',
     listWidth: 180,
     hideInForm: true,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Chip
           size='small'

@@ -42,7 +42,7 @@ const alertHistoryFields: SchemaField[] = [
     label: i18n.t('shared.alert_history.k6'),
     type: 'select',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Chip
         size='small'
         color={getSeverityColor(row.severity as string)}
@@ -56,7 +56,7 @@ const alertHistoryFields: SchemaField[] = [
     label: i18n.t('shared.alert_history.k7'),
     type: 'text',
     minWidth: 200,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography
           variant='body2'
@@ -85,7 +85,7 @@ const alertHistoryFields: SchemaField[] = [
     type: 'datetime',
     listWidth: 160,
     sortable: true,
-    renderCell: (row: Record<string, unknown>) =>
+    renderCell: (row: Record<string, unknown>, _index: number) =>
       new Date(row.created_at as string).toLocaleString('zh-CN'),
   },
   {
@@ -93,7 +93,7 @@ const alertHistoryFields: SchemaField[] = [
     label: i18n.t('shared.alert_history.k11'),
     type: 'select',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <StatusChip
         size='sm'
         status={row.status as string}

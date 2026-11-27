@@ -50,7 +50,7 @@ export const reviewSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 220,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const name = String(row.name ?? '');
         const version = row.version ? ` · v${String(row.version)}` : '';
         return React.createElement(
@@ -70,7 +70,7 @@ export const reviewSchema: EntitySchema = {
       label: i18n.t('rd.review.k35'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => String(row.code ?? '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => String(row.code ?? '-'),
     },
     {
       name: 'approval_status',
@@ -86,7 +86,7 @@ export const reviewSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const raw = String(row.approval_status ?? '').toLowerCase();
         const key = raw || 'none';
         const label = getApprovalStatusLabelMap()[key] || raw || '-';
@@ -99,7 +99,7 @@ export const reviewSchema: EntitySchema = {
       label: i18n.t('rd.review.k7'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.approved_by ? String(row.approved_by) : i18n.t('rd.review.k8');
         return React.createElement(
           Box,
@@ -114,7 +114,7 @@ export const reviewSchema: EntitySchema = {
       label: i18n.t('rd.review.k15'),
       type: 'datetime',
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.approved_at ?? row.created_at;
         if (!val) return '-';
         return React.createElement(

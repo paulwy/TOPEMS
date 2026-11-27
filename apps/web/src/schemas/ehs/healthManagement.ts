@@ -23,7 +23,7 @@ export const healthManagementSchema: EntitySchema = {
       listWidth: 140,
       hideInForm: true,
       visibleWhen: () => false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.record_no as string | null | undefined;
         return v || '-';
       },
@@ -67,7 +67,7 @@ export const healthManagementSchema: EntitySchema = {
       type: 'date',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.birthday as string | null | undefined;
         return v || '-';
       },
@@ -77,7 +77,7 @@ export const healthManagementSchema: EntitySchema = {
       label: i18n.t('ehs.health_management.k9'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.department as string | null | undefined;
         return v || '-';
       },
@@ -88,7 +88,7 @@ export const healthManagementSchema: EntitySchema = {
       label: i18n.t('ehs.health_management.k10'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.position as string | null | undefined;
         return v || '-';
       },
@@ -99,7 +99,7 @@ export const healthManagementSchema: EntitySchema = {
       label: i18n.t('ehs.health_management.k11'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.workplace as string | null | undefined;
         return v || '-';
       },
@@ -110,7 +110,7 @@ export const healthManagementSchema: EntitySchema = {
       type: 'text',
       listWidth: 80,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.blood_type as string | null | undefined;
         return v || '-';
       },
@@ -121,7 +121,7 @@ export const healthManagementSchema: EntitySchema = {
       type: 'text',
       listWidth: 140,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.contact_info as string | null | undefined;
         return v || '-';
       },
@@ -145,7 +145,7 @@ export const healthManagementSchema: EntitySchema = {
       showInList: false,
       hideInForm: true,
       visibleWhen: () => false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.hazard_factors;
         return Array.isArray(v) ? v.join(', ') : '-';
       },

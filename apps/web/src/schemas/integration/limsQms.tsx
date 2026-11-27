@@ -19,7 +19,7 @@ const limsQmsFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 240,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box>
         <Typography
           variant='body2'
@@ -50,7 +50,7 @@ const limsQmsFields: SchemaField[] = [
     type: 'text',
     listWidth: 140,
     placeholder: i18n.t('shared.lims_qms.k7'),
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -79,7 +79,7 @@ const limsQmsFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg =
         LIMS_QMS_STATUS_CONFIG[row.sync_status as string] || LIMS_QMS_STATUS_CONFIG.pending;
       return (
@@ -97,7 +97,7 @@ const limsQmsFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -115,7 +115,7 @@ const limsQmsFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     hideInForm: true,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'

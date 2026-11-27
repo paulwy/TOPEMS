@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { semanticTileSx } from '@/theme/semanticTile';
 import styles from './AiChatPage.module.css';
 /**
  * AI 对话页面 - V4.0 标准化改造 + ChatPageTemplate 迁移
@@ -405,11 +406,10 @@ export const AiChatPage: React.FC = () => {
                   width: 24,
                   height: 24,
                   borderRadius: 0.5,
-                  bgcolor: 'primary.light',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'primary.main',
+                  ...semanticTileSx('primary', 0.14),
                 }}
               >
                 {getTypeIcon(session.type)}
@@ -627,7 +627,8 @@ export const AiChatPage: React.FC = () => {
             <Paper
               sx={{
                 p: 2,
-                bgcolor: msg.role === 'user' ? 'primary.light' : 'background.paper',
+                bgcolor: msg.role === 'user' ? 'action.selected' : 'background.paper',
+                color: 'text.primary',
               }}
             >
               {msg.content.includes('```') ? (

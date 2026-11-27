@@ -16,6 +16,7 @@ import {
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { analyzeGradient } from '@/theme/gradient';
 import { ChevronRight, RefreshCw, MoreHorizontal } from 'lucide-react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { BackButton } from '@topems/shared-components';
@@ -150,12 +151,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       );
     return typeof resolved === 'string' ? resolved : undefined;
   };
-  const gradientUsable = Boolean(
-    pageGradient && !/undefined|NaN/.test(pageGradient) && /#|rgb|var\(/.test(pageGradient)
-  );
+  const gradient = React.useMemo(() => analyzeGradient(pageGradient), [pageGradient]);
+  const gradientUsable = gradient.usable;
   const iconBgColor = resolveColorToken(pageColor) ?? theme.palette.primary.main;
   const iconForeground = gradientUsable
-    ? theme.palette.common.white
+    ? theme.palette.getContrastText(gradient.average ?? iconBgColor)
     : theme.palette.getContrastText(iconBgColor);
 
   // G1: pathTabs 仅接受显式传入，不再从路由自动派生（层级导航统一由 AppShell 面包屑渲染）

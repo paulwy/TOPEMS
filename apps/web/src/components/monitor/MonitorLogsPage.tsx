@@ -19,7 +19,9 @@ import {
   Card,
   CardContent,
   Tooltip,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   FileText,
   Download,
@@ -62,6 +64,7 @@ interface SystemLog {
 const MOCK_LOGS: SystemLog[] = [];
 
 const MonitorLogsPage: React.FC = () => {
+  const theme = useTheme();
   const {} = useQuery({
     queryKey: ['monitor', 'logs'],
     queryFn: async () => {
@@ -315,7 +318,10 @@ const MonitorLogsPage: React.FC = () => {
               {stats.map((stat) => (
                 <Card
                   key={stat.id}
-                  sx={{ bgcolor: `${stat.color}.light` }}
+                  sx={{
+                    bgcolor: alpha(theme.palette[stat.color as 'primary'].main, 0.06),
+                    border: `1px solid ${alpha(theme.palette[stat.color as 'primary'].main, 0.18)}`,
+                  }}
                 >
                   <CardContent sx={{ p: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -323,7 +329,11 @@ const MonitorLogsPage: React.FC = () => {
                         sx={{
                           width: 40,
                           height: 40,
-                          bgcolor: `${stat.color}.lighter`,
+                          bgcolor: alpha(theme.palette[stat.color as 'primary'].main, 0.14),
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? theme.palette[stat.color as 'primary'].light
+                              : theme.palette[stat.color as 'primary'].dark,
                           borderRadius: 3,
                           display: 'flex',
                           alignItems: 'center',

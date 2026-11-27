@@ -38,7 +38,7 @@ export const formulaSchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
@@ -65,7 +65,7 @@ export const formulaSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.version ?? '');
         if (!val) return '-';
         return React.createElement(Chip, { label: val, size: 'small' });
@@ -76,7 +76,7 @@ export const formulaSchema: EntitySchema = {
       label: i18n.t('rd.formula.k8'),
       type: 'text',
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.project_id ?? '');
         return val || '-';
       },

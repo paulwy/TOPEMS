@@ -84,7 +84,7 @@ export const permissionSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 200,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const name = String(row.name || '');
         const description = String(row.description || '');
         return React.createElement(
@@ -134,7 +134,7 @@ export const permissionSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           Typography,
           {

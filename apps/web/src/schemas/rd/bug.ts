@@ -80,7 +80,7 @@ export const bugSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.severity ?? '');
         return React.createElement(Chip, {
           label: SEVERITY_LABEL_MAP[val] || val,
@@ -103,7 +103,7 @@ export const bugSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.priority ?? '');
         return React.createElement(Chip, {
           label: PRIORITY_LABEL_MAP[val] || val,

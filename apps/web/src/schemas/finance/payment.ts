@@ -60,7 +60,7 @@ export const paymentSchema: EntitySchema = {
       required: true,
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const style: React.CSSProperties = { fontWeight: 600 };
         return React.createElement(
           'span',

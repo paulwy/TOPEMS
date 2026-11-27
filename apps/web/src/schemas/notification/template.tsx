@@ -65,7 +65,7 @@ export const notificationTemplateSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 280,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const type = String(row['notification_type'] || 'info');
         const name = String(row['name'] || '');
         const description = row['description'] as string | undefined;
@@ -135,7 +135,7 @@ export const notificationTemplateSchema: EntitySchema = {
           { value: 'alert', label: i18n.t('shared.template.k25') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const type = String(row['notification_type'] || 'info');
         const label = TYPE_LABELS[type] || type;
         const color = TYPE_COLORS[type] || 'primary';
@@ -166,7 +166,7 @@ export const notificationTemplateSchema: EntitySchema = {
           { value: 'deprecated', label: i18n.t('shared.template.k30') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const status = String(row.status ?? 'draft');
         const label = STATUS_LABELS[status] || status;
         const color = STATUS_COLORS[status] || 'default';
@@ -188,7 +188,7 @@ export const notificationTemplateSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => (
+      renderCell: (row: Record<string, unknown>, _index: number) => (
         <Typography
           variant='body2'
           color='text.secondary'

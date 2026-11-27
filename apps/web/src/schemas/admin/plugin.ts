@@ -47,7 +47,7 @@ export const pluginSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 250,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const name = String(row.name || '');
         const description = row.description ? String(row.description) : '';
         return React.createElement(
@@ -79,7 +79,7 @@ export const pluginSchema: EntitySchema = {
       label: i18n.t('schema:admin.plugin.code.label'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement('code', { style: { fontSize: 12 } }, String(row.code || '')),
       validation: [{ type: 'maxLength', value: 64 }],
     },
@@ -88,7 +88,7 @@ export const pluginSchema: EntitySchema = {
       label: i18n.t('schema:admin.plugin.version.label'),
       type: 'text',
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const version = String(row.version || '');
         const latestVersion = row.latest_version ? String(row.latest_version) : '';
         const hasUpdate = latestVersion && latestVersion !== version;
@@ -128,7 +128,7 @@ export const pluginSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const pluginType = String(row.plugin_type || '');
         return React.createElement(
           'span',
@@ -152,7 +152,7 @@ export const pluginSchema: EntitySchema = {
       label: i18n.t('schema:admin.plugin.runtime_status.label'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const status = String(row.runtime_status || 'unknown');
         const label = RUNTIME_STATUS_LABELS[status] || status;
         const color = RUNTIME_STATUS_COLORS[status] || 'warning';
@@ -198,7 +198,7 @@ export const pluginSchema: EntitySchema = {
       label: i18n.t('schema:admin.plugin.runtime_url.label'),
       type: 'text',
       listWidth: 200,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const url = row.runtime_url ? String(row.runtime_url) : '-';
         return React.createElement(
           'span',

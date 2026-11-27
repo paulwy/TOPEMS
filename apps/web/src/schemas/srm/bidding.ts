@@ -92,7 +92,7 @@ export const biddingSchema: EntitySchema = {
       type: 'number',
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const amount = row.budget_amount as number | undefined;
         if (!amount) return '-';
         return React.createElement(

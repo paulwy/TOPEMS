@@ -59,7 +59,7 @@ export const getMilestoneSchema = (): EntitySchema => {
         defaultValue: 0,
         listWidth: 170,
         hideInForm: true,
-        renderCell: (row: Record<string, unknown>) => {
+        renderCell: (row: Record<string, unknown>, _index: number) => {
           const val = Number(row.progress ?? 0);
           return React.createElement(
             Box,

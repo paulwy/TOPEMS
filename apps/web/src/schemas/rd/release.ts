@@ -63,7 +63,7 @@ export const releaseSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.version || row.deploy_no || '';
         return React.createElement(
           Box,
@@ -82,7 +82,7 @@ export const releaseSchema: EntitySchema = {
       label: i18n.t('rd.release.k43'),
       type: 'text',
       listWidth: 200,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const name = row.formula_name ? String(row.formula_name) : '';
         const code = row.formula_code ? String(row.formula_code) : '';
         if (!name) {
@@ -101,7 +101,7 @@ export const releaseSchema: EntitySchema = {
       label: i18n.t('rd.release.k9'),
       type: 'datetime',
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.deploy_time || row.created_at || '';
         return React.createElement(
           Box,
@@ -125,7 +125,7 @@ export const releaseSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const env = (row.environment || row.env || '') as string;
         const label = getEnvLabelMap()[env] || env || '-';
         const color = ENV_COLOR_MAP[env] || 'default';
@@ -146,7 +146,7 @@ export const releaseSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const status = String(row.status ?? '');
         const label = getDeployStatusLabelMap()[status] || status || '-';
         const color = DEPLOY_STATUS_COLOR_MAP[status] || 'default';
@@ -158,7 +158,7 @@ export const releaseSchema: EntitySchema = {
       label: i18n.t('rd.release.k19'),
       type: 'text',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.deployer || row.operator || '';
         return React.createElement(
           Box,
@@ -221,7 +221,7 @@ export const releaseSchema: EntitySchema = {
       label: i18n.t('rd.release.k29'),
       type: 'text',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const url = row.target_url ? String(row.target_url) : '';
         if (!url) return '-';
         return React.createElement(

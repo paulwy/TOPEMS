@@ -122,7 +122,7 @@ export const getAccountSchema = (): EntitySchema => ({
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {
@@ -142,7 +142,7 @@ export const getAccountSchema = (): EntitySchema => ({
       required: true,
       sortable: true,
       listWidth: 180,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const name = String(row.name || '');
         const isDetail = row.is_detail === true;
         return React.createElement('span', { style: { fontWeight: isDetail ? 400 : 500 } }, name);
@@ -167,7 +167,7 @@ export const getAccountSchema = (): EntitySchema => ({
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const accountType = String(row.type || '');
         const label = getAccountTypeLabels()[accountType] || accountType;
         const color = ACCOUNT_TYPE_COLORS[accountType] || 'default';
@@ -191,7 +191,7 @@ export const getAccountSchema = (): EntitySchema => ({
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const direction = String(row.balance_direction || '');
         const label = getBalanceDirectionLabels()[direction] || direction;
         const color = BALANCE_DIRECTION_COLORS[direction] || 'primary';
@@ -204,7 +204,7 @@ export const getAccountSchema = (): EntitySchema => ({
       type: 'switch',
       defaultValue: true,
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const isDetail = row.is_detail === true;
         return React.createElement(
           'span',
@@ -234,7 +234,7 @@ export const getAccountSchema = (): EntitySchema => ({
       type: 'switch',
       defaultValue: true,
       listWidth: 90,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const isActive = row.isactive !== false;
         const colorMap: Record<string, string> = {
           success: `var(--color-success-main, ${designTokens.colors.success.dark})`,

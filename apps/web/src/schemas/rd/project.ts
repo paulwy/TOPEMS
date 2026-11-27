@@ -67,7 +67,7 @@ export const projectSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.project_type ?? '');
         if (!val) return '-';
         return React.createElement(Chip, {
@@ -109,7 +109,7 @@ export const projectSchema: EntitySchema = {
       type: 'number',
       defaultValue: 0,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = Number(row.progress ?? 0);
         return React.createElement(
           Stack,
@@ -141,7 +141,7 @@ export const projectSchema: EntitySchema = {
       label: i18n.t('rd.project.k30'),
       type: 'number',
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.budget;
         if (val == null) return '-';
         return (Number(val) / 10000).toFixed(1);

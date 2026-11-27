@@ -48,7 +48,7 @@ export const suggestionSchema: EntitySchema = {
         type: 'dynamic',
         resolver: 'warehouse',
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return (row.warehouse_name as string) || (row.warehouse_id as string) || '-';
       },
     },
@@ -79,7 +79,7 @@ export const suggestionSchema: EntitySchema = {
       type: 'number',
       listWidth: 110,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const qty = row.suggested_quantity as number;
         const unit = (row.unit as string) || '';
         return `${qty} ${unit}`;

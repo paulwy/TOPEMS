@@ -112,7 +112,7 @@ export const documentSchema: EntitySchema = {
       label: i18n.t('shared.document.k3'),
       type: 'text',
       listWidth: 240,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const doc = row as unknown as DocumentRow;
         const type = doc.content_type ? getFileType(doc.content_type) : 'pdf';
         return (
@@ -164,7 +164,7 @@ export const documentSchema: EntitySchema = {
           { value: 'image', label: i18n.t('shared.document.k6') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const doc = row as unknown as DocumentRow;
         const type = doc.content_type ? getFileType(doc.content_type) : 'pdf';
         const color = TYPE_COLORS[type] || 'colors.grey.400';
@@ -187,7 +187,7 @@ export const documentSchema: EntitySchema = {
       label: i18n.t('shared.document.k7'),
       type: 'text',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => (
+      renderCell: (row: Record<string, unknown>, _index: number) => (
         <Typography
           variant='body2'
           color='text.secondary'
@@ -201,7 +201,7 @@ export const documentSchema: EntitySchema = {
       label: i18n.t('shared.document.k8'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => (
+      renderCell: (row: Record<string, unknown>, _index: number) => (
         <Stack
           direction='row'
           spacing={0.5}
@@ -226,7 +226,7 @@ export const documentSchema: EntitySchema = {
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => (
+      renderCell: (row: Record<string, unknown>, _index: number) => (
         <Typography
           variant='body2'
           color='text.secondary'

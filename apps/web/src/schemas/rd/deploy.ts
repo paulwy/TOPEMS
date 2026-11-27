@@ -60,7 +60,7 @@ export const deploySchema: EntitySchema = {
       readonlyOnEdit: true,
       sortable: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
@@ -94,7 +94,7 @@ export const deploySchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.env ?? '');
         const label = ENV_LABEL_MAP[val] || val;
         const color = ENV_COLOR_MAP[val] || 'default';
@@ -116,7 +116,7 @@ export const deploySchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.deploy_type ?? '');
         const label = DEPLOY_TYPE_LABEL_MAP[val] || val;
         return React.createElement(Chip, { label, size: 'small', variant: 'outlined' });
@@ -137,7 +137,7 @@ export const deploySchema: EntitySchema = {
         ],
       },
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.status ?? '');
         const label = STATUS_LABEL_MAP[val] || val;
         const color = STATUS_COLOR_MAP[val] || 'default';
@@ -168,7 +168,7 @@ export const deploySchema: EntitySchema = {
       label: i18n.t('rd.deploy.k32'),
       type: 'datetime',
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.deploy_time || row.created_at;
         return val ? String(val) : '-';
       },
@@ -178,7 +178,7 @@ export const deploySchema: EntitySchema = {
       label: i18n.t('rd.deploy.k33'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const url = row.target_url ? String(row.target_url) : '';
         if (!url) return '-';
         return React.createElement(

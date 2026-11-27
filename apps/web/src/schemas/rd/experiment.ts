@@ -61,7 +61,7 @@ export const experimentSchema: EntitySchema = {
       label: i18n.t('rd.experiment.k4'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.project_name || row.project_id;
         return val ? String(val) : '-';
       },
@@ -81,7 +81,7 @@ export const experimentSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.phase ?? '');
         const color = PHASE_COLOR_MAP[val] || 'default';
         const label = PHASE_LABEL_MAP[val] || val;
@@ -104,7 +104,7 @@ export const experimentSchema: EntitySchema = {
         ],
       },
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.status ?? '');
         const color = STATUS_COLOR_MAP[val] || 'default';
         return React.createElement(Chip, { label: val, size: 'small', color });
@@ -127,7 +127,7 @@ export const experimentSchema: EntitySchema = {
       label: i18n.t('rd.experiment.k25'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.batch_number;
         return val ? String(val) : '-';
       },

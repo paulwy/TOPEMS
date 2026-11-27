@@ -66,7 +66,7 @@ export const getDepartmentSchema = (): EntitySchema => {
           type: 'dynamic',
           resolver: 'companies',
         },
-        renderCell: (row: Record<string, unknown>) => {
+        renderCell: (row: Record<string, unknown>, _index: number) => {
           return (row.company_name as string) || (row.org_id as string) || '-';
         },
       },
@@ -79,7 +79,7 @@ export const getDepartmentSchema = (): EntitySchema => {
           type: 'dynamic',
           resolver: 'departments',
         },
-        renderCell: (row: Record<string, unknown>) => {
+        renderCell: (row: Record<string, unknown>, _index: number) => {
           return (row.parent_name as string) || i18n.t('hrm.department.k10');
         },
       },

@@ -96,7 +96,7 @@ export const accidentSchema: EntitySchema = {
       label: i18n.t('ehs.accident.k22'),
       type: 'number',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return React.createElement(
           'span',
           { style: { fontWeight: 'medium' } },

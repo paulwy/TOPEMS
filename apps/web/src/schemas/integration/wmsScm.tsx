@@ -19,7 +19,7 @@ const wmsScmFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 240,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Box>
         <Typography
           variant='body2'
@@ -51,7 +51,7 @@ const wmsScmFields: SchemaField[] = [
     sortable: true,
     listWidth: 120,
     placeholder: i18n.t('shared.wms_scm.k7'),
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography variant='body2'>
         {String(row.quantity ?? '-')} {String(row.unit ?? '')}
       </Typography>
@@ -77,7 +77,7 @@ const wmsScmFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = WMS_SCM_STATUS_CONFIG[row.sync_status as string] || WMS_SCM_STATUS_CONFIG.pending;
       return (
         <Chip
@@ -94,7 +94,7 @@ const wmsScmFields: SchemaField[] = [
     type: 'datetime',
     sortable: true,
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'
@@ -112,7 +112,7 @@ const wmsScmFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     hideInForm: true,
-    renderCell: (row: Record<string, unknown>) => (
+    renderCell: (row: Record<string, unknown>, _index: number) => (
       <Typography
         variant='body2'
         color='text.secondary'

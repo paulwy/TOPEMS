@@ -39,7 +39,7 @@ export const orderSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const amount = row.total_amount as number | undefined;
         const style: React.CSSProperties = { fontWeight: 600, color: 'grey.800' };
         return React.createElement('span', { style }, `¥${(amount || 0).toLocaleString()}`);
@@ -85,7 +85,7 @@ export const orderSchema: EntitySchema = {
       label: i18n.t('srm.order.k15'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const date = row.order_date as string | undefined;
         return date ? new Date(date).toLocaleDateString('zh-CN') : '';
       },

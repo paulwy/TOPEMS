@@ -23,7 +23,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       listWidth: 140,
       hideInForm: true,
       visibleWhen: () => false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.plan_no as string | null | undefined;
         return v || '-';
       },
@@ -43,7 +43,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_plan.k4'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.check_type as string | null | undefined;
         return v || '-';
       },
@@ -54,7 +54,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_plan.k5'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.category as string | null | undefined;
         return v || '-';
       },
@@ -65,7 +65,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_plan.k6'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.check_date as string | null | undefined;
         return v || '-';
       },
@@ -76,7 +76,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       type: 'date',
       listWidth: 120,
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.end_date as string | null | undefined;
         return v || '-';
       },
@@ -86,7 +86,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_plan.k8'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.location as string | null | undefined;
         return v || '-';
       },
@@ -96,7 +96,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_plan.k9'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.hospital as string | null | undefined;
         return v || '-';
       },
@@ -106,7 +106,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_plan.k10'),
       type: 'textarea',
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.participants;
         return Array.isArray(v) ? v.join(', ') || '-' : '-';
       },
@@ -116,7 +116,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_plan.k11'),
       type: 'textarea',
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.hazard_factors;
         return Array.isArray(v) ? v.join(', ') || '-' : '-';
       },
@@ -126,7 +126,7 @@ export const healthCheckPlanSchema: EntitySchema = {
       label: i18n.t('ehs.health_check_plan.k12'),
       type: 'textarea',
       showInList: false,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const v = row.checkitems;
         return Array.isArray(v) ? v.join(', ') || '-' : '-';
       },

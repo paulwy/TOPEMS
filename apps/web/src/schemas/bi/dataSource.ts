@@ -31,7 +31,7 @@ const dataSourceFields: SchemaField[] = [
     required: true,
     sortable: true,
     listWidth: 260,
-    renderCell: (row: Record<string, unknown>) =>
+    renderCell: (row: Record<string, unknown>, _index: number) =>
       React.createElement(
         Box,
         { sx: { display: 'flex', alignItems: 'center', gap: 1.5 } },
@@ -71,7 +71,7 @@ const dataSourceFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = DATA_SOURCE_TYPE_CONFIG[row.type as string] || {
         icon: '💾',
         label: String(row.type ?? ''),
@@ -96,7 +96,7 @@ const dataSourceFields: SchemaField[] = [
         label: cfg.label,
       })),
     },
-    renderCell: (row: Record<string, unknown>) => {
+    renderCell: (row: Record<string, unknown>, _index: number) => {
       const cfg = DATA_SOURCE_STATUS_CONFIG[row.status as string] || {
         color: 'default' as const,
         label: String(row.status ?? ''),
@@ -153,7 +153,7 @@ const dataSourceFields: SchemaField[] = [
     label: i18n.t('shared.data_source.k13'),
     type: 'datetime',
     listWidth: 160,
-    renderCell: (row: Record<string, unknown>) =>
+    renderCell: (row: Record<string, unknown>, _index: number) =>
       row.last_sync
         ? React.createElement(
             Typography,
@@ -178,7 +178,7 @@ const dataSourceFields: SchemaField[] = [
     type: 'number',
     listWidth: 100,
     align: 'right',
-    renderCell: (row: Record<string, unknown>) =>
+    renderCell: (row: Record<string, unknown>, _index: number) =>
       React.createElement(
         Typography,
         { variant: 'body2' },
@@ -204,7 +204,7 @@ const dataSourceFields: SchemaField[] = [
     sortable: true,
     listWidth: 160,
     hideInForm: true,
-    renderCell: (row: Record<string, unknown>) =>
+    renderCell: (row: Record<string, unknown>, _index: number) =>
       React.createElement(
         Typography,
         { variant: 'body2', color: 'text.secondary' },

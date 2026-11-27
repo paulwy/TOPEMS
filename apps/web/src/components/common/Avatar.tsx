@@ -1,7 +1,7 @@
 import type { SxProps, Theme } from '@mui/material/styles';
 import { designTokens } from '@topems/tokens';
 import React from 'react';
-import { Avatar as MuiAvatar, Box, Typography, Badge } from '@mui/material';
+import { Avatar as MuiAvatar, Box, Typography, Badge, useTheme } from '@mui/material';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 type AvatarStatus = 'online' | 'offline' | 'busy' | 'away';
@@ -71,6 +71,7 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
   sx,
   children,
 }) => {
+  const theme = useTheme();
   const dimension = sizeMap[size];
   const displayText = label || (name ? getInitials(name) : undefined);
 
@@ -83,7 +84,11 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
         height: dimension,
         fontSize: fontSizeMap[size],
         bgcolor: bgColor || (src ? undefined : `${color || 'primary'}.light`),
-        color: color || src ? undefined : `${color || 'primary'}.dark`,
+        color: src
+          ? undefined
+          : theme.palette.mode === 'dark'
+            ? `${color || 'primary'}.light`
+            : `${color || 'primary'}.dark`,
         borderRadius: variant === 'square' ? 2 : variant === 'rounded' ? 2 : '50%',
         cursor: disabled ? 'not-allowed' : onClick ? 'pointer' : 'default',
         opacity: disabled ? 0.5 : 1,

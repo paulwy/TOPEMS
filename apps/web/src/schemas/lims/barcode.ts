@@ -80,7 +80,7 @@ export const barcodeSchema: EntitySchema = {
       label: i18n.t('lims.barcode.k14'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => String(row.sample_name || '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) => String(row.sample_name || '-'),
     },
     {
       name: 'status',
@@ -109,7 +109,7 @@ export const barcodeSchema: EntitySchema = {
       label: i18n.t('lims.barcode.k26'),
       type: 'date',
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = row.generated_at;
         if (!value) return '-';
         return new Date(value as string).toLocaleDateString('zh-CN');
@@ -120,7 +120,7 @@ export const barcodeSchema: EntitySchema = {
       label: i18n.t('lims.barcode.k27'),
       type: 'date',
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = row.printed_at;
         if (!value) return '-';
         return new Date(value as string).toLocaleDateString('zh-CN');

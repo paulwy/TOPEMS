@@ -54,7 +54,7 @@ export const materialIssueSchema: EntitySchema = {
       type: 'number',
       listWidth: 80,
       readonly: true,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         (row.items as unknown[] | undefined)?.length || 0,
     },
     {
@@ -72,7 +72,7 @@ export const materialIssueSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const statusMap: Record<string, { label: string; bg: string; color: string }> = {
           pending: {
             label: i18n.t('mes.material_issue.k12'),

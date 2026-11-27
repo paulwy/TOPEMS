@@ -56,7 +56,7 @@ export const getMobileNotificationSchema = (): EntitySchema => ({
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         getTypeLabels()[row.type as NotificationType] || String(row.type ?? ''),
     },
     {

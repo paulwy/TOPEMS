@@ -74,7 +74,7 @@ export const supplierProductSchema: EntitySchema = {
       required: true,
       defaultValue: 0,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const price = row.price as number | undefined;
         return price != null
           ? `¥${price.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`

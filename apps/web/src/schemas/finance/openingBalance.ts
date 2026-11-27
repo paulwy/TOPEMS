@@ -30,7 +30,7 @@ export const openingBalanceSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           { style: { fontWeight: 600, fontFamily: 'monospace' } },
@@ -54,7 +54,7 @@ export const openingBalanceSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           { style: { fontFamily: 'monospace' } },
@@ -77,7 +77,7 @@ export const openingBalanceSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {
@@ -97,7 +97,7 @@ export const openingBalanceSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           {

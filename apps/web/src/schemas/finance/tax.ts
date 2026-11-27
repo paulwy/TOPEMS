@@ -62,7 +62,7 @@ export const taxSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = String(row.tax_type ?? '');
         return React.createElement(Chip, {
           label: TAX_TYPE_LABELS[value] || value,
@@ -76,7 +76,7 @@ export const taxSchema: EntitySchema = {
       label: i18n.t('finance.tax.k17'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(
           'span',
           { style: { fontWeight: 500 } },
@@ -88,7 +88,7 @@ export const taxSchema: EntitySchema = {
       label: i18n.t('finance.tax.k18'),
       type: 'number',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatMoney(row.taxable_income as number, { color: 'text.secondary' }),
     },
     {
@@ -96,7 +96,7 @@ export const taxSchema: EntitySchema = {
       label: i18n.t('finance.tax.k19'),
       type: 'number',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         React.createElement(Chip, {
           label: `${row.tax_rate}%`,
           size: 'small',
@@ -108,7 +108,7 @@ export const taxSchema: EntitySchema = {
       label: i18n.t('finance.tax.k20'),
       type: 'number',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatMoney(row.tax_amount as number, {
           fontWeight: 700,
           color: 'primary.main',
@@ -119,7 +119,7 @@ export const taxSchema: EntitySchema = {
       label: i18n.t('finance.tax.k21'),
       type: 'number',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) =>
+      renderCell: (row: Record<string, unknown>, _index: number) =>
         formatMoney(row.paid_amount as number, { color: 'success.main' }),
     },
     {
@@ -127,7 +127,7 @@ export const taxSchema: EntitySchema = {
       label: i18n.t('finance.tax.k22'),
       type: 'number',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const owed = (row.owed_amount as number) || 0;
         return formatMoney(owed, {
           fontWeight: 600,
@@ -150,7 +150,7 @@ export const taxSchema: EntitySchema = {
         ],
       },
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = String(row.status ?? '');
         const label = STATUS_LABELS[value] || value;
         const colorMap: Record<

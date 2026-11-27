@@ -105,7 +105,7 @@ export const getEmployeeSchema = (): EntitySchema => {
           type: 'dynamic',
           resolver: 'departments',
         },
-        renderCell: (row: Record<string, unknown>) => {
+        renderCell: (row: Record<string, unknown>, _index: number) => {
           return (row.department_name as string) || (row.department_id as string) || '-';
         },
       },

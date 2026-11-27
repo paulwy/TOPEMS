@@ -45,7 +45,7 @@ export const productionProcessSchema: EntitySchema = {
       label: i18n.t('mes.production_process.h_5'),
       type: 'number',
       listWidth: 110,
-      renderCell: (row: Record<string, unknown>): React.ReactNode => {
+      renderCell: (row: Record<string, unknown>, _index: number): React.ReactNode => {
         const t = row.standard_time as number | undefined;
         return t ? `${t}h` : '-';
       },
@@ -55,7 +55,7 @@ export const productionProcessSchema: EntitySchema = {
       label: i18n.t('mes.production_process.k6'),
       type: 'text',
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>): React.ReactNode => {
+      renderCell: (row: Record<string, unknown>, _index: number): React.ReactNode => {
         const ws = row.work_station_id as string | undefined;
         return ws || '-';
       },

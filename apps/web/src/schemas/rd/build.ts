@@ -47,7 +47,7 @@ export const buildSchema: EntitySchema = {
       sortable: true,
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         return React.createElement(
           Box,
           { sx: { display: 'flex', alignItems: 'center', gap: 1 } },
@@ -84,7 +84,7 @@ export const buildSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.branch ?? '');
         if (!val) return '-';
         return React.createElement(Chip, {
@@ -100,7 +100,7 @@ export const buildSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 130,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.commit_hash ?? '');
         if (!val) return '-';
         return React.createElement(
@@ -130,7 +130,7 @@ export const buildSchema: EntitySchema = {
           { value: 'scheduled', label: i18n.t('rd.build.k17') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.build_type ?? '');
         const label = BUILD_TYPE_LABEL_MAP[val] || val;
         return React.createElement(Chip, {
@@ -156,7 +156,7 @@ export const buildSchema: EntitySchema = {
           { value: 'pending', label: i18n.t('rd.build.k22') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = String(row.status ?? '');
         const label = STATUS_LABEL_MAP[val] || val;
         const color = STATUS_COLOR_MAP[val] || 'default';
@@ -186,7 +186,7 @@ export const buildSchema: EntitySchema = {
       type: 'text',
       listWidth: 100,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.duration;
         return val == null ? '-' : String(val);
       },

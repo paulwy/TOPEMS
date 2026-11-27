@@ -103,7 +103,7 @@ export const contractSchema: EntitySchema = {
       type: 'number',
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const amount = row.amount as number | undefined;
         if (!amount) return '-';
         return CURRENCY_FORMATTER.format(amount);

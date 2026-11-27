@@ -83,7 +83,7 @@ export const getNotificationSchema = (): EntitySchema => ({
       label: i18n.t('shared.notification.k11'),
       type: 'text',
       listWidth: 280,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const n = row as unknown as NotificationRow;
         const type = n.notification_type || 'info';
         const bgColor = TYPE_BG_COLORS[type]?.bg || designTokens.colors.info[100];
@@ -157,7 +157,7 @@ export const getNotificationSchema = (): EntitySchema => ({
           { value: 'error', label: i18n.t('shared.notification.k21') },
         ],
       },
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const type = (row as unknown as NotificationRow).notification_type || 'info';
         const color = TYPE_COLORS[type] || 'default';
         const label = getTypeLabels()[type] || type;
@@ -177,7 +177,7 @@ export const getNotificationSchema = (): EntitySchema => ({
       label: i18n.t('shared.notification.k22'),
       type: 'switch',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => (
+      renderCell: (row: Record<string, unknown>, _index: number) => (
         <Chip
           size='small'
           label={
@@ -203,7 +203,7 @@ export const getNotificationSchema = (): EntitySchema => ({
       type: 'datetime',
       listWidth: 160,
       hideInForm: true,
-      renderCell: (row: Record<string, unknown>) => (
+      renderCell: (row: Record<string, unknown>, _index: number) => (
         <Typography
           variant='body2'
           color='text.secondary'

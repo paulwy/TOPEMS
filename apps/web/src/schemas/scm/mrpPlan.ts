@@ -75,7 +75,7 @@ export const mrpPlanSchema: EntitySchema = {
         ],
       },
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const value = String(row.status ?? 'draft');
         const config = statusColorConfig[value] || statusColorConfig.draft;
         return React.createElement(Chip, {
@@ -93,7 +93,7 @@ export const mrpPlanSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         const val = row.calculated_at as string | undefined;
         return val ? new Date(val).toLocaleString('zh-CN') : '-';
       },

@@ -60,7 +60,7 @@ export const billingSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => formatCurrency(row.amount as number),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatCurrency(row.amount as number),
     },
     {
       name: 'currency',
@@ -94,7 +94,7 @@ export const billingSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => formatDate(row.due_date as string),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatDate(row.due_date as string),
     },
     {
       name: 'paid_at',
@@ -103,7 +103,7 @@ export const billingSchema: EntitySchema = {
       readonly: true,
       sortable: true,
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => formatDate(row.paid_at as string),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatDate(row.paid_at as string),
     },
     {
       name: 'created_at',
