@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { semanticTileSx } from '@/theme/semanticTile';
 import styles from './MobileWorkbenchPage.module.css';
 import React, { useCallback, useEffect } from 'react';
 import { Box, Typography, Paper, Chip, Avatar, useTheme, List, Badge } from '@mui/material';
@@ -452,8 +453,7 @@ const MobileWorkbenchPage: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          bgcolor: `${stat.color}.lighter`,
-                          color: `${stat.color}.main`,
+                          ...semanticTileSx(stat.color, 0.14),
                         }}
                       >
                         {stat.icon}
@@ -542,8 +542,7 @@ const MobileWorkbenchPage: React.FC = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            bgcolor: `${action.color}.lighter`,
-                            color: `${action.color}.main`,
+                            ...semanticTileSx(action.color, 0.14),
                           }}
                         >
                           {action.icon}

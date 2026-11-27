@@ -6,6 +6,7 @@ import { iconSm } from '../sharedStyles';
  * 适用于数据统计、仪表盘、分析报表等场景
  */
 
+import { analyzeGradient } from '@/theme/gradient';
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   Box,
@@ -287,9 +288,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
     // 渐变值可能是 undefined / 非法令牌名（历史页面把 'warning.main' 之类当色值写入），
     // 一旦整条 background 被 CSS 丢弃，卡片就会白底白字。这里统一校验并回退到无渐变。
     const safeGradient = (s?: [string, string]) => {
-      const ok = (v?: string) =>
-        typeof v === 'string' && /^(#|rgb|hsl|var\(--|color-mix|oklch)/i.test(v.trim());
-      return s && ok(s[0]) && ok(s[1]) ? `linear-gradient(135deg, ${s[0]}, ${s[1]})` : undefined;
+      if (!s) return undefined;
+      const candidate = `linear-gradient(135deg, ${s[0]}, ${s[1]})`;
+      // 交给 CSS 引擎真实判定：拼进非法令牌（undefined / 点名写错）时整条 background 会被丢弃
+      return analyzeGradient(candidate).usable ? candidate : undefined;
     };
 
     // 图标瓦片：原来用「语义色 .light 实底 + 同色 .main 图标」，实测 1.1~1.8:1（橙压橙、紫压紫）。
@@ -316,6 +318,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       >
         {statCards.map((stat) => {
           const grad = safeGradient(stat.gradient);
+          const gradAvg = grad ? analyzeGradient(grad).average : null;
+          const gradFg = grad
+            ? theme.palette.getContrastText(gradAvg ?? theme.palette.primary.main)
+            : undefined;
           return (
             <Paper
               key={stat.id}
@@ -327,7 +333,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 borderRadius: 3,
                 background: grad,
                 bgcolor: grad ? undefined : stat.bgColor || 'background.paper',
-                color: grad ? 'var(--color-primary-foreground)' : 'inherit',
+                color: grad ? gradFg : 'inherit',
                 position: 'relative',
                 overflow: 'hidden',
                 transition: 'all 0.2s ease',
@@ -349,10 +355,10 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       bgcolor: grad
-                        ? 'glass.topLight'
+                        ? 'transparent'
                         : alpha(resolvePaletteEntry(stat.color).main, 0.14),
                       color: grad
-                        ? 'var(--color-primary-foreground)'
+                        ? gradFg
                         : theme.palette.mode === 'dark'
                           ? resolvePaletteEntry(stat.color).light
                           : resolvePaletteEntry(stat.color).dark,

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { FileCheck, ClipboardCheck, AlertTriangle, Shield } from 'lucide-react';
 
@@ -82,7 +83,14 @@ function StatsCards({ stats }: { stats: ComplianceStats }) {
       {cards.map((card) => (
         <Card
           key={card.label}
-          sx={{ bgcolor: `${card.accentColor}.light` }}
+          sx={{
+            bgcolor: alpha(
+              (theme.palette as unknown as Record<string, { main: string }>)[card.accentColor]
+                ?.main ?? theme.palette.primary.main,
+              0.06
+            ),
+            border: `1px solid ${alpha(theme.palette.divider, 0.9)}`,
+          }}
         >
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

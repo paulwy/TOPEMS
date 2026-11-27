@@ -422,18 +422,22 @@ export const designTokens = {
     full: 9999,
   },
 
+  // 阴影统一走 CSS 变量（--elevation-*）：亮/暗两套值定义在
+  // apps/web/src/theme/redesign-tokens.css。这里保留亮色原值作为 var() 回退，
+  // 供未加载令牌样式的场景（Storybook、单测、非 Web 消费方）继续可用。
+  // 直接写死亮色值时，暗色下所有卡片/浮层的投影都不可见（黑投影压近黑背景）。
   shadows: {
     none: 'none',
-    xs: '0 1px 2px 0 rgba(2, 6, 23, 0.04)',
-    sm: '0 1px 3px 0 rgba(2, 6, 23, 0.04), 0 1px 2px -1px rgba(2, 6, 23, 0.04)',
-    md: '0 4px 6px -1px rgba(2, 6, 23, 0.04), 0 2px 4px -2px rgba(2, 6, 23, 0.04)',
-    lg: '0 10px 15px -3px rgba(2, 6, 23, 0.04), 0 4px 6px -4px rgba(2, 6, 23, 0.04)',
-    xl: '0 20px 25px -5px rgba(2, 6, 23, 0.04), 0 8px 10px -6px rgba(2, 6, 23, 0.04)',
-    '2xl': '0 25px 50px -12px rgba(2, 6, 23, 0.08)',
-    float: '0 25px 50px -12px rgba(2, 6, 23, 0.08)',
-    '3xl': '0 35px 60px -15px rgba(2, 6, 23, 0.12)',
-    inner: 'inset 0 2px 4px 0 rgba(2, 6, 23, 0.04)',
-    glow: '0 0 20px rgba(79, 120, 237, 0.15)',
+    xs: 'var(--elevation-xs, 0 1px 2px 0 rgba(2, 6, 23, 0.04))',
+    sm: 'var(--elevation-sm, 0 1px 3px 0 rgba(2, 6, 23, 0.04), 0 1px 2px -1px rgba(2, 6, 23, 0.04))',
+    md: 'var(--elevation-md, 0 4px 6px -1px rgba(2, 6, 23, 0.04), 0 2px 4px -2px rgba(2, 6, 23, 0.04))',
+    lg: 'var(--elevation-lg, 0 10px 15px -3px rgba(2, 6, 23, 0.04), 0 4px 6px -4px rgba(2, 6, 23, 0.04))',
+    xl: 'var(--elevation-xl, 0 20px 25px -5px rgba(2, 6, 23, 0.04), 0 8px 10px -6px rgba(2, 6, 23, 0.04))',
+    '2xl': 'var(--elevation-2xl, 0 25px 50px -12px rgba(2, 6, 23, 0.08))',
+    float: 'var(--elevation-float, 0 25px 50px -12px rgba(2, 6, 23, 0.08))',
+    '3xl': 'var(--elevation-3xl, 0 35px 60px -15px rgba(2, 6, 23, 0.12))',
+    inner: 'var(--elevation-inner, inset 0 2px 4px 0 rgba(2, 6, 23, 0.04))',
+    glow: 'var(--elevation-glow, 0 0 20px rgba(79, 120, 237, 0.15))',
   },
 
   // 暗色模式专用阴影（alpha 更高以在深色背景上可见）

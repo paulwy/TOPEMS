@@ -22,6 +22,7 @@ import {
   CircleDot,
 } from 'lucide-react';
 import { Box, Typography, Button, Paper, Chip, useTheme, useMediaQuery } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 
 import { useTranslation } from 'react-i18next';
@@ -98,13 +99,16 @@ const QuickAction: React.FC<QuickActionProps> = ({ label, icon, color, onClick, 
           width: 56,
           height: 56,
           borderRadius: 2,
-          bgcolor: `${color}.light`,
+          bgcolor: alpha(colorMap[color as keyof typeof colorMap], 0.14),
+          color:
+            theme.palette.mode === 'dark'
+              ? theme.palette[color as 'primary'].light
+              : colorMap[color as keyof typeof colorMap],
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           mx: 'auto',
           mb: 2,
-          color: colorMap[color],
         }}
       >
         {icon}

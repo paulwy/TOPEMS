@@ -7,6 +7,8 @@ import { inventorySchema } from '@/schemas/erp';
 import { erpApi } from '@/api/erp';
 import type { Inventory } from '@/api/erp';
 import i18n from '@/i18n';
+import { alpha } from '@mui/material/styles';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 const inventoryAdapter = {
   list: async (params?: {
@@ -75,6 +77,9 @@ const StatCard: React.FC<{
     ? (theme.palette[paletteRole as 'primary'].main as string)
     : `var(--divider)`;
   void bgColor;
+  const tileSx = paletteRole
+    ? semanticTileSx(paletteRole as 'primary', 0.14)
+    : { bgcolor: alpha(theme.palette.divider, 0.25), color: 'text.secondary' };
   return (
     <Box
       sx={{
@@ -89,7 +94,7 @@ const StatCard: React.FC<{
           sx={{
             width: 40,
             height: 40,
-            bgcolor: gradient ? undefined : iconColor,
+            ...(gradient ? {} : tileSx),
             background: gradient
               ? `linear-gradient(135deg, ${iconColor}, ${theme.palette.primary.dark})`
               : undefined,
@@ -99,9 +104,7 @@ const StatCard: React.FC<{
             justifyContent: 'center',
           }}
         >
-          <Box
-            sx={{ color: gradient ? theme.palette.background.paper : iconColor, display: 'flex' }}
-          >
+          <Box sx={{ color: gradient ? theme.palette.common.white : 'inherit', display: 'flex' }}>
             {icon}
           </Box>
         </Box>
