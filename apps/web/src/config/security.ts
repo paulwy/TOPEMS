@@ -42,8 +42,11 @@ const securityConfig: SecurityConfig = {
           'wss://127.0.0.1:*',
         ]
       : [
+          // 2026-11-27：移除 strict-dynamic。该 CSP 由 applySecurityHeaders 以 <meta> 在运行时注入，
+          // 入口 <script type="module"> 无 nonce/hash，strict-dynamic 下没有可信根，
+          // 随后所有 import() 按需 chunk（i18n / telemetry / DashboardPage 等）被浏览器拒绝，
+          // 线上表现为停留在「加载中」或局部路由空白。同源 SPA 用 'self' + 'unsafe-inline' 即可。
           "'self'",
-          "'strict-dynamic'",
           "'unsafe-inline'",
           'https://*.amap.com',
           'https://*.baidu.com',
@@ -94,7 +97,7 @@ const securityConfig: SecurityConfig = {
       ].join('; ')
     : [
         "default-src 'self'",
-        "script-src 'self' 'strict-dynamic' 'unsafe-inline' https://*.amap.com https://*.baidu.com https://*.google.com https://*.google-analytics.com",
+        "script-src 'self' 'unsafe-inline' https://*.amap.com https://*.baidu.com https://*.google.com https://*.google-analytics.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
         "font-src 'self' https://fonts.gstatic.com",
