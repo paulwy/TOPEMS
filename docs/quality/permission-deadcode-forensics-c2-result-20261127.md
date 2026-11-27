@@ -217,3 +217,38 @@
 
 - 矩阵 `artifacts/audit/forensics-c2/c2-matrix.json/.csv`：逐行新增 `static_indirect`（`guard-write-join` / `plan-tier-assemble`）与 `static_indirect_note`；顶层 `static_indirect_scan` 记录四类规则、模块清单、命中码与未接线备注。v3 备份 `/tmp/topems-c2/c2-matrix.v3.bak.json/.csv`。
 - 本轮为静态侧补盲：A 类挂载点待写操作冒烟运行期确认；B 类待套餐权限落地后复核；D 类与未接线项不改变 581 既有分类。仍**不得**据静态引用或单次取证自动清理权限码/解除绑定。
+
+## 12. v3.2 增量：静态路由→守卫码映射交叉（#99，2026-11-28）
+
+### 12.1 目的与口径
+
+- 承接 §7「写操作冒烟」的**静态预备**分支：在不起实例、不重编、不写隔离库的前提下，按路由清单静态映射「路由→写门 admin 码」，为后续写操作冒烟预排目标端点。本轮纯静态只读，不触 prod、不改鉴权/令牌签发、不下活码定论。
+- 写门口径沿用 §11.2：`require_module_write(module)` 对 `GET/HEAD/OPTIONS` 放行，其余方法（POST/PUT/DELETE/PATCH）校验 `{module}:admin`。
+
+### 12.2 方法
+
+- 遍历 18 个写门模块 `svc/<module>/src/**/*.rs`，正则提取每个 `.route(...)` 段内路径字符串与方法关键字；含任一写方法（post/put/delete/patch）即计入写候选。
+- 启发式标注疑似豁免子组：`/health*`、`/ws/`、`/openapi`、`/metrics`、根路径 home，以及独立 `mcp.rs` 路由（如 search `POST /mcp` 由 `mcp_routes()` 独立 merge，未挂模块写门）。
+- **裁剪局限**：未按 axum Router 嵌套作用域逐组解析，清单为**模块级静态上界**；豁免标注为路径/文件名启发式，端点级是否真受写门保护须后续运行期确认。
+
+### 12.3 结果
+
+- 18 模块合计 **1319** 个写候选端点（静态上界，含待剔除的豁免端点）。7 个落入 581 双零的写门码与 §11.2 A 类完全一致：
+
+| 写门码 | 写候选 | 豁免候选 | 当前分类 |
+| --- | ---: | ---: | --- |
+| `master-data:admin` | 135 | 4 | 待复核 |
+| `rd:admin` | 41 | 4 | 待复核 |
+| `ticket:admin` | 34 | 2 | 待复核 |
+| `monitor:admin` | 30 | 10 | 兜底 |
+| `tms:admin` | 28 | 0 | 待复核 |
+| `search:admin` | 1 | 3 | 待复核 |
+| `srm:admin` | 46 | 0 | 活码（#96 已观测） |
+
+- 矩阵主分类不变：活码 1 / 待复核 553 / 兜底 27。
+
+### 12.4 边界与产物
+
+- 边界：本表不判定活码；`monitor:admin` 等静态挂载点与兜底分类并存，端点归属与真实门槛须写操作冒烟运行期确认；豁免启发式可能漏标，不得据此反向认定某端点「无门」。
+- 产物（`artifacts/audit/forensics-c2/`，gitignore）：`route-guard-map.json`（18 模块全量映射 + 豁免标注 + `scope_note`）；矩阵 `c2-matrix.json/.csv` v3.2 回填 `route_write_candidates`/`route_exempt`，顶层 `route_guard_map` 汇总；v3.1 备份 `/tmp/topems-c2/c2-matrix.v31.bak.json/.csv`；脚本 `/tmp/topems-c2/route-guard-map.py`、`refresh-matrix-v32.py`、`refresh-csv-v32.py`。
+
