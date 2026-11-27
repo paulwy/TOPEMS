@@ -132,6 +132,44 @@
 7. **复核**：仓库内前端/后端/脚本 grep 零残留（#73 静态已闭环）；外部 BI/报表/定时导出/第三方直连由运维在 DB 侧复核；manifest `pending_forward_patches` 登记 `to_apply`、checksums 入账；destructive / schema-defense / directed / ledger-ddrift / validate 门禁全绿。
 8. **投放**：走唯一入口 `apply-forward.sh --prod --allow-destructive=<version>`，票据匹配；不使用 `sqlx migrate run`。
 
+### 7.1 静态改造点盘点（2026-11-27，行号基于当前基线；退役批次执行时按当次基线复核）
+
+**A. `database/init/06_iam_schema.sql` 待删段（旧表 + 170000 未同步的 users 旧列残留）**
+
+| 行号 | 对象 | 说明 |
+|---|---|---|
+| 1355–1366 | `CREATE TABLE iam.roles` | 旧 7 列旧形状快照（id/name/description/created_at/tenant_id/deleted_at/status + `ck_roles_status_standard`/`roles_name_key`/`roles_pkey`），与 prod 12 列现形状不同，整段删除 |
+| 1368 | `FORCE ROW LEVEL SECURITY` | 随旧表删除 |
+| 2246–2250 | `roles_code_key` UNIQUE | 旧表唯一约束 |
+| 2254–2258 | `roles_pkey` 重复约束段 | pg_dump 风格双写，随旧表删除 |
+| 2451–2454 | `idx_roles_status` 索引 | 随旧表删除 |
+| 3010–3013 | `iam_allow_all_roles` POLICY | init 旧 allow-all；prod 现行策略已被 `20261119161000` 改为 `rls_global_read`/`rls_system_write` |
+| 3153 | `ENABLE ROW LEVEL SECURITY` | 随旧表删除 |
+| 1488 | `iam.users.role_id` 列定义 | 170000 已在 prod 删列，init 旧段未同步，一并清 |
+| 2486–2489 | `idx_users_role_id` 索引 | 170000 残留，一并清 |
+| 2724–2728 | `users_role_id_fkey` FK → `iam.roles(id)` | 170000 残留，一并清 |
+
+保留勿删：`core_role_permissions.role_id`（811/1914/2600）指向 `iam.core_roles`，属现行权威链。
+
+**B. `database/seeds/default_roles.sql` 待退役内容**
+
+- 3 处旧表 UPSERT：32（`super_admin` …001）、49（`dept_manager` …002）、62（`employee` …003）。
+- 75–78 行：`UPDATE iam.users SET role_id=… WHERE username='admin'`——写已被 170000 删除的旧 `role_id` 列，无守卫，在已清理库上重跑会报错。
+- 82–109 行：读旧表 `permissions` jsonb 的权限码存在性校验 DO 块；112–119 行：旧表/旧列验证 SELECT。
+- #74 已确认现行 `core_roles` 目录由迁移链自洽落库，摘除本种子不影响新库角色初始化；退役批次可整文件移除，无需另补 core_roles 种子。
+
+**C. `scripts/deploy-prod.sh` 同步点**
+
+| 行号 | 引用 | 处置 |
+|---|---|---|
+| 15 | `--seed-roles` 帮助文案 | 选项退役时一并删 |
+| 57 | `SEED_ROLES=false` 变量 | 一并删 |
+| 70 | `--seed-roles)` 解析分支 | 一并删 |
+| 262 / 267 | RESET 自动 seed 链 scp + psql `seed_roles.sql` | 删两行 |
+| 290–295 | `--seed-roles` 单独 seed 块 | 整块删 |
+
+**D. 不动项**：历史已记账迁移（`20261108091000`/`20261119161000`/`20261015000081`/`20260716000000`/`001`）为不可变回放链；`20261127210000` rollback 内对 `iam.roles` 的 FK 存在性守卫随 210000 回滚语义保留。
+
 ## 8. 关键未决（退役前需确认）
 
 - **外部消费者（唯一残留人工项）**：仓库内源码/视图/脚本已核零业务读取（#73）；DROP 前仍需运维/业务侧在 DB 侧复核仓库之外是否有外部 BI/报表库、定时导出、人工 ad-hoc 查询或第三方直连 DSN 读取 `iam.roles`（`pg_stat_statements` / 连接日志 / 外部 DSN 清单）。静态扫描无法覆盖这部分。
