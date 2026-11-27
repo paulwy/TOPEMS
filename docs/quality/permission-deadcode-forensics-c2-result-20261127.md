@@ -328,6 +328,24 @@
 - **盲区边界**：本轮为静态字符串对账，未跑运行期菜单/按钮显隐；`:view` 后缀码经 `:view→:read` 回退判定（#P3 兼容层），不在 581 DB 登记集；SDK 远端动态注入、菜单配置由后端下发的部分未在静态覆盖。是否预留/残留/死码仍须运行期菜单按钮采集 + 后端细粒度观测后再分。
 - **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`fe-refs-recon.json`（逐码分层命中 + 消费层对账 + 口径注记）；脚本 `/tmp/topems-c2/scan-fe-refs.py`。矩阵主分类不变：活码 6 / 待复核 548 / 兜底 27。
 
+### 13.9 运行期后端下发菜单/权限目录对账（#107，隔离实例只读）
+
+- **背景**：承接 §13.7/§13.8 静态双侧零消费结论，补后端运行期「实际下发给角色的菜单守卫码 / 权限目录登记」口径。全程只读登录与 GET，不写业务数据、不改鉴权与令牌签发、不自动清理权限码。
+- **环境恢复**：旧隔离实例（PID 61691，8199）隔夜陷入健康检查自连退化——`/health` 处理中回连自身 `127.0.0.1:8199/health` 失败，400+ 自连 ESTABLISHED 积压、health 无响应（HTTP 000）；根路径仍 200、search 心跳未断。停止旧进程后按 #101 脚本重启，新实例 PID 30132：31 模块全注册、`/api/server/health` 200、`/health` 200（degraded，下游自连聚合偶发降级，不影响鉴权观测）；环境隔离核验 `SERVER_PORT=8199`、`REDIS_URL=redis://localhost:6379/1`、`DATABASE_URL=.../topems_replay_verify`。prod 实例 8099 / `topems_prod` health 200，全程未停未切、两库物理连接无交叉。
+- **令牌重登**：实例重启后会话已清，6 个 c2_ 取证账号经 `/api/core/iam/auth/login` 重新换签，令牌授权数与 DB 聚合基线逐一吻合——admin 1158 / tenant_admin 1087 / finance_manager 102 / mes_manager 76 / report_manager 8 / guest 0，角色与 `is_superuser=false` 不变；隔离库授权面未漂移。
+- **采集端点**：
+  - `GET /api/core/menu/menus`：后端 DB 菜单表项，每项带 `permissions.permission` 守卫码；仅 admin 角色 200，5 个非 admin/空权账号 403（端点自身受守卫保护，业务角色菜单面本轮未采到）。
+  - `GET /api/core/menu/groups`：菜单分组（分组码，无守卫权限码）。
+  - `GET /api/core/iam/permissions/metadata`：后端权限目录全集 1162 条（与 L4 全集同水位），含 code/resource/action/service/description。
+  - `GET /api/portal/navigation/menu`：顶层导航应用（service/url 级，无权限码字段）。
+- **对账结果**：
+  - **菜单守卫码 ∩ 581 = 0**：admin 菜单 20 项（19 唯一守卫码，`mobile:home:read` 重复一项），逐一核验全部在 admin 令牌携带集内；这些是已授权活码的菜单接线点，无一落入 581 双零集。即 581 码在后端 DB 菜单表**无运行期接线消费点**。
+  - **581 全部已登记后端 metadata 目录**：`orphan_not_in_metadata = 0`，无目录漂移/未登记残留；description 来源标注分布为 `frontend-usage` 7 / `other`（批次/模块中文描述）212 / `empty` 362；按分类：活码 6 个无 frontend-usage 标注，待复核 548 中 5 个、兜底 27 中 2 个标注 frontend-usage（与 §13.8 仅 7 个进 `PERMISSION_DEFS` 名称表互证）。
+  - **导航端点不作权限证据**：`/api/portal/navigation/menu` 对 admin 与 guest 返回完全相同的 `portal / erp` 两项，未按角色权限裁剪；该端点可见性不具备角色鉴别力，不计入守卫消费对账。
+- **口径结论**：后端运行期下发侧未给 581 双零码提供新的消费证据——菜单接线点零命中、目录登记无漂移；与 §13.6–§13.8 静态复核一致，581 仍维持「目录登记 + 令牌携带/兜底 + 前后端静态与后端下发双侧零消费」画像。矩阵主分类不变：活码 6 / 待复核 548 / 兜底 27。
+- **盲区边界**：① 本轮为后端 API 下发口径，未跑浏览器内动态菜单/按钮显隐与 SDK 远端注入采集；② 菜单端点非 admin 403，业务经理/tenant_admin 的实际可见菜单面未覆盖；③ inline-trace 仍缺 route/handler 字段，端点级守卫定位延续 #102 盲区①③；④ 未造最小业务单据复核写门放行后落库/下游回传。以上仍属未立项扩面项，不在本轮执行。
+- **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`runtime-dispatch-recon.json`（6 角色导航可见集合、admin 菜单/分组/metadata 计数、菜单码与 581 交集、metadata 目录漂移与 description 分布、导航过滤判定及口径注记）；脚本 `/tmp/topems-c2/scan-runtime-dispatch.py`。
+
 
 
 
