@@ -844,3 +844,9 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 | analytics 注解 handler 登记 | 78 | **188**（0 未登记） |
 | spec paths | 3408 | **3482**（+74：新登记 + 9 条 alias） |
 | 桩豁免 | 242 | **243**（`GET /api/bi/health`） |
+
+### 第 31 轮收尾 · 全量冒烟暴露的两处真缺陷（`d8e26856a`）
+
+- **`GET /api/crm/recommendations` 500（panic）**：`crm.customer_recommendations.confidence` 是 `numeric(8,2)`，代码按 `f64` 用 `Row::get(6)` 解码，sqlx 类型不匹配直接 panic（`customer_recommendation.rs:145`）。三处 SELECT/RETURNING 统一 `confidence::float8 AS confidence` 并改 `try_get("confidence")`，实测 200。三个写接口（创建/单条查询）靠同一 SELECT 修复。
+- **`GET /api/monitor/metrics/history` 404**：该 path 只存在于 spec（注解路径与真实挂载不符），真实路由是 `GET /api/monitor/metrics`（实测 200）。从 spec 删除并入 `spec-prune-allowlist.json`（20 条），超集检查打印 WAIVED、判定 OK。
+- 收尾数据：spec 3481，live 3481（同一次 release 重编译）；全量冒烟 **1243 条 OK=1160 SOFT=82 SKIP=1 FAIL=0**；全量契约 **4758 / 3752 / 767**（较上一轮 849 缺口再降，bi **149/149/0**）。
