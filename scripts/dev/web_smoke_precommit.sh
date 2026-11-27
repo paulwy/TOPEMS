@@ -36,9 +36,42 @@ fail() {
 }
 
 DB_NAME="${WEB_SMOKE_DB_NAME:-topems_web_smoke}"
-# 必须用「带 host + 显式用户」的 TCP DSN：sqlx 对 `postgresql:///db` 解析出的空用户名
-# 会退化成角色 anonymous，建池即报 role "anonymous" does not exist（2026-11-06 实测）。
-DB_URL="${WEB_SMOKE_DATABASE_URL:-postgresql://$(id -un)@127.0.0.1:5432/$DB_NAME}"
+# DSN 与 psql/createdb 的传输方式必须一致，否则会出现「psql 走 socket 但 sqlx 走 TCP」的分裂。
+# 本机 PG 常见只开 socket 认证（TCP 要求口令而无人值守环境没有），此前脚本硬编码 TCP，
+# 导致任何改 apps/web/src/api/** 的提交都被 createdb 卡死（2026-11-27 实测）。
+#   WEB_SMOKE_DB_TRANSPORT = auto（默认，先探 TCP，不可用回落 socket）| tcp | socket
+#   WEB_SMOKE_DB_SOCKET_DIR = socket 目录（默认 /tmp）
+# 显式 WEB_SMOKE_DATABASE_URL 时保持原 TCP 行为（调用方自带 DSN 与建库参数）。
+WEB_SMOKE_SOCKET_DIR_DEFAULT="/tmp"
+if [ -n "${WEB_SMOKE_DATABASE_URL:-}" ]; then
+  DB_URL="$WEB_SMOKE_DATABASE_URL"
+  PG_ARGS=(-h 127.0.0.1 -p 5432 -U "$(id -un)")
+else
+  DB_TRANSPORT="${WEB_SMOKE_DB_TRANSPORT:-auto}"
+  if [ "$DB_TRANSPORT" = "auto" ]; then
+    if psql -w -h 127.0.0.1 -p 5432 -U "$(id -un)" -d postgres -tAc 'select 1' >/dev/null 2>&1; then
+      DB_TRANSPORT=tcp
+    else
+      DB_TRANSPORT=socket
+    fi
+    echo "[WCS-local] 数据库传输方式：${DB_TRANSPORT}（TCP 不可认证时回落 socket）"
+  fi
+  case "$DB_TRANSPORT" in
+    tcp)
+      # 必须用「带 host + 显式用户」的 TCP DSN：sqlx 对 `postgresql:///db` 解析出的空用户名
+      # 会退化成角色 anonymous，建池即报 role "anonymous" does not exist（2026-11-06 实测）。
+      DB_URL="postgresql://$(id -un)@127.0.0.1:5432/$DB_NAME"
+      PG_ARGS=(-h 127.0.0.1 -p 5432 -U "$(id -un)")
+      ;;
+    socket)
+      DB_URL="postgresql:///$DB_NAME?host=${WEB_SMOKE_DB_SOCKET_DIR:-$WEB_SMOKE_SOCKET_DIR_DEFAULT}"
+      PG_ARGS=(-h "${WEB_SMOKE_DB_SOCKET_DIR:-$WEB_SMOKE_SOCKET_DIR_DEFAULT}" -U "$(id -un)")
+      ;;
+    *)
+      fail "WEB_SMOKE_DB_TRANSPORT 只接受 auto|tcp|socket（收到 ${DB_TRANSPORT}）"
+      ;;
+  esac
+fi
 PORT="${WEB_SMOKE_PORT:-18099}"
 DEAD_PORT="${WEB_SMOKE_DEAD_PORT:-18098}"
 REDIS_PORT="${WEB_SMOKE_REDIS_PORT:-16379}"
@@ -59,9 +92,14 @@ esac
 case "$DB_URL" in
   *"_prod"*) fail "WEB_SMOKE_DATABASE_URL 含 *_prod：拒绝连接" ;;
 esac
-DEFAULT_DB_URL="postgresql://$(id -un)@127.0.0.1:5432/$DB_NAME"
+# 「本机自动建库」判定：未显式指定 DSN 时由本脚本管理测试库；
+# 显式 DSN 仅在等于 TCP 本机默认形态时才允许自动建库/重建（远端库一律不自动创建）。
 IS_LOCAL_DB=0
-[ "$DB_URL" = "$DEFAULT_DB_URL" ] && IS_LOCAL_DB=1
+if [ -z "${WEB_SMOKE_DATABASE_URL:-}" ]; then
+  IS_LOCAL_DB=1
+elif [ "$DB_URL" = "postgresql://$(id -un)@127.0.0.1:5432/$DB_NAME" ]; then
+  IS_LOCAL_DB=1
+fi
 case "$DB_NAME" in
   ''|*[!a-zA-Z0-9_]*) fail "WEB_SMOKE_DB_NAME 含非法字符：$DB_NAME" ;;
 esac
@@ -106,19 +144,23 @@ provision_db() {
     [ -f "$f" ] || fail "缺少基线资产 ${f}（见 docs/quality/environment-provisioning.md）"
   done
   echo "[WCS-local] 初始化测试库 ${DB_NAME}（anchor=${anchor}）"
-  createdb -h 127.0.0.1 -p 5432 -U "$(id -un)" "$DB_NAME" || fail "createdb ${DB_NAME} 失败"
+  createdb "${PG_ARGS[@]}" "$DB_NAME" || fail "createdb ${DB_NAME} 失败"
   gzip -dc "$schema" | psql "$DB_URL" -v ON_ERROR_STOP=1 -q >/dev/null || fail "schema 快照恢复失败"
+  # schema 唯一入口：快照采集时点可能早于后加 schema（如 archive 由 20260831190500 引入），
+  # 而 20261119100000 起迁移依赖它预置（迁移内不再自建 schema）。bootstrap 幂等，只补缺失。
+  psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$ROOT/database/scripts/bootstrap_schemas.sql" >/dev/null \
+    || fail "bootstrap_schemas.sql 失败（schema 预置）"
   psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$ledger" >/dev/null || fail "账本恢复失败"
   gzip -dc "$data" | psql "$DB_URL" -v ON_ERROR_STOP=1 -q >/dev/null || fail "参考数据恢复失败"
 }
 
 if [ "${WEB_SMOKE_REFRESH_DB:-0}" = "1" ]; then
   echo "[WCS-local] WEB_SMOKE_REFRESH_DB=1：重建测试库 ${DB_NAME}"
-  dropdb --if-exists -h 127.0.0.1 -p 5432 -U "$(id -un)" "$DB_NAME" || fail "dropdb ${DB_NAME} 失败"
+  dropdb --if-exists "${PG_ARGS[@]}" "$DB_NAME" || fail "dropdb ${DB_NAME} 失败"
 fi
 
 if [ "$IS_LOCAL_DB" = "1" ]; then
-  if ! psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" | grep -q 1; then
+  if ! psql "${PG_ARGS[@]}" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" | grep -q 1; then
     provision_db
   fi
 elif ! psql "$DB_URL" -tAc "SELECT 1" >/dev/null 2>&1; then
@@ -128,7 +170,7 @@ fi
 LEDGER_MAX="$(psql "$DB_URL" -tAc "SELECT COALESCE(max(version)::text,'0') FROM _sqlx_migrations WHERE success" 2>/dev/null | tr -d '[:space:]')"
 if [ -z "$LEDGER_MAX" ] || [ "$LEDGER_MAX" = "0" ]; then
   if [ "$IS_LOCAL_DB" = "1" ]; then
-    dropdb --if-exists -h 127.0.0.1 -p 5432 -U "$(id -un)" "$DB_NAME" >/dev/null 2>&1
+    dropdb --if-exists "${PG_ARGS[@]}" "$DB_NAME" >/dev/null 2>&1
     provision_db
     LEDGER_MAX="$(psql "$DB_URL" -tAc "SELECT COALESCE(max(version)::text,'0') FROM _sqlx_migrations WHERE success")"
   else
@@ -139,7 +181,10 @@ fi
 HEAD_VERSION="$(repo_head_version)"
 if [ -n "$HEAD_VERSION" ] && [ "${LEDGER_MAX:-0}" -lt "$HEAD_VERSION" ] 2>/dev/null; then
   echo "[WCS-local] 测试库落后（ledger=${LEDGER_MAX} < head=${HEAD_VERSION}），前向补齐"
-  bash scripts/migration/apply-forward.sh --dsn "$DB_URL" >/tmp/web_smoke_precommit.migrate.log 2>&1 \
+  # 一次性测试库是隔离库：死表批次闸门 GUC 由执行器按文件显式注入（prod 模式禁止此开关）。
+  gate_flag=()
+  if [ "$IS_LOCAL_DB" = "1" ]; then gate_flag=(--drill-gate-guc-auto); fi
+  bash scripts/migration/apply-forward.sh --dsn "$DB_URL" "${gate_flag[@]}" >/tmp/web_smoke_precommit.migrate.log 2>&1 \
     || { tail -20 /tmp/web_smoke_precommit.migrate.log >&2; fail "前向迁移失败（日志 /tmp/web_smoke_precommit.migrate.log）"; }
   LEDGER_MAX="$(psql "$DB_URL" -tAc "SELECT COALESCE(max(version)::text,'0') FROM _sqlx_migrations WHERE success")"
 fi
