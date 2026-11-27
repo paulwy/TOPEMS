@@ -149,7 +149,7 @@ const ModuleCard = ({
               variant='caption'
               sx={{ color: 'text.secondary', gridColumn: '1 / -1', textAlign: 'center' }}
             >
-              暂无数据
+              {i18n.t('bi.bi_index_page.empty')}
             </Typography>
           )}
           {Object.entries(stats)

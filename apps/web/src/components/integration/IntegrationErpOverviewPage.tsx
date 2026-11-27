@@ -404,84 +404,84 @@ export const IntegrationErpOverviewPage: React.FC = () => {
       </Card>
 
       {/* Sync summary */}
-        <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
-          <Card variant='outlined'>
-            <CardContent>
-              <Typography
-                variant='subtitle2'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                {t('integration.integration_erp_overview_page.e3')}
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
-                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'success.50', borderRadius: 1 }}>
-                    <Typography
-                      variant='h5'
-                      sx={{ fontWeight: 600, color: 'success.700' }}
-                    >
-                      {connections.length}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {t('integration.integration_erp_overview_page.e4')}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
-                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'primary.50', borderRadius: 1 }}>
-                    <Typography
-                      variant='h5'
-                      sx={{ fontWeight: 600, color: 'primary.main' }}
-                    >
-                      {stats.find((s) => s.id === 'active-connections')?.value ?? '0'}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {t('integration.integration_erp_overview_page.e5')}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
-                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'warning.50', borderRadius: 1 }}>
-                    <Typography
-                      variant='h5'
-                      sx={{ fontWeight: 600, color: 'warning.700' }}
-                    >
-                      {stats.find((s) => s.id === 'success-rate')?.value ?? '0%'}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {t('integration.integration_erp_overview_page.e6')}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
-                  <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'info.50', borderRadius: 1 }}>
-                    <Typography
-                      variant='h5'
-                      sx={{ fontWeight: 600, color: 'info.700' }}
-                    >
-                      {stats.find((st) => st.id === 'errors')?.value ?? '0'}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {t('integration.integration_erp_overview_page.e7')}
-                    </Typography>
-                  </Box>
+      <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
+        <Card variant='outlined'>
+          <CardContent>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {t('integration.integration_erp_overview_page.e3')}
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
+                <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'success.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 600, color: 'success.700' }}
+                  >
+                    {connections.length}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    {t('integration.integration_erp_overview_page.e4')}
+                  </Typography>
                 </Box>
               </Box>
-            </CardContent>
-          </Card>
-        </Box>
+              <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
+                <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'primary.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 600, color: 'primary.main' }}
+                  >
+                    {stats.find((s) => s.id === 'active-connections')?.value ?? '0'}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    {t('integration.integration_erp_overview_page.e5')}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
+                <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'warning.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 600, color: 'warning.700' }}
+                  >
+                    {stats.find((s) => s.id === 'success-rate')?.value ?? '0%'}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    {t('integration.integration_erp_overview_page.e6')}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
+                <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'info.50', borderRadius: 1 }}>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 600, color: 'info.700' }}
+                  >
+                    {stats.find((st) => st.id === 'errors')?.value ?? '0'}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    {t('integration.integration_erp_overview_page.e7')}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     </PageContainer>
   );
 };
