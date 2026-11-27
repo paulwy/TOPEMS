@@ -93,6 +93,14 @@
 - 旧表 `permissions` jsonb 是早期扁平码快照，`tenant_admin` 行 1050 码未进入任何用户令牌集；后端守卫比对令牌权限集，从不回查旧表。
 - 旧表 4 行 `code/name` 也不作为角色目录展示来源（前端角色标签由 `useRole` 基于 `is_superuser`/`roles` 数组本地化产出）。
 
+### 5.1 初始化依赖核查（#74，2026-11-27）
+
+**问题**：摘除 `default_roles.sql` 后，新库初始化是否还需要这 3 个旧体系角色占位（`super_admin`/`dept_manager`/`employee`）？
+
+- **现行目录落库链路**：`core_roles` 角色由迁移链 replay 自洽落库——`20261024000014` 兜底 `admin`、`20261023000002` 落 `*_manager` 系列、`20260724000004` 模块权限种子；不经过 `default_roles.sql`。摘除旧表种子不影响新库角色目录初始化。
+- **旧 3 code 的源码引用**：生产鉴权代码无按这 3 个 code 比对的 `has_role` 分支；Rust/前端命中的 `"employee"` 均为实体→模块归属映射（HRM 员工、凭证辅助核算类型、federation 实体映射），与角色码无关。`super_admin` 仅出现在：① 各服务测试 Claims 夹具（内存字符串标签，不查库）；② `svc/ai/src/dsh/mcp/security.rs:132` 一处 `has_role("super_admin")` 字符串比对——现行登录签发改从 core 链路解析角色名（`admin`/`tenant_admin`/`*_manager`），不会产出 `super_admin`，该分支恒不命中，属待甄别死分支，归 L7/L8 批次处置，与旧表退役解耦。
+- **结论**：旧 3 行占位无功能承载，可随退役一并移除；新库角色目录由迁移链独立承担。种子文件在退役批次可整文件摘除，无需另补 core_roles 种子。
+
 ## 6. 退役收益 vs 风险成本
 
 ### 6.1 收益
@@ -105,8 +113,8 @@
 
 - **破坏性 DROP TABLE**：需独立 replay 窗口 + 票据 + 配套 rollback；门禁要求无 CASCADE、每条 DROP 独立 destructive 标记、`rows-at-review=4`。
 - **前置硬依赖**：必须先投放 `210000` 解除 `position_roles_role_id_fkey`，否则 DROP 被外键阻断。
-- **种子/部署链路改造**：退役 `default_roles.sql` 对旧表的 INSERT/UPDATE/校验，或整文件从 RESET/SEED_ROLES 分支摘除；需确认无其他初始化流程依赖该种子产出。
-- **离线读取复核**：当前源码/视图扫描未见报表/导出/BI 直连旧表；DROP 前仍需复核是否有外部报表、BI 工具或定时任务直连该表（本机无法覆盖外部系统）。
+- **种子/部署链路改造**：退役 `default_roles.sql` 对旧表的 INSERT/UPDATE/校验，或整文件从 RESET/SEED_ROLES 分支摘除；#74 已核实现行 `core_roles` 角色目录由迁移链自洽落库（见 §5.1 初始化依赖核查），摘除该种子不影响新库角色初始化。
+- **离线读取复核（#73 静态面已闭环）**：全仓后端 Rust / 前端 / 导出报表 / BI / 脚本扫描，对旧表 `permissions` jsonb 零业务读取；唯一 jsonb 展开点是不可变历史迁移 `20261108091000` 与种子校验 DO 块。残留命中均为 CI/运维 RLS 治理断言（`check-rls-permissions.cjs`、`verify-rls.sh`、两则 ops RLS SQL），不导出业务数据。**仍需人工确认的边界**：仓库之外的外部 BI/报表库、定时导出、人工 ad-hoc 查询、第三方直连 DSN——静态扫描看不到，DROP 前应由运维在 DB 侧用 `pg_stat_statements` / 连接日志 / 外部 DSN 清单复核。
 - **历史快照价值**：4 行 jsonb 权限码为旧体系残留，现行目录已独立承载授权；退役前仍应全量快照备份（含 jsonb），仅作回溯留档，不重新灌回。
 
 ### 6.3 保留方案的成本（对照）
@@ -121,13 +129,13 @@
 4. **配套 rollback**：按 pg_dump 原样重建空骨架（列/唯一约束/索引/RLS/策略/条件授权），重灌备份 4 行；依附 FK 在 210000 后已无引用，rollback 不再重建指向旧表的业务 FK。
 5. **种子退役**：改造或摘除 `default_roles.sql` 对旧表的 INSERT/UPDATE/DO 校验；同步 `deploy-prod.sh` RESET/SEED_ROLES 分支引用；核对无其他脚本/文档链路残留。
 6. **init DDL**：删 `init/06_iam_schema.sql` 旧表全段（建表/约束/索引/FK/策略/RLS）。
-7. **复核**：离线报表/BI/导出无直连；前端/后端 grep 零残留；manifest `pending_forward_patches` 登记 `to_apply`、checksums 入账；destructive / schema-defense / directed / ledger-ddrift / validate 门禁全绿。
+7. **复核**：仓库内前端/后端/脚本 grep 零残留（#73 静态已闭环）；外部 BI/报表/定时导出/第三方直连由运维在 DB 侧复核；manifest `pending_forward_patches` 登记 `to_apply`、checksums 入账；destructive / schema-defense / directed / ledger-ddrift / validate 门禁全绿。
 8. **投放**：走唯一入口 `apply-forward.sh --prod --allow-destructive=<version>`，票据匹配；不使用 `sqlx migrate run`。
 
 ## 8. 关键未决（退役前需确认）
 
-- 是否存在源码之外的外部消费者（报表/BI/定时任务/手动查询）直连 `iam.roles`——需运维/业务侧确认，静态扫描无法覆盖。
-- `default_roles.sql` 摘除后，新库初始化是否还需要这 3 个旧体系角色占位；若现行 bootstrap 已由 `core_roles` 种子/迁移承担，则整文件退役。
+- **外部消费者（唯一残留人工项）**：仓库内源码/视图/脚本已核零业务读取（#73）；DROP 前仍需运维/业务侧在 DB 侧复核仓库之外是否有外部 BI/报表库、定时导出、人工 ad-hoc 查询或第三方直连 DSN 读取 `iam.roles`（`pg_stat_statements` / 连接日志 / 外部 DSN 清单）。静态扫描无法覆盖这部分。
+- **旧角色占位（#74 已闭环）**：现行 `core_roles` 目录由迁移链自洽落库，旧 3 code 无生产鉴权分支引用；摘除 `default_roles.sql` 不影响新库初始化，种子可整文件退役。
 - 退役批次与 210000 的窗口关系：建议分两次 replay，不合并为一个破坏性迁移，便于回滚定位。
 
 ## 9. 附：相关既有记录
