@@ -198,7 +198,7 @@ export const supplierSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => formatDateTimeCell(row.created_at),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatDateTimeCell(row.created_at),
     },
     {
       name: 'updated_at',
@@ -208,7 +208,7 @@ export const supplierSchema: EntitySchema = {
       hideInForm: true,
       sortable: true,
       listWidth: 160,
-      renderCell: (row: Record<string, unknown>) => formatDateTimeCell(row.updated_at),
+      renderCell: (row: Record<string, unknown>, _index: number) => formatDateTimeCell(row.updated_at),
     },
   ],
 
