@@ -2026,6 +2026,13 @@ pub struct ReconRuleQueryParams {
     pub enabled: Option<bool>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/reconcile/batch",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v55/reconcile/batch"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reconcile_batch_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2068,6 +2075,13 @@ pub async fn reconcile_batch_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/reconcile/single",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v55/reconcile/single"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reconcile_single_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2091,6 +2105,13 @@ pub async fn reconcile_single_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/reconcile/results",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v55/reconcile/results"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_recon_results_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2126,6 +2147,13 @@ pub async fn get_recon_results_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/reconcile/rules",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v55/reconcile/rules"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_recon_rule_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2144,6 +2172,13 @@ pub async fn create_recon_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/reconcile/rules",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v55/reconcile/rules"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_recon_rules_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2165,6 +2200,16 @@ pub async fn list_recon_rules_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/reconcile/match/{id}/approve",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/finance-v55/reconcile/match/{id}/approve"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn approve_match_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2183,6 +2228,16 @@ pub async fn approve_match_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/reconcile/match/{id}/dispute",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/finance-v55/reconcile/match/{id}/dispute"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn dispute_match_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2213,6 +2268,13 @@ pub struct MatchInvoiceRequest {
     pub purchase_order_id: String,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/invoice/recognize",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v55/invoice/recognize"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn recognize_invoice_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2243,6 +2305,16 @@ pub async fn recognize_invoice_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/invoice/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v55/invoice/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_invoice_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2265,6 +2337,13 @@ pub async fn get_invoice_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/invoices",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v55/invoices"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_invoices_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2300,6 +2379,16 @@ pub async fn list_invoices_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/invoice/{id}/validate",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v55/invoice/{id}/validate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn validate_invoice_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2324,6 +2413,16 @@ pub async fn validate_invoice_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/invoice/{id}/post",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v55/invoice/{id}/post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn post_invoice_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2345,6 +2444,13 @@ pub async fn post_invoice_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/invoice/match",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v55/invoice/match"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn match_invoice_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2398,6 +2504,13 @@ impl SchedulePaymentRequest {
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/payment/initiate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v55/payment/initiate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn initiate_payment_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2431,6 +2544,16 @@ pub async fn initiate_payment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/payment/{id}/status",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v55/payment/{id}/status"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_payment_status_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2453,6 +2576,16 @@ pub async fn get_payment_status_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/payment/{id}/reverse",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v55/payment/{id}/reverse"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reverse_payment_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2509,6 +2642,13 @@ pub async fn list_payments_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/payment/schedule",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v55/payment/schedule"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn schedule_payment_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2562,6 +2702,13 @@ pub async fn schedule_payment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v55/payment/methods",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v55/payment/methods"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_supported_methods_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,

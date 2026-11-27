@@ -1247,6 +1247,13 @@ impl LiquidityOptimizer {
 
 // --- Cash Pool Handlers ---
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/pool",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v58/pool"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_pool_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1264,6 +1271,16 @@ pub async fn create_pool_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/pool/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v58/pool/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_pool_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1285,6 +1302,13 @@ pub async fn get_pool_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/pools",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v58/pools"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_pools_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1305,6 +1329,13 @@ pub async fn list_pools_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/pool/allocate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v58/pool/allocate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn allocate_funds_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1322,6 +1353,13 @@ pub async fn allocate_funds_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/pool/transfer",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v58/pool/transfer"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn transfer_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1339,6 +1377,16 @@ pub async fn transfer_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/pool/{id}/balance",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v58/pool/{id}/balance"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_pool_balance_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1360,6 +1408,16 @@ pub async fn get_pool_balance_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/pool/{id}/history",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v58/pool/{id}/history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_pool_history_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1381,6 +1439,13 @@ pub async fn get_pool_history_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/pool/consolidate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v58/pool/consolidate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn consolidate_cash_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1417,6 +1482,13 @@ async fn create_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/forecast/run",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v58/forecast/run"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn run_forecast_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1434,6 +1506,16 @@ pub async fn run_forecast_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/forecast/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v58/forecast/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_forecast_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1507,6 +1589,13 @@ async fn compare_scenarios_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/forecast/summary",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v58/forecast/summary"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_forecast_summary_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1527,6 +1616,16 @@ pub async fn get_forecast_summary_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/forecast/{id}/assumptions",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/finance-v58/forecast/{id}/assumptions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_assumptions_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1547,6 +1646,13 @@ pub async fn update_assumptions_handler(
 
 // --- Liquidity Handlers ---
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/liquidity/snapshot",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v58/liquidity/snapshot"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_liquidity_snapshot_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1567,6 +1673,13 @@ pub async fn get_liquidity_snapshot_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/liquidity/optimize",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v58/liquidity/optimize"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn optimize_liquidity_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1584,6 +1697,13 @@ pub async fn optimize_liquidity_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/liquidity/recommendations",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v58/liquidity/recommendations"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_recommendations_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1604,6 +1724,13 @@ pub async fn get_recommendations_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/liquidity/action",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v58/liquidity/action"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn execute_action_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1616,6 +1743,13 @@ pub async fn execute_action_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/liquidity/targets",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v58/liquidity/targets"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_targets_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1636,6 +1770,16 @@ pub async fn get_targets_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/liquidity/target/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/finance-v58/liquidity/target/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn set_target_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1654,6 +1798,13 @@ pub async fn set_target_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v58/liquidity/history",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v58/liquidity/history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_optimization_history_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

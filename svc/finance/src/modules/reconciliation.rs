@@ -117,6 +117,16 @@ pub async fn create_session_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reconciliation/sessions/{session_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("session_id" = String, Path, description = "session_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/reconciliation/sessions/{session_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -140,6 +150,13 @@ pub async fn get_session_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reconciliation/sessions",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reconciliation/sessions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_sessions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -226,6 +243,16 @@ pub async fn import_items_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reconciliation/sessions/{session_id}/match",
+    tag = "Auto-Backfill",
+    params(
+        ("session_id" = String, Path, description = "session_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/reconciliation/sessions/{session_id}/match"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn auto_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -249,6 +276,16 @@ pub async fn auto_match_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reconciliation/sessions/{session_id}/complete",
+    tag = "Auto-Backfill",
+    params(
+        ("session_id" = String, Path, description = "session_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/reconciliation/sessions/{session_id}/complete"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn complete_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -330,6 +367,16 @@ pub async fn get_items_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reconciliation/sessions/{session_id}/summary",
+    tag = "Auto-Backfill",
+    params(
+        ("session_id" = String, Path, description = "session_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/reconciliation/sessions/{session_id}/summary"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -562,6 +609,16 @@ pub async fn batch_update_diff_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reconciliation/sessions/{session_id}/diff-stats",
+    tag = "Auto-Backfill",
+    params(
+        ("session_id" = String, Path, description = "session_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/reconciliation/sessions/{session_id}/diff-stats"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_diff_statistics_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -588,6 +645,13 @@ pub async fn get_diff_statistics_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reconciliation/aging",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reconciliation/aging"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

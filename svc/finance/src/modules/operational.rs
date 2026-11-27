@@ -823,6 +823,13 @@ fn json_amount_to_decimal(v: &Value) -> Option<rust_decimal::Decimal> {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/budgets",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/budgets"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_budget(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -984,6 +991,16 @@ pub async fn get_budget(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/budgets/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/budgets/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_budget(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1284,6 +1301,13 @@ pub async fn list_receivables(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/receivables",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/receivables"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_receivable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1443,6 +1467,16 @@ pub async fn get_receivable(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/receivables/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/receivables/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_receivable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1736,6 +1770,13 @@ pub async fn list_payables(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payables",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/payables"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_payable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1897,6 +1938,16 @@ pub async fn get_payable(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payables/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/payables/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_payable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

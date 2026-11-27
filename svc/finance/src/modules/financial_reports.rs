@@ -233,6 +233,13 @@ pub struct ItemVouchersQuery {
     pub page_size: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/item-vouchers",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/item-vouchers"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_report_item_vouchers(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -410,6 +417,13 @@ pub struct TrendQuery {
     pub currency_code: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/trend",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/trend"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_report_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -550,6 +564,13 @@ pub struct PeriodOverPeriodQuery {
     pub currency_code: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/period-over-period",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/period-over-period"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_report_period_over_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -649,6 +670,16 @@ pub struct ConsolidatedReportQuery {
     pub currency_code: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/consolidated/{consolidation_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("consolidation_id" = String, Path, description = "consolidation_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/reports/consolidated/{consolidation_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -738,6 +769,16 @@ pub async fn create_consolidation_entity(
     )
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/consolidated/entities/{entity_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("entity_id" = String, Path, description = "entity_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/reports/consolidated/entities/{entity_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -754,6 +795,16 @@ pub async fn update_consolidation_entity(
     )
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/consolidated/entities/{entity_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("entity_id" = String, Path, description = "entity_id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/reports/consolidated/entities/{entity_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -815,6 +866,13 @@ pub async fn get_intercompany_elims(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/consolidated/elims",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/reports/consolidated/elims"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn add_intercompany_elimination(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -866,6 +924,13 @@ pub async fn export_consolidated_report(
 
 // ========== Phase 4: 批量导出 ==========
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/export/batch",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/reports/export/batch"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_export_reports(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1078,6 +1143,16 @@ pub async fn create_report_subscription(
     )
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/subscriptions/{subscription_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("subscription_id" = String, Path, description = "subscription_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/reports/subscriptions/{subscription_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1124,6 +1199,16 @@ pub async fn update_report_subscription(
     )
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/subscriptions/{subscription_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("subscription_id" = String, Path, description = "subscription_id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/reports/subscriptions/{subscription_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1138,6 +1223,16 @@ pub async fn delete_report_subscription(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/subscriptions/{subscription_id}/send-now",
+    tag = "Auto-Backfill",
+    params(
+        ("subscription_id" = String, Path, description = "subscription_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/reports/subscriptions/{subscription_id}/send-now"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn send_report_now(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1160,6 +1255,16 @@ pub struct SubscriptionHistoryQuery {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/subscriptions/{subscription_id}/history",
+    tag = "Auto-Backfill",
+    params(
+        ("subscription_id" = String, Path, description = "subscription_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/reports/subscriptions/{subscription_id}/history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_subscription_history(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -2014,6 +2119,13 @@ pub async fn get_cash_flow(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/cash-flow/history",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/cash-flow/history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_cash_flow_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2527,6 +2639,13 @@ pub async fn get_business_overview(
 }
 
 /// 项目汇总报表：按项目维度汇总凭证金额
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/project-summary",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/project-summary"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_project_summary(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2809,6 +2928,13 @@ pub async fn get_aging_analysis(
 }
 
 /// 凭证统计报表：按状态/类型统计凭证数量和金额
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/voucher-statistics",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/voucher-statistics"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_voucher_statistics(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2950,6 +3076,13 @@ pub async fn get_cash_flow_analysis(
 }
 
 /// 费用分析报表：按费用类科目汇总费用
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/expense-analysis",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/expense-analysis"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_expense_analysis(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

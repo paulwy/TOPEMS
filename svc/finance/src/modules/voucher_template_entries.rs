@@ -46,6 +46,16 @@ pub struct ReorderEntriesRequest {
     pub entry_ids: Vec<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-templates/{template_id}/entries",
+    tag = "Auto-Backfill",
+    params(
+        ("template_id" = String, Path, description = "template_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/voucher-templates/{template_id}/entries"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_entries(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -85,6 +95,17 @@ pub async fn list_entries(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-templates/{template_id}/entries/{entry_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("template_id" = String, Path, description = "template_id"),
+        ("entry_id" = String, Path, description = "entry_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/voucher-templates/{template_id}/entries/{entry_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_entry(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

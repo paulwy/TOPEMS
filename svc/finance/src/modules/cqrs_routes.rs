@@ -53,7 +53,7 @@ pub struct PaginatedEventsResponse {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:voucher:create"])),
-    path = "/cqrs/commands/create-voucher",
+    path = "/finance/cqrs/commands/create-voucher",
     responses(
         (status = 200, description = "成功"),
         (status = 201, description = "创建成功"),
@@ -85,6 +85,16 @@ pub async fn handle_create_voucher(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/commands/post-voucher/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/commands/post-voucher/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn handle_post_voucher(
     Path(id): Path<String>,
     Json(req): Json<PostVoucherCommand>,
@@ -105,6 +115,16 @@ pub async fn handle_post_voucher(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/commands/reverse-voucher/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/commands/reverse-voucher/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn handle_reverse_voucher(
     Path(id): Path<String>,
     Json(req): Json<ReverseVoucherCommand>,
@@ -127,7 +147,7 @@ pub async fn handle_reverse_voucher(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["finance:voucher:read"])),
-    path = "/cqrs/views/voucher-summary",
+    path = "/finance/cqrs/views/voucher-summary",
     responses(
         (status = 200, description = "成功"),
         (status = 400, description = "请求参数错误"),
@@ -162,6 +182,16 @@ pub async fn list_voucher_summary(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/views/voucher-summary/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/views/voucher-summary/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_voucher_summary_by_id(
     Path(id): Path<String>,
 ) -> ApiResponse<Option<VoucherSummaryView>> {
@@ -172,6 +202,13 @@ pub async fn get_voucher_summary_by_id(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/views/receivable-aging",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/views/receivable-aging"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_receivable_aging(
     Query(params): Query<ReceivableAgingQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ReceivableAgingView>> {
@@ -194,7 +231,7 @@ pub async fn list_receivable_aging(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["finance:read"])),
-    path = "/cqrs/events/{aggregate_id}",
+    path = "/finance/cqrs/events/{aggregate_id}",
     responses(
         (status = 200, description = "成功"),
         (status = 400, description = "请求参数错误"),
@@ -221,6 +258,13 @@ pub async fn get_events(Path(aggregate_id): Path<String>) -> ApiResponse<Vec<Eve
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/views/rebuild",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/views/rebuild"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn rebuild_views() -> ApiResponse<()> {
     let context = get_cqrs_context();
     match context.projector.rebuild_all().await {
@@ -229,6 +273,13 @@ pub async fn rebuild_views() -> ApiResponse<()> {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/stats",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/stats"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_stats() -> ApiResponse<CqrsStatsResponse> {
     let context = get_cqrs_context();
     let view_names: Vec<String> = context
@@ -265,7 +316,7 @@ pub async fn get_stats() -> ApiResponse<CqrsStatsResponse> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["finance:read"])),
-    path = "/cqrs/projection-progress",
+    path = "/finance/cqrs/projection-progress",
     responses(
         (status = 200, description = "成功"),
         (status = 400, description = "请求参数错误"),
@@ -289,6 +340,13 @@ pub async fn get_projection_progress(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/events",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/events"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_events_paginated(
     Query(params): Query<EventsQueryParams>,
 ) -> ApiResponse<PaginatedEventsResponse> {
@@ -319,6 +377,16 @@ pub async fn list_events_paginated(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/views/replay/{view_name}",
+    tag = "Auto-Backfill",
+    params(
+        ("view_name" = String, Path, description = "view_name"),
+    ),
+    responses((status = 200, description = "post /api/finance/views/replay/{view_name}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn replay_view(Path(view_name): Path<String>) -> ApiResponse<()> {
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.replay_view(&view_name).await {

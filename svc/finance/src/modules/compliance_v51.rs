@@ -1071,6 +1071,13 @@ pub async fn create_control_point_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/control-points",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/compliance-v51/control-points"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_control_points_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1101,6 +1108,16 @@ pub async fn list_control_points_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/control-points/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/compliance-v51/control-points/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_control_point_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1122,6 +1139,16 @@ pub async fn get_control_point_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/control-points/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/compliance-v51/control-points/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_control_point_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1140,6 +1167,16 @@ pub async fn update_control_point_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/control-points/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/compliance-v51/control-points/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_control_point_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1183,6 +1220,16 @@ pub async fn generate_control_matrix_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/control-matrices/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/compliance-v51/control-matrices/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_control_matrix_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1204,6 +1251,13 @@ pub async fn get_control_matrix_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/control-matrices",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/compliance-v51/control-matrices"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_control_matrices_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1225,6 +1279,13 @@ pub async fn list_control_matrices_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/risk-assessments",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/compliance-v51/risk-assessments"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn assess_risk_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1243,6 +1304,16 @@ pub async fn assess_risk_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/risk-assessments/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/compliance-v51/risk-assessments/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_risk_assessment_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1310,6 +1381,13 @@ pub async fn list_risk_assessments_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/risk-assessments/summary",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/compliance-v51/risk-assessments/summary"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_risk_summary_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1348,6 +1426,16 @@ async fn generate_compliance_report_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/reports/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/compliance-v51/reports/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_compliance_report_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1407,6 +1495,16 @@ pub async fn list_compliance_reports_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/compliance-v51/reports/{id}/export",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/compliance-v51/reports/{id}/export"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_compliance_report_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

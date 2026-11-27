@@ -1334,6 +1334,13 @@ pub struct ReportListQueryParams {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/report/template",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/report/template"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_template_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1352,6 +1359,13 @@ pub async fn create_template_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/report/templates",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v57/report/templates"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_templates_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1375,6 +1389,13 @@ pub async fn get_templates_handler(
 
 // --- Report Generation ---
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/report/generate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/report/generate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn generate_report_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1393,6 +1414,13 @@ pub async fn generate_report_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/reports",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v57/reports"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_reports_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1450,6 +1478,16 @@ async fn get_report_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/report/{id}/download",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v57/report/{id}/download"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn download_report_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1472,6 +1510,16 @@ pub async fn download_report_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/report/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/finance-v57/report/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_report_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1490,6 +1538,13 @@ pub async fn delete_report_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/report/schedule",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/report/schedule"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn schedule_report_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1515,6 +1570,13 @@ pub struct AnalysisHistoryQueryParams {
     pub dimension: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/analysis",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/analysis"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn analyze_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1533,6 +1595,13 @@ pub async fn analyze_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/analysis/pivot",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/analysis/pivot"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn pivot_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1551,6 +1620,13 @@ pub async fn pivot_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/analysis/drill-down",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/analysis/drill-down"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn drill_down_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1569,6 +1645,13 @@ pub async fn drill_down_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/analysis/roll-up",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/analysis/roll-up"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn roll_up_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1587,6 +1670,13 @@ pub async fn roll_up_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/analysis/slice",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/analysis/slice"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn slice_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1605,6 +1695,13 @@ pub async fn slice_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/analysis/dice",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/analysis/dice"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn dice_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1623,6 +1720,13 @@ pub async fn dice_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/analysis/history",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v57/analysis/history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_analysis_history_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1656,6 +1760,13 @@ pub struct TrendQueryParams {
     pub metric: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/forecast",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/forecast"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn generate_forecast_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1692,6 +1803,13 @@ async fn detect_anomalies_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/insights",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v57/insights"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_insights_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1714,6 +1832,13 @@ pub async fn get_insights_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/model/train",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v57/model/train"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn train_model_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1732,6 +1857,13 @@ pub async fn train_model_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/models",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v57/models"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_models_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1753,6 +1885,13 @@ pub async fn list_models_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v57/trend",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v57/trend"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_trend_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

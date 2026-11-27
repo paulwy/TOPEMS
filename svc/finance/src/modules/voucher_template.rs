@@ -821,6 +821,13 @@ pub struct AutoGenerateRequest {
     pub rule_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher/generate/auto",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/voucher/generate/auto"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn auto_generate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -901,6 +908,16 @@ pub async fn auto_generate(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher/generate/regenerate/{original_voucher_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("original_voucher_id" = String, Path, description = "original_voucher_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/voucher/generate/regenerate/{original_voucher_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn regenerate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

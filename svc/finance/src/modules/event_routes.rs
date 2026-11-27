@@ -132,6 +132,13 @@ pub async fn list_handlers() -> ApiResponse<HandlersResponse> {
     ApiResponse::success(HandlersResponse { handlers, count }, "查询成功")
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/events/route",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/events/route"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn route_event(Json(req): Json<RouteEventRequest>) -> ApiResponse<RouteEventResponse> {
     let pipeline = get_event_pipeline();
     let results = pipeline
@@ -149,12 +156,26 @@ pub async fn route_event(Json(req): Json<RouteEventRequest>) -> ApiResponse<Rout
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/events/process",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/events/process"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn process_events(Json(req): Json<ProcessEventsRequest>) -> ApiResponse<PipelineResult> {
     let pipeline = get_event_pipeline();
     let result = pipeline.process_events(&req.events).await;
     ApiResponse::success(result, "处理完成")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/sagas",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/sagas"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_sagas() -> ApiResponse<SagasListResponse> {
     let pipeline = get_event_pipeline();
     let items = pipeline.get_saga_coordinator().list_sagas(None).await;
@@ -187,6 +208,13 @@ pub async fn get_saga(Path(saga_id): Path<String>) -> ApiResponse<SagaInstance> 
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/sagas/start",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/sagas/start"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> ApiResponse<StartSagaResponse> {
     let pipeline = get_event_pipeline();
     match pipeline
@@ -209,6 +237,16 @@ pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> ApiResponse<StartS
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/sagas/{saga_id}/compensate",
+    tag = "Auto-Backfill",
+    params(
+        ("saga_id" = String, Path, description = "saga_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/sagas/{saga_id}/compensate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn compensate_saga(Path(saga_id): Path<String>) -> ApiResponse<CompensateSagaResponse> {
     let pipeline = get_event_pipeline();
     match pipeline
@@ -221,6 +259,13 @@ pub async fn compensate_saga(Path(saga_id): Path<String>) -> ApiResponse<Compens
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/sagas/stats",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/sagas/stats"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn saga_stats() -> ApiResponse<SagaStats> {
     let pipeline = get_event_pipeline();
     ApiResponse::success(pipeline.get_saga_coordinator().get_stats(), "查询成功")

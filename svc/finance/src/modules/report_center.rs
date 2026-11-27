@@ -839,6 +839,16 @@ pub async fn get_enhanced_balance_sheet_handler(
     ApiResponse::success(report, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/income-statement/{period}",
+    tag = "Auto-Backfill",
+    params(
+        ("period" = String, Path, description = "period"),
+    ),
+    responses((status = 200, description = "get /api/finance/reports/income-statement/{period}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_enhanced_income_statement_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -870,6 +880,16 @@ pub async fn get_enhanced_income_statement_handler(
 }
 
 /// 现金流量表增强版：无真实现金流活动分类数据源，诚实返回 501。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/cash-flow/{period}",
+    tag = "Auto-Backfill",
+    params(
+        ("period" = String, Path, description = "period"),
+    ),
+    responses((status = 200, description = "get /api/finance/reports/cash-flow/{period}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_enhanced_cash_flow_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -880,6 +900,16 @@ pub async fn get_enhanced_cash_flow_handler(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/financial-analysis/{period}",
+    tag = "Auto-Backfill",
+    params(
+        ("period" = String, Path, description = "period"),
+    ),
+    responses((status = 200, description = "get /api/finance/reports/financial-analysis/{period}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_financial_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -960,6 +990,13 @@ pub async fn get_comparative_report_handler(
 }
 
 /// 报表导出：无真实文件生成/落盘，诚实返回 501（不再伪造 file_size 与 download_url）。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/export",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/reports/export"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_report_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,

@@ -124,6 +124,16 @@ pub async fn create_reconciliation(
 }
 
 /// GET /api/core/settlement-center/reconciliations/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/api/core/settlement-center/reconciliations/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/api/core/settlement-center/reconciliations/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -151,6 +161,16 @@ pub async fn get_reconciliation(
 }
 
 /// POST /api/core/settlement-center/reconciliations/{id}/reconcile
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/api/core/settlement-center/reconciliations/{id}/reconcile",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/api/core/settlement-center/reconciliations/{id}/reconcile"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reconcile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -301,6 +321,16 @@ pub async fn create_settlement(
 }
 
 /// GET /api/core/settlement-center/settlements/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/api/core/settlement-center/settlements/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/api/core/settlement-center/settlements/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -443,6 +473,16 @@ pub async fn create_link(
 }
 
 /// DELETE /api/core/settlement-center/links/{id}
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/api/core/settlement-center/links/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/api/core/settlement-center/links/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -660,6 +700,13 @@ pub async fn reject_difference(
 // ============================================================
 
 /// GET /api/core/settlement-center/dashboard
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/api/core/settlement-center/dashboard",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/api/core/settlement-center/dashboard"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_dashboard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

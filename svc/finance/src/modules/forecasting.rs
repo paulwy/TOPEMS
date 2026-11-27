@@ -1043,6 +1043,16 @@ pub async fn get_cash_flow_forecast_handler(
     ApiResponse::success(forecast, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/forecasting/cash-flow/{period}/scenarios",
+    tag = "Auto-Backfill",
+    params(
+        ("period" = String, Path, description = "period"),
+    ),
+    responses((status = 200, description = "get /api/finance/forecasting/cash-flow/{period}/scenarios"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_forecast_scenarios_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1053,6 +1063,13 @@ pub async fn get_forecast_scenarios_handler(
     ApiResponse::success(scenarios, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/forecasting/cash-flow/accuracy",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/forecasting/cash-flow/accuracy"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_forecast_accuracy_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1062,6 +1079,16 @@ pub async fn get_forecast_accuracy_handler(
     ApiResponse::success(accuracy, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/forecasting/budget-variance/{period}",
+    tag = "Auto-Backfill",
+    params(
+        ("period" = String, Path, description = "period"),
+    ),
+    responses((status = 200, description = "get /api/finance/forecasting/budget-variance/{period}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_budget_variance_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1099,6 +1126,13 @@ pub async fn get_variance_trend_handler(
     ApiResponse::success(trend, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/forecasting/budget-variance/significant",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/forecasting/budget-variance/significant"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_significant_variances_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1117,6 +1151,13 @@ async fn get_active_alerts_handler(
     ApiResponse::success(alerts, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/forecasting/alerts/summary",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/forecasting/alerts/summary"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_alert_summary_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

@@ -1591,6 +1591,16 @@ async fn create_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/decision/evaluate/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v60/decision/evaluate/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn evaluate_scenario_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1609,6 +1619,16 @@ pub async fn evaluate_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/decision/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v60/decision/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_decision_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1650,6 +1670,16 @@ async fn list_scenarios_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/decision/{id}/alternatives",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v60/decision/{id}/alternatives"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_alternatives_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1688,6 +1718,13 @@ async fn compare_scenarios_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/decision/history",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v60/decision/history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_decision_history_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1708,6 +1745,16 @@ pub async fn get_decision_history_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/decision/sensitivity/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v60/decision/sensitivity/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn sensitivity_analysis_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1760,6 +1807,13 @@ pub async fn create_alert_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/alert/rules",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v60/alert/rules"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_alert_rules_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1780,6 +1834,13 @@ pub async fn get_alert_rules_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/alert/evaluate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v60/alert/evaluate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn evaluate_alerts_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1870,6 +1931,13 @@ pub async fn resolve_alert_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/alert/history",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v60/alert/history"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_alert_history_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1890,6 +1958,13 @@ pub async fn get_alert_history_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/alert/channel",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v60/alert/channel"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn configure_channel_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1909,6 +1984,13 @@ pub async fn configure_channel_handler(
 
 // --- Scheduling Handlers ---
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/schedule/task",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v60/schedule/task"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_task_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1938,6 +2020,13 @@ pub async fn create_task_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/schedule/tasks",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v60/schedule/tasks"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tasks_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2005,6 +2094,16 @@ async fn schedule_task_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/schedule/{id}/run",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v60/schedule/{id}/run"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn execute_task_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2022,6 +2121,16 @@ pub async fn execute_task_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/schedule/execution/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v60/schedule/execution/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_execution_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2048,6 +2157,13 @@ pub struct ExecutionQueryParams {
     pub task_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/schedule/executions",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v60/schedule/executions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_executions_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2069,6 +2185,16 @@ pub async fn list_executions_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/schedule/task/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/finance-v60/schedule/task/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_task_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2108,6 +2234,16 @@ pub async fn update_task_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/schedule/{id}/pause",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v60/schedule/{id}/pause"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn pause_task_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2125,6 +2261,16 @@ pub async fn pause_task_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v60/schedule/{id}/resume",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v60/schedule/{id}/resume"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn resume_task_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

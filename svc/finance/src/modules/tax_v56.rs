@@ -1625,6 +1625,13 @@ pub struct TaxSummaryQueryParams {
     pub year: Option<i32>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/generate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v56/tax/generate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn generate_tax_form_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1643,6 +1650,13 @@ pub async fn generate_tax_form_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/forms",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/forms"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tax_forms_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1678,6 +1692,16 @@ pub async fn get_tax_forms_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/forms/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/forms/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tax_form_by_id_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1700,6 +1724,16 @@ pub async fn get_tax_form_by_id_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/forms/{id}/submit",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v56/tax/forms/{id}/submit"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn submit_tax_form_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1718,6 +1752,16 @@ pub async fn submit_tax_form_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/forms/{id}/amend",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "post /api/finance/finance-v56/tax/forms/{id}/amend"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn amend_tax_form_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1737,6 +1781,13 @@ pub async fn amend_tax_form_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/summary",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/summary"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tax_summary_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1759,6 +1810,13 @@ pub async fn get_tax_summary_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/schedule",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/schedule"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tax_schedule_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1784,6 +1842,13 @@ pub struct RateScheduleQueryParams {
     pub jurisdiction: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/calculate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v56/tax/calculate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn calculate_tax_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1858,6 +1923,13 @@ pub async fn calculate_tax_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/rates",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/rates"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_rate_schedule_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1888,6 +1960,13 @@ pub async fn get_rate_schedule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/rates/lookup",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/rates/lookup"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn lookup_rate_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1920,6 +1999,13 @@ pub async fn lookup_rate_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/breakdown",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/breakdown"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_tax_breakdown_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1951,6 +2037,13 @@ pub async fn get_tax_breakdown_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/validate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/validate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn validate_rate_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1980,6 +2073,13 @@ pub struct ComplianceQueryParams {
     pub entity: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/plan",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v56/tax/plan"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_plan_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1998,6 +2098,13 @@ pub async fn create_plan_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/scenario",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v56/tax/scenario"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn analyze_scenario_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2016,6 +2123,13 @@ pub async fn analyze_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/suggestions",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/suggestions"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_suggestions_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2060,6 +2174,13 @@ async fn compare_scenarios_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/plans",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/plans"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_plans_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2095,6 +2216,16 @@ pub async fn list_plans_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/plans/{id}/approve",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/finance-v56/tax/plans/{id}/approve"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn approve_plan_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2113,6 +2244,13 @@ pub async fn approve_plan_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v56/tax/compliance",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v56/tax/compliance"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_compliance_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

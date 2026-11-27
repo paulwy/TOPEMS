@@ -1370,6 +1370,13 @@ impl StressTestEngine {
 
 // --- Anti-Fraud Handlers ---
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/fraud/analyze",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v59/fraud/analyze"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn analyze_transaction_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1388,6 +1395,16 @@ pub async fn analyze_transaction_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/fraud/decision/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v59/fraud/decision/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_fraud_decision_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1415,6 +1432,13 @@ pub struct SignalQueryParams {
     pub signal_type: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/fraud/signals",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v59/fraud/signals"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_signals_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1437,6 +1461,13 @@ pub async fn get_signals_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/fraud/device",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v59/fraud/device"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_device_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1455,6 +1486,16 @@ pub async fn create_device_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/fraud/device/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v59/fraud/device/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_device_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1484,6 +1525,13 @@ pub async fn get_device_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/fraud/blocked",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v59/fraud/blocked"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_blocked_devices_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1505,6 +1553,13 @@ pub async fn list_blocked_devices_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/fraud/rule",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v59/fraud/rule"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn add_rule_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1523,6 +1578,13 @@ pub async fn add_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/fraud/rules",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v59/fraud/rules"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_rules_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1546,6 +1608,13 @@ pub async fn get_rules_handler(
 
 // --- Credit Scoring Handlers ---
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/credit/score",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v59/credit/score"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn calculate_score_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1564,6 +1633,16 @@ pub async fn calculate_score_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/credit/profile/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v59/credit/profile/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_credit_profile_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1582,6 +1661,13 @@ pub async fn get_credit_profile_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/credit/models",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v59/credit/models"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_scoring_models_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1603,6 +1689,13 @@ pub async fn get_scoring_models_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/credit/model",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v59/credit/model"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_model_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1621,6 +1714,16 @@ pub async fn create_model_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/credit/model/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/finance-v59/credit/model/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_model_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1645,6 +1748,13 @@ pub struct FactorQueryParams {
     pub entity_id: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/credit/factors",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v59/credit/factors"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_score_factors_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1663,6 +1773,13 @@ pub async fn get_score_factors_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/credit/compare",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v59/credit/compare"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_model_comparison_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1685,6 +1802,13 @@ pub async fn get_model_comparison_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/credit/bulk",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v59/credit/bulk"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn bulk_score_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1723,6 +1847,13 @@ pub async fn create_scenario_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/stress/run",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/finance-v59/stress/run"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn run_stress_test_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1741,6 +1872,16 @@ pub async fn run_stress_test_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/stress/result/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/finance-v59/stress/result/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_test_result_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1822,6 +1963,13 @@ pub struct GetParamsQueryParams {
     pub scenario_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/stress/params",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v59/stress/params"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_scenario_parameters_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1844,6 +1992,13 @@ pub async fn get_scenario_parameters_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/finance-v59/stress/summary",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/finance-v59/stress/summary"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_test_summary_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

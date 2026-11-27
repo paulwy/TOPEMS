@@ -510,6 +510,13 @@ fn validate_invoice_type(v: &str) -> bool {
 }
 
 /// POST /sales-invoices
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/sales-invoices",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/sales-invoices"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_sales_invoice(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -584,6 +591,16 @@ pub async fn create_sales_invoice(
 }
 
 /// PUT /sales-invoices/{id}（仅 draft 可编辑）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/sales-invoices/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/sales-invoices/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_sales_invoice(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -647,6 +664,16 @@ pub async fn update_sales_invoice(
 }
 
 /// DELETE /sales-invoices/{id}（仅 draft）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/sales-invoices/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/sales-invoices/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_sales_invoice(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1123,6 +1150,13 @@ pub async fn get_collection(
 }
 
 /// POST /sales-collections
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/sales-collections",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/sales-collections"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_collection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

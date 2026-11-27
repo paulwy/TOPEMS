@@ -76,6 +76,8 @@ def module_path(file_rel):
         return 'crate'
     if p == 'main':
         return None
+    if p.endswith('::mod'):
+        p = p[: -len('::mod')]
     if p.startswith('modules::'):
         return 'crate::' + p
     return 'crate::' + p
@@ -101,6 +103,8 @@ def main():
     ap.add_argument('--routes-extra', default='', help='额外的路由文件（逗号分隔，可为其他 crate）')
     ap.add_argument('--accept-new', action='store_true', help='允许写入（默认 dry-run 语义需显式 --apply）')
     ap.add_argument('--apply', action='store_true', help='真正写盘')
+    ap.add_argument('--force-prefix', default='', help='不猜前缀，统一用此前缀（如 /finance）')
+    ap.add_argument('--min-votes', type=int, default=1, help='前缀推断至少需要的票数，不足则跳过（防止空前缀乱写）')
     ap.add_argument('--dry-run', action='store_true')
     args = ap.parse_args()
 
@@ -138,13 +142,17 @@ def main():
         texts['@' + extra] = et
         for route, meth, h, off in parse_routes(et):
             route_map[h].append((route, meth, '@' + extra, block_index(et, off)))
+    dup_defs = set()
     for rel, t in texts.items():
         for h in anns.get(rel, {}):
-            if h in defs:
-                continue
-            defs[h] = (rel, anns[rel][h])
-        for fm in re.finditer(r'pub\s+async\s+fn\s+([A-Za-z0-9_]+)', t):
-            defs.setdefault(fm.group(1), (rel, None))
+            if h in defs and defs[h][0] != rel:
+                dup_defs.add(h)
+            defs.setdefault(h, (rel, anns[rel][h]))
+        for fm in re.finditer(r'(?m)^pub\s+(?:async\s+)?fn\s+([A-Za-z0-9_]+)', t):
+            h = fm.group(1)
+            if h in defs and defs[h][0] != rel:
+                dup_defs.add(h)
+            defs.setdefault(h, (rel, None))
 
     # 反推前缀
     conflicts = []
@@ -174,7 +182,7 @@ def main():
             continue
         rel_routes, blk = entries[0][2], entries[0][3]
         define_rel, ann = defs.get(h, (None, None))
-        if define_rel is None:
+        if define_rel is None or h in dup_defs:
             stats['no_def'] += 1
             continue
         if ann:
@@ -183,8 +191,14 @@ def main():
             if mod:
                 to_register.add('%s::%s' % (mod, h))
             continue
-        c = prefix_votes.get((rel_routes, blk))
-        prefix = c.most_common(1)[0][0] if c else ''
+        if args.force_prefix:
+            prefix = args.force_prefix
+        else:
+            c = prefix_votes.get((rel_routes, blk))
+        if not args.force_prefix and (not c or sum(c.values()) < args.min_votes):
+            stats['skip_no_prefix'] += 1
+            continue
+        prefix = c.most_common(1)[0][0]
         route, meth = entries[0][0], entries[0][1]
         to_add[define_rel].append((h, meth, prefix + route))
 
@@ -196,10 +210,14 @@ def main():
     for rel, items in to_add.items():
         t = texts[rel]
         for h, meth, path in items:
-            idx = t.find('pub async fn %s' % h)
-            if idx < -1:
+            fm = re.search(r'(?m)^pub\s+(?:async\s+)?fn\s+%s\b' % re.escape(h), t)
+            if not fm:
                 continue
+            idx = fm.start()
             j = t.rfind('\n', 0, idx) + 1
+            if 'utoipa::path' in t[max(0, j - 400): j]:
+                stats['skip_dup_ann'] += 1
+                continue
             params = re.findall(r'\{([A-Za-z0-9_]+)\}', path)
             pblock = ''.join('        ("%s" = String, Path, description = "%s"),\n' % (p, p) for p in params)
             ann = (

@@ -559,3 +559,40 @@ IAM 的路由在 `svc/unified-core/src/routes/iam.rs`，handler 在 `modules/iam
 | im 缺口 | 35 | **19**（均为后端确实没有的写接口） |
 
 iam 的 22 条无参 GET 全部实测非 404；`GET /api/communication/notification/channels` 实测 **404** 而 `/notification/push-config/channels` 200，说明 server crate 里那块 `/notification/channels` 路由是死挂载，注解里的 `push-config` 才是对的。
+
+## 第 24 轮：finance（版本化子模块的挂载前缀 + 三源并集）
+
+finance 起于 285 条前端调用、命中 95、缺口 190。结构结论全部靠 HTTP 实测得出，不靠读代码猜：
+
+- 主挂载是 `/api/finance`：169 条无参 GET 探 `/api/finance<route>`，163 条非 404。
+- versioned 子模块（`risk_v54`、`settlement_v55`、`tax_v56`、`reports_v57`、`treasury_v58`、`risk_v59`、`decision_v60` 等）是 `merge` 进主 router，而各自 route 自带 `/finance-v54/...` 前缀，因此真实路径是 `/api/finance/finance-v54/risk/alerts`（实测 200）；注解若写 `/finance-v54/...`，`normalize_path` 会规范成 `/api/finance-v54/...`（实测 404，幻影路径）。
+- `cqrs_routes.rs` 的真实挂载是 `mod.rs` 里的 `.nest("/cqrs", cqrs_routes::cqrs_routes())`，原来 `path = "/api/finance/views/receivable-aging"` 自身就是 404。
+
+### 做法
+
+1. `sed` 把 5 处 `path = "/finance-v` 改成 `/finance/finance-v`，先消掉幻影前缀。
+2. `openapi_backfill.py --crate svc/finance --force-prefix /finance --apply`：本轮给它加了 `--force-prefix`（不再投票猜前缀）、`--min-votes`、`--routes-extra`、`--apply`；同时修了 impl 块误插、同名跨文件 def、`modules/mod.rs` 的路径归属、`skip_dup_ann`。
+3. `cqrs_routes.rs` 整文件注解前缀纠正为 `/finance/cqrs/...`。
+4. 重建 spec 前先做三源并集：gen 输出 + 合并前本地 spec + `git show origin/main:docs/api/openapi.json`。第三次踩到"只并前两者"，把 main 已有的 `/api/finance/reports/income-statement/generate` 弄丢，补回后确认零丢失。
+5. 剔除 3 条实测 404 的幻影路径（`/api/finance/events`、`/stats`、`/views/receivable-aging`），再跑 150 条无参 GET 实测：**0 条 404**。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2875 | **3162**（live 也是 3162） |
+| finance 注解 | 0 | **323 条新增**（另 337 条登记） |
+| 契约 finance 调用/匹配/缺口 | 285/95/190 | **285/248/37** |
+| 全量冒烟 | 1041 FAIL=0 | **1141 条 FAIL=0**（OK=1062 SOFT=78 SKIP=1） |
+| spec 超集（vs origin/main） | — | 新增 path 277 / 新增 method 20 / **丢失 0** |
+
+### 踩坑与验证
+
+- `docs/api/openapi.json` 是 minified 单行且被 `registry.rs` 用 `include_str!` 内嵌，改完必须重编译重启才生效，否则 live spec 与文件不一致。
+- `openapi-gen` 是"修剪式"生成：base 里不在注解集的路径会被删掉，所以合并必须显式三源并集，不能拿 gen 输出直接覆盖。
+- 本机磁盘一度写满导致 Bash 输出目录创建失败（`No space left on device`）；期间 `cargo check` 出现 0.17s 就 `Finished` 的可疑输出，用"临时追加 `compile_error!("probe")` 再回滚"确认 cargo 确实在编译 finance，不是空跑。
+- 剩余 37 条缺口的性质已分清：`/balance-sheet/*`、`/income-statement/*`、`/aux-accounts`、`/payments`、`/ar/collections`、`/reconcile/auto` 等是后端真没有对应路由；`risk/alerts/*/acknowledge|resolve`、`compliance/report` 是路径参数型；最后一组 `GET|POST /api/finance/api/core/settlement-center/*` 是前端 `src/api/finance/settlementCenter.ts` 把 `/api/core/...` 直接拼在 finance baseUrl 上造成的双前缀，属前端拼串 bug，需先确认 `/api/core/settlement-center/*` 本身是否 200 再决定改前端还是加别名。
+
+### 提交口径
+
+本机工作区 HEAD 落后 origin/main 较多，`git diff origin/main -- svc/finance/src` 里 `mod.rs`、`financial_reports.rs`、`openapi.rs`、`expense_status.rs` 存在大段"删除"，实为 main 已合入的 W5-B 租户谓词加固（`try_tenant_id_from_claims` + 显式 `tenant_id` 谓词）等新版内容。整目录拷贝会把这些回退掉，因此本轮不拷源码，改为在 `origin/main` 的干净 worktree 内重跑 `openapi_backfill.py`，只拷 spec 与本文档。

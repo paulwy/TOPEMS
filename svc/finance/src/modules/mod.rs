@@ -262,6 +262,16 @@ pub async fn create_account(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/{account_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("account_id" = String, Path, description = "account_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/accounts/{account_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -293,6 +303,16 @@ pub async fn get_account(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/code/{code}",
+    tag = "Auto-Backfill",
+    params(
+        ("code" = String, Path, description = "code"),
+    ),
+    responses((status = 200, description = "get /api/finance/accounts/code/{code}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_account_by_code(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -373,6 +393,13 @@ pub async fn get_account_balances(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/accounts"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -401,6 +428,13 @@ pub async fn list_accounts(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/vouchers"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -433,6 +467,16 @@ pub async fn create_voucher(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/vouchers/{voucher_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -509,6 +553,16 @@ async fn list_vouchers(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}/submit",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/vouchers/{voucher_id}/submit"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn submit_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -535,6 +589,16 @@ pub async fn submit_voucher(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}/approve",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/vouchers/{voucher_id}/approve"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn approve_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -565,6 +629,16 @@ pub async fn approve_voucher(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}/post",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/vouchers/{voucher_id}/post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn post_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -630,6 +704,16 @@ async fn update_voucher(
 }
 
 /// V39.0 Phase 7: 删除凭证
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/vouchers/{voucher_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -657,6 +741,16 @@ pub async fn delete_voucher(
 }
 
 /// V39.0 Phase 7: 反过账凭证
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}/unpost",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/vouchers/{voucher_id}/unpost"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn unpost_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -683,6 +777,13 @@ pub async fn unpost_voucher(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/ledger",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/ledger"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_ledger(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -828,6 +929,17 @@ async fn get_income_statement(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/periods/{year}/{month}/close",
+    tag = "Auto-Backfill",
+    params(
+        ("year" = String, Path, description = "year"),
+        ("month" = String, Path, description = "month"),
+    ),
+    responses((status = 200, description = "post /api/finance/periods/{year}/{month}/close"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn close_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -903,6 +1015,13 @@ pub async fn open_period(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/aux-accounts",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/aux-accounts"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_aux_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1035,6 +1154,13 @@ pub async fn get_aux_ledger(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/aux-balance",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/aux-balance"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_aux_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1124,6 +1250,13 @@ async fn get_cash_flow(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/batch/submit",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/vouchers/batch/submit"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_submit_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1153,6 +1286,13 @@ pub async fn batch_submit_vouchers(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/batch/approve",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/vouchers/batch/approve"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_approve_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1183,6 +1323,13 @@ pub async fn batch_approve_vouchers(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/batch/post",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/vouchers/batch/post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_post_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1250,6 +1397,13 @@ pub async fn export_vouchers(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/year-end-close",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/year-end-close"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn year_end_close(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1290,6 +1444,13 @@ pub async fn year_end_close(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/payments"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1361,6 +1522,16 @@ pub async fn create_payment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments/{payment_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/payments/{payment_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1452,6 +1623,16 @@ pub async fn list_payments_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments/{payment_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/payments/{payment_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1485,6 +1666,16 @@ pub async fn update_payment_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments/{payment_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/payments/{payment_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1512,6 +1703,16 @@ pub async fn delete_payment_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments/{payment_id}/submit",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/payments/{payment_id}/submit"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn submit_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1557,6 +1758,16 @@ pub async fn submit_payment_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments/{payment_id}/approve",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/payments/{payment_id}/approve"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn approve_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1605,6 +1816,16 @@ pub async fn approve_payment_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments/{payment_id}/reject",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/payments/{payment_id}/reject"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reject_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1654,6 +1875,16 @@ pub async fn reject_payment_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments/{payment_id}/execute",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/payments/{payment_id}/execute"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn execute_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1697,6 +1928,13 @@ pub struct WriteOffRequest {
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payments/write-off",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/payments/write-off"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn write_off_payment_item_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1776,6 +2014,13 @@ pub async fn export_payments_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/approval-configs",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/approval-configs"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_approval_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1806,6 +2051,13 @@ pub async fn list_approval_configs_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/approval-configs",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/approval-configs"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1845,6 +2097,16 @@ pub async fn create_approval_config_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/approval-configs/{config_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("config_id" = String, Path, description = "config_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/approval-configs/{config_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1877,6 +2139,16 @@ pub async fn get_approval_config_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/approval-configs/{config_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("config_id" = String, Path, description = "config_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/approval-configs/{config_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1914,6 +2186,16 @@ pub async fn update_approval_config_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/approval-configs/{config_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("config_id" = String, Path, description = "config_id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/approval-configs/{config_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1951,6 +2233,13 @@ pub async fn delete_approval_config_handler(
 // ========== 审批操作（供 ERP 合并报表审批流程调用） ==========
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/approvals/submit",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/approvals/submit"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn submit_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2079,6 +2368,13 @@ pub async fn approve_approval(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/approvals/reject",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/approvals/reject"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reject_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -2133,6 +2429,13 @@ pub async fn reject_approval(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/approvals/cancel",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/approvals/cancel"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn cancel_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -2161,6 +2464,13 @@ pub struct FinanceDashboardStats {
     pub pending_approvals: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/dashboard",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/dashboard"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_dashboard_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2279,6 +2589,16 @@ pub async fn list_voucher_templates_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-templates/{template_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("template_id" = String, Path, description = "template_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/voucher-templates/{template_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2311,6 +2631,13 @@ pub async fn get_voucher_template_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-templates",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/voucher-templates"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2391,6 +2718,16 @@ async fn update_voucher_template_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-templates/{template_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("template_id" = String, Path, description = "template_id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/voucher-templates/{template_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2420,6 +2757,16 @@ pub async fn delete_voucher_template_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-templates/{template_id}/set-default",
+    tag = "Auto-Backfill",
+    params(
+        ("template_id" = String, Path, description = "template_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/voucher-templates/{template_id}/set-default"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn set_default_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3359,6 +3706,16 @@ pub async fn list_generation_rules_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-generation-rules/{rule_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/voucher-generation-rules/{rule_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3388,6 +3745,13 @@ pub async fn get_generation_rule_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-generation-rules",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/voucher-generation-rules"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3428,6 +3792,16 @@ pub async fn create_generation_rule_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-generation-rules/{rule_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/voucher-generation-rules/{rule_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3468,6 +3842,16 @@ pub async fn update_generation_rule_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-generation-rules/{rule_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/voucher-generation-rules/{rule_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3502,6 +3886,16 @@ pub struct ToggleRuleRequest {
     pub isactive: bool,
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-generation-rules/{rule_id}/toggle",
+    tag = "Auto-Backfill",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/voucher-generation-rules/{rule_id}/toggle"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn toggle_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3621,6 +4015,13 @@ pub async fn test_rule_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/voucher-generation-rules/generate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/voucher-generation-rules/generate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn generate_vouchers_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3724,6 +4125,16 @@ pub async fn import_vouchers_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/u8-import/{import_id}/status",
+    tag = "Auto-Backfill",
+    params(
+        ("import_id" = String, Path, description = "import_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/u8-import/{import_id}/status"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_import_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3753,6 +4164,13 @@ pub async fn get_import_status_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/u8-import/records",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/u8-import/records"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_import_records_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3837,6 +4255,16 @@ pub async fn get_import_record_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/u8-import/{import_id}/rollback",
+    tag = "Auto-Backfill",
+    params(
+        ("import_id" = String, Path, description = "import_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/u8-import/{import_id}/rollback"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn rollback_import_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4026,6 +4454,13 @@ pub async fn get_receivable_aging_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/receivables/batch",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/receivables/batch"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_create_receivables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4285,6 +4720,13 @@ pub struct CollectionQueryParams {
     pub customer_id: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/collections",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/collections"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_collections_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4363,6 +4805,13 @@ pub async fn get_collection_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/collections",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/collections"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4587,6 +5036,13 @@ pub async fn write_off_collection_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/collections/batch-write-off",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/collections/batch-write-off"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_write_off_collections_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4678,6 +5134,16 @@ pub async fn list_payment_records_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payment-records/{payment_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/payment-records/{payment_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4705,6 +5171,13 @@ pub async fn get_payment_record_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payment-records",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/payment-records"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4738,6 +5211,16 @@ pub async fn create_payment_record_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/ap/payments/{payment_id}/approve",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/ap/payments/{payment_id}/approve"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn approve_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4772,6 +5255,16 @@ pub async fn approve_payment_record_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/ap/payments/{payment_id}/reject",
+    tag = "Auto-Backfill",
+    params(
+        ("payment_id" = String, Path, description = "payment_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/ap/payments/{payment_id}/reject"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reject_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4868,6 +5361,13 @@ async fn delete_payment_record_handler(
 }
 
 // gate: admin-only
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/payment-records/write-off",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/payment-records/write-off"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn write_off_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4965,6 +5465,13 @@ pub struct AgingQueryParams {
     pub months: Option<i32>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/aging/receivable",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/aging/receivable"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn calculate_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4989,6 +5496,13 @@ pub async fn calculate_receivable_aging_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/aging/payable",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/aging/payable"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn calculate_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5013,6 +5527,13 @@ pub async fn calculate_payable_aging_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/aging/summary",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/aging/summary"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_aging_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5084,6 +5605,13 @@ pub async fn get_aging_detail_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/aging/trend",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/aging/trend"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_aging_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5162,6 +5690,16 @@ pub struct ArAgingQuery {
     pub as_of_date: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}/entries",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/vouchers/{voucher_id}/entries"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_voucher_entries(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -5210,6 +5748,16 @@ pub async fn get_voucher_entries(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}/items",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/vouchers/{voucher_id}/items"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_voucher_items(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -5288,6 +5836,13 @@ pub async fn batch_create_vouchers(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/batch-delete",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/vouchers/batch-delete"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_delete_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5343,6 +5898,16 @@ pub async fn batch_delete_vouchers(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}/unapprove",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/vouchers/{voucher_id}/unapprove"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn unapprove_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5388,6 +5953,16 @@ pub async fn unapprove_voucher(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/{voucher_id}/reverse",
+    tag = "Auto-Backfill",
+    params(
+        ("voucher_id" = String, Path, description = "voucher_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/vouchers/{voucher_id}/reverse"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reverse_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5436,6 +6011,13 @@ pub async fn reverse_voucher(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/next-no",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/vouchers/next-no"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_next_voucher_no(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5477,6 +6059,13 @@ pub async fn get_next_voucher_no(
     ApiResponse::success(serde_json::json!({"voucher_no": voucher_no}), "查询成功")
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/generate",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/vouchers/generate"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn generate_voucher_by_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5553,6 +6142,13 @@ pub async fn import_vouchers_general(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/vouchers/import/u8",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/vouchers/import/u8"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn import_vouchers_u8(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -5575,6 +6171,13 @@ pub async fn import_vouchers_u8(
 
 // ========== RC4a 补齐: 会计期间接口 ==========
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/period/current",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/period/current"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_current_period(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -5590,6 +6193,13 @@ pub async fn get_current_period(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/periods",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/periods"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_periods(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5821,6 +6431,13 @@ pub async fn open_period_v2(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/periods/close",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/periods/close"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn close_period_v2(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5909,6 +6526,13 @@ pub async fn close_period_v2(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/periods/close-income",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/periods/close-income"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn close_income_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -5989,6 +6613,13 @@ pub async fn year_end_close_v2(
 
 // ========== RC4a 补齐: AR/AP 别名与对账接口 ==========
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/ar/aging",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/ar/aging"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_ar_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -6054,6 +6685,13 @@ pub async fn get_ap_aging(
 
 // ==================== RC4a 补齐: 科目扩展 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/tree",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/accounts/tree"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_account_tree(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -6122,6 +6760,16 @@ fn account_transition_allowed(from: &str, to: &str) -> bool {
         || (from == "inactive" && matches!(to, "active" | "archived"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/{account_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("account_id" = String, Path, description = "account_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/accounts/{account_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -6237,6 +6885,16 @@ pub async fn update_account(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/{account_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("account_id" = String, Path, description = "account_id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/accounts/{account_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -6327,6 +6985,16 @@ pub async fn delete_account(
 /// 现改为：父科目必须存在且未软删；每个子科目强制 parent_id=路径参数、
 /// level=父级 +1、account_type 缺省继承父级、currency 缺省 CNY；
 /// 单次上限 500 条；编码重复按 23505 转 409 并指明具体编码。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/{account_id}/children-batch",
+    tag = "Auto-Backfill",
+    params(
+        ("account_id" = String, Path, description = "account_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/accounts/{account_id}/children-batch"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_create_account_children(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -6449,6 +7117,13 @@ pub async fn batch_create_account_children(
     ApiResponse::success(created, &format!("批量创建成功（{} 个）", count))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/opening-balances",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/accounts/opening-balances"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_opening_balances(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -6569,6 +7244,16 @@ pub async fn get_opening_balances(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/opening-balances/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get /api/finance/accounts/opening-balances/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_opening_balance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -6631,6 +7316,16 @@ pub async fn get_opening_balance(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/opening-balances/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/accounts/opening-balances/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -6720,6 +7415,16 @@ pub async fn update_opening_balance(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/opening-balances/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/accounts/opening-balances/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -6762,6 +7467,13 @@ pub async fn delete_opening_balance(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/opening-balances/batch",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/accounts/opening-balances/batch"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn import_opening_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -6894,6 +7606,13 @@ pub async fn import_opening_balances(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/opening-balances",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/accounts/opening-balances"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_opening_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -7001,6 +7720,16 @@ pub async fn create_opening_balances(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/{account_id}/opening-balance",
+    tag = "Auto-Backfill",
+    params(
+        ("account_id" = String, Path, description = "account_id"),
+    ),
+    responses((status = 200, description = "post /api/finance/accounts/{account_id}/opening-balance"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn set_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -7122,6 +7851,13 @@ pub async fn set_opening_balance(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/accounts/opening-balances/carry-forward",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/accounts/opening-balances/carry-forward"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn carry_forward_opening_balance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -7186,6 +7922,13 @@ pub async fn carry_forward_opening_balance(
 
 // ==================== RC4a 补齐: 交易对手财务信息 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/counterparty/customers",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/counterparty/customers"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_counterparty_customers(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -7194,6 +7937,16 @@ pub async fn list_counterparty_customers(
     ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/counterparty/customers/{customer_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("customer_id" = String, Path, description = "customer_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/counterparty/customers/{customer_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_counterparty_customer(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -7202,6 +7955,16 @@ pub async fn get_counterparty_customer(
     ApiResponse::success(serde_json::json!({"customer_id": customer_id}), "查询成功")
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/counterparty/customers/{customer_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("customer_id" = String, Path, description = "customer_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/counterparty/customers/{customer_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_counterparty_customer(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -7214,6 +7977,13 @@ pub async fn update_counterparty_customer(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/counterparty/suppliers",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/counterparty/suppliers"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_counterparty_suppliers(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -7222,6 +7992,16 @@ pub async fn list_counterparty_suppliers(
     ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/counterparty/suppliers/{supplier_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("supplier_id" = String, Path, description = "supplier_id"),
+    ),
+    responses((status = 200, description = "get /api/finance/counterparty/suppliers/{supplier_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_counterparty_supplier(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -7230,6 +8010,16 @@ pub async fn get_counterparty_supplier(
     ApiResponse::success(serde_json::json!({"supplier_id": supplier_id}), "查询成功")
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/counterparty/suppliers/{supplier_id}",
+    tag = "Auto-Backfill",
+    params(
+        ("supplier_id" = String, Path, description = "supplier_id"),
+    ),
+    responses((status = 200, description = "put /api/finance/counterparty/suppliers/{supplier_id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_counterparty_supplier(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -8102,6 +8892,13 @@ async fn transition_expense_approval(
 
 // ==================== RC4a 补齐: 报表基础 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/account-balance",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/account-balance"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_account_balance_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -8164,6 +8961,13 @@ pub async fn get_account_balance_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/account-ledger",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/account-ledger"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_account_ledger_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -8172,6 +8976,13 @@ pub async fn get_account_ledger_report(
     ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/dimension-detail",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/dimension-detail"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_dimension_detail_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -8180,6 +8991,13 @@ pub async fn get_dimension_detail_report(
     ApiResponse::success(serde_json::json!({"items": []}), "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/balance-sheet/export",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/balance-sheet/export"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_balance_sheet_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -8216,6 +9034,13 @@ pub async fn export_income_statement_report(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reports/cash-flow/export",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/reports/cash-flow/export"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn export_cash_flow_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,

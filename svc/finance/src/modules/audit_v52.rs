@@ -1975,6 +1975,13 @@ pub async fn create_audit_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/rules",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/audit-v52/rules"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_audit_rules_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1998,6 +2005,16 @@ pub async fn list_audit_rules_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/rules/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "put /api/finance/audit-v52/rules/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_audit_rule_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2016,6 +2033,16 @@ pub async fn update_audit_rule_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/rules/{id}",
+    tag = "Auto-Backfill",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "delete /api/finance/audit-v52/rules/{id}"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_audit_rule_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2033,6 +2060,13 @@ pub async fn delete_audit_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/findings",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/audit-v52/findings"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_audit_findings_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2118,6 +2152,13 @@ pub async fn resolve_finding_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/run",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/audit-v52/run"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn run_audit_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2152,6 +2193,13 @@ async fn detect_anomalies_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/anomaly/alerts",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/audit-v52/anomaly/alerts"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_anomaly_alerts_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2222,6 +2270,13 @@ pub async fn get_detection_summary_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/anomaly/config",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/audit-v52/anomaly/config"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn configure_detection_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2261,6 +2316,13 @@ pub async fn configure_detection_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/alerts",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/audit-v52/alerts"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_alerts_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2328,6 +2390,13 @@ pub async fn create_alert_config_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/audit-v52/alerts/config/list",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "get /api/finance/audit-v52/alerts/config/list"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_alert_configs_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

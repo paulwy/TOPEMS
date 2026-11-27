@@ -434,6 +434,13 @@ pub async fn get_reconcile_items(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/finance/reconcile",
+    tag = "Auto-Backfill",
+    responses((status = 200, description = "post /api/finance/reconcile"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_reconcile_order(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
