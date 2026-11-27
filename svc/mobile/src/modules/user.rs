@@ -157,7 +157,7 @@ pub async fn get_profile(
     };
 
     let __mobile_response = {
-        let profile = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1"))
+        let profile = match sqlx::query("SELECT id, username, full_name AS nickname, phone, email, avatar_url, department_id::text AS department, position, created_at, updated_at FROM iam.users WHERE deleted_at IS NULL AND id = $1")
         .bind(user_id)
         .fetch_optional(&mut scope)
         .await
@@ -235,11 +235,11 @@ pub async fn update_profile(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6"))
+    let result = sqlx::query("UPDATE iam.users SET full_name = COALESCE($1, full_name), phone = COALESCE($2, phone), email = COALESCE($3, email), position = COALESCE($4, position), updated_at = NOW() WHERE id = $5 AND deleted_at IS NULL")
+        // department 在 IAM 是 department_id(uuid)，此处不按名字改写，避免写坏组织关系
         .bind(payload.nickname)
         .bind(payload.phone)
         .bind(payload.email)
-        .bind(payload.department)
         .bind(payload.position)
         .bind(user_id)
         .execute(&mut scope)
@@ -360,10 +360,7 @@ pub async fn upload_avatar(
 
     let avatar_url = format!("/uploads/{}", file_name);
 
-    let result = sqlx::query(only_own_schema_query!(
-        "mobile",
-        "UPDATE mobile.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2"
-    ))
+    let result = sqlx::query("UPDATE iam.users SET avatar_url = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL")
     .bind(&avatar_url)
     .bind(user_id)
     .execute(&mut scope)

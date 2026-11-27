@@ -12,7 +12,6 @@ import {
   User,
   Bell,
   Smartphone,
-  Database,
   Shield,
   HelpCircle,
   Info,
@@ -60,7 +59,7 @@ const MobileSettingsPage: React.FC = () => {
         }),
   });
   const displayName = profile?.full_name || user?.fullName || user?.username || '';
-  const displayEmail = profile?.email || user?.email || 'user@example.com';
+  const displayEmail = profile?.email || user?.email || '';
   const displayRole =
     profile?.position ||
     user?.role ||
@@ -87,22 +86,6 @@ const MobileSettingsPage: React.FC = () => {
           subtitle: i18n.t('mobile.mobile_profile_page.k4'),
           type: 'navigate',
           path: MOBILE_PATHS.scan,
-        },
-        {
-          id: 'offline',
-          icon: <Database className={styles.il3} />,
-          label: i18n.t('mobile.mobile_profile_page.k5'),
-          subtitle: i18n.t('mobile.mobile_profile_page.k6'),
-          type: 'navigate',
-          path: MOBILE_PATHS.offlineSync,
-          badge: (
-            <Chip
-              label='2.3 GB'
-              size='small'
-              variant='outlined'
-              sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-            />
-          ),
         },
         {
           id: 'app-settings',

@@ -194,7 +194,7 @@ const MobileScanPage: React.FC = () => {
         navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
-        navigate(MOBILE_PATHS.settings);
+        navigate(MOBILE_PATHS.profile);
         break;
     }
   };

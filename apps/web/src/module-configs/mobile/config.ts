@@ -218,6 +218,20 @@ const mobileScanRoute: RouteConfigV2<MobileScanPageProps> = {
   action: 'read',
 };
 
+// 扫码按钮统一跳 /mobile/scan-page（历史常量），该路径此前未注册 → 点击落 404
+const mobileScanPageRoute: RouteConfigV2<MobileScanPageProps> = {
+  path: MOBILE_PATHS.scanPage,
+  element: lazyWithRetry(() => import('@/components/mobile/MobileScanPage'), 'MobileScanPage'),
+  module: 'mobile',
+  code: 'mobile-scan-page',
+  title: i18n.t('mobile.nav.mobile-scan'),
+  titleKey: 'mobile.nav.mobile-scan',
+  template: 'form',
+  group: 'process',
+  requiredPermissions: ['mobile:scan:read', 'mobile:home:read'],
+  action: 'read',
+};
+
 const mobileNotificationRoute: RouteConfigV2<MobileNotificationPageProps> = {
   path: MOBILE_PATHS.notifications,
   element: lazyWithRetry(
@@ -266,6 +280,23 @@ const mobileSettingsRoute: RouteConfigV2<MobileSettingsPageProps> = {
   action: 'admin',
 };
 
+// 个人中心「应用设置」入口指向 /mobile/settings-app，此前未注册 → 点击落 404
+const mobileSettingsAppRoute: RouteConfigV2<MobileSettingsPageProps> = {
+  path: MOBILE_PATHS.settingsApp,
+  element: lazyWithRetry(
+    () => import('@/components/mobile/MobileSettingsPage'),
+    'MobileSettingsPage'
+  ),
+  module: 'mobile',
+  code: 'mobile-settings-app',
+  title: i18n.t('mobile.nav.mobile-settings'),
+  titleKey: 'mobile.nav.mobile-settings',
+  template: 'settings',
+  group: 'setting',
+  requiredPermissions: ['mobile:home:admin'],
+  action: 'admin',
+};
+
 // ---- 路由配置（供路由系统使用） ----
 export const mobileModuleConfig: RouteModuleConfig = {
   code: 'mobile',
@@ -289,9 +320,11 @@ export const mobileModuleConfig: RouteModuleConfig = {
     mobileQualityRoute,
     mobileProductionRoute,
     mobileScanRoute,
+    mobileScanPageRoute,
     mobileNotificationRoute,
     mobileProfileRoute,
     mobileSettingsRoute,
+    mobileSettingsAppRoute,
   ],
 };
 
