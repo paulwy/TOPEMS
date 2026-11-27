@@ -2670,5 +2670,6 @@
   "hrm.hrm_overview_page.attendance_records": "考勤记录",
   "hrm.hrm_overview_page.performance_review_count": "绩效评审数",
   "hrm.hrm_overview_page.training_record_count": "培训记录数",
-  "hrm.hrm_overview_page.hire_trend": "入职趋势（近 12 个月）"
+  "hrm.hrm_overview_page.hire_trend": "入职趋势（近 12 个月）",
+  "hrm.hrm_overview_page.unassigned": "未分配"
 }

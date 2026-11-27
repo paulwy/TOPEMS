@@ -161,7 +161,7 @@ const HrmOverviewPage: React.FC = () => {
   const departmentData = useMemo(() => {
     const buckets = new Map<string, number>();
     for (const emp of employees) {
-      const name = emp.department_name || '未分配';
+      const name = emp.department_name || i18n.t('hrm.hrm_overview_page.unassigned');
       buckets.set(name, (buckets.get(name) ?? 0) + 1);
     }
     return [...buckets.entries()].map(([label, value]) => ({ label, value }));

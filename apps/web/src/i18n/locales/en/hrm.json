@@ -3664,5 +3664,6 @@
   "hrm.hrm_overview_page.attendance_records": "Attendance records",
   "hrm.hrm_overview_page.performance_review_count": "Performance reviews",
   "hrm.hrm_overview_page.training_record_count": "Training records",
-  "hrm.hrm_overview_page.hire_trend": "New hires (last 12 months)"
+  "hrm.hrm_overview_page.hire_trend": "New hires (last 12 months)",
+  "hrm.hrm_overview_page.unassigned": "Unassigned"
 }
