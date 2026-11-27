@@ -36,6 +36,7 @@ fn tenant_scope_or_400(
 }
 
 /// 下载文件
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
@@ -218,6 +219,7 @@ pub async fn download_file(
 }
 
 /// 预览文件（在线查看）
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
@@ -400,6 +402,7 @@ pub async fn preview_file(
 }
 
 /// 获取文件缩略图（仅图片）
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),

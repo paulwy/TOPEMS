@@ -62,6 +62,7 @@ pub struct FilePermissionRequest {
 
 /// 列出文件列表
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
@@ -258,6 +259,7 @@ fn forbidden_response(message: &str) -> Response {
 
 /// 获取文件详情
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     get,
     security(("BearerAuth" = [])),
@@ -412,6 +414,7 @@ pub async fn get_file(
 }
 
 /// 更新文件信息
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     put,
     security(("BearerAuth" = [])),
@@ -614,6 +617,7 @@ pub async fn update_file(
 }
 
 /// 删除文件（软删除）
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     delete,
     security(("BearerAuth" = [])),
@@ -791,6 +795,7 @@ pub async fn delete_file(
 }
 
 /// 移动文件
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),
@@ -973,6 +978,7 @@ pub async fn move_file(
 }
 
 /// 复制文件
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     post,
     security(("BearerAuth" = [])),

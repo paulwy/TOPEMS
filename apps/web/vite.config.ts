@@ -600,13 +600,14 @@ function topemsRechartsSplitPlugin(): Plugin {
         { test: /[\\/]node_modules[\\/]lucide-react[\\/]/, name: 'lucide-vendor' },
       ];
 
-      // V85-202611: 路由配置表合并。
+      // V85-202611: 路由配置表合并为两片。
       // 登录后 getAllRoutes 要遍历 37 个模块，每个模块单独一个 config-*.js：
-      // 37 个小 chunk（合计 568KB raw / ~150KB gz）经 CF 隧道逐跳 500ms，
-      // 是首屏十几秒的主要来源之一。合并成单个 route-configs chunk 后，
-      // 一次请求拿到全部路由表；体积仍远低于 1500KB 告警线。
+      // 37 个小 chunk 经 CF 隧道逐跳 500ms，是首屏十几秒的主要来源之一。
+      // 37 片合并后单 chunk 已超过 500KB CI 上限，按模块名 a-m / n-z 二分：
+      // 仍只有 2 个请求，且每片稳定低于预算。
       const appGroups = [
-        { test: /[\\/]src[\\/]module-configs[\\/]/, name: 'route-configs' },
+        { test: /[\\/]src[\\/]module-configs[\\/][a-m]/, name: 'route-configs-a' },
+        { test: /[\\/]src[\\/]module-configs[\\/][n-z]/, name: 'route-configs-b' },
       ];
 
       const rechartsGroups = [

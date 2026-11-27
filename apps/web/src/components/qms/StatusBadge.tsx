@@ -95,7 +95,7 @@ const STATUS_LABELS: Record<string, string> = {
   resolved: i18n.t('qms.nonconformance.k19'),
   closed: i18n.t('qms.nonconformance.k18'),
   cancelled: i18n.t('components.status_badge.k5'),
-  draft: i18n.t('components.status_badge.k9'),
+  draft: i18n.t('components.status_badge.k0'),
   scheduled: i18n.t('components.status_badge.k10'),
   verified: i18n.t('components.status_badge.k11'),
   initiated: i18n.t('components.status_badge.k12'),

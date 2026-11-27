@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 
 import ErpSalesOrderRedesignPage from '@/components/erp/ErpSalesOrderRedesignPage';
 
@@ -34,6 +35,6 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }
 
 describe('ErpSalesOrderRedesignPage', () => {
   it('空数据下可安全渲染', () => {
-    expect(() => render(<ErpSalesOrderRedesignPage />)).not.toThrow();
+    expect(() => render(<MemoryRouter><ErpSalesOrderRedesignPage /></MemoryRouter>)).not.toThrow();
   });
 });

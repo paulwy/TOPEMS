@@ -628,6 +628,7 @@ pub async fn get_report_period_over_period(
 
 // ========== Phase 4: 多公司合并 ==========
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:admin"])),
@@ -743,6 +744,7 @@ pub async fn get_consolidation_entities(
     )
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:admin"])),
@@ -1084,6 +1086,7 @@ pub async fn get_report_subscriptions(
     )
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:admin"])),
@@ -1540,6 +1543,7 @@ fn required_company_id(raw: Option<&str>) -> Result<Uuid, ApiResponse<serde_json
         .ok_or_else(|| ApiResponse::error(400, "company_id 必传（单公司租户也不省略）"))
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["finance:admin"])),

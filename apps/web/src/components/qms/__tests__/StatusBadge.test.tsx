@@ -28,6 +28,10 @@ const { tMock } = vi.hoisted(() => {
     'components.status_badge.k18': '已验证',
     'components.status_badge.k19': '已采纳',
     'components.status_badge.k20': '已替代',
+    'qms.nonconformance.k16': '待处理',
+    'qms.nonconformance.k19': '已解决',
+    'qms.nonconformance.k18': '已关闭',
+    'qms.inspection.k26': '已驳回',
   };
 
   const fsmActionButtonsTranslations: Record<string, string> = {
@@ -127,35 +131,35 @@ describe('QMS StatusBadge', () => {
         status='pending'
       />
     );
-    expect(screen.getByText('草稿')).toBeInTheDocument();
+    expect(screen.getByText('待处理')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='inspection'
         status='in_progress'
       />
     );
-    expect(screen.getByText('待审批')).toBeInTheDocument();
+    expect(screen.getByText('进行中')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='inspection'
         status='pending_audit'
       />
     );
-    expect(screen.getByText('已审批')).toBeInTheDocument();
+    expect(screen.getByText('待审批')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='inspection'
         status='completed'
       />
     );
-    expect(screen.getByText('进行中')).toBeInTheDocument();
+    expect(screen.getByText('已完成')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='inspection'
         status='rejected'
       />
     );
-    expect(screen.getByText('已完成')).toBeInTheDocument();
+    expect(screen.getByText('已驳回')).toBeInTheDocument();
   });
 
   it('renders issue FSM statuses', () => {
@@ -165,28 +169,28 @@ describe('QMS StatusBadge', () => {
         status='open'
       />
     );
-    expect(screen.getByText('已取消')).toBeInTheDocument();
+    expect(screen.getByText('待处理')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='issue'
         status='resolved'
       />
     );
-    expect(screen.getByText('待处理')).toBeInTheDocument();
+    expect(screen.getByText('已解决')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='issue'
         status='closed'
       />
     );
-    expect(screen.getByText('已发布')).toBeInTheDocument();
+    expect(screen.getByText('已关闭')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='issue'
         status='cancelled'
       />
     );
-    expect(screen.getByText('运行中')).toBeInTheDocument();
+    expect(screen.getByText('已取消')).toBeInTheDocument();
   });
 
   it('renders action FSM statuses', () => {
@@ -196,14 +200,14 @@ describe('QMS StatusBadge', () => {
         status='pending'
       />
     );
-    expect(screen.getByText('草稿')).toBeInTheDocument();
+    expect(screen.getByText('待处理')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='action'
         status='completed'
       />
     );
-    expect(screen.getByText('进行中')).toBeInTheDocument();
+    expect(screen.getByText('已完成')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='action'
@@ -220,7 +224,7 @@ describe('QMS StatusBadge', () => {
         status='draft'
       />
     );
-    expect(screen.getByText('可用')).toBeInTheDocument();
+    expect(screen.getByText('草稿')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='audit_plan'
@@ -234,14 +238,14 @@ describe('QMS StatusBadge', () => {
         status='in_progress'
       />
     );
-    expect(screen.getByText('待审批')).toBeInTheDocument();
+    expect(screen.getByText('进行中')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='audit_plan'
         status='cancelled'
       />
     );
-    expect(screen.getByText('运行中')).toBeInTheDocument();
+    expect(screen.getByText('已取消')).toBeInTheDocument();
   });
 
   it('renders audit_finding FSM statuses', () => {
@@ -251,7 +255,7 @@ describe('QMS StatusBadge', () => {
         status='open'
       />
     );
-    expect(screen.getByText('已取消')).toBeInTheDocument();
+    expect(screen.getByText('待处理')).toBeInTheDocument();
     rerender(
       <StatusBadge
         fsm='audit_finding'
@@ -265,7 +269,7 @@ describe('QMS StatusBadge', () => {
         status='closed'
       />
     );
-    expect(screen.getByText('已发布')).toBeInTheDocument();
+    expect(screen.getByText('已关闭')).toBeInTheDocument();
   });
 
   it('renders eight_d FSM statuses including root_cause', () => {
@@ -354,7 +358,7 @@ describe('QMS StatusBadge', () => {
         status='closed'
       />
     );
-    const badge = screen.getByText('已发布');
+    const badge = screen.getByText('已关闭');
     expect(badge.className).toContain('bg-gray-100');
   });
 
@@ -365,7 +369,7 @@ describe('QMS StatusBadge', () => {
         status='completed'
       />
     );
-    let badge = screen.getByText('进行中');
+    let badge = screen.getByText('已完成');
     expect(badge.className).toContain('bg-green-100');
     unmount();
     render(
@@ -374,7 +378,7 @@ describe('QMS StatusBadge', () => {
         status='completed'
       />
     );
-    badge = screen.getByText('进行中');
+    badge = screen.getByText('已完成');
     expect(badge.className).toContain('bg-orange-100');
   });
 

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
 import { ListPageTemplate } from '../ListPageTemplate';
@@ -23,9 +24,11 @@ const data: TestRow[] = [
   { id: '2', name: '李四' },
 ];
 
+const renderWithRouter = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</MemoryRouter>);
+
 describe('ListPageTemplate', () => {
   it('renders with header and table', () => {
-    render(
+    renderWithRouter(
       <ListPageTemplate
         header={{ title: '客户管理' }}
         columns={columns}
@@ -40,7 +43,7 @@ describe('ListPageTemplate', () => {
   });
 
   it('renders with toolbar', () => {
-    render(
+    renderWithRouter(
       <ListPageTemplate
         header={{ title: '客户管理' }}
         toolbar={<div>工具栏</div>}
@@ -54,7 +57,7 @@ describe('ListPageTemplate', () => {
   });
 
   it('renders with empty state', () => {
-    render(
+    renderWithRouter(
       <ListPageTemplate
         header={{ title: '客户管理' }}
         columns={columns}
@@ -82,7 +85,7 @@ describe('ListPageTemplate writeOnly 列（批 12）', () => {
   });
 
   it('未传 writePermission 时不过滤（存量零回归）', () => {
-    render(
+    renderWithRouter(
       <ListPageTemplate
         header={{ title: 'T' }}
         columns={writeCols}
@@ -95,7 +98,7 @@ describe('ListPageTemplate writeOnly 列（批 12）', () => {
 
   it('传 writePermission 且无权限时隐藏 writeOnly 列', () => {
     mockCheckPermission.mockReturnValue(false);
-    render(
+    renderWithRouter(
       <ListPageTemplate
         header={{ title: 'T' }}
         columns={writeCols}
@@ -109,7 +112,7 @@ describe('ListPageTemplate writeOnly 列（批 12）', () => {
   });
 
   it('传 writePermission 且有权限时正常渲染 writeOnly 列', () => {
-    render(
+    renderWithRouter(
       <ListPageTemplate
         header={{ title: 'T' }}
         columns={writeCols}

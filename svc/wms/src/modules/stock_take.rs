@@ -934,6 +934,7 @@ pub async fn start_stock_take(
     response
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["wms:stocktake:admin"])),
