@@ -400,6 +400,16 @@
 - **遗留待补（不据本轮结论下死码定论）**：① SDK 远端动态注入菜单/按钮鉴权点；② 多角色菜单面裁剪对比（本轮仅 admin 视图；#107 已记导航端点未按角色裁剪，仅 2 项 portal/erp）。
 - **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`fe-bundle-crosscheck.json`（dist 字面量交集 7 码分层与目录挂名判定）、`fe-runtime-consumer-recon.json`（前端门控直参/绑定 416 码与 ∩581 对账）、`fe-runtime-menu-button-recon.json`（本轮运行期三层对账汇总）；反代脚本 `/tmp/topems-c2/fe-proxy.mjs`（取证收尾随 `/tmp/topems-c2/` 清理，进程停止）。
 
+### 13.13 内联鉴权 trace 端点级缺口复核（#111 预备，静态只读；不改判、不重编）
+
+- **背景**：复核盲区①「handler 内联鉴权端点级观测」缺口。#96 收口补埋后 `inline-trace.jsonl` 已采集 3771 条决策，本轮只读复核其字段完备度与 ∩581 证据强度，不补埋、不重编隔离实例。
+- **trace 字段现状**：每条仅 `ts / user / super / roles / permission / allowed / source`，**无 `route`/`path`、无 `handler` 字段**，内联决策无法映射到具体端点或 handler 函数。源码工作区已为干净态（`permission.rs`、`auth.rs` 与 `/tmp/*.bak` diff=0），埋点仅编在隔离实例二进制；备份 `/tmp/permission.rs.bak`、`/tmp/auth.rs.bak` 在位。
+- **∩581 观测 9 码**：内联观测唯一码 376 个，落入 581 共 9 个——活码 5（`master-data:admin`、`rd:admin`、`search:admin`、`srm:admin`、`ticket:admin`、`tms:admin` 中已观测者）、兜底 `monitor:admin`（36/42 allowed），待复核 read 码 2 个：`erp:general_ledger:read`、`report:read`（各 2 条 `c2_admin` allowed=true）。
+- **两待复核 read 码证据强度判定**：trace 记录均为 `c2_admin`（admin 角色、1158 权、整集携带候选码）放行；因无端点字段无法定位调用上下文，且 admin 令牌整集覆盖使放行不具鉴别力，**不计入 `in_be_observed`，维持待复核**，不改判活码。矩阵两行补 `inline_trace_note` 备注，备份 `c2-matrix.v33-pre111.bak.json`。
+- **结构限制与补埋成本**：`Claims::has_permission` 为 Claims 方法内联点，方法体内拿不到当前请求的路由/handler；要补端点字段需跨层把请求上下文（Extension/Headers）透传到鉴权层，再重编隔离实例、复扫、取证后还原备份，改动面与风险高于 #96，单列为未立项扩面项。
+- **间接引用补充**：业务服务内联鉴权多走各服务 `shared/permission.rs` 的枚举/常量码（如 pm `PmPermission::*` 转字符串），静态字面量扫描收不全；该部分由 #98（§11）静态间接引用补盲部分收口。
+- **口径结论**：本轮未改矩阵主分类 **6 / 548 / 27**；2 个待复核 read 码保留原绑定，待端点级内联补埋立项后再复核。
+
 
 
 
