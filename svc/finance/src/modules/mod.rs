@@ -6633,11 +6633,17 @@ pub async fn get_opening_balance(
 
 pub async fn update_opening_balance(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    // W5-B：写路径不依赖 RLS 隐式过滤，显式带租户谓词（防 scope 被系统上下文绕过）。
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -6685,7 +6691,7 @@ pub async fn update_opening_balance(
                subject_name = COALESCE($4, subject_name),
                period = COALESCE($5, period),
                updated_at = NOW()
-           WHERE id = $1 AND deleted_at IS NULL
+           WHERE id = $1 AND tenant_id = $6::uuid AND deleted_at IS NULL
            RETURNING id, company_id, subject_code, subject_name, period,
                      debit_balance::float8, credit_balance::float8, tenant_id, created_at, updated_at"#
     ))
@@ -6694,6 +6700,7 @@ pub async fn update_opening_balance(
     .bind(credit_balance)
     .bind(subject_name)
     .bind(period)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     match row {
@@ -6715,10 +6722,16 @@ pub async fn update_opening_balance(
 
 pub async fn delete_opening_balance(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    // W5-B：软删同样显式带租户谓词，跨租户 id 统一 404。
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -6736,9 +6749,10 @@ pub async fn delete_opening_balance(
     let res = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.opening_balances SET deleted_at = NOW()
-           WHERE id = $1 AND deleted_at IS NULL"#
+           WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"#
     ))
     .bind(id)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     match res {
