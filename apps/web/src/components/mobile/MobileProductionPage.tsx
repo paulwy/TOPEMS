@@ -83,8 +83,7 @@ const MobileProductionPage: React.FC = () => {
       id: 'approval',
       label: i18n.t('mobile.mobile_production_page.k3'),
       icon: <CheckSquare className={styles.il4} />,
-      badge: 3,
-    },
+      },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_production_page.k4'),

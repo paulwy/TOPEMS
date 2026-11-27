@@ -365,8 +365,7 @@ const MobileApprovalPage: React.FC = () => {
       id: 'approval',
       label: i18n.t('mobile.mobile_approval_page.k20'),
       icon: <CheckSquare className={styles.il11} />,
-      badge: 3,
-    },
+      },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_approval_page.k21'),

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper, useTheme, Badge } from '@mui/material';
 import { Home, ListTodo, ScanLine, CheckSquare, User } from 'lucide-react';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { useQuery } from '@tanstack/react-query';
+import apiClient from '@/api/client';
 
 export interface TabItem {
   id: string;
@@ -37,7 +39,6 @@ const defaultTabs: TabItem[] = [
     id: 'approval',
     label: i18n.t('shared.bottom_tab_bar.k3'),
     icon: <CheckSquare size={22} />,
-    badge: 3,
   },
   {
     id: 'profile',
@@ -52,6 +53,26 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
   onChange,
 }) => {
   const theme = useTheme();
+
+  // 审批角标取真实待办数（GET /api/core/flow/tasks/my/count），不再写死 3
+  const { data: pendingCount } = useQuery({
+    queryKey: ['mobile', 'flow', 'pending-count'],
+    queryFn: async () => {
+      const res = await apiClient.workflow.get('/tasks/my/count');
+      return Number(res?.data) || 0;
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const resolvedTabs = useMemo(
+    () =>
+      tabs.map((tab) =>
+        tab.id === 'approval' && pendingCount && pendingCount > 0
+          ? { ...tab, badge: pendingCount }
+          : tab
+      ),
+    [tabs, pendingCount]
+  );
 
   const handleChange = (_event: React.SyntheticEvent, newValue: string) => {
     onChange?.(newValue);
@@ -89,7 +110,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
           },
         }}
       >
-        {tabs.map((tab) => (
+        {resolvedTabs.map((tab) => (
           <BottomNavigationAction
             key={tab.id}
             value={tab.id}
