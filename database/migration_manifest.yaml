@@ -3362,3 +3362,10 @@ pending_forward_patches:
     effect: "把 dev 剩余的 20 张同名副本（flow 17 张 + doc_service 3 张）统一 ALTER TABLE RENAME 为 _deprecated_<原名>；不 DROP、不搬数据，rollback 原路改回"
     destructive_scan: "无 DROP/UPDATE/DELETE；仅 RENAME，check-destructive-sql 命中 0 条"
     note: "前置每张断言 0 行（有数据即 RAISE）；后置断言 flow 活名只剩 core_comments/core_favorites/core_menu_groups/core_menus + schema_defense_ledger 5 张；生产 20 张全部不存在 → 纯空跑；doc_service.files(9 行)/templates(13 行) 保留；配合 20261118160000 补投与 archive._purge_20261127_flow_shadow_rows 归档清理 40 行残留"
+  # ===== 2026-11-27：RLS 零 NULL 行表收口 tenant_id IS NULL 旁路 =====
+  - version: "20261127230000"
+    file: "database/migrations/20261127230000_rls_tenant_null_bypass_tighten.sql"
+    status: applied
+    effect: "运行时目录发现候选（tenant_id 可空 + 该表 0 行 NULL + 策略名 tenant_isolation_*/rls_tenant_isolation + 标准 app.tenant_id 模板），仅 regexp 删除 ' OR (tenant_id IS NULL)' 片段；dev 收紧 48 条，生产纯空跑"
+    destructive_scan: "无 DROP/UPDATE/DELETE；ALTER POLICY 重写判定表达式，改前快照 archive.rls_policy_before_20261127"
+    note: "刻意豁免 *_public_read / rls_platform_read / rls_global_read / *_platform_maintain 四类平台共享策略；有 NULL 行的 34 张表与 fail-open 方言（current_setting(app.tenant_id,true) IS NULL）另批；rollback 从快照表原样还原"
