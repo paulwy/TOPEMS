@@ -70,4 +70,21 @@ describe('供应商详情 · view 只读排版（真实 schema）', () => {
     renderDetail();
     expect(screen.queryByTestId('form-submit-btn')).not.toBeInTheDocument();
   });
+
+  it('每个字段只渲染一个标签节点（A-13 回归：标签不再出现两次）', () => {
+    const { container } = renderDetail();
+    const labelNodes = container.querySelectorAll('[data-testid="form-view-label"]');
+    expect(labelNodes.length).toBe(viewFields.length);
+
+    const fieldNames = Array.from(labelNodes).map((n) => n.getAttribute('data-field-name'));
+    expect(new Set(fieldNames).size).toBe(fieldNames.length);
+
+    const labelCounts = new Map<string, number>();
+    Array.from(labelNodes).forEach((node) => {
+      const text = (node.textContent ?? '').trim();
+      labelCounts.set(text, (labelCounts.get(text) ?? 0) + 1);
+    });
+    const duplicated = [...labelCounts.entries()].filter(([, count]) => count > 1);
+    expect(duplicated).toEqual([]);
+  });
 });

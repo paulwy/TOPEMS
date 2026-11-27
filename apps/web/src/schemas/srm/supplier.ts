@@ -69,11 +69,13 @@ export const supplierSchema: EntitySchema = {
       // options 由 dynamicOptions 从 /api/master-data/supplier-categories 注入
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 50 }],
-      renderCell: (row: Record<string, unknown>) => {
+      renderCell: (row: Record<string, unknown>, _index: number) => {
         // 批 35：列表展示优先 getNameZh(category_code)；无 code 或未命中时回退原 category 自由文本。
         // 自由文本 fallback 仅用于展示历史值，不做业务判断；当前数据全部有 category_code，fallback 永不触发。
-        const code = row.category_code;
-        const fallback = (row.category as string) || '';
+        // A-15：必须声明两个形参，否则 toColumnDef 会按「单元格值」签名调用，
+        // 回调收到的不是 row 而是 code 字符串，分类列会一律渲染成 '-'。
+        const code = row?.category_code;
+        const fallback = (row?.category as string) || '';
         if (!code) return fallback || '-';
         return getNameZhSync('supplierCategory', code, fallback) || fallback || '-';
       },

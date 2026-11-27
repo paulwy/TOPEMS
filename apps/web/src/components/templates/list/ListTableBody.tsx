@@ -76,6 +76,13 @@ export interface ListTableBodyProps<T> {
 }
 
 /**
+ * A-15：同一列的 renderCell 失败只告警一次。
+ * 列表每次重渲染 / 翻页都会重跑列渲染，若失败原因常驻（数据脏、字段缺失），
+ * 不收敛就会把控制台刷满，掩盖真正的首次错误。
+ */
+const warnedRenderColumns = new Set<string>();
+
+/**
  * 表格主体：加载骨架、错误/空状态、数据行（树形缩进、固定列、行内编辑、行操作）与展开行。
  * 从 ListPageTemplate 的 renderTableBody 原样抽出，保持空态/骨架/行渲染分支顺序一致。
  */
@@ -423,11 +430,16 @@ export function ListTableBody<T>({
                         return column.render(row ?? ({} as T), index);
                       } catch (e) {
                         // 任何自定义渲染报错都不打断整表渲染，返回占位 '-'
+                        // A-15：同一列只告警一次，避免失败常驻时把控制台刷满
                         if (typeof console !== 'undefined' && console?.warn) {
-                          console.warn(
-                            `[ListPageTemplate] renderCell for column="${column.id}" failed, fallback to "-":`,
-                            e
-                          );
+                          const columnKey = String(column.id);
+                          if (!warnedRenderColumns.has(columnKey)) {
+                            warnedRenderColumns.add(columnKey);
+                            console.warn(
+                              `[ListPageTemplate] renderCell for column="${column.id}" failed, fallback to "-":`,
+                              e
+                            );
+                          }
                         }
                         return '-';
                       }

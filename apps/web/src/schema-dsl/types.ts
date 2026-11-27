@@ -434,21 +434,28 @@ export function toColumnDef(field: SchemaField): ColumnDef | null {
   let render;
   if (field.renderCell) {
     render = (row: Record<string, unknown>, index: number) => {
+      // A-15：row 可能为 null（后端返回空条目 / 空态占位行），
+      // 直接读 row[field.name] 会抛 "Cannot read properties of null (reading 'xxx')"，
+      // 列表每渲染一次就刷一条告警。此处统一兜底为空对象，渲染器自行回退 '-'.
+      const safeRow = row ?? ({} as Record<string, unknown>);
       const fnLength = field.renderCell!.length;
       if (fnLength >= 2) {
         const renderWithRow = field.renderCell as (
           row: Record<string, unknown>,
           index: number
         ) => React.ReactNode;
-        return renderWithRow(row, index);
+        return renderWithRow(safeRow, index);
       } else if (fnLength === 1) {
-        const value = row[field.name];
+        const value = safeRow[field.name];
+        // A-15：单参数签名按「单元格值」调用，值本身为空时不再回调渲染器——
+        // 很多 schema 把 (row) 误写成单参数，回调里会读 row.xxx，值为空必抛 TypeError
+        if (value === null || value === undefined) return '-';
         return (field.renderCell as (value: unknown) => string | React.ReactNode)(value);
       } else {
         const renderWithRowOnly = field.renderCell as (
           row: Record<string, unknown>
         ) => React.ReactNode;
-        return renderWithRowOnly(row);
+        return renderWithRowOnly(safeRow);
       }
     };
   }
@@ -465,7 +472,8 @@ export function toColumnDef(field: SchemaField): ColumnDef | null {
       (field.options.options || []).map((opt) => [String(opt.value), opt.label ?? opt.value])
     );
     render = (row: Record<string, unknown>) => {
-      const value = row[field.name];
+      // 同上：静态枚举分支也需要 row 兜底，避免 null 行在内置渲染器里抛错
+      const value = (row ?? {})[field.name];
       if (value == null || value === '') return '';
       const label = optionMap.get(String(value));
       return label ?? String(value);

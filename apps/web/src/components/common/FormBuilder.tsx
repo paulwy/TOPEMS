@@ -431,12 +431,15 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
           <Box key={field.name}>
             <Typography
               variant='caption'
+              data-testid='form-view-label'
+              data-field-name={field.name}
               sx={{ display: 'block', color: 'text.secondary', mb: 0.25 }}
             >
               {field.label}
             </Typography>
             <Typography
               variant='body2'
+              data-testid='form-view-value'
               sx={{ wordBreak: 'break-word', minHeight: 24 }}
             >
               {formatViewValue(field, value)}

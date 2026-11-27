@@ -227,8 +227,8 @@ export function DataTable<T extends object>({
                         className={styles.il13}
                       >
                         {column.render
-                          ? column.render(row, index)
-                          : String((row[column.key as keyof T] as React.ReactNode) ?? '')}
+                          ? column.render(row ?? ({} as T), index)
+                          : String(((row ?? {})[column.key as keyof T] as React.ReactNode) ?? '')}
                       </td>
                     ))}
                   </tr>

@@ -9,6 +9,7 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { toColumnDef, getColumns } from '../types';
 import type { SchemaField, EntitySchema } from '../types';
+import { supplierSchema } from '@/schemas/srm/supplier';
 
 describe('toColumnDef - renderCell 签名一致性', () => {
   const baseField: SchemaField = {
@@ -173,6 +174,77 @@ describe('getColumns - renderCell 在列数组中的一致性', () => {
 
     expect(ids).toEqual(['id', 'status', 'name']);
     expect(labels).toEqual(['ID', '状态', '名称']);
+  });
+});
+
+describe('toColumnDef - row 为空时的空值兜底（A-15）', () => {
+  // 线上告警原文：Cannot read properties of null (reading 'category_code')
+  // 复现路径：后端返回 null 条目 / 空态占位行 → renderCell 直接读 row[field.name] 抛错
+  const supplierCategoryField: SchemaField = {
+    name: 'category_code',
+    label: '分类',
+    type: 'select',
+    renderCell: (row: Record<string, unknown>) => {
+      const code = row.category_code as string | undefined;
+      return code || '-';
+    },
+  };
+
+  it('row = null 时 renderCell 不抛错，返回 "-"', () => {
+    const col = toColumnDef(supplierCategoryField);
+    expect(col).not.toBeNull();
+    expect(() => col!.render!(null as never, 0)).not.toThrow();
+    expect(col!.render!(null as never, 0)).toBe('-');
+  });
+
+  it('row = undefined 时 renderCell 同样不抛错', () => {
+    const col = toColumnDef(supplierCategoryField);
+    expect(() => col!.render!(undefined as never, 0)).not.toThrow();
+    expect(col!.render!(undefined as never, 0)).toBe('-');
+  });
+
+  it('单参数 (value) 签名在 row 为空时不再回调渲染器，直接占位 "-"', () => {
+    const field: SchemaField = {
+      name: 'amount',
+      label: '金额',
+      type: 'number',
+      renderCell: (value: unknown) => (value == null ? '' : String(value)),
+    };
+    const col = toColumnDef(field);
+    expect(() => col!.render!(null as never, 0)).not.toThrow();
+    expect(col!.render!(null as never, 0)).toBe('-');
+  });
+
+  it('静态枚举 select 在 row 为空时返回空字符串', () => {
+    const field: SchemaField = {
+      name: 'status',
+      label: '状态',
+      type: 'select',
+      options: {
+        type: 'static',
+        options: [
+          { value: 'active', label: '启用' },
+          { value: 'inactive', label: '停用' },
+        ],
+      },
+    };
+    const col = toColumnDef(field);
+    expect(() => col!.render!(null as never, 0)).not.toThrow();
+    expect(col!.render!(null as never, 0)).toBe('');
+  });
+
+  it('真实供应商 schema 的「分类」列：空行返回 "-"，有值行读到整行而不是单元格值', () => {
+    const columns = getColumns(supplierSchema);
+    const categoryCol = columns.find((c) => c.id === 'category_code');
+    expect(categoryCol).toBeDefined();
+
+    // 空行：不再抛 "Cannot read properties of null (reading 'category_code')"
+    expect(() => categoryCol!.render!(null as never, 0)).not.toThrow();
+    expect(categoryCol!.render!(null as never, 0)).toBe('-');
+
+    // 有值行：必须拿到整行（category 自由文本作为 fallback 可见），
+    // 若仍按单元格值调用，这里会渲染成 '-'，即线上「分类列恒为 -」的复现
+    expect(categoryCol!.render!({ category: '钢材' } as never, 0)).toBe('钢材');
   });
 });
 

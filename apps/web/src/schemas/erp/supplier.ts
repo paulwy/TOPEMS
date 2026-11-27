@@ -65,9 +65,10 @@ export const supplierSchema: EntitySchema = {
       // options 由 dynamicOptions 从 mdm 字典注入；不选合法（category_code 留空）
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 50 }],
-      renderCell: (row: Record<string, unknown>) => {
-        const code = row.category_code;
-        const fallback = (row.category as string) || '';
+      // A-15：显式声明两个形参，避免被 toColumnDef 按「单元格值」签名调用（否则分类列恒为 '-'）
+      renderCell: (row: Record<string, unknown>, _index: number) => {
+        const code = row?.category_code;
+        const fallback = (row?.category as string) || '';
         if (!code) return fallback || '-';
         return getNameZhSync('supplierCategory', code, fallback) || fallback || '-';
       },
