@@ -1,7 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 
-const PAGES_DIR = '/Users/air/TOPEMS/apps/web/src/pages/wms';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '../..');
+
+const PAGES_DIR = path.join(ROOT, 'apps/web/src/pages/wms');
 const MIGRATED_DETAIL_PAGES = [
   'WmsInboundDetailPage.tsx',
   'WmsOutboundDetailPage.tsx',
@@ -129,7 +133,7 @@ for (const rec of recommendationOrder) {
 }
 
 const output = outputLines.join('\n');
-const outPath = '/Users/air/TOPEMS/scripts/design-system-audit/reports/wms-pages-template-scan.md';
+const outPath = path.join(ROOT, 'scripts/design-system-audit/reports/wms-pages-template-scan.md');
 fs.writeFileSync(outPath, output);
 console.log(output);
 console.log(`\n报告已保存：${outPath}`);

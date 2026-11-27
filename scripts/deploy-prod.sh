@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================
-# TOPEMS 一键部署脚本（air → xingzhai）
+# TOPEMS 一键部署脚本
 # =============================================
 # 用法:
 #   ./scripts/deploy-prod.sh              # 部署后端（编译+上传+重启+健康检查）
@@ -21,10 +21,11 @@
 set -e
 
 # ── 配置 ──
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROD_HOST="xingzhai@192.168.110.115"
 PROD_BIN_DIR="/Users/xingzhai/topems/bin"
 PROD_REPO_DIR="/Users/xingzhai/TOPEMS"
-LOCAL_REPO="/Users/air/TOPEMS"
+LOCAL_REPO="$ROOT"
 # 绝对路径：不依赖执行时 CWD（2026-11-05 修复：相对路径 ./target/release 导致 --skip-build 误判缺失）
 LOCAL_BIN="$LOCAL_REPO/target/release/topems-server"
 BIN_OVERRIDE=""                                  # --bin 显式指定

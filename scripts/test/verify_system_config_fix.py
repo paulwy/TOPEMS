@@ -1,6 +1,9 @@
 from playwright.sync_api import sync_playwright
 import json
+import os
 import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 errors_found = []
 requests_log = []
@@ -52,7 +55,7 @@ def run_test(port: int = 3000):
         try:
             page.goto(f"{base_url}/admin/system-settings", wait_until="networkidle", timeout=60000)
             page.wait_for_timeout(8000)
-            page.screenshot(path="/Users/air/TOPEMS/scripts/tmp-output/test_system_settings.png", full_page=True)
+            page.screenshot(path=os.path.join(ROOT, 'scripts/tmp-output/test_system_settings.png'), full_page=True)
             title = page.title()
             print(f"  Page title: {title}")
         except Exception as e:
@@ -84,7 +87,7 @@ def run_test(port: int = 3000):
         try:
             page.goto(f"{base_url}/system/params", wait_until="networkidle", timeout=60000)
             page.wait_for_timeout(8000)
-            page.screenshot(path="/Users/air/TOPEMS/scripts/tmp-output/test_system_params.png", full_page=True)
+            page.screenshot(path=os.path.join(ROOT, 'scripts/tmp-output/test_system_params.png'), full_page=True)
             title = page.title()
             print(f"  Page title: {title}")
         except Exception as e:

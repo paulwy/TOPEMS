@@ -17,7 +17,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 : "${DSN:?必须显式设置 DSN（如 postgresql://<角色>@127.0.0.1:5432/topems）；不提供内置默认连接串}"
 MANIFEST="${MANIFEST:-$REPO_ROOT/scripts/db/shadow-tables-step2.tsv}"
-SNAPSHOT_ROOT="${SNAPSHOT_ROOT:-/Users/air/topems-db-snapshots/20261115-step2}"
+SNAPSHOT_ROOT="${SNAPSHOT_ROOT:-$REPO_ROOT/topems-db-snapshots/20261115-step2}"
 DRILL_DB="${DRILL_DB:-topems_rollback_drill}"
 
 BATCH=""
@@ -204,7 +204,7 @@ say "删除前形态: 索引=$PRE_IDX 策略=$PRE_POL"
 # （如 public.core_tenants）失败；克隆保证外键父表齐全，再在克隆里按同序删表后回灌。
 DRILL_RESULT="未执行"
 if $DRILL; then
-  DDSN="postgresql:///$DRILL_DB?host=/tmp&user=air"
+  DDSN="postgresql:///$DRILL_DB?host=/tmp&user=$(id -un)"
   CONNS="$(psql_at -c "select count(*) from pg_stat_activity where datname=current_database() and pid<>pg_backend_pid()")"
   [[ "$CONNS" == "0" ]] || die "rollback drill needs 0 connections on dev (now $CONNS); stop services and retry"
   dropdb -h /tmp --if-exists "$DRILL_DB" >/dev/null 2>&1 || true

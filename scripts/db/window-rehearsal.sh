@@ -26,11 +26,11 @@ DRILL_DB="topems_window_drill"
 VERIFY_DB="topems_window_verify"
 PG_SCHEME='postgres'
 URL_SEP='://'
-DRILL_DSN="${PG_SCHEME}${URL_SEP}air@localhost/${DRILL_DB}?host=%2Ftmp"
-VERIFY_DSN="${PG_SCHEME}${URL_SEP}air@localhost/${VERIFY_DB}?host=%2Ftmp"
+DRILL_DSN="${PG_SCHEME}${URL_SEP}$(id -un)@localhost/${DRILL_DB}?host=%2Ftmp"
+VERIFY_DSN="${PG_SCHEME}${URL_SEP}$(id -un)@localhost/${VERIFY_DB}?host=%2Ftmp"
 OUT="$ROOT/tmp/window-rehearsal-$TS"
 WALL_START=$SECONDS
-BACKUP_DIR="/Users/air/topems/backups"
+BACKUP_DIR="$ROOT/backups"
 PORT=18099
 KEEP="${KEEP_DRILL_DB:-0}"
 STUB_PID=""
@@ -162,8 +162,8 @@ WINDOW_AUTO=1 WINDOW_TARGET=local WINDOW_ALLOW_DIRTY=1 \
   WINDOW_SSH_BIN="$SIM/bin/ssh" \
   WINDOW_SCP_BIN="$SIM/bin/scp" \
   WINDOW_REMOTE_PGHOST=/tmp \
-  WINDOW_REMOTE_PGUSER=air \
-  WINDOW_REMOTE_DSN="postgres://air@localhost/${DRILL_DB}?host=%2Ftmp" \
+  WINDOW_REMOTE_PGUSER="$(id -un)" \
+  WINDOW_REMOTE_DSN="postgres://$(id -un)@localhost/${DRILL_DB}?host=%2Ftmp" \
   bash "$ROOT/scripts/db/window-execution.sh" all \
     --ssh-host rehearsal-local \
     --remote-db "$DRILL_DB" \

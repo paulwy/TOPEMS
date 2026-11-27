@@ -199,8 +199,8 @@ if [[ -n "$DSN" ]]; then
   ADMIN_PSQL=(psql "$ADMIN_DSN")
 else
   TARGET_HOST="${PGHOST:-/tmp}"
-  TARGET_PSQL=(psql -h "$TARGET_HOST" -U "${PGUSER:-air}" -d "$DB")
-  ADMIN_PSQL=(psql -h "$TARGET_HOST" -U "${PGUSER:-air}" -d postgres)
+  TARGET_PSQL=(psql -h "$TARGET_HOST" -U "${PGUSER:-$(id -un)}" -d "$DB")
+  ADMIN_PSQL=(psql -h "$TARGET_HOST" -U "${PGUSER:-$(id -un)}" -d postgres)
 fi
 DB_LC="$(printf '%s' "$DB" | tr '[:upper:]' '[:lower:]')"
 HOST_LC="$(printf '%s' "$TARGET_HOST" | tr '[:upper:]' '[:lower:]')"
@@ -748,7 +748,7 @@ else
   # 与系统通道；--prod 模式禁止该参数（apply-forward 互斥守卫）。
   FORWARD_ARGS+=(--drill-gate-guc-auto)
 fi
-PGHOST="${TARGET_HOST}" PGUSER="${PGUSER:-air}" bash "$ROOT/scripts/migration/apply-forward.sh" "${FORWARD_ARGS[@]}" \
+PGHOST="${TARGET_HOST}" PGUSER="${PGUSER:-$(id -un)}" bash "$ROOT/scripts/migration/apply-forward.sh" "${FORWARD_ARGS[@]}" \
   || die "前向迁移失败（禁止回退 sqlx migrate run）"
 
 ROWS_POST="$(probe "SELECT count(*) FROM public._sqlx_migrations WHERE success")" || die "前向后账本探测失败"

@@ -14,7 +14,7 @@
 #   scripts/db/schema-health.sh --strict       # 属主漂移 / 现库落后基线 / 真实待办迁移任一命中即 exit 1
 #   scripts/db/schema-health.sh --no-baseline  # 跳过基线差量
 #
-# 依赖：psql；基线比对需要能建临时库的本机超级用户（air，走 unix socket 免密）。
+# 依赖：psql；基线比对需要能建临时库的本机超级用户（当前 OS 用户，走 unix socket 免密）。
 # =============================================================================
 set -uo pipefail
 

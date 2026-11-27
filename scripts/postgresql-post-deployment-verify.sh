@@ -87,7 +87,7 @@ print_section() {
 exec_sql() {
     local sql="$1"
     local db="${2:-topems}"
-    psql -U air -t -A -c "$sql" -d "$db" 2>/dev/null || echo ""
+    psql -U "${PGUSER:-$(id -un)}" -t -A -c "$sql" -d "$db" 2>/dev/null || echo ""
 }
 
 # ==================== 验证函数 ====================

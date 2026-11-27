@@ -20,7 +20,7 @@
 #
 # 用法:
 #   bash scripts/migration/rebuild-verify-classified.sh
-#   PGHOST=/tmp PGUSER=air bash scripts/migration/rebuild-verify-classified.sh --db my_verify
+#   PGHOST=/tmp PGUSER="$(id -un)" bash scripts/migration/rebuild-verify-classified.sh --db my_verify
 #
 # 退出码: 0 = 0 失败；1 = 存在失败；2 = 环境/建库失败
 # 说明: 重建库默认保留供核对（p4_rebuild_verify），重复执行会先 DROP/CREATE。

@@ -10,7 +10,7 @@
 #   bash scripts/ops/post-window-probe-20261124.sh \
 #     --host /tmp --user xingzhai --db topems_prod
 #   bash scripts/ops/post-window-probe-20261124.sh \
-#     --host /tmp --user air --db topems_prodlite        # 本机演练库自测
+#     --host /tmp --user "$(id -un)" --db topems_prodlite   # 本机演练库自测
 #
 # 判据来源：docs/ops/prod-schema-window-plan-2026-11-24.md §5.5 / §6
 # ============================================================

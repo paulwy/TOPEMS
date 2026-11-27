@@ -37,7 +37,7 @@ shift || true
 
 DSN="${DICT_WINDOW_DSN:-${DATABASE_URL:-}}"
 OUT_DIR="${DICT_WINDOW_OUT_DIR:-}"
-BACKUP_DIR="${DICT_WINDOW_BACKUP_DIR:-/Users/air/topems/backups}"
+BACKUP_DIR="${DICT_WINDOW_BACKUP_DIR:-$ROOT/backups}"
 SEED_BIN="${DICT_WINDOW_SEED_BIN:-$ROOT/target/debug/examples/seed_dict_replay}"
 ANCHOR=""
 PROD_FLAG=""

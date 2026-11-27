@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { chromium } from '@playwright/test';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, '../..');
 
 const url = process.argv[2] || 'http://localhost:5173/wms/inbound-orders/inb-001';
 const outputPath =
   process.argv[3] ||
-  '/Users/air/TOPEMS/scripts/design-system-audit/reports/wms-inbound-detail-migrated.png';
+  path.join(ROOT, 'scripts/design-system-audit/reports/wms-inbound-detail-migrated.png');
 
 const tokenPayload = {
   sub: '1',

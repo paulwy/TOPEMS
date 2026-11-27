@@ -243,7 +243,7 @@ check_current_config() {
         local target_value
         target_value=$(echo "$config_item" | cut -d'|' -f2)
         local current_value
-        current_value=$(psql -U air -d topems -t -c "SHOW $param;" 2>/dev/null | tr -d '[:space:]' || echo "N/A")
+        current_value=$(psql -U "${PGUSER:-$(id -un)}" -d topems -t -c "SHOW $param;" 2>/dev/null | tr -d '[:space:]' || echo "N/A")
         local status="待修改"
 
         if [[ "$current_value" == "$target_value" ]]; then
@@ -265,9 +265,9 @@ check_connections() {
 
     # 总连接数
     local total_connections
-    total_connections=$(psql -U air -d topems -t -c "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    total_connections=$(psql -U "${PGUSER:-$(id -un)}" -d topems -t -c "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d '[:space:]' || echo "0")
     local max_connections
-    max_connections=$(psql -U air -d topems -t -c "SHOW max_connections;" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    max_connections=$(psql -U "${PGUSER:-$(id -un)}" -d topems -t -c "SHOW max_connections;" 2>/dev/null | tr -d '[:space:]' || echo "0")
     local connection_usage
     connection_usage=$(echo "scale=1; $total_connections * 100 / $max_connections" | bc 2>/dev/null || echo "0")
 
@@ -281,7 +281,7 @@ check_connections() {
 
     # 活跃连接数
     local active_connections
-    active_connections=$(psql -U air -d topems -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    active_connections=$(psql -U "${PGUSER:-$(id -un)}" -d topems -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null | tr -d '[:space:]' || echo "0")
     log_info "活跃连接数: $active_connections"
 
     if [[ "$active_connections" -gt 10 ]]; then
@@ -292,7 +292,7 @@ check_connections() {
 
     # 最长查询时间
     local longest_query
-    longest_query=$(psql -U air -d topems -t -c "
+    longest_query=$(psql -U "${PGUSER:-$(id -un)}" -d topems -t -c "
         SELECT COALESCE(max(EXTRACT(EPOCH FROM (now() - query_start))), 0)::int
         FROM pg_stat_activity
         WHERE state = 'active' AND pid != pg_backend_pid();

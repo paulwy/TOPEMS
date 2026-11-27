@@ -3,9 +3,9 @@
 # TOPEMS Traefik 网关初始化脚本
 #
 # 功能：
-#   1. 从 /Users/air/TOPEMS/config/services.yaml 读取服务列表（如存在）
+#   1. 从 <仓库根>/config/services.yaml 读取服务列表（如存在）
 #   2. 基于服务列表生成 Traefik 动态路由配置
-#   3. 输出到 /Users/air/TOPEMS/docker/traefik/dynamic.yml
+#   3. 输出到 <仓库根>/docker/traefik/dynamic.yml
 #
 # 用法：
 #   bash init-gateway.sh                # 默认输出到 dynamic.yml

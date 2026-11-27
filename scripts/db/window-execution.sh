@@ -47,7 +47,7 @@ shift || true
 
 DSN="${WINDOW_DSN:-${DATABASE_URL:-}}"
 OUT_DIR="${WINDOW_OUT_DIR:-$ROOT/tmp/window-$(date +%Y%m%d_%H%M%S)}"
-BACKUP_DIR="${WINDOW_BACKUP_DIR:-/Users/air/topems/backups}"
+BACKUP_DIR="${WINDOW_BACKUP_DIR:-$ROOT/backups}"
 RESTORE_DSN="${WINDOW_RESTORE_DSN:-}"
 APP_DSN="${WINDOW_APP_DSN:-}"
 APP_ROLE="${WINDOW_APP_ROLE:-}"

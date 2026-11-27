@@ -1,6 +1,6 @@
 #!/bin/bash
 # 属主收敛巡检：把本机对象属主统一到 topems_owner，并断言 0 漂移。
-# 用法：./scripts/db/owner-sweep.sh [库名=topems]（用本机超级用户 air 连接，需 psql 免密）
+# 用法：./scripts/db/owner-sweep.sh [库名=topems]（用本机当前 OS 用户超级用户连接，需 psql 免密）
 set -euo pipefail
 DB=${1:-topems}
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
