@@ -669,7 +669,12 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 label={field.label}
                 value={value ? dayjs(value as string) : null}
                 onChange={(newValue: dayjs.Dayjs | null) =>
-                  handleChange(field.name, newValue?.format(field.valueFormat === 'iso-datetime' ? 'YYYY-MM-DDTHH:mm:ssZ' : 'YYYY-MM-DD'))
+                  handleChange(
+                    field.name,
+                    newValue?.format(
+                      field.valueFormat === 'iso-datetime' ? 'YYYY-MM-DDTHH:mm:ssZ' : 'YYYY-MM-DD'
+                    )
+                  )
                 }
                 disabled={isDisabled}
                 slotProps={{
@@ -698,7 +703,12 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
                 label={field.label}
                 value={value ? dayjs(value as string) : null}
                 onChange={(newValue: dayjs.Dayjs | null) =>
-                  handleChange(field.name, newValue?.format(field.valueFormat === 'iso-datetime' ? 'YYYY-MM-DDTHH:mm:ssZ' : 'YYYY-MM-DD'))
+                  handleChange(
+                    field.name,
+                    newValue?.format(
+                      field.valueFormat === 'iso-datetime' ? 'YYYY-MM-DDTHH:mm:ssZ' : 'YYYY-MM-DD'
+                    )
+                  )
                 }
                 disabled={isDisabled}
                 slotProps={{

@@ -482,7 +482,7 @@ pub struct Permission {
         // ===== File module - download =====
         // ===== File module - manage =====
         // ===== File module - upload =====
-    
+
         crate::modules::flow::category::list_categories,
         crate::modules::flow::category::get_category,
         crate::modules::flow::category::create_category,

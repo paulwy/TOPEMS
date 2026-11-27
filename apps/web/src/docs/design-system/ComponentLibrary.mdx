@@ -2,7 +2,7 @@
 import { Meta } from '@storybook/addon-docs';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Chip, Divider } from '@mui/material';
 
-<Meta title="Design System/ComponentLibrary" />
+<Meta title='Design System/ComponentLibrary' />
 
 # 组件库
 
@@ -12,64 +12,98 @@ import React from 'react';
 
 {/* 组件分类卡片 */}
 const CategorySection = ({ title, icon, description, components }) => (
-  <Box sx={{ mb: 4 }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-      <Typography variant="h6">{icon} {title}</Typography>
-      <Chip label={`${components.length} 个组件`} size="small" variant="outlined" />
-    </Box>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{description}</Typography>
-    <TableContainer>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ fontWeight: 'bold' }}>组件</TableCell>
-            <TableCell>说明</TableCell>
-            <TableCell sx={{ width: 160 }}>Storybook</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {components.map(comp => (
-            <TableRow key={comp.name} hover>
-              <TableCell>
-                <Typography variant="body2" fontWeight="bold" sx={{ fontFamily: 'monospace' }}>
-                  {comp.name}
-                </Typography>
-              </TableCell>
-              <TableCell>
-                <Typography variant="body2" color="text.secondary">{comp.description}</Typography>
-                {comp.highlights && (
-                  <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
-                    {comp.highlights.map(h => (
-                      <Chip key={h} label={h} size="small" sx={{ fontSize: '0.625rem', height: 20 }} />
-                    ))}
-                  </Stack>
-                )}
-              </TableCell>
-              <TableCell>
-                <Chip
-                  label="查看 Story"
-                  size="small"
-                  clickable
-                  component="a"
-                  href={comp.storyLink}
-                  variant="outlined"
-                  color="primary"
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+
+<Box sx={{ mb: 4 }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+    <Typography variant='h6'>
+      {icon} {title}
+    </Typography>
+    <Chip
+      label={`${components.length} 个组件`}
+      size='small'
+      variant='outlined'
+    />
   </Box>
+  <Typography
+    variant='body2'
+    color='text.secondary'
+    sx={{ mb: 2 }}
+  >
+    {description}
+  </Typography>
+  <TableContainer>
+    <Table size='small'>
+      <TableHead>
+        <TableRow>
+          <TableCell sx={{ fontWeight: 'bold' }}>组件</TableCell>
+          <TableCell>说明</TableCell>
+          <TableCell sx={{ width: 160 }}>Storybook</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {components.map((comp) => (
+          <TableRow
+            key={comp.name}
+            hover
+          >
+            <TableCell>
+              <Typography
+                variant='body2'
+                fontWeight='bold'
+                sx={{ fontFamily: 'monospace' }}
+              >
+                {comp.name}
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                {comp.description}
+              </Typography>
+              {comp.highlights && (
+                <Stack
+                  direction='row'
+                  spacing={0.5}
+                  sx={{ mt: 0.5 }}
+                >
+                  {comp.highlights.map((h) => (
+                    <Chip
+                      key={h}
+                      label={h}
+                      size='small'
+                      sx={{ fontSize: '0.625rem', height: 20 }}
+                    />
+                  ))}
+                </Stack>
+              )}
+            </TableCell>
+            <TableCell>
+              <Chip
+                label='查看 Story'
+                size='small'
+                clickable
+                component='a'
+                href={comp.storyLink}
+                variant='outlined'
+                color='primary'
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+</Box>
 );
 
 ---
 
 <CategorySection
-  title="数据展示"
-  icon="📊"
-  description="用于展示结构化数据的核心组件"
+  title='数据展示'
+  icon='📊'
+  description='用于展示结构化数据的核心组件'
   components={[
     {
       name: 'DataTable',
@@ -79,7 +113,8 @@ const CategorySection = ({ title, icon, description, components }) => (
     },
     {
       name: 'StatusBadge',
-      description: '状态徽标组件，内置 9 种业务状态映射（员工、考勤、请假、薪资、绩效、客户、商机、项目、工作流），支持 3 种尺寸和 4 种变体',
+      description:
+        '状态徽标组件，内置 9 种业务状态映射（员工、考勤、请假、薪资、绩效、客户、商机、项目、工作流），支持 3 种尺寸和 4 种变体',
       highlights: ['9 种业务状态', '自动颜色', '多尺寸', '自定义映射'],
       storyLink: '/story/common-status-badge--page',
     },
@@ -101,9 +136,9 @@ const CategorySection = ({ title, icon, description, components }) => (
 <Divider sx={{ my: 3 }} />
 
 <CategorySection
-  title="数据录入"
-  icon="✏️"
-  description="表单输入与数据筛选组件"
+  title='数据录入'
+  icon='✏️'
+  description='表单输入与数据筛选组件'
   components={[
     {
       name: 'FormField',
@@ -145,13 +180,14 @@ const CategorySection = ({ title, icon, description, components }) => (
 <Divider sx={{ my: 3 }} />
 
 <CategorySection
-  title="操作与交互"
-  icon="🖱️"
-  description="按钮、命令面板、分页等交互组件"
+  title='操作与交互'
+  icon='🖱️'
+  description='按钮、命令面板、分页等交互组件'
   components={[
     {
       name: 'ActionButton',
-      description: '操作按钮组件，支持多种变体（contained、outlined、text）和尺寸（sm、md、lg），内置图标和加载状态',
+      description:
+        '操作按钮组件，支持多种变体（contained、outlined、text）和尺寸（sm、md、lg），内置图标和加载状态',
       highlights: ['多变体', '多尺寸', '图标', '加载态'],
       storyLink: '/story/common-action-button--page',
     },
@@ -179,9 +215,9 @@ const CategorySection = ({ title, icon, description, components }) => (
 <Divider sx={{ my: 3 }} />
 
 <CategorySection
-  title="反馈与状态"
-  icon="💬"
-  description="对话框、进度条、加载状态等反馈组件"
+  title='反馈与状态'
+  icon='💬'
+  description='对话框、进度条、加载状态等反馈组件'
   components={[
     {
       name: 'ConfirmDialog',
@@ -213,9 +249,9 @@ const CategorySection = ({ title, icon, description, components }) => (
 <Divider sx={{ my: 3 }} />
 
 <CategorySection
-  title="导航与辅助"
-  icon="🧭"
-  description="页面导航和辅助信息组件"
+  title='导航与辅助'
+  icon='🧭'
+  description='页面导航和辅助信息组件'
   components={[
     {
       name: 'PageContainer',
@@ -245,9 +281,14 @@ const CategorySection = ({ title, icon, description, components }) => (
 
 <Box sx={{ p: 3, borderRadius: 2, backgroundColor: 'grey.50', mb: 3 }}>
   <Stack spacing={1.5}>
-    <Typography variant="subtitle2" fontWeight="bold">标准 Props</Typography>
+    <Typography
+      variant='subtitle2'
+      fontWeight='bold'
+    >
+      标准 Props
+    </Typography>
     <TableContainer>
-      <Table size="small">
+      <Table size='small'>
         <TableBody>
           <TableRow>
             <TableCell sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>sx</TableCell>
@@ -295,7 +336,7 @@ import {
 
 // 使用 sx prop 自定义样式
 <StatusBadge
-  status="active"
+  status='active'
   sx={{ mt: 1 }}
-/>
+/>;
 ```

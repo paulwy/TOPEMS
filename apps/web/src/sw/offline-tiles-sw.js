@@ -11,13 +11,17 @@
  * 2. 预下载瓦片并导入到 IndexedDB
  */
 
-const CACHE_NAME = "gis-offline-tiles-v1";
-const TILE_DB_NAME = "gis_offline_db";
-const TILE_STORE = "tiles";
+const CACHE_NAME = 'gis-offline-tiles-v1';
+const TILE_DB_NAME = 'gis_offline_db';
+const TILE_STORE = 'tiles';
 
 const SW_DEBUG = false;
-const swLog = (...args) => { if (SW_DEBUG) console.log(...args); };
-const swError = (...args) => { if (SW_DEBUG) console.error(...args); };
+const swLog = (...args) => {
+  if (SW_DEBUG) console.log(...args);
+};
+const swError = (...args) => {
+  if (SW_DEBUG) console.error(...args);
+};
 
 // 瓦片URL模板
 const TILE_URL_PATTERNS = [
@@ -54,7 +58,7 @@ async function getTileFromIDB(url) {
       const key = `${source}:${z}:${x}:${y}`;
 
       try {
-        const tx = db.transaction(TILE_STORE, "readonly");
+        const tx = db.transaction(TILE_STORE, 'readonly');
         const store = tx.objectStore(TILE_STORE);
         const getRequest = store.get(key);
 
@@ -79,12 +83,10 @@ async function getTileFromIDB(url) {
  */
 function parseTileUrl(url) {
   // OSM 瓦片: https://tile.openstreetmap.org/10/847/507.png
-  const osmMatch = url.match(
-    /tile\.openstreetmap\.org\/(\d+)\/(\d+)\/(\d+)\.png/,
-  );
+  const osmMatch = url.match(/tile\.openstreetmap\.org\/(\d+)\/(\d+)\/(\d+)\.png/);
   if (osmMatch) {
     return {
-      source: "osm",
+      source: 'osm',
       z: parseInt(osmMatch[1], 10),
       x: parseInt(osmMatch[2], 10),
       y: parseInt(osmMatch[3], 10),
@@ -92,10 +94,12 @@ function parseTileUrl(url) {
   }
 
   // 高德瓦片: https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=847&y=507&z=10
-  const amapMatch = url.match(/webrd0\d*\.is\.autonavi\.com\/appmaptile.*?&z=(\d+)&x=(\d+)&y=(\d+)/);
+  const amapMatch = url.match(
+    /webrd0\d*\.is\.autonavi\.com\/appmaptile.*?&z=(\d+)&x=(\d+)&y=(\d+)/
+  );
   if (amapMatch) {
     return {
-      source: "amap",
+      source: 'amap',
       z: parseInt(amapMatch[1], 10),
       x: parseInt(amapMatch[2], 10),
       y: parseInt(amapMatch[3], 10),
@@ -103,10 +107,12 @@ function parseTileUrl(url) {
   }
 
   // 高德卫星图
-  const amapSatMatch = url.match(/webst0\d*\.is\.autonavi\.com\/appmaptile.*?style=(\d+)&x=(\d+)&y=(\d+)&z=(\d+)/);
+  const amapSatMatch = url.match(
+    /webst0\d*\.is\.autonavi\.com\/appmaptile.*?style=(\d+)&x=(\d+)&y=(\d+)&z=(\d+)/
+  );
   if (amapSatMatch) {
     return {
-      source: "amap_satellite",
+      source: 'amap_satellite',
       z: parseInt(amapSatMatch[4], 10),
       x: parseInt(amapSatMatch[2], 10),
       y: parseInt(amapSatMatch[3], 10),
@@ -119,29 +125,27 @@ function parseTileUrl(url) {
 /**
  * Service Worker 安装事件
  */
-self.addEventListener("install", (event) => {
-  swLog("[SW] Installing offline tile service worker");
+self.addEventListener('install', (event) => {
+  swLog('[SW] Installing offline tile service worker');
   self.skipWaiting();
 });
 
 /**
  * Service Worker 激活事件
  */
-self.addEventListener("activate", (event) => {
-  swLog("[SW] Activating offline tile service worker");
+self.addEventListener('activate', (event) => {
+  swLog('[SW] Activating offline tile service worker');
   event.waitUntil(clients.claim());
 });
 
 /**
  * 拦截请求
  */
-self.addEventListener("fetch", async (event) => {
+self.addEventListener('fetch', async (event) => {
   const url = new URL(event.request.url);
 
   // 只处理瓦片请求
-  const isTileRequest = TILE_URL_PATTERNS.some((pattern) =>
-    pattern.test(url.href),
-  );
+  const isTileRequest = TILE_URL_PATTERNS.some((pattern) => pattern.test(url.href));
 
   if (!isTileRequest) {
     return;
@@ -157,8 +161,8 @@ self.addEventListener("fetch", async (event) => {
           swLog(`[SW] Tile found in cache: ${url.pathname}`);
           return new Response(blob, {
             headers: {
-              "Content-Type": "image/png",
-              "Cache-Control": "public, max-age=31536000",
+              'Content-Type': 'image/png',
+              'Cache-Control': 'public, max-age=31536000',
             },
           });
         }
@@ -177,12 +181,12 @@ self.addEventListener("fetch", async (event) => {
         return response;
       } catch (error) {
         swError(`[SW] Error fetching tile: ${error}`);
-        return new Response("Tile not available", {
+        return new Response('Tile not available', {
           status: 503,
-          statusText: "Service Unavailable",
+          statusText: 'Service Unavailable',
         });
       }
-    })(),
+    })()
   );
 });
 
@@ -231,15 +235,15 @@ function openDB() {
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains(TILE_STORE)) {
-        db.createObjectStore(TILE_STORE, { keyPath: "key" });
+        db.createObjectStore(TILE_STORE, { keyPath: 'key' });
       }
     };
   });
 }
 
 // 消息处理：允许手动触发缓存
-self.addEventListener("message", async (event) => {
-  if (event.data.type === "CACHE_TILES") {
+self.addEventListener('message', async (event) => {
+  if (event.data.type === 'CACHE_TILES') {
     // 可以批量缓存瓦片
     const { tiles } = event.data;
     swLog(`[SW] Caching ${tiles.length} tiles`);

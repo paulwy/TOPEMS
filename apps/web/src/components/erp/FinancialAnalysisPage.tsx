@@ -607,8 +607,7 @@ const FinancialAnalysisPage: React.FC = () => {
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k13'),
-                value:
-                  (budget?.budget_amount || 0) - (budget?.actual_amount || 0),
+                value: (budget?.budget_amount || 0) - (budget?.actual_amount || 0),
                 color: theme.palette.warning[700],
               },
             ],
@@ -750,8 +749,7 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 metric: i18n.t('erp.financial_analysis_page.k13'),
                 amount:
-                  (budgetAnalysisData.budget_amount || 0) -
-                  (budgetAnalysisData.actual_amount || 0),
+                  (budgetAnalysisData.budget_amount || 0) - (budgetAnalysisData.actual_amount || 0),
               },
             ],
           },

@@ -35,6 +35,12 @@ vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }
 
 describe('ErpSalesOrderRedesignPage', () => {
   it('空数据下可安全渲染', () => {
-    expect(() => render(<MemoryRouter><ErpSalesOrderRedesignPage /></MemoryRouter>)).not.toThrow();
+    expect(() =>
+      render(
+        <MemoryRouter>
+          <ErpSalesOrderRedesignPage />
+        </MemoryRouter>
+      )
+    ).not.toThrow();
   });
 });
