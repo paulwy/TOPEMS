@@ -24,7 +24,6 @@ interface RsReportData {
     lab: number;
     pilot: number;
     scaleup: number;
-    successRate: number;
   };
   formulas: {
     total: number;
@@ -32,64 +31,89 @@ interface RsReportData {
     testing: number;
     draft: number;
   };
-  monthlyProgress: Array<{ month: string; projects: number; experiments: number }>;
+  monthlyProgress: Array<{ month: string; projects: number }>;
 }
-const defaultReportData: RsReportData = {
-  projects: {
-    total: 24,
-    active: 12,
-    completed: 8,
-    cancelled: 4,
-  },
-  experiments: {
-    total: 156,
-    lab: 80,
-    pilot: 50,
-    scaleup: 26,
-    successRate: 87.5,
-  },
-  formulas: {
-    total: 45,
-    published: 30,
-    testing: 10,
-    draft: 5,
-  },
-  monthlyProgress: [
-    { month: '2024-01', projects: 2, experiments: 15 },
-    { month: '2024-02', projects: 3, experiments: 20 },
-    { month: '2024-03', projects: 4, experiments: 25 },
-    { month: '2024-04', projects: 5, experiments: 30 },
-    { month: '2024-05', projects: 4, experiments: 28 },
-    { month: '2024-06', projects: 6, experiments: 38 },
-  ],
-};
-const RsReportPage: React.FC = () => {
+const emptyReportData: RsReportData = {
+  projects: { total: 0, active: 0, completed: 0, cancelled: 0 },
+  experiments: { total: 0, lab: 0, pilot: 0, scaleup: 0 },
+  formulas: { total: 0, published: 0, testing: 0, draft: 0 },
+  monthlyProgress: [],
+};const RsReportPage: React.FC = () => {
   const reportQuery = useQuery<RsReportData>({
     queryKey: QUERY_KEYS.AD_HOC.RD_REPORT_SUMMARY_BASE,
     queryFn: async () => {
-      const response = await apiClient.rd.get<Record<string, unknown>>('/reports/projects/summary');
-      // 后端契约：扁平 snake_case 项目汇总（total_projects/active_projects/...），
-      // 无 experiments/formulas 汇总端点 → 映射 projects 段，其余保持默认展示值。
-      // 结构不符时整体回退默认数据，避免 data.projects undefined 崩溃。
-      const d = response.success ? response.data : undefined;
-      if (d && typeof d.total_projects === 'number') {
-        return {
-          projects: {
-            total: d.total_projects,
-            active: d.active_projects ?? 0,
-            completed: d.completed_projects ?? 0,
-            cancelled: d.delayed_projects ?? 0,
-          },
-          experiments: defaultReportData.experiments,
-          formulas: defaultReportData.formulas,
-          monthlyProgress: defaultReportData.monthlyProgress,
-        } as RsReportData;
+      // 全部取真实端点（原实现把 156 个试验 / 87.5% 成功率 / 2024 年月度趋势当默认值，
+      // 空库时用户看到的就是这组编造数字）：
+      //   /reports/projects/summary  项目汇总
+      //   /reports/projects/trends   按周立项趋势
+      //   /experiments/phase/{lab|pilot|scaleup}  三阶段试验数
+      //   /formulas                  配方台账
+      const [
+        summaryRes,
+        trendsRes,
+        labRes,
+        pilotRes,
+        scaleupRes,
+        formulasRes,
+      ] = await Promise.all([
+        apiClient.rd.get<Record<string, unknown>>('/reports/projects/summary'),
+        apiClient.rd.get<Array<Record<string, unknown>>>('/reports/projects/trends'),
+        apiClient.rd.get<{ total: number }>('/experiments/phase/lab', {
+          params: { page: 1, page_size: 1 },
+        }),
+        apiClient.rd.get<{ total: number }>('/experiments/phase/pilot', {
+          params: { page: 1, page_size: 1 },
+        }),
+        apiClient.rd.get<{ total: number }>('/experiments/phase/scaleup', {
+          params: { page: 1, page_size: 1 },
+        }),
+        apiClient.rd.get<{ items?: Array<Record<string, unknown>>; total?: number }>('/formulas', {
+          params: { page: 1, page_size: 200 },
+        }),
+      ]);
+
+      const d = summaryRes.success ? (summaryRes.data ?? {}) : {};
+      const lab = Number((labRes.success ? labRes.data?.total : 0) ?? 0);
+      const pilot = Number((pilotRes.success ? pilotRes.data?.total : 0) ?? 0);
+      const scaleup = Number((scaleupRes.success ? scaleupRes.data?.total : 0) ?? 0);
+
+      const formulas = (formulasRes.success ? formulasRes.data?.items : undefined) ?? [];
+      let published = 0;
+      let testing = 0;
+      let draft = 0;
+      for (const item of formulas) {
+        const status = String(item.status ?? '').toLowerCase();
+        if (/publish|release|active|approve/.test(status)) published += 1;
+        else if (/test|review|trial/.test(status)) testing += 1;
+        else draft += 1;
       }
-      return defaultReportData;
+
+      const trends = (trendsRes.success ? trendsRes.data : undefined) ?? [];
+      return {
+        projects: {
+          total: Number(d.total_projects ?? 0),
+          active: Number(d.active_projects ?? 0),
+          completed: Number(d.completed_projects ?? 0),
+          cancelled: Number(d.delayed_projects ?? 0),
+        },
+        experiments: { total: lab + pilot + scaleup, lab, pilot, scaleup },
+        formulas: {
+          total: Number((formulasRes.success ? formulasRes.data?.total : 0) ?? formulas.length),
+          published,
+          testing,
+          draft,
+        },
+        monthlyProgress: trends
+          .map((row) => ({
+            month: String(row.period ?? '').slice(0, 7),
+            projects: Number(row.project_count ?? 0),
+          }))
+          .filter((row) => row.month),
+      } as RsReportData;
     },
     staleTime: 5 * 60 * 1000,
   });
-  const reportData = reportQuery.data ?? defaultReportData;
+  const reportData = reportQuery.data ?? emptyReportData;
   const loading = reportQuery.isLoading;
   useEffect(() => {
     if (reportQuery.isError) {
@@ -111,12 +135,8 @@ const RsReportPage: React.FC = () => {
       value: reportData.experiments.total,
       icon: <ScienceIcon size={24} />,
       color: 'warning' as const,
-      description: `${i18n.t('pages.rs_report_page.k3')}${reportData.experiments.successRate}%`,
-      trend: {
-        value: reportData.experiments.successRate,
-        direction: 'up' as const,
-        label: i18n.t('rd.rs_report_page.k2'),
-      },
+      // 原「成功率 87.5%」没有任何后端来源，属于编造指标，已删除。
+      description: `${reportData.experiments.lab} / ${reportData.experiments.pilot} / ${reportData.experiments.scaleup}`,
     },
     {
       id: 'formula-stats',
@@ -150,7 +170,6 @@ const RsReportPage: React.FC = () => {
       data: reportData.monthlyProgress.map((item) => ({
         name: item.month,
         value: item.projects,
-        experiments: item.experiments,
       })),
       colors: ['primary.main', 'success.main'],
     },
@@ -192,22 +211,14 @@ const RsReportPage: React.FC = () => {
       columns: [
         { id: 'month', label: i18n.t('rd.rs_report_page.k17') },
         { id: 'projects', label: i18n.t('rd.rs_report_page.k18') },
-        { id: 'experiments', label: i18n.t('rd.rs_report_page.k19') },
       ],
       data: reportData.monthlyProgress.map((item) => ({
         month: item.month,
         projects: item.projects,
-        experiments: item.experiments,
       })),
     },
   ];
-  const timeRangeOptions = [
-    { label: i18n.t('rd.rs_report_page.k20'), value: 'week' },
-    { label: i18n.t('rd.rs_report_page.k21'), value: 'month' },
-    { label: i18n.t('rd.rs_report_page.k22'), value: 'quarter' },
-    { label: i18n.t('rd.rs_report_page.k23'), value: 'year' },
-  ];
-  const [timeRange, setTimeRange] = useState('month');
+  // 时间范围控件已撤：/api/rd/report* 不接受任何周期参数，下拉框只是摆设。
   return (
     <PageContainer
       padding={false}
@@ -221,11 +232,8 @@ const RsReportPage: React.FC = () => {
         charts={charts}
         tables={tables}
         loading={loading}
-        timeRangeOptions={timeRangeOptions}
-        timeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
         onRefresh={() => reportQuery.refetch()}
-        showTimeRange={true}
+        showTimeRange={false}
         showRefresh={true}
         showExport={true}
         showSearch={false}

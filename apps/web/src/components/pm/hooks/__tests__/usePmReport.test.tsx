@@ -87,7 +87,6 @@ describe('UsePmReport', () => {
   it('should render and return initial state', () => {
     const { result } = renderHook(() => usePmReport());
     expect(result.current).toBeDefined();
-    expect(result.current.selectedPeriod).toBe('all');
     expect(result.current.stats).toEqual(DEFAULT_STATS);
     expect(result.current.benefits).toEqual([]);
     expect(result.current.loading).toBe(false);
@@ -126,27 +125,6 @@ describe('UsePmReport', () => {
   it('budgetUtilization should be 0 when total_budget is 0', () => {
     const { result } = renderHook(() => usePmReport());
     expect(result.current.budgetUtilization).toBe(0);
-  });
-
-  it('should return 5 time range options', () => {
-    const { result } = renderHook(() => usePmReport());
-    expect(Array.isArray(result.current.timeRangeOptions)).toBe(true);
-    expect(result.current.timeRangeOptions).toHaveLength(5);
-    expect(result.current.timeRangeOptions.map((o) => o.value)).toEqual([
-      'all',
-      'week',
-      'month',
-      'quarter',
-      'year',
-    ]);
-  });
-
-  it('setSelectedPeriod should update selected period', () => {
-    const { result } = renderHook(() => usePmReport());
-    act(() => {
-      result.current.setSelectedPeriod('month');
-    });
-    expect(result.current.selectedPeriod).toBe('month');
   });
 
   it('should return string type for title and export text', () => {

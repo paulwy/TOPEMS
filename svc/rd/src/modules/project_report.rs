@@ -106,9 +106,9 @@ pub async fn get_project_summary(
         r#"
         SELECT 
             COUNT(*) as total_projects,
-            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_projects,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_projects,
-            SUM(CASE WHEN status = 'delayed' OR (end_date < NOW() AND status != 'completed') THEN 1 ELSE 0 END) as delayed_projects,
+            COALESCE(SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END), 0) as active_projects,
+            COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) as completed_projects,
+            COALESCE(SUM(CASE WHEN status = 'delayed' OR (end_date < NOW() AND status != 'completed') THEN 1 ELSE 0 END), 0) as delayed_projects,
             COALESCE(SUM(budget), 0) as total_budget,
             COALESCE(SUM(actual_cost), 0) as total_actual_cost,
             COALESCE(AVG(progress)::FLOAT8, 0) as avg_progress
@@ -137,9 +137,9 @@ pub async fn get_project_summary(
 
             let summary = ProjectSummary {
                 total_projects: row.get("total_projects"),
-                active_projects: row.get("active_projects"),
-                completed_projects: row.get("completed_projects"),
-                delayed_projects: row.get("delayed_projects"),
+                active_projects: row.get::<Option<i64>, _>("active_projects").unwrap_or(0),
+                completed_projects: row.get::<Option<i64>, _>("completed_projects").unwrap_or(0),
+                delayed_projects: row.get::<Option<i64>, _>("delayed_projects").unwrap_or(0),
                 total_budget: row.get::<Option<f64>, _>("total_budget").unwrap_or(0.0),
                 total_actual_cost: row
                     .get::<Option<f64>, _>("total_actual_cost")
@@ -188,7 +188,7 @@ pub async fn get_project_trends(
         SELECT 
             DATE_TRUNC('week', created_at) as period,
             COUNT(*) as project_count,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count,
+            COALESCE(SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END), 0) as completed_count,
             COALESCE(AVG(progress)::FLOAT8, 0) as avg_progress,
             COALESCE(SUM(budget), 0) as total_budget,
             COALESCE(SUM(actual_cost), 0) as total_cost

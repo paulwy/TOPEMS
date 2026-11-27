@@ -73,9 +73,8 @@ const DEFAULT_STATS: PmStatistics = {
 const PmReportPage: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams<{ projectId?: string }>();
-  const [selectedPeriod, setSelectedPeriod] = useState('all');
   const statsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.PM.STATISTICS, selectedPeriod, params.projectId ?? ''],
+    queryKey: [...QUERY_KEYS.PM.STATISTICS, params.projectId ?? ''],
     queryFn: async () => {
       const response = await pmApi.getStatistics();
       if (response.success && response.data) {
@@ -89,7 +88,6 @@ const PmReportPage: React.FC = () => {
   const benefitsQuery = useQuery({
     queryKey: [
       ...(params.projectId ? QUERY_KEYS.PM.BENEFITS(params.projectId) : QUERY_KEYS.PM.REPORTS),
-      selectedPeriod,
     ],
     queryFn: async () => {
       if (!params.projectId) return [] as ProjectBenefit[];
@@ -612,15 +610,6 @@ const PmReportPage: React.FC = () => {
         }
         statCards={statCards}
         loading={loading}
-        timeRangeOptions={[
-          { label: i18n.t('pm.pm_report_page.k39'), value: 'all' },
-          { label: i18n.t('pm.pm_report_page.k40'), value: 'week' },
-          { label: i18n.t('pm.pm_report_page.k41'), value: 'month' },
-          { label: i18n.t('pm.pm_report_page.k42'), value: 'quarter' },
-          { label: i18n.t('pm.pm_report_page.k43'), value: 'year' },
-        ]}
-        timeRange={selectedPeriod}
-        onTimeRangeChange={setSelectedPeriod}
         onRefresh={loadReportData}
         onExport={handleExport}
         exportText={i18n.t('pm.pm_report_page.k44')}

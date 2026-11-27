@@ -159,12 +159,7 @@ const PerformanceMonitorPage: React.FC = () => {
       data: apiHistory.slice(-20).reverse() as unknown as Record<string, unknown>[],
     },
   ];
-  const timeRangeOptions = [
-    { label: i18n.t('admin.performance_monitor_page.time_range_1h'), value: '1h' },
-    { label: i18n.t('admin.performance_monitor_page.time_range_6h'), value: '6h' },
-    { label: i18n.t('admin.performance_monitor_page.time_range_24h'), value: '24h' },
-  ];
-  const [timeRange, setTimeRange] = useState('1h');
+  // 时间范围控件已撤：本页指标来自前端内存采集，后端无按周期查询的接口。
   return (
     <PageContainer
       title={i18n.t('admin.performance_monitor_page.title')}
@@ -383,11 +378,8 @@ const PerformanceMonitorPage: React.FC = () => {
         charts={charts}
         tables={tables}
         loading={false}
-        timeRangeOptions={timeRangeOptions}
-        timeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
         onRefresh={() => _setTrigger((prev) => prev + 1)}
-        showTimeRange={true}
+        showTimeRange={false}
         showRefresh={true}
         showExport={false}
         showSearch={false}

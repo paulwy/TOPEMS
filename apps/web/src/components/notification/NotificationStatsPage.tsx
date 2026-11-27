@@ -19,7 +19,6 @@ interface ServiceStatus {
 const NotificationStatsPage: React.FC = () => {
   const theme = useTheme();
   const queryClient = useQueryClient();
-  const [timeRange, setTimeRange] = useState('week');
   const { data: stats, isPending: statsLoading } = useQuery<NotificationStats>({
     queryKey: QUERY_KEYS.NOTIFICATION.STATS,
     queryFn: async () => {
@@ -202,13 +201,7 @@ const NotificationStatsPage: React.FC = () => {
         },
       ]
     : [];
-  const timeRangeOptions = [
-    { label: i18n.t('notification.notification_stats_page.k22'), value: 'today' },
-    { label: i18n.t('notification.notification_stats_page.k23'), value: 'week' },
-    { label: i18n.t('notification.notification_stats_page.k24'), value: 'month' },
-    { label: i18n.t('notification.notification_stats_page.k25'), value: 'quarter' },
-    { label: i18n.t('notification.notification_stats_page.k26'), value: 'year' },
-  ];
+  // 时间范围控件已撤：/api/notification/stats 只返回累计统计，无周期入参。
   return (
     <PageContainer padding={false}>
       <StatsPageTemplate
@@ -218,11 +211,8 @@ const NotificationStatsPage: React.FC = () => {
         charts={charts}
         tables={tables}
         loading={loading}
-        timeRangeOptions={timeRangeOptions}
-        timeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
         onRefresh={loadData}
-        showTimeRange={true}
+        showTimeRange={false}
         showRefresh={true}
         showExport={true}
         showSearch={false}

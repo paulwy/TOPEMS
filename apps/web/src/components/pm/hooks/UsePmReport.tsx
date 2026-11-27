@@ -55,13 +55,7 @@ export interface TrendDatum {
   cpi: number;
   spi: number;
 }
-export interface TimeRangeOption {
-  label: string;
-  value: string;
-}
 interface UsePmReportReturn {
-  selectedPeriod: string;
-  setSelectedPeriod: (period: string) => void;
   stats: PmStatistics;
   benefits: ProjectBenefit[];
   loading: boolean;
@@ -73,7 +67,6 @@ interface UsePmReportReturn {
   riskData: ChartDatum[];
   trendData: TrendDatum[];
   budgetUtilization: number;
-  timeRangeOptions: TimeRangeOption[];
   pageTitle: string;
   pageSubtitle: string;
   exportText: string;
@@ -90,9 +83,8 @@ interface UsePmReportReturn {
 export const usePmReport = (): UsePmReportReturn => {
   const navigate = useNavigate();
   const params = useParams<{ projectId?: string }>();
-  const [selectedPeriod, setSelectedPeriod] = useState('all');
   const statsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.PM.STATISTICS, selectedPeriod, params.projectId ?? ''],
+    queryKey: [...QUERY_KEYS.PM.STATISTICS, params.projectId ?? ''],
     queryFn: async () => {
       const response = await pmApi.getStatistics();
       if (response.success && response.data) {
@@ -106,7 +98,6 @@ export const usePmReport = (): UsePmReportReturn => {
   const benefitsQuery = useQuery({
     queryKey: [
       ...(params.projectId ? QUERY_KEYS.PM.BENEFITS(params.projectId) : QUERY_KEYS.PM.REPORTS),
-      selectedPeriod,
     ],
     queryFn: async () => {
       if (!params.projectId) return [] as ProjectBenefit[];
@@ -125,7 +116,7 @@ export const usePmReport = (): UsePmReportReturn => {
   const error =
     statsQuery.isError || benefitsQuery.isError ? i18n.t('pm.pm_report_page.load_failed') : '';
   const projectStatsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.PM.STATISTICS_PROJECTS, selectedPeriod],
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_PROJECTS],
     queryFn: async () => {
       const response = await pmStatisticsApi.getProjectStatistics();
       if (response.success && response.data) {
@@ -138,7 +129,7 @@ export const usePmReport = (): UsePmReportReturn => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const contractStatsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.PM.STATISTICS_CONTRACTS, selectedPeriod],
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_CONTRACTS],
     queryFn: async () => {
       const response = await pmStatisticsApi.getContractStatistics();
       if (response.success && response.data) {
@@ -151,7 +142,7 @@ export const usePmReport = (): UsePmReportReturn => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const budgetStatsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.PM.STATISTICS_BUDGET, selectedPeriod],
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_BUDGET],
     queryFn: async () => {
       const response = await pmStatisticsApi.getBudgetStatistics();
       if (response.success && response.data) {
@@ -164,7 +155,7 @@ export const usePmReport = (): UsePmReportReturn => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const riskStatsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.PM.STATISTICS_RISKS, selectedPeriod],
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_RISKS],
     queryFn: async () => {
       const response = await pmStatisticsApi.getRiskStatistics();
       if (response.success && response.data) {
@@ -177,7 +168,7 @@ export const usePmReport = (): UsePmReportReturn => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const taskStatsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.PM.STATISTICS_TASKS, selectedPeriod],
+    queryKey: [...QUERY_KEYS.PM.STATISTICS_TASKS],
     queryFn: async () => {
       const response = await pmStatisticsApi.getTaskStatistics();
       if (response.success && response.data) {
@@ -358,24 +349,14 @@ export const usePmReport = (): UsePmReportReturn => {
     () => (stats.total_budget > 0 ? (stats.spent_budget / stats.total_budget) * 100 : 0),
     [stats]
   );
-  const timeRangeOptions: TimeRangeOption[] = useMemo(
-    () => [
-      { label: i18n.t('pm.pm_report_page.label_98c99f'), value: 'all' },
-      { label: i18n.t('pm.pm_report_page.label_725205'), value: 'week' },
-      { label: i18n.t('pm.pm_report_page.label_0ec94a'), value: 'month' },
-      { label: i18n.t('pm.pm_report_page.label_0477ce'), value: 'quarter' },
-      { label: i18n.t('pm.pm_report_page.label_04ab9d'), value: 'year' },
-    ],
-    []
-  );
+  // 周期下拉已撤：/api/pm/statistics 与各维度统计端点都不接受 start_date/end_date
+  // （后端 handler 形参是 `Query(_params)`），下拉只改 queryKey 不改数据。
   const pageTitle = i18n.t('pm.pm_report_page.attr_d5179b');
   const pageSubtitle = params.projectId
     ? i18n.t('pm.pm_report_page.detail_subtitle')
     : i18n.t('pm.pm_report_page.project_data_analysis');
   const exportText = i18n.t('pm.pm_report_page.attr_4fcf74');
   return {
-    selectedPeriod,
-    setSelectedPeriod,
     stats,
     benefits,
     loading,
@@ -387,7 +368,6 @@ export const usePmReport = (): UsePmReportReturn => {
     riskData,
     trendData,
     budgetUtilization,
-    timeRangeOptions,
     pageTitle,
     pageSubtitle,
     exportText,
