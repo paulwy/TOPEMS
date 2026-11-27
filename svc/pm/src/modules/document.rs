@@ -138,6 +138,16 @@ async fn get_document(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/documents",
+    tag = "document",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_document(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -191,6 +201,16 @@ async fn create_document(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/documents/{id}",
+    tag = "document",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_document(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -240,6 +260,16 @@ async fn update_document(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/documents/{id}",
+    tag = "document",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_document(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -321,6 +351,16 @@ async fn get_document_versions(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/documents/{id}/versions",
+    tag = "document",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_document_version(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -492,6 +532,16 @@ async fn get_folder(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/folders",
+    tag = "document",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_folder(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -540,6 +590,16 @@ async fn create_folder(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/folders/{id}",
+    tag = "document",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_folder(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -583,6 +643,16 @@ async fn update_folder(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/folders/{id}",
+    tag = "document",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_folder(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

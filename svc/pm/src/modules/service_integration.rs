@@ -34,6 +34,16 @@ async fn list_integrations(State(_db): State<Db>) -> ApiResponse<Vec<()>> {
     ApiResponse::success(vec![], "获取服务集成列表成功")
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/service-integrations",
+    tag = "service_integration",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_integration(State(_db): State<Db>) -> ApiResponse<()> {
     ApiResponse::success((), "创建服务集成成功")
 }
@@ -55,6 +65,16 @@ async fn get_integration(State(_db): State<Db>, Path(_id): Path<Uuid>) -> ApiRes
     ApiResponse::success((), "获取服务集成成功")
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/service-integrations/{id}",
+    tag = "service_integration",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_integration(State(_db): State<Db>, Path(_id): Path<Uuid>) -> ApiResponse<()> {
     ApiResponse::success((), "更新服务集成成功")
 }

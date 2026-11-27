@@ -190,6 +190,16 @@ async fn get_quality_check(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/quality-checks",
+    tag = "quality",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_quality_check(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -245,6 +255,16 @@ async fn create_quality_check(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/quality-checks/{id}",
+    tag = "quality",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_quality_check(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -400,6 +420,16 @@ async fn get_defect(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/defects",
+    tag = "quality",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_defect(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -454,6 +484,16 @@ async fn create_defect(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/defects/{id}",
+    tag = "quality",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_defect(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -525,6 +565,16 @@ async fn update_defect(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/defects/{id}",
+    tag = "quality",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_defect(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

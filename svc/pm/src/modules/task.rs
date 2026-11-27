@@ -244,6 +244,16 @@ pub async fn list_tasks_by_project(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/tasks",
+    tag = "task",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_task(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -369,6 +379,16 @@ pub async fn get_task(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/tasks/{id}",
+    tag = "task",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn update_task(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -467,6 +487,16 @@ pub async fn update_task(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/tasks/{id}",
+    tag = "task",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn delete_task(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -168,6 +168,16 @@ async fn get_settlement(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/settlements",
+    tag = "settlement",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_settlement(
     State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
@@ -257,6 +267,16 @@ async fn create_settlement(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/settlements/{id}",
+    tag = "settlement",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
@@ -579,6 +599,16 @@ async fn get_settlement_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/settlements/{settlement_id}/items",
+    tag = "settlement",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_settlement_item(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
@@ -717,6 +747,16 @@ async fn update_settlement_item(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/settlement-items/{id}",
+    tag = "settlement",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_settlement_item(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
@@ -814,6 +854,16 @@ async fn get_settlement_adjustments(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/settlements/{settlement_id}/adjustments",
+    tag = "settlement",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_settlement_adjustment(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,

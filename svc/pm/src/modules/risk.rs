@@ -191,6 +191,16 @@ async fn get_risk(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/risks",
+    tag = "risk",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_risk(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -284,6 +294,16 @@ async fn create_risk(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/risks/{id}",
+    tag = "risk",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_risk(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -458,6 +478,16 @@ async fn get_risk_events(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/risks/{id}/events",
+    tag = "risk",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_risk_event(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -139,6 +139,16 @@ async fn get_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/reports",
+    tag = "report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_report(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -464,6 +474,16 @@ async fn get_template(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/report-templates",
+    tag = "report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_template(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -511,6 +531,16 @@ async fn create_template(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/report-templates/{id}",
+    tag = "report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_template(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -554,6 +584,16 @@ async fn update_template(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/report-templates/{id}",
+    tag = "report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_template(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

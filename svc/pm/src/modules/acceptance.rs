@@ -144,6 +144,16 @@ async fn get_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/acceptance-plans",
+    tag = "acceptance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_plan(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -233,6 +243,16 @@ async fn create_plan(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/acceptance-plans/{id}",
+    tag = "acceptance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_plan(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -409,6 +429,16 @@ async fn get_plan_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/acceptance-plans/{plan_id}/items",
+    tag = "acceptance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_plan_item(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -515,6 +545,16 @@ async fn update_plan_item(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/acceptance-items/{id}",
+    tag = "acceptance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_plan_item(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -733,6 +773,16 @@ async fn create_record(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/acceptance-records/{id}",
+    tag = "acceptance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_record(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

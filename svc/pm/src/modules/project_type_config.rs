@@ -150,6 +150,16 @@ async fn list_types(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/project-types",
+    tag = "project_type_config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_type(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -264,6 +274,16 @@ async fn get_type(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/project-types/{id}",
+    tag = "project_type_config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_type(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -321,6 +341,16 @@ async fn update_type(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/project-types/{id}",
+    tag = "project_type_config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_type(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -80,6 +80,16 @@ async fn get_project_notifications(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/notifications",
+    tag = "notification",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_notification(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -177,6 +187,16 @@ async fn get_project_settings(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/notification-settings",
+    tag = "notification",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_setting(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

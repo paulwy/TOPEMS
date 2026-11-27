@@ -898,3 +898,20 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 ### 第 34 轮收尾 · 全量冒烟暴露的真缺陷：`GET /api/wms/locations` 500
 
 `wms.locations.capacity` 是 `numeric(15,2)`，本机 `location.rs` 的 SELECT/RETURNING 直接取 `capacity`、按 `Option<f64>` 解码 → 列表接口 500（`error occurred while decoding column "capacity": mismatched types; Rust type Option<f64> (FLOAT8) is not compatible with SQL type NUMERIC`）。查证 **main 早已修**：`30880a671`（第八批新建入口可用性）已把 6 处 SELECT/RETURNING 改成 `capacity::float8 AS capacity`，本机工作区该文件落后才复现（与第 33 轮 scm `quantity` 完全同型）。已把 `origin/main` 版本取回本地、重编译后冒烟复测 FAIL=0，本轮**不重复提交**该修复。同类隐患（NUMERIC 列按 f64 解码）已连续三轮各命中一次，建议后续对 `numeric` 列做一次全仓解码审计。
+
+## 第 35 轮 · pm（50 → 0）
+
+**基线**：pm 153 调用 / 103 匹配 / 50 缺口；前缀 `/api/pm`（`svc/pm/src/main.rs` 的 `api_prefix`），路由真源是各模块 `create_routes()`，由 `modules/mod.rs` 逐个 `merge`。
+
+**做法**
+1. 按 `(method, path)` 把 spec 里没有的路由全量枚举（共 58 条）→ 反查同文件 handler 插最小注解，`register_annotated_handlers.py --crate-prefix crate::modules` 登记 50 条。
+2. 8 条被"邻近注解"误判跳过、实际无注解的（`create_budget_item`、contract/report 两个同名 `get_template`、`create_document_version`、`create_folder`、`create_risk_event`、`create_integration/update_integration`），按精确位置单独补。
+3. **删 2 条死路由登记**：`pm_plugin.rs` 定义了 `/api/plugins/info|health`，但 `create_routes()` 没被 `mod.rs` merge，真实路径 `/api/pm/api/plugins/*` 实测 404；把 `openapi.rs` 里这两条登记去掉（根路径 `/api/plugins/*` 属 plugin-registry 服务，main 的 spec 里另有）。
+
+**坑（脚本侧，四个）**
+- `register_annotated_handlers.py` 的 `--crate-prefix` 必须是 `crate::modules`；传 `crate` 会生成 `crate::task::update_task` 这种不存在的路径（本次踩了一次，回滚 openapi.rs 重跑）。
+- 脚本插在 `paths(...)` 末行后可能漏逗号（`plugin_health_check` 后直接换行）→ `expected ','`。
+- 已登记项会被重复插入（`pm_plugin::plugin_health_check` 出现两次）→ `E0428/E0119`，需手工去重。
+- 只看"往前 1500 字符内是否有 `utoipa::path`"会把上一个函数的注解误算成本函数的（8 条被跳过），确认方式仍是"自上一个顶格 `\n}\n` 起这段是否含 `utoipa::path`"。
+
+**结果**：pm **153/153/0**；`--probe` 下 pm 的 SPEC_GAP / REAL_MISSING / NEEDS_PARAM 全为 0；spec 3590 → **3592**。

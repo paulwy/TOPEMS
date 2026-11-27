@@ -268,6 +268,16 @@ async fn get_budget(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/budgets",
+    tag = "budget",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_budget(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -351,6 +361,16 @@ async fn create_budget(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/budgets/{id}",
+    tag = "budget",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_budget(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -689,6 +709,16 @@ async fn get_budget_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/budgets/{id}/items",
+    tag = "budget",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_budget_item(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -814,6 +844,16 @@ async fn update_budget_item(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/budgets/{id}/items/{item_id}",
+    tag = "budget",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_budget_item(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -188,6 +188,16 @@ async fn get_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/contracts",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_contract(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -281,6 +291,16 @@ async fn create_contract(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/contracts/{id}",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_contract(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -400,6 +420,16 @@ async fn update_contract(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/contracts/{id}",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_contract(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -817,6 +847,16 @@ async fn list_contract_milestones(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/contracts/{id}/milestones",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_contract_milestone(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -934,6 +974,16 @@ async fn update_contract_milestone(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/contracts/{id}/milestones/{milestone_id}",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_contract_milestone(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1016,6 +1066,16 @@ async fn list_payment_schedule(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/contracts/{id}/payments",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_payment_schedule(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1130,6 +1190,16 @@ async fn update_payment_schedule(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/contracts/{id}/payments/{payment_id}",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_payment_schedule(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1164,6 +1234,16 @@ async fn delete_payment_schedule(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pm/contract-templates",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn list_templates(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1195,6 +1275,16 @@ async fn list_templates(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/pm/contract-templates/{id}",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn get_template(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1228,6 +1318,16 @@ async fn get_template(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/contract-templates",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_template(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1275,6 +1375,16 @@ async fn create_template(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/pm/contract-templates/{id}",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn update_template(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1322,6 +1432,16 @@ async fn update_template(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/pm/contract-templates/{id}",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn delete_template(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1403,6 +1523,16 @@ async fn get_project_contracts(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/pm/projects/{project_id}/contracts",
+    tag = "contract",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_project_contract(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
