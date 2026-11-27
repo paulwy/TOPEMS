@@ -436,10 +436,11 @@ export const createCustomTheme = (): Theme => {
             elevation: 0,
           },
           styleOverrides: {
-            root: {
+            // 边框必须跟随当前色彩方案的 divider：静态 #e2e8f0 在暗色下是近白线圈
+            root: ({ theme }) => ({
               borderRadius: semanticTokens.radius.card,
               boxShadow: semanticTokens.elevation.card,
-              border: semanticTokens.border.card,
+              border: `1px solid ${theme.palette.divider}`,
               transition: `transform ${designTokens.motion.transition.base}, box-shadow ${designTokens.motion.transition.base}, border-color ${designTokens.motion.transition.base}`,
               '&:hover': {
                 transform: 'translateY(-2px)',
@@ -448,7 +449,7 @@ export const createCustomTheme = (): Theme => {
               '&:active': {
                 transform: 'translateY(0) scale(0.99)',
               },
-            },
+            }),
           },
         },
         MuiPaper: {
@@ -524,10 +525,10 @@ export const createCustomTheme = (): Theme => {
         },
         MuiTableCell: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               padding: `${designTokens.spacing.md} 16px`,
-              borderBottom: semanticTokens.border.default,
-            },
+              borderBottom: `1px solid ${theme.palette.divider}`,
+            }),
             head: ({ theme }) => ({
               fontWeight: designTokens.typography.fontWeight.semibold,
               backgroundColor: designTokens.colors.grey[50],
@@ -936,17 +937,17 @@ export const createCustomTheme = (): Theme => {
         },
         MuiAccordion: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               borderRadius: designTokens.borderRadius.md,
               boxShadow: 'none',
-              border: semanticTokens.border.card,
+              border: `1px solid ${theme.palette.divider}`,
               '&:before': {
                 display: 'none',
               },
               '&.Mui-expanded': {
                 margin: 0,
               },
-            },
+            }),
           },
         },
         MuiAccordionSummary: {
@@ -967,10 +968,10 @@ export const createCustomTheme = (): Theme => {
         },
         MuiAccordionDetails: {
           styleOverrides: {
-            root: {
+            root: ({ theme }) => ({
               padding: `${designTokens.spacing.md} 20px 20px`,
-              borderTop: semanticTokens.border.default,
-            },
+              borderTop: `1px solid ${theme.palette.divider}`,
+            }),
           },
         },
         MuiLink: {
