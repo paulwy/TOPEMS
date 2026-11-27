@@ -51,4 +51,12 @@ describe('MobileAttendancePage 文案口径', () => {
       expect(en[`pages.mobile_attendance_page.${key}`]).toBeTruthy();
     }
   });
+
+  it('打卡按钮文字不再与渐变卡同色（对比度可读）', () => {
+    // 旧写法：主色字（? 'primary.main' : 'text.secondary'）+ 主色 12% 底
+    expect(src).not.toContain("? 'primary.main' : 'text.secondary'");
+    expect(src).not.toContain('alpha(theme.palette.primary.main, 0.12)');
+    expect(src).toContain('alpha(theme.palette.common.white, 0.18)');
+    expect(src).toContain("color: canPunch ? 'common.white' : 'text.secondary'");
+  });
 });

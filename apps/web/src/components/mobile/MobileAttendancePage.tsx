@@ -422,6 +422,9 @@ const MobileAttendancePage: React.FC = () => {
     },
   ];
   const todayStatus = attendanceStats?.today_status;
+  // 打卡按钮是否可点：可点时文字用白色压在渐变色块上（原先用主色字 + 主色半透明底，
+  // 与卡片渐变同色系，实测对比度接近 1:1，线上看起来像「幽灵文字」）。
+  const canPunch = todayStatus === 'not_checked_in' || todayStatus === 'checked_in';
   return (
     <MobilePageTemplate
       title={i18n.t('mobile.mobile_attendance_page.k40')}
@@ -517,10 +520,7 @@ const MobileAttendancePage: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      bgcolor:
-                        todayStatus === 'not_checked_in' || todayStatus === 'checked_in'
-                          ? alpha(theme.palette.primary.main, 0.12)
-                          : 'action.disabledBackground',
+                      bgcolor: canPunch ? alpha(theme.palette.common.white, 0.18) : 'action.disabledBackground',
                       cursor: checkingIn ? 'not-allowed' : 'pointer',
                       transition: 'transform 0.2s',
                       '&:active': {
@@ -538,10 +538,7 @@ const MobileAttendancePage: React.FC = () => {
                     <Box
                       sx={{
                         textAlign: 'center',
-                        color:
-                          todayStatus === 'not_checked_in' || todayStatus === 'checked_in'
-                            ? 'primary.main'
-                            : 'text.secondary',
+                        color: canPunch ? 'common.white' : 'text.secondary',
                       }}
                     >
                       <CalendarCheck
