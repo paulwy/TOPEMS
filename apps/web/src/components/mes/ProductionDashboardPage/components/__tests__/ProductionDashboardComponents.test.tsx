@@ -15,12 +15,12 @@ const i18nMap = vi.hoisted(
       'pages.alarm_list.k0': '实时报警',
       'pages.alarm_list.k1': '当前无报警，运行平稳',
       'pages.alarm_list.k2': '最近 {{count}} 条',
-      'pages.equipment_status_panel.k0': '设备运行状态',
-      'pages.equipment_status_panel.k1': '合计',
-      'pages.equipment_status_panel.k2': '台',
-      'pages.equipment_status_panel.k3': '运行 ',
-      'pages.equipment_status_panel.k4': '维护 ',
-      'pages.equipment_status_panel.k5': '故障 ',
+      'pages.equipment_status_panel.k0': '运行 ',
+      'pages.equipment_status_panel.k1': '维护 ',
+      'pages.equipment_status_panel.k2': '故障 ',
+      'pages.equipment_status_panel.k3': '设备运行状态',
+      'pages.equipment_status_panel.k4': '合计',
+      'pages.equipment_status_panel.k5': '台',
       'pages.work_station_utilization_card.k0': '工站利用率',
       'pages.work_station_utilization_card.k1': '暂无工站数据',
       'pages.work_station_utilization_card.k2': '活跃工单',
@@ -71,25 +71,9 @@ vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
-let tCallCounter: Record<string, number> = {};
-
 vi.mock('@/i18n', () => ({
   default: {
     t: (key: string, options?: Record<string, unknown>) => {
-      if (key === 'pages.equipment_status_panel.k0') {
-        tCallCounter[key] = (tCallCounter[key] ?? 0) + 1;
-        if (tCallCounter[key] === 1) return i18nMap['pages.equipment_status_panel.k0'] ?? key;
-        if (tCallCounter[key] === 2) return '合计';
-        return '运行 ';
-      }
-      if (key === 'pages.equipment_status_panel.k1') {
-        tCallCounter[key] = (tCallCounter[key] ?? 0) + 1;
-        if (tCallCounter[key] === 1) return '台';
-        return '维护 ';
-      }
-      if (key === 'pages.equipment_status_panel.k2') {
-        return '故障 ';
-      }
       if (options && typeof options === 'object') {
         let result = i18nMap[key] ?? key;
         for (const [k, v] of Object.entries(options)) {
@@ -101,10 +85,6 @@ vi.mock('@/i18n', () => ({
     },
   },
 }));
-
-beforeEach(() => {
-  tCallCounter = {};
-});
 
 vi.mock('@/components/charts', () => ({
   PieChart: ({ data }: { data: Array<{ name: string; value: number }> }) => (

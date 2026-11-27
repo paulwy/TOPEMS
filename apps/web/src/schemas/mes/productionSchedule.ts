@@ -1,6 +1,10 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
-import { loadMesOrderOptions, loadMesProcessOptions, loadMesWorkstationOptions } from '@/schemas/dynamicLoaders';
+import {
+  loadMesOrderOptions,
+  loadMesProcessOptions,
+  loadMesWorkstationOptions,
+} from '@/schemas/dynamicLoaders';
 
 export const productionScheduleSchema: EntitySchema = {
   entity: 'mes_production_schedule',
@@ -17,7 +21,11 @@ export const productionScheduleSchema: EntitySchema = {
   // 排程必须挂到真实生产订单上
   dynamicOptions: [
     { field: 'order_id', queryKey: ['mes', 'orders', 'forSchedule'], loader: loadMesOrderOptions },
-    { field: 'process_id', queryKey: ['mes', 'processes', 'forSchedule'], loader: loadMesProcessOptions },
+    {
+      field: 'process_id',
+      queryKey: ['mes', 'processes', 'forSchedule'],
+      loader: loadMesProcessOptions,
+    },
     {
       field: 'work_station_id',
       queryKey: ['mes', 'workstations', 'forSchedule'],

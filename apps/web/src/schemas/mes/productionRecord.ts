@@ -3,7 +3,11 @@ import { Chip, Stack, Box } from '@mui/material';
 import { User, Package } from 'lucide-react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
-import { loadMesOrderOptions, loadMesProcessOptions, loadMesWorkstationOptions } from '@/schemas/dynamicLoaders';
+import {
+  loadMesOrderOptions,
+  loadMesProcessOptions,
+  loadMesWorkstationOptions,
+} from '@/schemas/dynamicLoaders';
 
 export const productionRecordSchema: EntitySchema = {
   entity: 'mes_production_record',
@@ -20,7 +24,11 @@ export const productionRecordSchema: EntitySchema = {
   // 报工：订单必填、工位可选，两者此前都是手填 UUID
   dynamicOptions: [
     { field: 'order_id', queryKey: ['mes', 'orders', 'forRecord'], loader: loadMesOrderOptions },
-    { field: 'process_id', queryKey: ['mes', 'processes', 'forRecord'], loader: loadMesProcessOptions },
+    {
+      field: 'process_id',
+      queryKey: ['mes', 'processes', 'forRecord'],
+      loader: loadMesProcessOptions,
+    },
     {
       field: 'work_station_id',
       queryKey: ['mes', 'workstations', 'forRecord'],

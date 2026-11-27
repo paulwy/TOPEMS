@@ -19,7 +19,6 @@ const itemFields: NestedTableConfig['fields'] = [
   { name: 'actualQuantity', label: '实发数量', type: 'number', required: true, listWidth: 100 },
   { name: 'batchNo', label: '批次号', type: 'text', listWidth: 120 },
   { name: 'notes', label: '备注', type: 'text', listWidth: 160 },
-
 ];
 
 const itemsTable: NestedTableConfig = {

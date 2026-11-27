@@ -1,9 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
-import {
-  loadHrmEmployeeOptions,
-  loadMesWorkstationOptions,
-} from '@/schemas/dynamicLoaders';
+import { loadHrmEmployeeOptions, loadMesWorkstationOptions } from '@/schemas/dynamicLoaders';
 
 export const teamSchema: EntitySchema = {
   entity: 'team',
@@ -18,8 +15,16 @@ export const teamSchema: EntitySchema = {
 
   // mes.teams.work_station_id / leader_id 都是 uuid，裸文本无意义
   dynamicOptions: [
-    { field: 'work_station_id', queryKey: ['mes', 'workstations', 'forTeam'], loader: loadMesWorkstationOptions },
-    { field: 'leader_id', queryKey: ['hrm', 'employees', 'forTeam'], loader: loadHrmEmployeeOptions },
+    {
+      field: 'work_station_id',
+      queryKey: ['mes', 'workstations', 'forTeam'],
+      loader: loadMesWorkstationOptions,
+    },
+    {
+      field: 'leader_id',
+      queryKey: ['hrm', 'employees', 'forTeam'],
+      loader: loadHrmEmployeeOptions,
+    },
   ],
   fields: [
     {

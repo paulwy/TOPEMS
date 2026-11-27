@@ -19,7 +19,6 @@ const itemFields: NestedTableConfig['fields'] = [
   { name: 'reason', label: '退回原因', type: 'text', listWidth: 140 },
   { name: 'batchNo', label: '批次号', type: 'text', listWidth: 120 },
   { name: 'notes', label: '备注', type: 'text', listWidth: 160 },
-
 ];
 
 const itemsTable: NestedTableConfig = {
