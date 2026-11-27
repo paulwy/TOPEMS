@@ -128,7 +128,11 @@ BEGIN
        AND cn.nspname = 'public'
        AND cl.relname IN (SELECT t FROM pg_temp._doomed33)
        AND con.confrelid IN (
-             SELECT format('public.%I', t)::regclass FROM pg_temp._doomed33
+             -- 空库/生产缺席时跳过：必须先 to_regclass 判空再 cast，
+             -- 否则 regclass 转换会因 relation 不存在中止整条迁移。
+             SELECT to_regclass(format('public.%I', t))
+               FROM pg_temp._doomed33
+              WHERE to_regclass(format('public.%I', t)) IS NOT NULL
            )
      ORDER BY 1,2,3
   LOOP

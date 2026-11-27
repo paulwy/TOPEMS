@@ -34,7 +34,10 @@ export function normalizeReportRow(raw: unknown): ReportData {
   const config = {
     // 后端扁平行没有 title，用 name 兜底；再退化到 id
     title:
-      asString(existingConfig.title) || asString(row.name) || asString(row.title) || asString(row.id),
+      asString(existingConfig.title) ||
+      asString(row.name) ||
+      asString(row.title) ||
+      asString(row.id),
     report_type: (asString(existingConfig.report_type) ||
       asString(row.report_type) ||
       DEFAULT_REPORT_TYPE) as ReportType,
