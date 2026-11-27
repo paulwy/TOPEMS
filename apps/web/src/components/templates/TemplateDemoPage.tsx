@@ -18,6 +18,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Play, RefreshCw, FileText, Settings, Sparkles, Search } from 'lucide-react';
 import type { Template, TemplateCategory, TemplateVariable } from '../../api/template';
 import { logger } from '@/utils/logger';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 // Mock数据 - 模拟从API获取的模板列表
 const mockTemplates: Template[] = [
@@ -1132,8 +1133,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                         label={template.template_type}
                         size='small'
                         sx={{
-                          bgcolor: 'info.light',
-                          color: 'info.main',
+                          ...semanticTileSx('info', 0.14),
                           fontSize: 12,
                         }}
                       />
@@ -1141,8 +1141,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose: _onClose }
                         label={`${template.use_count} ${i18n.t('components.template_demo_page.k70')}`}
                         size='small'
                         sx={{
-                          bgcolor: 'success.light',
-                          color: 'success.main',
+                          ...semanticTileSx('success', 0.14),
                           fontSize: 12,
                         }}
                       />

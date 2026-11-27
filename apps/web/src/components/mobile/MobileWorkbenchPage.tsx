@@ -231,36 +231,22 @@ const MobileWorkbenchPage: React.FC = () => {
   const handleRefresh = useCallback(async () => {
     await workbenchQuery.refetch();
   }, [workbenchQuery]);
-  const getAvatarBgColor = (type: string) => {
+  // 语义色软底瓦片：MUI v9 没有 .lighter 色阶，`${x}.lighter` 会被丢弃，
+  // Avatar 退回默认 grey[400] 底 + 同色系前景（1.1~2.2:1，暗色灰底更浅）。
+  const getTileKey = (type: string) => {
     switch (type) {
       case 'task':
-        return 'primary.lighter';
+        return 'primary';
       case 'approval':
-        return 'warning.lighter';
+        return 'warning';
       case 'production':
-        return 'success.lighter';
+        return 'success';
       case 'quality':
-        return 'error.lighter';
+        return 'error';
       case 'notification':
-        return 'info.lighter';
+        return 'info';
       default:
-        return 'grey.100';
-    }
-  };
-  const getAvatarColor = (type: string) => {
-    switch (type) {
-      case 'task':
-        return 'primary.main';
-      case 'approval':
-        return 'warning.main';
-      case 'production':
-        return 'success.main';
-      case 'quality':
-        return 'error.main';
-      case 'notification':
-        return 'info.main';
-      default:
-        return 'text.primary';
+        return 'primary';
     }
   };
   const getStatusColor = (status: string) => {
@@ -608,8 +594,7 @@ const MobileWorkbenchPage: React.FC = () => {
                           sx={{
                             width: 36,
                             height: 36,
-                            bgcolor: getAvatarBgColor(item.type),
-                            color: getAvatarColor(item.type),
+                            ...semanticTileSx(getTileKey(item.type), 0.14),
                           }}
                         >
                           {item.avatar}

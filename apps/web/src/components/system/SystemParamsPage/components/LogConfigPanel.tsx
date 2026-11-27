@@ -19,6 +19,7 @@ import {
 import { Grid } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 interface LogConfigType {
   level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
@@ -61,8 +62,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'primary.light',
-                  color: 'primary.main',
+                  ...semanticTileSx('primary', 0.14),
                 }}
               >
                 <FileText size={20} />
@@ -192,8 +192,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'warning.light',
-                  color: 'warning.main',
+                  ...semanticTileSx('warning', 0.14),
                 }}
               >
                 <FileText size={20} />
@@ -315,8 +314,7 @@ const LogConfigPanel: React.FC<LogConfigPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'error.light',
-                  color: 'error.main',
+                  ...semanticTileSx('error', 0.14),
                 }}
               >
                 <AlertCircle size={20} />

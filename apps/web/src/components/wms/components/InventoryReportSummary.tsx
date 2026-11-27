@@ -15,6 +15,7 @@ import {
   Warehouse as WarehouseIcon,
 } from 'lucide-react';
 import type { InventoryStatistics } from '@/api/wms';
+import { semanticInkSx, semanticTileSx } from '@/theme/semanticTile';
 
 interface InventoryReportSummaryProps {
   statistics: InventoryStatistics | undefined;
@@ -40,12 +41,7 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <WarehouseIcon
-                  style={{
-                    width: 20,
-                    height: 20,
-                    marginRight: 8,
-                    color: theme.palette.secondary[400],
-                  }}
+                  sx={{ width: 20, height: 20, mr: 1, ...semanticInkSx('secondary') }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -67,14 +63,7 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Package
-                  style={{
-                    width: 20,
-                    height: 20,
-                    marginRight: 8,
-                    color: theme.palette.success.main,
-                  }}
-                />
+                <Package sx={{ width: 20, height: 20, mr: 1, ...semanticInkSx('success') }} />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -95,14 +84,7 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUp
-                  style={{
-                    width: 20,
-                    height: 20,
-                    marginRight: 8,
-                    color: theme.palette.warning.main,
-                  }}
-                />
+                <TrendingUp sx={{ width: 20, height: 20, mr: 1, ...semanticInkSx('success') }} />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -123,14 +105,7 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <BarChart3
-                  style={{
-                    width: 20,
-                    height: 20,
-                    marginRight: 8,
-                    color: theme.palette.secondary[500],
-                  }}
-                />
+                <BarChart3 sx={{ width: 20, height: 20, mr: 1, ...semanticInkSx('secondary') }} />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -155,22 +130,17 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
         sx={{ mb: 3 }}
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: '100%', bgcolor: 'error.light' }}>
+          <Card sx={{ height: '100%', ...semanticTileSx('error', 0.12) }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AlertTriangle
-                  style={{ width: 20, height: 20, marginRight: 8, color: theme.palette.error[600] }}
-                />
-                <Typography
-                  variant='subtitle2'
-                  color='error.dark'
-                >
+                <AlertTriangle sx={{ width: 20, height: 20, mr: 1, ...semanticInkSx('error') }} />
+                <Typography variant='subtitle2'>
                   {t('wms.inventory_report_page.field_out_of_stock_items')}
                 </Typography>
               </Box>
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color: 'error.dark' }}
+                sx={{ fontWeight: 700 }}
               >
                 {statistics?.out_of_stockitems || 0}
               </Typography>
@@ -184,27 +154,17 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: '100%', bgcolor: 'warning.light' }}>
+          <Card sx={{ height: '100%', ...semanticTileSx('warning', 0.12) }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingDown
-                  style={{
-                    width: 20,
-                    height: 20,
-                    marginRight: 8,
-                    color: theme.palette.warning.dark,
-                  }}
-                />
-                <Typography
-                  variant='subtitle2'
-                  color='warning.dark'
-                >
+                <TrendingDown sx={{ width: 20, height: 20, mr: 1, ...semanticInkSx('warning') }} />
+                <Typography variant='subtitle2'>
                   {t('wms.inventory_report_page.field_low_stock_items')}
                 </Typography>
               </Box>
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color: 'warning.dark' }}
+                sx={{ fontWeight: 700 }}
               >
                 {statistics?.low_stockitems || 0}
               </Typography>
@@ -216,22 +176,17 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: '100%', bgcolor: 'info.light' }}>
+          <Card sx={{ height: '100%', ...semanticTileSx('info', 0.12) }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Clock
-                  style={{ width: 20, height: 20, marginRight: 8, color: theme.palette.info.dark }}
-                />
-                <Typography
-                  variant='subtitle2'
-                  color='info.dark'
-                >
+                <Clock sx={{ width: 20, height: 20, mr: 1, ...semanticInkSx('info') }} />
+                <Typography variant='subtitle2'>
                   {t('wms.inventory_report_page.field_avg_turnover_days')}
                 </Typography>
               </Box>
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color: 'info.dark' }}
+                sx={{ fontWeight: 700 }}
               >
                 {statistics?.average_turnover_days || 0}
               </Typography>
@@ -245,7 +200,7 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ height: '100%', bgcolor: 'success.light' }}>
+          <Card sx={{ height: '100%', ...semanticTileSx('success', 0.12) }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <TrendingUp
@@ -256,16 +211,13 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
                     color: theme.palette.success.dark,
                   }}
                 />
-                <Typography
-                  variant='subtitle2'
-                  color='success.dark'
-                >
+                <Typography variant='subtitle2'>
                   {t('wms.inventory_report_page.field_turnover_rate')}
                 </Typography>
               </Box>
               <Typography
                 variant='h4'
-                sx={{ fontWeight: 700, color: 'success.dark' }}
+                sx={{ fontWeight: 700 }}
               >
                 {statistics?.turnover_rate || 0}
               </Typography>

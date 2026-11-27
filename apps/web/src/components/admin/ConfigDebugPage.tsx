@@ -5,6 +5,7 @@ import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 const ConfigDebugPage: React.FC = () => {
   const theme = useTheme();
@@ -55,8 +56,7 @@ const ConfigDebugPage: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: 'primary.light',
-                    color: 'primary.main',
+                    ...semanticTileSx('primary', 0.14),
                   }}
                 >
                   <Server className={styles.il4} />
@@ -105,8 +105,7 @@ const ConfigDebugPage: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: 'success.light',
-                    color: 'success.main',
+                    ...semanticTileSx('success', 0.14),
                   }}
                 >
                   <Database className={styles.il5} />
@@ -155,8 +154,7 @@ const ConfigDebugPage: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: 'warning.light',
-                    color: 'warning.main',
+                    ...semanticTileSx('warning', 0.14),
                   }}
                 >
                   <Code className={styles.il6} />

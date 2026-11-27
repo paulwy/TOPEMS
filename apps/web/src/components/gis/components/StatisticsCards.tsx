@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Paper, Typography, useTheme } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import { MapPin, ArrowRight, Warehouse, Camera, Map, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 interface StatisticsCardsProps {
   statistics?: {
@@ -29,75 +30,46 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
   factoryMapsLength,
   businessLocationsLength,
 }) => {
-  const theme = useTheme();
   const { t } = useTranslation();
 
+  // 瓦片统一走语义软底：原先 bg 用 'success.lighter'/'indigo.light' 这类不存在的色阶，
+  // 整条背景被丢弃，图标则用旧 --success-text/--warning-text 变量，暗色下压白底不可辨。
   const cards = [
     {
       count: statistics?.device_points || devicePointsLength,
       label: t('gis.index.stat_device_points'),
-      icon: (
-        <MapPin
-          size={20}
-          style={{ color: 'var(--success-text)' } as React.CSSProperties}
-        />
-      ),
-      bg: 'success.lighter' as const,
+      icon: <MapPin size={20} />,
+      key: 'success',
     },
     {
       count: statistics?.pipelines || pipelinesLength,
       label: t('gis.index.stat_pipelines'),
-      icon: (
-        <ArrowRight
-          size={20}
-          style={{ color: 'var(--accent-primary-hover)' } as React.CSSProperties}
-        />
-      ),
-      bg: 'indigo.light' as const,
+      icon: <ArrowRight size={20} />,
+      key: 'primary',
     },
     {
       count: statistics?.storage_locations || storageLocationsLength,
       label: t('gis.index.stat_storage_locations'),
-      icon: (
-        <Warehouse
-          size={20}
-          style={{ color: 'var(--warning-text)' } as React.CSSProperties}
-        />
-      ),
-      bg: 'warning.light' as const,
+      icon: <Warehouse size={20} />,
+      key: 'warning',
     },
     {
       count: statistics?.evidence_records || evidenceRecordsLength,
       label: t('gis.index.stat_evidence_records'),
-      icon: (
-        <Camera
-          size={20}
-          style={{ color: theme.palette.pink.dark } as React.CSSProperties}
-        />
-      ),
-      bg: 'secondary.100' as const,
+      icon: <Camera size={20} />,
+      key: 'secondary',
     },
     {
       count: statistics?.factory_maps || factoryMapsLength,
       label: t('gis.index.stat_factory_maps'),
-      icon: (
-        <Map
-          size={20}
-          style={{ color: theme.palette.purple.dark } as React.CSSProperties}
-        />
-      ),
-      bg: 'secondary.100' as const,
+      icon: <Map size={20} />,
+      key: 'secondary',
     },
     {
       count: statistics?.business_locations || businessLocationsLength,
       label: t('gis.index.stat_business_locations'),
-      icon: (
-        <Building2
-          size={20}
-          style={{ color: theme.palette.teal.main } as React.CSSProperties}
-        />
-      ),
-      bg: theme.palette.teal[100],
+      icon: <Building2 size={20} />,
+      key: 'info',
     },
   ];
 
@@ -122,7 +94,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
             p: 4,
             boxShadow: 1,
             border: 1,
-            borderColor: 'grey.100',
+            borderColor: 'divider',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -131,7 +103,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
                 width: 40,
                 height: 40,
                 borderRadius: 2,
-                bgcolor: card.bg,
+                ...semanticTileSx(card.key, 0.14),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

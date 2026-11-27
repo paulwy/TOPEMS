@@ -246,7 +246,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 transform: 'translateY(-50%)',
                 width: 16,
                 height: 16,
-                color: theme.palette.grey[400],
+                color: theme.palette.text.secondary,
               }}
             />
             <input
@@ -606,7 +606,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
         style={{
           marginTop: 3,
           fontSize: '13px',
-          color: theme.palette.grey[400],
+          color: theme.palette.text.secondary,
           textAlign: 'right',
         }}
       >

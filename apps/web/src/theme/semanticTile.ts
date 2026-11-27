@@ -26,3 +26,11 @@ export const semanticTileSx = (key?: string, ratio = 0.12) => ({
     return theme.palette.mode === 'dark' ? (entry.light ?? entry.main) : (entry.dark ?? entry.main);
   },
 });
+
+/** 语义色「墨色」：只给前景（裸图标/文字压在卡片底色上时用这个） */
+export const semanticInkSx = (key?: string) => ({
+  color: (theme: Theme) => {
+    const entry = pickEntry(theme, key);
+    return theme.palette.mode === 'dark' ? (entry.light ?? entry.main) : (entry.dark ?? entry.main);
+  },
+});

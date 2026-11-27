@@ -22,6 +22,7 @@ import {
 import { Grid } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 interface CacheConfigType {
   enabled: boolean;
@@ -77,8 +78,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'primary.light',
-                  color: 'primary.main',
+                  ...semanticTileSx('primary', 0.14),
                 }}
               >
                 <Database size={20} />
@@ -242,8 +242,7 @@ const CacheConfigPanel: React.FC<CacheConfigPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'success.light',
-                  color: 'success.main',
+                  ...semanticTileSx('success', 0.14),
                 }}
               >
                 <Database size={20} />

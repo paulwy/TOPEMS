@@ -5,6 +5,7 @@ import { Box, Card, CardContent, Skeleton, Typography, Chip, Stack } from '@mui/
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { StatCard as StatCardType } from './types';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 const colorMap: Record<string, string> = {
   primary: 'primary.main',
@@ -106,8 +107,11 @@ export const StatCardComponent: React.FC<StatCardType & { loading?: boolean }> =
                       sx={{
                         height: 20,
                         fontSize: designTokens.typography.fontSize.scale['0.65rem'],
-                        bgcolor: tag.color || `${bgColor}20`,
-                        color: tag.color || bgColor,
+                        // `${bgColor}20` 这种字符串拼 alpha 对 'success.dark' 之类是非法值，
+                        // 会被整条丢弃；改用语义软底瓦片，两种模式下都算得出对比度
+                        ...(tag.color
+                          ? { bgcolor: 'action.hover', color: tag.color }
+                          : semanticTileSx(color, 0.12)),
                       }}
                     />
                   ))}
@@ -231,7 +235,7 @@ export const StatCardComponent: React.FC<StatCardType & { loading?: boolean }> =
                       background: customGradient,
                       color: 'common.white',
                     }
-                  : { bgcolor: `${bgColor}15`, color: bgColor }),
+                  : semanticTileSx(color, 0.14)),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

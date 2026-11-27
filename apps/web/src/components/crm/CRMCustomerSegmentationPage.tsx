@@ -256,7 +256,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                 >
                   <Tag
                     size={24}
-                    color='var(--color-primary-foreground)'
+                    color='primary.contrastText'
                   />
                 </Box>
                 <Box>
@@ -290,7 +290,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                 >
                   <Users
                     size={24}
-                    color='var(--color-primary-foreground)'
+                    color='success.contrastText'
                   />
                 </Box>
                 <Box>
@@ -324,7 +324,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                 >
                   <TrendingUp
                     size={24}
-                    color='var(--color-primary-foreground)'
+                    color='warning.contrastText'
                   />
                 </Box>
                 <Box>

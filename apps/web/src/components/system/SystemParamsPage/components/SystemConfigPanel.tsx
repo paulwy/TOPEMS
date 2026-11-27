@@ -18,6 +18,7 @@ import {
 import { Grid } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 interface SystemConfigType {
   site_name: string;
@@ -69,8 +70,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'primary.light',
-                  color: 'primary.main',
+                  ...semanticTileSx('primary', 0.14),
                 }}
               >
                 <Settings size={20} />
@@ -181,8 +181,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'success.light',
-                  color: 'success.main',
+                  ...semanticTileSx('success', 0.14),
                 }}
               >
                 <Settings size={20} />
@@ -317,8 +316,7 @@ const SystemConfigPanel: React.FC<SystemConfigPanelProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'warning.light',
-                  color: 'warning.main',
+                  ...semanticTileSx('warning', 0.14),
                 }}
               >
                 <Settings size={20} />

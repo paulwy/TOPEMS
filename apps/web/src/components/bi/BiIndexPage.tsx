@@ -269,7 +269,7 @@ const BiIndexPage = () => {
                   startAdornment: (
                     <Search
                       size={18}
-                      style={{ marginRight: 8, color: theme.palette.grey[400] }}
+                      style={{ marginRight: 8, color: theme.palette.text.secondary }}
                     />
                   ),
                 },

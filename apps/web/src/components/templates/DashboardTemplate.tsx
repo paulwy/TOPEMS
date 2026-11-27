@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { alpha } from '@mui/material/styles';
 import {
   Box,
   Card,
@@ -19,6 +18,7 @@ import {
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 import { EmptyState } from '@topems/shared-components';
 import {
   TrendingUp as TrendingUpIcon,
@@ -171,16 +171,6 @@ export const StatCard: React.FC<StatCardConfig> = ({
   loading,
 }) => {
   const theme = useTheme();
-  const paletteMap: Record<DashboardColor, string> = {
-    primary: theme.palette.primary.main,
-    secondary: theme.palette.secondary.main,
-    success: theme.palette.success.main,
-    error: theme.palette.error.main,
-    warning: theme.palette.warning.main,
-    info: theme.palette.info.main,
-  };
-  // 未知 color（如 'primary.main' 等非短键值）兜底 primary，避免 alpha(undefined) 崩溃
-  const accent = paletteMap[color] || paletteMap.primary;
 
   if (loading) {
     return (
@@ -255,8 +245,9 @@ export const StatCard: React.FC<StatCardConfig> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: accent,
-                bgcolor: alpha(accent, 0.1),
+                // 同色压同色（accent 压 10% accent）亮色只有 2.2~2.3:1，
+                // 统一走语义软底瓦片：12~14% 主色底 + 亮色取 -dark、暗色取 -light
+                ...semanticTileSx(color, 0.14),
               }}
             >
               <Box sx={{ fontSize: 24 }}>{icon}</Box>
@@ -326,8 +317,7 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
               fontSize: 14,
             }}
           >
-            {/* k0 是搜索框占位词（“搜索…”），空态单独用 empty 键，避免两处共用同一文案 */}
-            {emptyText || i18n.t('components.dashboard_template.empty')}
+            {emptyText || i18n.t('components.dashboard_template.k0')}
           </Box>
         </CardContent>
       </Card>

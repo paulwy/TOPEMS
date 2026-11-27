@@ -4,6 +4,7 @@ import { LayoutTemplate, Plus, Play, Edit, Trash2 } from 'lucide-react';
 import type { ReportTemplate, ReportTypeInfo } from '@/api/report';
 import { getReportTypeName } from '@/components/report/ReportPageUtils';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 interface TemplateListProps {
   templates: ReportTemplate[];
@@ -109,8 +110,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
                         label={template.category}
                         size='small'
                         sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
+                          ...semanticTileSx('primary', 0.14),
                           borderRadius: '50%',
                         }}
                       />
