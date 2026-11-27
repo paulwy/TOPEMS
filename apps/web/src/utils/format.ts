@@ -104,6 +104,19 @@ export const formatCurrency = (amount: number | string, currency: string = 'CNY'
   return `${symbol}${sharedFormatNumber(number, 2)}`;
 };
 
+/**
+ * 紧凑金额：≥100 万折成「万」，避免卡片/窄容器里的长数字折行。
+ * 与 CRM 漏斗页同一口径，改口径请只改这里。
+ */
+export const formatCompactMoney = (amount: number | string): string => {
+  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (!Number.isFinite(value)) return '¥0';
+  if (Math.abs(value) >= 1_000_000) {
+    return `¥${(value / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 })}万`;
+  }
+  return `¥${Math.round(value).toLocaleString('zh-CN')}`;
+};
+
 export const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);

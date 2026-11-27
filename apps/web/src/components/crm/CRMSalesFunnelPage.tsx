@@ -17,17 +17,12 @@ import type { ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { crmAnalyticsApi, type FunnelStageRow } from '@/api/crm';
 import i18n from '@/i18n';
+import { formatCompactMoney } from '@/utils/format';
 
 type FunnelViewMode = 'count' | 'weighted';
 
 // 大额金额用「万」缩写：卡片宽度固定，百万级以上直接写元会在中间折行成 ¥3,390,0 / 00
-const formatMoney = (value: number): string => {
-  const v = Number(value);
-  if (!Number.isFinite(v)) return '¥0';
-  if (Math.abs(v) >= 1_000_000)
-    return `¥${(v / 10000).toLocaleString('zh-CN', { maximumFractionDigits: 1 })}万`;
-  return `¥${Math.round(v).toLocaleString()}`;
-};
+const formatMoney = formatCompactMoney;
 
 interface MappedStage {
   stage: string;

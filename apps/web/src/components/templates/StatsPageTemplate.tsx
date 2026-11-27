@@ -30,6 +30,7 @@ import {
 import i18n from '@/i18n';
 import { Search, RefreshCw, Download, Calendar } from 'lucide-react';
 import { EmptyState } from '@topems/shared-components';
+import { LazyChart } from '@/components/charts';
 
 /**
  * 统计指标卡片类型
@@ -86,6 +87,170 @@ export interface ChartConfig {
   comparisonData?: ChartData[];
   comparisonLabel?: string;
 }
+
+/** 图表系列（recharts 的 y 轴一列） */
+interface SeriesKey {
+  key: string;
+  name: string;
+  color?: string;
+}
+
+interface PreparedChart {
+  data: Record<string, unknown>[];
+  xKey: string;
+  yKeys: SeriesKey[];
+}
+
+interface StatsChartProps {
+  chart: ChartConfig;
+}
+
+/**
+ * 识别「区分系列」的字段：同名类目出现多次、且存在 2–8 个字符串取值的字段时，
+ * 说明 data 是扁平的多元组（如 {name:'2026-01', value:10, type:'predicted'}），
+ * 需要按该字段拆成多条系列，否则会画成锯齿。
+ */
+const detectSeriesField = (data: ChartData[], nameKey: string, dataKey: string): string | null => {
+  if (data.length < 3) return null;
+  const names = new Set(data.map((row) => String(row[nameKey] ?? row.name ?? '')));
+  if (names.size >= data.length) return null;
+  const candidates = Object.keys(data[0] ?? {}).filter(
+    (k) => k !== nameKey && k !== 'name' && k !== dataKey && k !== 'value' && k !== 'color'
+  );
+  for (const key of candidates) {
+    const values = data.map((row) => row[key]);
+    if (!values.every((v) => typeof v === 'string')) continue;
+    const distinct = new Set(values as string[]);
+    if (distinct.size >= 2 && distinct.size <= 8) return key;
+  }
+  return null;
+};
+
+/** 把 ChartConfig 的扁平 data 转成 recharts 需要的「一行一个类目、一列一个系列」形状 */
+const prepareChart = (chart: ChartConfig): PreparedChart => {
+  const { data, dataKey, nameKey, comparisonData, comparisonLabel, colors } = chart;
+  const labelOf = (row: ChartData) => String(row[nameKey] ?? row.name ?? '');
+  const valueOf = (row: ChartData) => Number(row[dataKey] ?? row.value ?? 0) || 0;
+
+  const seriesField = detectSeriesField(data, nameKey, dataKey);
+  if (seriesField) {
+    const rows: Record<string, unknown>[] = [];
+    const index = new Map<string, Record<string, unknown>>();
+    const seriesNames = new Set<string>();
+    for (const row of data) {
+      const label = labelOf(row);
+      const seriesName = String(row[seriesField]);
+      seriesNames.add(seriesName);
+      let target = index.get(label);
+      if (!target) {
+        target = { [nameKey]: label };
+        index.set(label, target);
+        rows.push(target);
+      }
+      target[seriesName] = valueOf(row);
+    }
+    return {
+      data: rows,
+      xKey: nameKey,
+      yKeys: [...seriesNames].map((name, i) => ({ key: name, name, color: colors?.[i] })),
+    };
+  }
+
+  const rows = data.map((row) => ({ [nameKey]: labelOf(row), [dataKey]: valueOf(row) }));
+  const yKeys: SeriesKey[] = [{ key: dataKey, name: chart.title, color: colors?.[0] }];
+
+  if (comparisonData?.length) {
+    const compare = new Map<string, number>();
+    for (const row of comparisonData) compare.set(labelOf(row), valueOf(row));
+    const compareKey = `${dataKey}__compare`;
+    for (const row of rows) row[compareKey] = compare.get(String(row[nameKey])) ?? 0;
+    yKeys.push({ key: compareKey, name: comparisonLabel || chart.title, color: colors?.[1] });
+  }
+
+  return { data: rows, xKey: nameKey, yKeys };
+};
+
+/**
+ * 图表是否有可画的数值：全为 0 时不画空坐标系，直接出「暂无数据」
+ */
+const chartHasValues = (chart: ChartConfig): boolean => {
+  if (chart.data.length === 0) return false;
+  const pick = (row: ChartData) => Number(row[chart.dataKey] ?? row.value ?? 0);
+  const rows = chart.comparisonData?.length ? [...chart.data, ...chart.comparisonData] : chart.data;
+  return rows.some((row) => Number.isFinite(pick(row)) && pick(row) !== 0);
+};
+
+/**
+ * 真实图表渲染：按 type 走 LazyChart（recharts 按需加载，不进入主包）
+ */
+const StatsChart: React.FC<StatsChartProps> = ({ chart }) => {
+  const prepared = useMemo(() => prepareChart(chart), [chart]);
+  const height = chart.height ?? 250;
+  const rows = prepared.data as unknown as ChartData[];
+
+  if (chart.type === 'pie' || chart.type === 'donut') {
+    return (
+      <LazyChart
+        type='pie'
+        height={height}
+        data={chart.data.map((row) => ({
+          name: String(row[chart.nameKey] ?? row.name ?? ''),
+          value: Number(row[chart.dataKey] ?? row.value ?? 0) || 0,
+          color: row.color as string | undefined,
+        }))}
+      />
+    );
+  }
+
+  if (chart.type === 'radar') {
+    return (
+      <LazyChart
+        type='radar'
+        data={rows}
+        dataKey={prepared.xKey}
+        yKeys={prepared.yKeys}
+        height={height}
+      />
+    );
+  }
+
+  if (chart.type === 'area') {
+    return (
+      <LazyChart
+        type='area'
+        data={rows}
+        xKey={prepared.xKey}
+        yKeys={prepared.yKeys}
+        height={height}
+        showGrid={chart.showGrid}
+      />
+    );
+  }
+
+  if (chart.type === 'line') {
+    return (
+      <LazyChart
+        type='line'
+        data={rows}
+        xKey={prepared.xKey}
+        yKey={prepared.yKeys[0].key}
+        yKeys={prepared.yKeys}
+        height={height}
+      />
+    );
+  }
+
+  return (
+    <LazyChart
+      type='bar'
+      data={rows}
+      xKey={prepared.xKey}
+      yKey={prepared.yKeys[0].key}
+      yKeys={prepared.yKeys}
+      height={height}
+    />
+  );
+};
 
 /**
  * 表格列配置类型
@@ -518,22 +683,25 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                 {chart.title}
               </Typography>
 
-              {/* 图表内容占位 - 实际项目中会接入图表库如Recharts */}
-              <Box
-                sx={{
-                  height: chart.height || 250,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: 'grey.50',
-                  borderRadius: 1,
-                }}
-              >
-                <Typography color='text.secondary'>
-                  {i18n.t('components.stats_page_template.k0')}: {chart.type} - {chart.data.length}{' '}
-                  {i18n.t('components.stats_page_template.k1')}
-                </Typography>
-              </Box>
+              {/* 真实图表：空数据出空态，不再用「加载中」占位冒充渲染 */}
+              {!chartHasValues(chart) ? (
+                <Box
+                  sx={{
+                    height: chart.height || 250,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'grey.50',
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography color='text.secondary'>
+                    {i18n.t('templates.stats_page_template.k1')}
+                  </Typography>
+                </Box>
+              ) : (
+                <StatsChart chart={chart} />
+              )}
             </Paper>
           ))}
         </Box>

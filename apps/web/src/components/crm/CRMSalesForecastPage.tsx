@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Box, Button, useTheme } from '@mui/material';
 import { Plus, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { crmApi, crmAnalyticsApi, type Period, type ForecastSeriesRow } from '@/api/crm';
+import { crmApi, crmAnalyticsApi, type ForecastSeriesRow } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -13,6 +13,7 @@ import type {
   TableColumn,
 } from '@/components/templates/StatsPageTemplate';
 import i18n from '@/i18n';
+import { formatCompactMoney } from '@/utils/format';
 import { PageContainer } from '@/components/common';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -41,7 +42,6 @@ const CRMSalesForecastPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
   const [timeRange, _setTimeRange] = useState('monthly');
-  const [period, setPeriod] = useState<Period>('MTD');
 
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
@@ -49,8 +49,9 @@ const CRMSalesForecastPage: React.FC = () => {
   // 真实聚合：GET /api/crm/analytics/forecast → { series:[{period,period_type,predicted_amount,actual_amount,confidence_level,trend}] }
   // 后端无独立 status 字段：以 actual_amount>0 推断为已完成，否则为已生成（诚实近似）。
   const analyticsForecastQuery = useQuery({
-    queryKey: [...QUERY_KEYS.CRM.SALES_FORECAST, timeRange, period],
-    queryFn: () => crmAnalyticsApi.getForecast(period),
+    // 后端 /analytics/forecast 同样不吃 period（`Query(_p)`），页面不再提供无效的时间范围控件。
+    queryKey: [...QUERY_KEYS.CRM.SALES_FORECAST, timeRange],
+    queryFn: () => crmAnalyticsApi.getForecast(),
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
@@ -130,14 +131,14 @@ const CRMSalesForecastPage: React.FC = () => {
       {
         id: 'total-predicted',
         title: t('crm.salesForecast.stat_total_predicted'),
-        value: `¥${summary.totalPredicted.toLocaleString()}`,
+        value: formatCompactMoney(summary.totalPredicted),
         icon: <Target sx={{ width: 24, height: 24 }} />,
         gradient: [theme.palette.primary.dark, theme.palette.primary[800]] as [string, string],
       },
       {
         id: 'total-actual',
         title: t('crm.salesForecast.stat_total_actual'),
-        value: `¥${summary.totalActual.toLocaleString()}`,
+        value: formatCompactMoney(summary.totalActual),
         icon: <Calculator sx={{ width: 24, height: 24 }} />,
         gradient: [theme.palette.success.main, theme.palette.success.dark] as [string, string],
       },
@@ -220,16 +221,6 @@ const CRMSalesForecastPage: React.FC = () => {
     [displayForecasts, loading, t]
   );
 
-  const timeRangeOptions = [
-    { label: t('crm.period.mtd') || i18n.t('pages.crm_sales_forecast_page.k0'), value: 'MTD' },
-    { label: t('crm.period.qtd') || i18n.t('pages.crm_sales_forecast_page.k1'), value: 'QTD' },
-    { label: t('crm.period.ytd') || i18n.t('pages.crm_sales_forecast_page.k2'), value: 'YTD' },
-    {
-      label: t('crm.period.r12') || i18n.t('pages.crm_sales_forecast_page.12_3'),
-      value: 'ROLLING_12M',
-    },
-  ];
-
   const customToolbar = (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
       <Button
@@ -260,13 +251,9 @@ const CRMSalesForecastPage: React.FC = () => {
         chartColumns={{ xs: 1, lg: 2 }}
         tables={tables}
         loading={loading}
-        timeRangeOptions={timeRangeOptions}
-        timeRange={period}
-        onTimeRangeChange={(v) => setPeriod(v as Period)}
         onRefresh={() => analyticsForecastQuery.refetch()}
         showExport={false}
         showRefresh={true}
-        showTimeRange={true}
         showSearch={false}
         customToolbar={customToolbar}
         statCardDirection='row'
