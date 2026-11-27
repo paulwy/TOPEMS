@@ -3288,3 +3288,11 @@ pending_forward_patches:
     effect: "幂等重建 5 条租户业务键唯一索引：mes.workshops workshops_tenant_code_key(tenant_id,code) / workshops_id_tenant_key(id,tenant_id)；mes.production_lines production_lines_tenant_code_key；mes.shifts shifts_tenant_code_key；mes.work_calendars work_calendars_tenant_code_key；末尾按 pg_indexes 逐条断言在位"
     destructive_scan: "CREATE UNIQUE INDEX IF NOT EXISTS ×5 + to_regclass 守卫 + 断言；无 DELETE/UPDATE/TRUNCATE/DROP COLUMN/DROP TABLE"
     note: "承接被撤回的 20261127090000；本机 2026-11-27 应用（索引已存在 → 空跑 + 断言通过，账本 success=t）；生产待投放（mes 四表 0 行，建索引零风险）。回滚 database/rollback/20261127110000_mes_basics_tenant_scoped_keys.rollback.sql"
+
+  # ===== 2026-11-27：mes 基础资料 code 唯一性降级为租户内唯一（决策 A） =====
+  - version: "20261127120000"
+    file: "database/migrations/20261127120000_mes_basics_code_unique_tenant_scope.sql"
+    status: applied
+    effect: "DROP CONSTRAINT IF EXISTS 删除 mes.production_lines/shifts/work_calendars/workshops 的 4 条全局 `*_code_key UNIQUE(code)`；末尾断言全局约束已消失且 (tenant_id,code) 唯一索引在位，缺一 RAISE EXCEPTION"
+    destructive_scan: "仅 ALTER TABLE ... DROP CONSTRAINT IF EXISTS（pg_constraint 存在性守卫 + to_regclass 表守卫）；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN"
+    note: "决策 A：canonical 20261121160000 的全局 code 唯一与 20261127110000 的租户内唯一并存时全局更严，跨租户不能复用 code；生产四表 0 行，本轮已投放（账本 success=t）。回滚 database/rollback/20261127120000_*.rollback.sql（重建全局唯一，若已有跨租户同 code 会失败，属预期）"
