@@ -488,3 +488,9 @@ apiClient.core.get(`${API_BASE}/list`)
 | 冒烟 | 970 条 FAIL=0 | 967 条 **FAIL=0** |
 
 剩余 34 条是**后端确实没有对应路由**的写接口（如 `POST /api/erp/asset-categories`、`POST /api/erp/leave-requests`、`POST /api/erp/production-orders` 的集合级写），属功能缺口，不用 spec 造假补平。
+
+### 收尾：customers 500 与最终冒烟
+
+spec 加到 2794 后全量冒烟多跑出 1 条 FAIL：`GET /api/erp/customers` 500，日志 `error occurred while decoding column "credit_limit": unexpected null`。`Customer.credit_limit` 是非空 `Decimal`，而列表 SQL 直接选裸列，库里该列可空。12 处 customers SQL 改为 `COALESCE(credit_limit, 0)` 后 200。
+
+最终冒烟（干净 origin/main 构建，spec 2794）：`1017 条 OK=950 SOFT=67 FAIL=0 SKIP=0 DEGRADED=0`。条数从 967 涨到 1017 是 ERP 新增的 280 路径带来的，不是回归。
