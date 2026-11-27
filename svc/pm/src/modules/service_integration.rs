@@ -35,6 +35,7 @@ async fn list_integrations(State(_db): State<Db>) -> ApiResponse<Vec<()>> {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/service-integrations",
     tag = "service_integration",
@@ -66,6 +67,7 @@ async fn get_integration(State(_db): State<Db>, Path(_id): Path<Uuid>) -> ApiRes
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/service-integrations/{id}",
     tag = "service_integration",

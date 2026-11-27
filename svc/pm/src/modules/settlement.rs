@@ -169,6 +169,7 @@ async fn get_settlement(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/settlements",
     tag = "settlement",
@@ -268,6 +269,7 @@ async fn create_settlement(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/settlements/{id}",
     tag = "settlement",
@@ -600,6 +602,7 @@ async fn get_settlement_items(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/settlements/{settlement_id}/items",
     tag = "settlement",
@@ -748,6 +751,7 @@ async fn update_settlement_item(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/settlement-items/{id}",
     tag = "settlement",
@@ -855,6 +859,7 @@ async fn get_settlement_adjustments(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/settlements/{settlement_id}/adjustments",
     tag = "settlement",

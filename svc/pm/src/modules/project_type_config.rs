@@ -151,6 +151,7 @@ async fn list_types(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/project-types",
     tag = "project_type_config",
@@ -275,6 +276,7 @@ async fn get_type(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/project-types/{id}",
     tag = "project_type_config",
@@ -342,6 +344,7 @@ async fn update_type(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/project-types/{id}",
     tag = "project_type_config",

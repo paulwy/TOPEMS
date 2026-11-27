@@ -81,6 +81,7 @@ async fn get_project_notifications(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/notifications",
     tag = "notification",
@@ -188,6 +189,7 @@ async fn get_project_settings(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/notification-settings",
     tag = "notification",

@@ -192,6 +192,7 @@ async fn get_risk(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/risks",
     tag = "risk",
@@ -295,6 +296,7 @@ async fn create_risk(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/risks/{id}",
     tag = "risk",
@@ -479,6 +481,7 @@ async fn get_risk_events(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/risks/{id}/events",
     tag = "risk",

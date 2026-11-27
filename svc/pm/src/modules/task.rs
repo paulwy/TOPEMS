@@ -245,6 +245,7 @@ pub async fn list_tasks_by_project(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/tasks",
     tag = "task",
@@ -380,6 +381,7 @@ pub async fn get_task(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/tasks/{id}",
     tag = "task",
@@ -488,6 +490,7 @@ pub async fn update_task(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/tasks/{id}",
     tag = "task",

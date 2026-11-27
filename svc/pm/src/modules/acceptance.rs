@@ -145,6 +145,7 @@ async fn get_plan(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/acceptance-plans",
     tag = "acceptance",
@@ -244,6 +245,7 @@ async fn create_plan(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/acceptance-plans/{id}",
     tag = "acceptance",
@@ -430,6 +432,7 @@ async fn get_plan_items(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/acceptance-plans/{plan_id}/items",
     tag = "acceptance",
@@ -546,6 +549,7 @@ async fn update_plan_item(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/acceptance-items/{id}",
     tag = "acceptance",
@@ -774,6 +778,7 @@ async fn create_record(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/acceptance-records/{id}",
     tag = "acceptance",

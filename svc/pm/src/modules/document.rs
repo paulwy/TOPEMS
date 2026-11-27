@@ -139,6 +139,7 @@ async fn get_document(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/documents",
     tag = "document",
@@ -202,6 +203,7 @@ async fn create_document(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/documents/{id}",
     tag = "document",
@@ -261,6 +263,7 @@ async fn update_document(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/documents/{id}",
     tag = "document",
@@ -352,6 +355,7 @@ async fn get_document_versions(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/documents/{id}/versions",
     tag = "document",
@@ -533,6 +537,7 @@ async fn get_folder(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/folders",
     tag = "document",
@@ -591,6 +596,7 @@ async fn create_folder(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/folders/{id}",
     tag = "document",
@@ -644,6 +650,7 @@ async fn update_folder(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/folders/{id}",
     tag = "document",

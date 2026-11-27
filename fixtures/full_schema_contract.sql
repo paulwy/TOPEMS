@@ -8197,6 +8197,7 @@ CREATE TABLE hrm.employees (
     hukou_location character varying(255),
     address text,
     education character varying(50),
+    monthly_salary numeric(14,2),
     marital_status character varying(20),
     nationality character varying(50),
     bank_account character varying(100),

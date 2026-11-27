@@ -269,6 +269,7 @@ async fn get_budget(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/budgets",
     tag = "budget",
@@ -362,6 +363,7 @@ async fn create_budget(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/budgets/{id}",
     tag = "budget",
@@ -710,6 +712,7 @@ async fn get_budget_items(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/budgets/{id}/items",
     tag = "budget",
@@ -845,6 +848,7 @@ async fn update_budget_item(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/budgets/{id}/items/{item_id}",
     tag = "budget",

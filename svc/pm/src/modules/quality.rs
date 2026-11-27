@@ -191,6 +191,7 @@ async fn get_quality_check(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/quality-checks",
     tag = "quality",
@@ -256,6 +257,7 @@ async fn create_quality_check(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/quality-checks/{id}",
     tag = "quality",
@@ -421,6 +423,7 @@ async fn get_defect(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/defects",
     tag = "quality",
@@ -485,6 +488,7 @@ async fn create_defect(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/defects/{id}",
     tag = "quality",
@@ -566,6 +570,7 @@ async fn update_defect(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/defects/{id}",
     tag = "quality",

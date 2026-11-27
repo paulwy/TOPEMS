@@ -140,6 +140,7 @@ async fn get_report(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/reports",
     tag = "report",
@@ -475,6 +476,7 @@ async fn get_template(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/report-templates",
     tag = "report",
@@ -532,6 +534,7 @@ async fn create_template(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/report-templates/{id}",
     tag = "report",
@@ -585,6 +588,7 @@ async fn update_template(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/report-templates/{id}",
     tag = "report",

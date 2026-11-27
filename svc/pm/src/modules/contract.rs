@@ -189,6 +189,7 @@ async fn get_contract(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/contracts",
     tag = "contract",
@@ -292,6 +293,7 @@ async fn create_contract(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/contracts/{id}",
     tag = "contract",
@@ -421,6 +423,7 @@ async fn update_contract(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/contracts/{id}",
     tag = "contract",
@@ -848,6 +851,7 @@ async fn list_contract_milestones(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/contracts/{id}/milestones",
     tag = "contract",
@@ -975,6 +979,7 @@ async fn update_contract_milestone(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/contracts/{id}/milestones/{milestone_id}",
     tag = "contract",
@@ -1067,6 +1072,7 @@ async fn list_payment_schedule(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/contracts/{id}/payments",
     tag = "contract",
@@ -1191,6 +1197,7 @@ async fn update_payment_schedule(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/contracts/{id}/payments/{payment_id}",
     tag = "contract",
@@ -1235,6 +1242,7 @@ async fn delete_payment_schedule(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:read"])),
     get,
     path = "/api/pm/contract-templates",
     tag = "contract",
@@ -1276,6 +1284,7 @@ async fn list_templates(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:read"])),
     get,
     path = "/api/pm/contract-templates/{id}",
     tag = "contract",
@@ -1319,6 +1328,7 @@ async fn get_template(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/contract-templates",
     tag = "contract",
@@ -1376,6 +1386,7 @@ async fn create_template(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     put,
     path = "/api/pm/contract-templates/{id}",
     tag = "contract",
@@ -1433,6 +1444,7 @@ async fn update_template(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     delete,
     path = "/api/pm/contract-templates/{id}",
     tag = "contract",
@@ -1524,6 +1536,7 @@ async fn get_project_contracts(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["pm:write"])),
     post,
     path = "/api/pm/projects/{project_id}/contracts",
     tag = "contract",
