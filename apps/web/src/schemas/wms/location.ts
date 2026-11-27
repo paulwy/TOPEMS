@@ -21,7 +21,11 @@ export const locationSchema: EntitySchema = {
 
   // wms.locations.warehouse_id 是 uuid，裸文本提交必 422
   dynamicOptions: [
-    { field: 'warehouse_id', queryKey: ['wms', 'warehouses', 'forLocation'], loader: loadWmsWarehouseOptions },
+    {
+      field: 'warehouse_id',
+      queryKey: ['wms', 'warehouses', 'forLocation'],
+      loader: loadWmsWarehouseOptions,
+    },
   ],
 
   fields: [

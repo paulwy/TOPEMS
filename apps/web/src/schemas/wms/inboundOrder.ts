@@ -25,8 +25,16 @@ export const inboundOrderSchema: EntitySchema = {
   // wms.inbound_orders.warehouse_id / supplier_id 都是 uuid：
   // 裸文本提交会 422 "UUID parsing failed"，改挂仓库/供应商下拉
   dynamicOptions: [
-    { field: 'warehouse_id', queryKey: ['wms', 'warehouses', 'forInbound'], loader: loadWmsWarehouseOptions },
-    { field: 'supplier_id', queryKey: ['scm', 'suppliers', 'forInbound'], loader: loadScmSupplierOptions },
+    {
+      field: 'warehouse_id',
+      queryKey: ['wms', 'warehouses', 'forInbound'],
+      loader: loadWmsWarehouseOptions,
+    },
+    {
+      field: 'supplier_id',
+      queryKey: ['scm', 'suppliers', 'forInbound'],
+      loader: loadScmSupplierOptions,
+    },
   ],
 
   fields: [

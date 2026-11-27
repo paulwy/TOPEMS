@@ -22,9 +22,21 @@ export const serialNumberSchema: EntitySchema = {
   // wms.serial_numbers 的 warehouse_id / location_id / supplier_id 都是 uuid，
   // 裸文本必 422；warehouse_id 后端要求必填
   dynamicOptions: [
-    { field: 'warehouse_id', queryKey: ['wms', 'warehouses', 'forSerial'], loader: loadWmsWarehouseOptions },
-    { field: 'location_id', queryKey: ['wms', 'locations', 'forSerial'], loader: loadWmsLocationOptions },
-    { field: 'supplier_id', queryKey: ['scm', 'suppliers', 'forSerial'], loader: loadScmSupplierOptions },
+    {
+      field: 'warehouse_id',
+      queryKey: ['wms', 'warehouses', 'forSerial'],
+      loader: loadWmsWarehouseOptions,
+    },
+    {
+      field: 'location_id',
+      queryKey: ['wms', 'locations', 'forSerial'],
+      loader: loadWmsLocationOptions,
+    },
+    {
+      field: 'supplier_id',
+      queryKey: ['scm', 'suppliers', 'forSerial'],
+      loader: loadScmSupplierOptions,
+    },
   ],
 
   fields: [

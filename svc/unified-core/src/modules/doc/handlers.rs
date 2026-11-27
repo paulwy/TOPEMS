@@ -1192,6 +1192,7 @@ fn empty_paged() -> PaginatedResponse<serde_json::Value> {
 // ---------- health ----------
 
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/health",
     tag = "Filled",
@@ -1205,6 +1206,7 @@ pub async fn doc_health() -> ApiResponse<String> {
 
 /// 待上游支持：协作者列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/documents/{document_id}/collaborators",
     tag = "Filled",
@@ -1216,6 +1218,7 @@ pub async fn list_collaborators_stub() -> ApiResponse<Vec<serde_json::Value>> {
 
 /// 待上游支持：添加协作者
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     post,
     path = "/api/core/doc/documents/{document_id}/collaborators",
     tag = "Filled",
@@ -1232,6 +1235,7 @@ pub async fn update_collaborator_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：移除协作者
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/documents/{document_id}/collaborators/{user_id}",
     tag = "Filled",
@@ -1245,6 +1249,7 @@ pub async fn remove_collaborator_stub() -> ApiResponse<()> {
 
 /// 待上游支持：评论列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/documents/{document_id}/comments",
     tag = "Filled",
@@ -1266,6 +1271,7 @@ pub async fn update_comment_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：删除评论
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/documents/{document_id}/comments/{comment_id}",
     tag = "Filled",
@@ -1279,6 +1285,7 @@ pub async fn delete_comment_stub() -> ApiResponse<()> {
 
 /// 待上游支持：文档活动记录
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/documents/{document_id}/activities",
     tag = "Filled",
@@ -1297,6 +1304,7 @@ pub async fn create_share_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：分享链接列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/documents/{document_id}/share",
     tag = "Filled",
@@ -1308,6 +1316,7 @@ pub async fn list_shares_stub() -> ApiResponse<Vec<serde_json::Value>> {
 
 /// 待上游支持：删除分享链接
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/documents/{document_id}/share/{share_id}",
     tag = "Filled",
@@ -1336,6 +1345,7 @@ pub async fn diff_versions_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：获取文档锁
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/documents/{document_id}/lock",
     tag = "Filled",
@@ -1352,6 +1362,7 @@ pub async fn acquire_lock_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：解锁
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/documents/{document_id}/lock",
     tag = "Filled",
@@ -1365,6 +1376,7 @@ pub async fn release_lock_stub() -> ApiResponse<()> {
 
 /// 待上游支持：工作区列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/workspaces",
     tag = "Filled",
@@ -1391,6 +1403,7 @@ pub async fn update_workspace_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：删除工作区
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/workspaces/{workspace_id}",
     tag = "Filled",
@@ -1402,6 +1415,7 @@ pub async fn delete_workspace_stub() -> ApiResponse<()> {
 
 /// 待上游支持：工作区目录树
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/workspaces/{workspace_id}/tree",
     tag = "Filled",
@@ -1413,6 +1427,7 @@ pub async fn get_workspace_tree_stub() -> ApiResponse<Vec<serde_json::Value>> {
 
 /// 待上游支持：移动项目
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     post,
     path = "/api/core/doc/workspaces/{workspace_id}/move",
     tag = "Filled",
@@ -1424,6 +1439,7 @@ pub async fn move_items_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：复制项目
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     post,
     path = "/api/core/doc/workspaces/{workspace_id}/copy",
     tag = "Filled",
@@ -1435,6 +1451,7 @@ pub async fn copy_items_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：排序
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     post,
     path = "/api/core/doc/workspaces/{workspace_id}/sort",
     tag = "Filled",
@@ -1446,6 +1463,7 @@ pub async fn sort_items_stub() -> ApiResponse<()> {
 
 /// 待上游支持：回收站列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/workspaces/{workspace_id}/trash",
     tag = "Filled",
@@ -1462,6 +1480,7 @@ pub async fn restore_from_trash_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：彻底删除回收站项目
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/workspaces/{workspace_id}/trash/{item_id}",
     tag = "Filled",
@@ -1473,6 +1492,7 @@ pub async fn delete_from_trash_stub() -> ApiResponse<()> {
 
 /// 待上游支持：清空回收站
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     post,
     path = "/api/core/doc/workspaces/{workspace_id}/empty-trash",
     tag = "Filled",
@@ -1484,6 +1504,7 @@ pub async fn empty_trash_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：搜索工作区
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/workspaces/{workspace_id}/search",
     tag = "Filled",
@@ -1495,6 +1516,7 @@ pub async fn search_workspace_stub() -> ApiResponse<PaginatedResponse<serde_json
 
 /// 待上游支持：工作区统计
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/workspaces/{workspace_id}/stats",
     tag = "Filled",
@@ -1519,6 +1541,7 @@ pub async fn get_workspace_stats_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：模板审批列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/{template_id}/approvals",
     tag = "Filled",
@@ -1560,6 +1583,7 @@ pub async fn cancel_approval_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：待审批列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/approvals/pending",
     tag = "Filled",
@@ -1571,6 +1595,7 @@ pub async fn list_pending_approvals_stub() -> ApiResponse<PaginatedResponse<serd
 
 /// 待上游支持：我的待审批
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/approvals/my-pending",
     tag = "Filled",
@@ -1582,6 +1607,7 @@ pub async fn list_my_pending_stub() -> ApiResponse<PaginatedResponse<serde_json:
 
 /// 待上游支持：我提交的
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/approvals/my-submitted",
     tag = "Filled",
@@ -1593,6 +1619,7 @@ pub async fn list_my_submitted_stub() -> ApiResponse<PaginatedResponse<serde_jso
 
 /// 待上游支持：我的历史
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/approvals/my-history",
     tag = "Filled",
@@ -1606,6 +1633,7 @@ pub async fn list_my_history_stub() -> ApiResponse<PaginatedResponse<serde_json:
 
 /// 待上游支持：模板分配列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/{template_id}/assignments",
     tag = "Filled",
@@ -1622,6 +1650,7 @@ pub async fn create_assignment_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：删除分配
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/templates/{template_id}/assignments/{assignment_id}",
     tag = "Filled",
@@ -1638,6 +1667,7 @@ pub async fn get_template_usage_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：全局使用统计
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/usage/stats",
     tag = "Filled",
@@ -1657,6 +1687,7 @@ pub async fn get_usage_stats_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：热门模板
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/usage/top",
     tag = "Filled",
@@ -1678,6 +1709,7 @@ pub async fn export_template_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：依赖列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/{template_id}/dependencies",
     tag = "Filled",
@@ -1694,6 +1726,7 @@ pub async fn add_dependency_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：移除依赖
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/templates/{template_id}/dependencies/{dep_id}",
     tag = "Filled",
@@ -1724,6 +1757,7 @@ pub async fn toggle_template_status_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：模板版本列表
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/{template_id}/versions",
     tag = "Filled",
@@ -1750,6 +1784,7 @@ pub async fn update_template_version_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：删除模板版本
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:write"])),
     delete,
     path = "/api/core/doc/templates/{template_id}/versions/{version}",
     tag = "Filled",
@@ -1786,6 +1821,7 @@ pub async fn compare_versions_stub() -> ApiResponse<serde_json::Value> {
 
 /// 待上游支持：版本历史
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/{template_id}/versions/history",
     tag = "Filled",
@@ -1797,6 +1833,7 @@ pub async fn get_version_history_stub() -> ApiResponse<PaginatedResponse<serde_j
 
 /// 待上游支持：更新日志
 #[utoipa::path(
+    security(("BearerAuth" = ["doc:read"])),
     get,
     path = "/api/core/doc/templates/{template_id}/versions/changelog",
     tag = "Filled",

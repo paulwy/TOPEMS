@@ -708,7 +708,8 @@ export const ProductionDashboardPage: React.FC = () => {
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              {i18n.t('pages.index.mes_footer_every')} {REFRESH_INTERVAL_MS / 1000} {i18n.t('pages.index.mes_footer_suffix')}
+              {i18n.t('pages.index.mes_footer_every')} {REFRESH_INTERVAL_MS / 1000}{' '}
+              {i18n.t('pages.index.mes_footer_suffix')}
               {wsConnected ? i18n.t('pages.index.websocket_18') : i18n.t('pages.index.k17')}
             </Typography>
           </Stack>

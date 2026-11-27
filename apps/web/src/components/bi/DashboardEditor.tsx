@@ -91,7 +91,11 @@ const CHART_TYPES: { value: ChartType; label: string; icon: React.ReactNode }[] 
     label: i18n.t('components.dashboard_editor.type_composed'),
     icon: <BarChart3 size={20} />,
   },
-  { value: 'gauge', label: i18n.t('components.dashboard_editor.type_gauge'), icon: <Target size={20} /> },
+  {
+    value: 'gauge',
+    label: i18n.t('components.dashboard_editor.type_gauge'),
+    icon: <Target size={20} />,
+  },
 ];
 
 const WIDGET_TYPES = [
@@ -593,19 +597,18 @@ export const DashboardEditor: React.FC<{
                         {i18n.t('components.dashboard_editor.no_data')}
                       </Typography>
                     ) : (
-                    <ChartComponent
-                      type={widget.config.chartType || 'bar'}
-                      data={widget.config.data}
-                      xKey={widget.config.xKey}
-                      yKey={widget.config.yKey}
-                      yKeys={widget.config.yKeys}
-                      chartHeight={widget.h * CELL_HEIGHT - 80}
-                      chartWidth={widget.w * CELL_WIDTH - 32}
-                      showLegend={widget.w >= 3}
-                      showTooltip={true}
-                    />
+                      <ChartComponent
+                        type={widget.config.chartType || 'bar'}
+                        data={widget.config.data}
+                        xKey={widget.config.xKey}
+                        yKey={widget.config.yKey}
+                        yKeys={widget.config.yKeys}
+                        chartHeight={widget.h * CELL_HEIGHT - 80}
+                        chartWidth={widget.w * CELL_WIDTH - 32}
+                        showLegend={widget.w >= 3}
+                        showTooltip={true}
+                      />
                     )}
-
                   </Box>
                 )}
               </Box>
