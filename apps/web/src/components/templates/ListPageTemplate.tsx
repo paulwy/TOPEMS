@@ -31,6 +31,8 @@ import {
   LinearProgress,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { resolveDetailPathPattern } from '@/routes/detailPathMap';
 import {
   AlertTriangle as WarningIcon,
   MoreHorizontal,
@@ -830,14 +832,29 @@ export function ListPageTemplate<
   }, [crud, formMode, currentRecord, formSubmitting, handleFormSubmit, closeForm, renderAutoForm]);
   // 是否有表单（renderForm 或 formFields）
   const hasForm = !!(crud?.renderForm || crud?.formFields);
+  // 详情路由兜底：路由表里存在 `<当前路径>/:id` 时，行点击直接进详情页
+  // 优先级：显式 onRowClick > crud 表单（弹层查看）> 详情路由 > 无行为
+  const location = useLocation();
+  const navigate = useNavigate();
+  const resolvedDetailBasePath = useMemo(() => {
+    const pattern = resolveDetailPathPattern(location.pathname);
+    return pattern ? pattern.replace(/\/:id$/, '') : undefined;
+  }, [location.pathname]);
   // crud 模式下自动推断行点击行为
   const resolvedOnRowClick = useMemo(() => {
     if (onRowClick) return onRowClick;
     if (crud && hasForm && crud.clickRowToView !== false) {
       return (row: T) => openViewForm(row);
     }
+    if (resolvedDetailBasePath) {
+      return (row: T) => {
+        const id = getRowId?.(row) ?? (row as unknown as Record<string, unknown>)?.id;
+        if (id === undefined || id === null || id === '') return;
+        navigate(`${resolvedDetailBasePath}/${encodeURIComponent(String(id))}`);
+      };
+    }
     return;
-  }, [onRowClick, crud, hasForm, openViewForm]);
+  }, [onRowClick, crud, hasForm, openViewForm, resolvedDetailBasePath, navigate, getRowId]);
   // crud 模式下自动推断双击行编辑行为
   const resolvedOnRowDoubleClick = useMemo(() => {
     if (crud && hasForm && crud.doubleClickToEdit !== false) {
