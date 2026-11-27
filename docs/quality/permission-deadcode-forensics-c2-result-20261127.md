@@ -130,10 +130,40 @@
 2. **写码守卫未触达**：写门 `require_module_write` 对 GET/HEAD/OPTIONS 直接放行；本轮只读 GET，548 个写码决策仍未观测。
 3. **前端运行期动态资源未采集**：未起隔离前端，菜单/按钮/SDK/i18n 动态资源缺运行期对账。
 4. **空库单次冒烟**：部分列表/详情/投影端点 404/500，未走到对应守卫。
-5. **admin/超管口径不可用**：27 个 admin 兜底码未进非超管令牌集；超管 `["*"]` 短路无鉴别力。
+5. **admin/超管口径**（#97 已解除 admin 角色侧）：原 27 个 admin 兜底码未进非超管令牌集；#97 补建非超管 admin 账号（1158 具体码、不短路）纳入观测，见 §10。超管 `["*"]` 短路口径仍不可用于鉴别。
 
 ### 9.7 v2 产物
 
 - `artifacts/audit/forensics-c2/c2-matrix.json/.csv`：v2 逐条四格标记，顶层含 `observed_sources`（guard/inline 拆分与行数）、`be_observed_in_orphan`。
 - v1 矩阵备份：`/tmp/topems-c2/c2-matrix.v1.bak.json/.csv`。
 - 原始日志：`guard-trace.jsonl`（守卫层）、`inline-trace.jsonl`（收口层）。
+
+## 10. v3 增量：admin 角色取证账号与兜底码 GET 补扫（#97，2026-11-27）
+
+> 针对 §9.6 盲区⑤（admin/超管令牌口径不可用）补扫；仍为隔离库只读 GET 冒烟，**27 个兜底码 GET 未观测不等于死码**。
+
+### 10.1 账号与口径
+
+- 隔离库新增 `c2_admin`，绑 `admin` 角色（1158 权限），`is_superuser=false`、默认租户 member/active。**admin 是角色绑定而非超管**：令牌承载 1158 个具体权限码，不走超管 `["*"]` 短路，具备鉴别力。
+- 登录 200，`roles=[admin]`、`perm_cnt=1158`；**27 个原兜底码全部进入 admin 令牌集**（此前仅绑 admin，5 个非超管令牌带不到）。
+
+### 10.2 补扫结果
+
+- 1174 个无参 GET，c2_admin 并发轮询：200=880 / 403=16 / 404=225，其余 400/501/405/500/503。
+- 后端观测并集仍 **45** 码；**27 兜底码运行期 0 观测**。
+
+| 兜底码分层 | 数量 | 码 |
+|---|---:|---|
+| 读/伞码（GET 理论可触达） | 5 | `system:center:read`、`system:dictionary`、`system:monitor`、`system:plugin`、`system:settings` |
+| 写/管理码（守卫挂 POST/PUT/DELETE） | 22 | `admin:dashboard:write`、`iam:delete`、`iam:permission:create/delete/update`、`migration:service:create/delete/update`、`monitor:admin`、`monitor:alert:create/delete/update`、`monitor:log:create/delete/update`、`monitor:rule:create/delete/update`、`plugin:plugin:create/delete/update`、`tenant:member:delete` |
+
+### 10.3 结论边界
+
+- **口径盲区⑤已解除**：admin 角色令牌可用于兜底码观测，且非短路、有鉴别力。
+- 22 写码守卫挂写方法，本轮只读 GET 未触达；5 读/伞码在空库 GET 路径多 404/500，未走到守卫。两者均**不能据此判死码**；写码待写操作冒烟（需先造最小单据样本），读/伞码待前端/完整流程复核。
+
+### 10.4 矩阵 v3 与产物
+
+- 分类数量不变：活码 1 / 待复核 553 / admin 兜底 27。
+- 逐行新增 `in_admin_token`、`in_nonadmin_token` 标记；顶层 `admin_scan` 记录账号、角色、权限数、携带数、GET 观测数与读/写分层。
+- v2 矩阵备份：`/tmp/topems-c2/c2-matrix.v2.bak.json/.csv`。
