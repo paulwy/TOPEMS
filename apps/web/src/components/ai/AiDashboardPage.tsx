@@ -374,8 +374,12 @@ export const AiDashboardPage: React.FC = () => {
       try {
         const res = await apiClient.ai.get('/conversations', { params: { page: 1, page_size: 5 } });
         const data = res?.data as unknown;
-        if (Array.isArray(data)) return data as Array<{ id: string; title?: string; created_at?: string }>;
-        return ((data as { items?: Array<{ id: string; title?: string; created_at?: string }> })?.items ?? []);
+        if (Array.isArray(data))
+          return data as Array<{ id: string; title?: string; created_at?: string }>;
+        return (
+          (data as { items?: Array<{ id: string; title?: string; created_at?: string }> })?.items ??
+          []
+        );
       } catch {
         return [];
       }
@@ -483,7 +487,9 @@ export const AiDashboardPage: React.FC = () => {
       (recentConvQuery.data ?? []).map((c) => ({
         id: c.id,
         title: c.title || c.id,
-        description: c.created_at ? new Date(c.created_at).toLocaleString('zh-CN', { hour12: false }) : '',
+        description: c.created_at
+          ? new Date(c.created_at).toLocaleString('zh-CN', { hour12: false })
+          : '',
         status: 'success' as const,
         type: 'chat' as const,
         onClick: () => navigate(AI_PATHS.chat),
@@ -554,7 +560,6 @@ export const AiDashboardPage: React.FC = () => {
     },
     [navigate]
   );
-
 
   const refreshToolbar = (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
@@ -701,7 +706,11 @@ export const AiDashboardPage: React.FC = () => {
                 size='small'
               />
             </Box>
-            <Typography variant='body2' color='text.secondary' sx={{ py: 4, textAlign: 'center' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ py: 4, textAlign: 'center' }}
+            >
               {t('ai.dashboard.trend.empty')}
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>

@@ -11,7 +11,12 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardList, CalendarCheck, Package, CalendarDays, ArrowRight } from 'lucide-react';
-import { DashboardTemplate, type StatCard, type ChartCard, type QuickAction } from '@/components/templates';
+import {
+  DashboardTemplate,
+  type StatCard,
+  type ChartCard,
+  type QuickAction,
+} from '@/components/templates';
 import i18n from '@/i18n';
 import { APS_PATHS } from '@/module-configs/aps/config';
 import { productionPlanApi, scheduleApi } from '@/api/aps';
@@ -94,9 +99,7 @@ const ApsDashboardPage: React.FC = () => {
       {
         id: 'plan-periods',
         title: i18n.t('aps.aps_dashboard_page.plan_periods'),
-        value: String(
-          new Set(plans.map((p) => p.start_date?.slice(0, 7)).filter(Boolean)).size
-        ),
+        value: String(new Set(plans.map((p) => p.start_date?.slice(0, 7)).filter(Boolean)).size),
         icon: <CalendarDays size={24} />,
         color: 'warning',
       },

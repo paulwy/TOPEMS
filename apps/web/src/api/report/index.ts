@@ -346,7 +346,6 @@ export const reportApi = {
     return apiClient.bi.delete<boolean>(`/templates/${id}`);
   },
 
-
   listSchedules: async (): Promise<ApiResponse<ReportSchedule[]>> => {
     return apiClient.bi.get<ReportSchedule[]>('/schedules');
   },

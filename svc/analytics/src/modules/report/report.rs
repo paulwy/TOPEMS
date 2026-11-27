@@ -542,6 +542,7 @@ pub async fn export_report(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/reports/{id}/exports",
     tag = "bi",
     responses((status = 200, description = "OK"))
@@ -560,6 +561,7 @@ pub async fn list_export_jobs(
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["analytics:report:read"])),
     path = "/reports/exports/{job_id}",
     tag = "bi",
     responses((status = 200, description = "OK"))

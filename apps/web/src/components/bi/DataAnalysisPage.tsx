@@ -24,10 +24,8 @@ import {
 import { DashboardTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ChartComponent } from '@/components/bi/ChartLibrary';
 
-
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
 
 const DataAnalysisPage = () => {
   const theme = useTheme();
@@ -56,7 +54,12 @@ const DataAnalysisPage = () => {
     const totalAmount = rows.reduce((s2, o) => s2 + (Number(o.total_amount) || 0), 0);
     const orderCount = rows.length;
     const customerCount = new Set(rows.map((o) => o.customer_name).filter(Boolean)).size;
-    return { totalAmount, orderCount, customerCount, avgOrderAmount: orderCount ? totalAmount / orderCount : 0 };
+    return {
+      totalAmount,
+      orderCount,
+      customerCount,
+      avgOrderAmount: orderCount ? totalAmount / orderCount : 0,
+    };
   }, [ordersData]);
   const { totalAmount, orderCount, customerCount, avgOrderAmount } = totals;
 
@@ -123,7 +126,6 @@ const DataAnalysisPage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [chartType, setChartType] = useState<'bar' | 'line' | 'area' | 'pie'>('bar');
 
-
   const renderChartAnalysis = () => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -156,8 +158,7 @@ const DataAnalysisPage = () => {
             </Button>
           ))}
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }}></Box>
       </Box>
 
       <Card
@@ -501,53 +502,52 @@ const DataAnalysisPage = () => {
     <DashboardTemplate
       title={t('bi.data_analysis_page.page_title')}
       subtitle={t('bi.data_analysis_page.page_subtitle')}
-        breadcrumbs={[
-          { label: t('bi.data_analysis_page.home'), href: '/dashboard' },
-          { label: 'BI' },
-          { label: t('bi.data_analysis_page.data_analysis_tab') },
-        ]}
-      >
-        <Box sx={{ p: 3 }}>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 700, mb: 3 }}
-          >
-            {t('bi.data_analysis_page.k46')}
-          </Typography>
+      breadcrumbs={[
+        { label: t('bi.data_analysis_page.home'), href: '/dashboard' },
+        { label: 'BI' },
+        { label: t('bi.data_analysis_page.data_analysis_tab') },
+      ]}
+    >
+      <Box sx={{ p: 3 }}>
+        <Typography
+          variant='h4'
+          sx={{ fontWeight: 700, mb: 3 }}
+        >
+          {t('bi.data_analysis_page.k46')}
+        </Typography>
 
+        <Card
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider', mb: 3 }}
+        >
+          <CardContent sx={{ pb: 0 }}>
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+            >
+              <Tab
+                label={t('bi.data_analysis_page.analysis_tab')}
+                icon={<BarChart3 size={16} />}
+                iconPosition='start'
+              />
+              <Tab
+                label={t('bi.data_analysis_page.detail_tab')}
+                icon={<Table2 size={16} />}
+                iconPosition='start'
+              />
+              <Tab
+                label={t('bi.data_analysis_page.data_detail_tab')}
+                icon={<Layers size={16} />}
+                iconPosition='start'
+              />
+            </Tabs>
+          </CardContent>
+        </Card>
 
-          <Card
-            elevation={0}
-            sx={{ border: '1px solid', borderColor: 'divider', mb: 3 }}
-          >
-            <CardContent sx={{ pb: 0 }}>
-              <Tabs
-                value={activeTab}
-                onChange={(_, v) => setActiveTab(v)}
-              >
-                <Tab
-                  label={t('bi.data_analysis_page.analysis_tab')}
-                  icon={<BarChart3 size={16} />}
-                  iconPosition='start'
-                />
-                <Tab
-                  label={t('bi.data_analysis_page.detail_tab')}
-                  icon={<Table2 size={16} />}
-                  iconPosition='start'
-                />
-                <Tab
-                  label={t('bi.data_analysis_page.data_detail_tab')}
-                  icon={<Layers size={16} />}
-                  iconPosition='start'
-                />
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          {activeTab === 0 && renderChartAnalysis()}
-          {activeTab === 1 && renderPivotTable()}
-          {activeTab === 2 && renderDataTable()}
-        </Box>
+        {activeTab === 0 && renderChartAnalysis()}
+        {activeTab === 1 && renderPivotTable()}
+        {activeTab === 2 && renderDataTable()}
+      </Box>
     </DashboardTemplate>
   );
 };

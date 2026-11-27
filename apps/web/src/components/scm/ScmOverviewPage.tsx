@@ -116,26 +116,54 @@ const ScmOverviewPage: React.FC = () => {
 
   const statusData = useMemo(
     () => [
-      { label: i18n.t('scm.scm_overview_page.status_pending'), value: purchase?.pending_orders ?? 0 },
-      { label: i18n.t('scm.scm_overview_page.status_approved'), value: purchase?.approved_orders ?? 0 },
-      { label: i18n.t('scm.scm_overview_page.status_rejected'), value: purchase?.rejected_orders ?? 0 },
-      { label: i18n.t('scm.scm_overview_page.status_completed'), value: purchase?.completed_orders ?? 0 },
+      {
+        label: i18n.t('scm.scm_overview_page.status_pending'),
+        value: purchase?.pending_orders ?? 0,
+      },
+      {
+        label: i18n.t('scm.scm_overview_page.status_approved'),
+        value: purchase?.approved_orders ?? 0,
+      },
+      {
+        label: i18n.t('scm.scm_overview_page.status_rejected'),
+        value: purchase?.rejected_orders ?? 0,
+      },
+      {
+        label: i18n.t('scm.scm_overview_page.status_completed'),
+        value: purchase?.completed_orders ?? 0,
+      },
     ],
     [purchase]
   );
 
   const inventoryData = useMemo(
     () => [
-      { label: i18n.t('scm.scm_overview_page.inventory_skus'), value: overview?.inventory?.total_skus ?? 0 },
-      { label: i18n.t('scm.scm_overview_page.inventory_low'), value: overview?.inventory?.low_stock_count ?? 0 },
+      {
+        label: i18n.t('scm.scm_overview_page.inventory_skus'),
+        value: overview?.inventory?.total_skus ?? 0,
+      },
+      {
+        label: i18n.t('scm.scm_overview_page.inventory_low'),
+        value: overview?.inventory?.low_stock_count ?? 0,
+      },
     ],
     [overview]
   );
 
   const charts: ChartCard[] = useMemo(
     () => [
-      { id: 'po-status', title: i18n.t('scm.scm_overview_page.k39'), type: 'bar', data: statusData },
-      { id: 'inventory', title: i18n.t('scm.scm_overview_page.k40'), type: 'pie', data: inventoryData },
+      {
+        id: 'po-status',
+        title: i18n.t('scm.scm_overview_page.k39'),
+        type: 'bar',
+        data: statusData,
+      },
+      {
+        id: 'inventory',
+        title: i18n.t('scm.scm_overview_page.k40'),
+        type: 'pie',
+        data: inventoryData,
+      },
     ],
     [statusData, inventoryData]
   );
@@ -186,7 +214,8 @@ const ScmOverviewPage: React.FC = () => {
     return rows.map((po) => ({
       id: po.id,
       title: po.order_number,
-      description: po.total_amount != null ? `¥${Number(po.total_amount).toLocaleString('zh-CN')}` : '',
+      description:
+        po.total_amount != null ? `¥${Number(po.total_amount).toLocaleString('zh-CN')}` : '',
       time: po.order_date || '',
       icon: <ShoppingCart size={18} />,
       status:
