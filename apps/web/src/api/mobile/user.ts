@@ -39,6 +39,16 @@ interface UpdateProfileRequest {
   timezone?: string;
 }
 
+export interface UserSettings {
+  language: string;
+  theme: string;
+  notification_enabled: boolean;
+  sound_enabled: boolean;
+  auto_sync: boolean;
+  sync_interval: number;
+  configured: boolean;
+}
+
 export const userApi = {
   getProfile: async (): Promise<ApiResponse<UserProfile>> => {
     return apiClient.mobile.get('/user/profile');
@@ -54,8 +64,12 @@ export const userApi = {
     });
   },
 
-  getSettings: async (): Promise<ApiResponse<unknown>> => {
+  getSettings: async (): Promise<ApiResponse<UserSettings>> => {
     return apiClient.mobile.get('/user/settings');
+  },
+
+  updateSettings: async (data: Partial<UserSettings>): Promise<ApiResponse<UserSettings>> => {
+    return apiClient.mobile.put('/user/settings', data);
   },
 };
 

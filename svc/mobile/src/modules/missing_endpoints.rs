@@ -186,31 +186,6 @@ pub async fn get_usage_stats(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["mobile:user:read"])),
-    path = "/user/settings",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "user"
-)]
-pub async fn get_user_settings(
-    headers: HeaderMap,
-    State(auth_state): State<topems_shared::AuthState>,
-    State(_db): State<Db>,
-) -> impl IntoResponse {
-    let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
-    let settings = json!({
-        "notifications": {"push": true, "email": false, "inApp": true},
-        "language": "zh-CN",
-        "theme": "light",
-        "offlineSync": {"auto": true, "intervalMinutes": 15}
-    });
-    (StatusCode::OK, ApiResponse::success(settings, "用户设置"))
-}
-
-#[utoipa::path(
-    get,
     security(("BearerAuth" = ["mobile:push:read"])),
     path = "/push/config",
     responses(

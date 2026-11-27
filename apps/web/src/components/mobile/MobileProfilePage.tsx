@@ -1,8 +1,9 @@
 import { designTokens } from '@topems/tokens';
 import styles from './MobileProfilePage.module.css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { userApi } from '@/api/mobile/user';
+import { userApi, type UserSettings } from '@/api/mobile/user';
+import { useThemeStore } from '@/store';
 import { Box, Typography, Avatar, useTheme, Switch, Chip, Paper } from '@mui/material';
 import {
   Home,
@@ -68,8 +69,40 @@ const MobileSettingsPage: React.FC = () => {
     user?.role ||
     profile?.department ||
     i18n.t('mobile.mobile_profile_page.k29');
-  const [darkMode, setDarkMode] = useState(false);
+  // 深色模式与推送开关都读写真实设置：深色走全局主题 store，推送写 mobile.user_settings。
+  const themeMode = useThemeStore((state) => state.theme);
+  const setTheme = useThemeStore((state) => state.setTheme);
+  const darkMode = themeMode === 'dark';
   const [pushEnabled, setPushEnabled] = useState(true);
+  const settingsQuery = useQuery({
+    queryKey: ['mobile-user-settings'],
+    queryFn: () => userApi.getSettings().then((res) => res.data ?? null),
+  });
+  useEffect(() => {
+    if (settingsQuery.data && typeof settingsQuery.data.notification_enabled === 'boolean') {
+      setPushEnabled(settingsQuery.data.notification_enabled);
+    }
+  }, [settingsQuery.data]);
+  const handleToggleDarkMode = React.useCallback(
+    (value: boolean) => {
+      setTheme(value ? 'dark' : 'light');
+      void userApi.updateSettings({ theme: value ? 'dark' : 'light' }).catch(() => undefined);
+    },
+    [setTheme]
+  );
+  const handleTogglePush = React.useCallback(
+    (value: boolean) => {
+      const previous = pushEnabled;
+      setPushEnabled(value);
+      void userApi
+        .updateSettings({ notification_enabled: value })
+        .catch(async () => {
+          setPushEnabled(previous);
+          await settingsQuery.refetch();
+        });
+    },
+    [pushEnabled, settingsQuery]
+  );
   const settingGroups: SettingGroup[] = [
     {
       title: i18n.t('mobile.mobile_profile_page.k0'),
@@ -109,7 +142,7 @@ const MobileSettingsPage: React.FC = () => {
           label: i18n.t('mobile.mobile_profile_page.k10'),
           type: 'switch',
           value: darkMode,
-          onToggle: (value) => setDarkMode(value),
+          onToggle: handleToggleDarkMode,
         },
         {
           id: 'push',
@@ -118,7 +151,7 @@ const MobileSettingsPage: React.FC = () => {
           subtitle: i18n.t('mobile.mobile_profile_page.k12'),
           type: 'switch',
           value: pushEnabled,
-          onToggle: (value) => setPushEnabled(value),
+          onToggle: handleTogglePush,
         },
         {
           id: 'language',

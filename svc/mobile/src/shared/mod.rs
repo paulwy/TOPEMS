@@ -120,7 +120,7 @@ use crate::modules::inventory::{
 };
 use crate::modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
 use crate::modules::missing_endpoints::{
-    get_push_config, get_usage_stats, get_user_settings, list_inspection_tasks, update_push_config,
+    get_push_config, get_usage_stats, list_inspection_tasks, update_push_config,
     update_push_template,
 };
 use crate::modules::notifications::{
@@ -183,7 +183,8 @@ use crate::modules::task::{
 };
 use crate::modules::user::{
     change_password, get_department_members, get_permissions, get_profile, get_user_by_id,
-    list_users, update_profile, update_user_status, upload_avatar,
+    get_user_settings, list_users, update_profile, update_user_settings, update_user_status,
+    upload_avatar,
 };
 use crate::modules::workbench::get_workbench_data;
 use axum::Router;
@@ -355,7 +356,10 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::get(list_inspection_tasks),
         )
         .route("/analytics/usage", axum::routing::get(get_usage_stats))
-        .route("/user/settings", axum::routing::get(get_user_settings))
+        .route(
+            "/user/settings",
+            axum::routing::get(get_user_settings).put(update_user_settings),
+        )
         .route(
             "/push/config",
             axum::routing::get(get_push_config).put(update_push_config),
