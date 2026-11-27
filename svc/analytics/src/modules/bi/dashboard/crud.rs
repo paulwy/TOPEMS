@@ -17,9 +17,7 @@ use super::models::{
 use super::IntoDateTime;
 
 // 软删除行不应出现在列表中（deleted_at 由 delete_dashboard 写入）
-async fn load_deleted_dashboard_ids(
-    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
-) -> Vec<Uuid> {
+async fn load_deleted_dashboard_ids(tx: &mut sqlx::Transaction<'_, sqlx::Postgres>) -> Vec<Uuid> {
     sqlx::query_scalar::<_, Uuid>(
         "SELECT id FROM bi.analytics_dashboards WHERE deleted_at IS NOT NULL",
     )
