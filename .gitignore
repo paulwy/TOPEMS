@@ -307,10 +307,7 @@ logs/_stale-*
 
 # Design system 探索
 
-# 微前端：runtime/governance/marketplace 等已正式采用并纳入版本库（2026-11 起）
-# 仅以下未落地的探索子目录仍忽略；其余一律跟踪，避免新文件被静默排除
-apps/web/src/microfrontend/lowcode/
-apps/web/src/microfrontend/platform/
+# 微前端目录整体纳入版本库（2026-11 起），含 lowcode/platform 探索件，不再忽略
 
 # AI 组件探索
 apps/web/src/utils/ai/
