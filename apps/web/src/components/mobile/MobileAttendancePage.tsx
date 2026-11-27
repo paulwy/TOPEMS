@@ -160,7 +160,7 @@ const MobileAttendancePage: React.FC = () => {
         });
         return;
       }
-      apiLogger.error(i18n.t('pages.mobile_attendance_page.k0'), err);
+      apiLogger.error('[mobile-attendance] checkIn failed', err);
       addNotification({
         title: i18n.t('mobile.mobile_attendance_page.k5'),
         message: i18n.t('mobile.mobile_attendance_page.k6'),
@@ -226,7 +226,7 @@ const MobileAttendancePage: React.FC = () => {
         });
         return;
       }
-      apiLogger.error(i18n.t('pages.mobile_attendance_page.k1'), err);
+      apiLogger.error('[mobile-attendance] checkOut failed', err);
       addNotification({
         title: i18n.t('mobile.mobile_attendance_page.k9'),
         message: i18n.t('mobile.mobile_attendance_page.k10'),
@@ -288,7 +288,7 @@ const MobileAttendancePage: React.FC = () => {
         });
         return;
       }
-      apiLogger.error(i18n.t('pages.mobile_attendance_page.k2'), err);
+      apiLogger.error('[mobile-attendance] submitLeave failed', err);
       addNotification({
         title: i18n.t('mobile.mobile_attendance_page.k14'),
         message: i18n.t('mobile.mobile_attendance_page.k15'),
@@ -569,7 +569,7 @@ const MobileAttendancePage: React.FC = () => {
                         variant='body2'
                         sx={{ opacity: 0.7, mb: 0.5 }}
                       >
-                        {i18n.t('pages.mobile_attendance_page.k0')}
+                        {i18n.t('pages.mobile_attendance_page.k12')}
                       </Typography>
                       <Typography
                         variant='h6'
@@ -583,7 +583,7 @@ const MobileAttendancePage: React.FC = () => {
                         variant='body2'
                         sx={{ opacity: 0.7, mb: 0.5 }}
                       >
-                        {i18n.t('pages.mobile_attendance_page.k1')}
+                        {i18n.t('pages.mobile_attendance_page.k13')}
                       </Typography>
                       <Typography
                         variant='h6'
@@ -613,21 +613,9 @@ const MobileAttendancePage: React.FC = () => {
                       variant='body2'
                       sx={{ fontWeight: 500 }}
                     >
-                      {i18n.t('pages.mobile_attendance_page.k2')}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {i18n.t('pages.mobile_attendance_page.k3')}
+                      {i18n.t('pages.mobile_attendance_page.k14')}
                     </Typography>
                   </Box>
-                  <Chip
-                    label={i18n.t('mobile.mobile_attendance_page.k44')}
-                    size='small'
-                    color='success'
-                    sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-                  />
                 </Paper>
                 <Paper
                   elevation={0}
@@ -871,14 +859,14 @@ const MobileAttendancePage: React.FC = () => {
                               color='text.secondary'
                             >
                               {leave.days}
-                              {i18n.t('pages.mobile_attendance_page.k0')}
+                              {i18n.t('pages.mobile_attendance_page.k15')}
                             </Typography>
                           </Box>
                           <Typography
                             variant='body2'
                             sx={{ mb: 1, fontWeight: 500 }}
                           >
-                            {leave.start_date} {i18n.t('pages.mobile_attendance_page.k1')}{' '}
+                            {leave.start_date} {i18n.t('pages.mobile_attendance_page.k16')}{' '}
                             {leave.end_date}
                           </Typography>
                           <Typography
