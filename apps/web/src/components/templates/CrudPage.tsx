@@ -775,6 +775,24 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 
   // ── 渲染 ──
   const showCreate = actions.includes('create');
+  // 新建按钮文案：createTitle 是弹窗标题（"产能管理"、"FMEA 失效模式与影响分析"），
+  // 只有它本身就是动作短语（以"新建/新增"开头）时才适合当按钮文案；否则按
+  // 「新建 + 实体名」生成（实体名取 title 去掉尾部"管理"，避免"新建产能管理"这种读法）。
+  const createEntityTitle = useMemo(
+    () => (schema.title || '').replace(/管理$/, ''),
+    [schema.title]
+  );
+  const createButtonLabel = useMemo(() => {
+    if (schema.createButtonLabel) return schema.createButtonLabel;
+    const custom = schema.createTitle;
+    if (custom && /^(新建|新增)/.test(custom)) return custom;
+    return `${i18n.t('components.crud_page.k24')}${createEntityTitle}`;
+  }, [schema.createButtonLabel, schema.createTitle, createEntityTitle]);
+  const createDialogTitle = useMemo(() => {
+    const custom = schema.createTitle;
+    if (custom && /^(新建|新增)/.test(custom)) return custom;
+    return `${i18n.t('components.crud_page.k24')}${createEntityTitle}`;
+  }, [schema.createTitle, createEntityTitle]);
   const selectable = schema.list?.selectable || batchActions.length > 0;
   const rows = useMemo(() => data?.data || [], [data]);
   const total = data?.total || 0;
@@ -965,6 +983,8 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 />
               </>
             ) : (
+              /* 空表时把新建动作也交给空态行：CrudPage 不传 crud 配置，
+                 ListPageTemplate 自己推不出空态 CTA，只能由这里显式给。 */
               <ListPageTemplate
                 title={showHeaderTitle ? schema.title : ''}
                 subtitle={showHeaderTitle ? schema.description : ''}
@@ -1003,13 +1023,24 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 inlineEditMode={schema.list?.inlineEditMode}
                 onInlineEditSave={handleInlineEditSave}
                 headerContent={resolvedHeaderContent}
+                emptyActionButton={
+                  showCreate
+                    ? {
+                        label: createButtonLabel,
+                        icon: <Plus size={16} />,
+                        onClick: () => {
+                          setWizardValues({});
+                          setCreateFormValues({});
+                          setCreateOpen(true);
+                        },
+                      }
+                    : undefined
+                }
                 actions={
                   [
                     showCreate
                       ? {
-                          label:
-                            schema.createTitle ||
-                            `${i18n.t('components.crud_page.k24')}${schema.title}`,
+                          label: createButtonLabel,
                           icon: <Plus size={16} />,
                           onClick: () => {
                             setWizardValues({});
@@ -1076,7 +1107,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           fullWidth
         >
           <DialogTitle>
-            {schema.createTitle || `${i18n.t('components.crud_page.k27')}${schema.title}`}
+            {createDialogTitle}
           </DialogTitle>
           <DialogContent>
             {hasWizard && extensions.wizard ? (

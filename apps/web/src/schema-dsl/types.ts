@@ -358,6 +358,8 @@ export interface EntitySchema<T = Record<string, unknown>> {
 
   /** 创建弹窗标题（默认 '新建{title}'） */
   createTitle?: string;
+  /** 新建按钮文案（默认 '新建{title}'）；createTitle 只作用于弹窗标题，不要拿它当按钮文案 */
+  createButtonLabel?: string;
   /** 编辑弹窗标题（默认 '编辑{title}'） */
   editTitle?: string;
   /** 详情弹窗标题（默认 '{title}详情'） */
