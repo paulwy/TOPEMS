@@ -14,8 +14,11 @@
 #   - 磁盘可用 < 60 GiB 直接退出（exit 0，只记日志），避免把系统盘写满
 #   - 有 cargo build/test 在跑时跳过：夜间测试与白天的 release 演练抢同一份 CPU/磁盘，
 #     两个全量编译并行会把余量一次吃光
-#   - 使用独立 CARGO_TARGET_DIR（~/.cache/topems-nightly-target），跑完即删：夜间构建
-#     不再往仓库 target/ 里堆，磁盘占用可预测；白天 Trae 的增量缓存不受影响
+#   - 使用独立 CARGO_TARGET_DIR（~/.cache/topems/nightly-target），默认跑完即删：夜间构建
+#     不再往仓库 target/ 里堆，磁盘占用可预测；白天 Trae 的增量缓存不受影响。
+#     测试失败时保留供排查，但最长 7 天（TOPEMS_NIGHTLY_KEEP_DAYS 可覆盖），
+#     下次运行启动时扫过期自动回收，避免无人值守时无限累积（2026-11-27 事故根因）。
+#   - 任何异常退出（Ctrl-C、被 kill、阶段 1 失败）由 trap EXIT 兜底清理
 #   - SQLX_OFFLINE=true、RUST_TEST_THREADS=1，与 pre-push 原语义一致
 #   - 不写生产库：DATABASE_URL 取 .env 的 TEST_DATABASE_URL，缺失才回落 MIGRATE_URL
 #
@@ -71,12 +74,38 @@ fi
 
 echo "── 阶段 2：cargo test --workspace --lib（全量）──"
 export SQLX_OFFLINE=true
-# 独立 target：夜间构建与仓库 target/（Trae 增量缓存）互不污染，跑完即删
-NIGHTLY_TARGET="${HOME}/.cache/topems-nightly-target"
+# 独立 target：夜间构建与仓库 target/（Trae 增量缓存）互不污染（落点约定见
+# docs/ops/ops-workspace-and-build-cache-convention-2026-11-27.md）
+NIGHTLY_TARGET="${TOPEMS_NIGHTLY_TARGET_DIR:-${HOME}/.cache/topems/nightly-target}"
+NIGHTLY_KEEP_DAYS="${TOPEMS_NIGHTLY_KEEP_DAYS:-7}"
+
+# 过期残留：上次失败留下的 target 超过保留期直接回收（无人值守时唯一的兜底）
+if [ -d "$NIGHTLY_TARGET" ]; then
+  if [ -n "$(find "$NIGHTLY_TARGET" -maxdepth 0 -mtime +"$NIGHTLY_KEEP_DAYS" 2>/dev/null)" ]; then
+    echo "回收过期夜间 target（>${NIGHTLY_KEEP_DAYS} 天，$(du -sh "$NIGHTLY_TARGET" 2>/dev/null | cut -f1)）：${NIGHTLY_TARGET}"
+    rm -rf "$NIGHTLY_TARGET"
+  fi
+fi
+
 rm -rf "$NIGHTLY_TARGET"
 mkdir -p "$NIGHTLY_TARGET"
 export CARGO_TARGET_DIR="$NIGHTLY_TARGET"
 echo "CARGO_TARGET_DIR=${NIGHTLY_TARGET}"
+
+# 收尾责任：正常结束/测试通过 → 删除；测试失败 → 保留 ≤ NIGHTLY_KEEP_DAYS 天；
+# 任何异常退出（Ctrl-C、被 kill、阶段失败）→ 删除，避免留下孤儿 target
+TEST_FAILED_KEEP=0
+_cleanup_nightly_target() {
+  local rc=$?
+  if [ "$TEST_FAILED_KEEP" = "1" ]; then
+    echo "保留夜间 target 供排查（最长 ${NIGHTLY_KEEP_DAYS} 天）：${NIGHTLY_TARGET}"
+  else
+    [ -d "$NIGHTLY_TARGET" ] && rm -rf "$NIGHTLY_TARGET" && echo "已清理夜间 target：${NIGHTLY_TARGET}"
+  fi
+  return "$rc"
+}
+trap _cleanup_nightly_target EXIT
+
 export RUST_TEST_THREADS=1
 if [ -f .env ]; then
   TEST_DSN=$(sed -nE 's/^TEST_DATABASE_URL=(.*)/\1/p' .env | head -1)
@@ -102,7 +131,8 @@ if cargo test --workspace --lib; then
   echo "已清理夜间 target：${NIGHTLY_TARGET}"
 else
   echo "✗ cargo test --workspace --lib 失败"; RC=1
-  echo "保留 ${NIGHTLY_TARGET} 供排查（体积 $(du -sg "$NIGHTLY_TARGET" 2>/dev/null | awk '{print $1}') GiB）"
+  TEST_FAILED_KEEP=1
+  echo "保留 ${NIGHTLY_TARGET} 供排查（体积 $(du -sg "$NIGHTLY_TARGET" 2>/dev/null | awk '{print $1}') GiB，超 ${NIGHTLY_KEEP_DAYS} 天自动回收）"
 fi
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] nightly gates 结束（RC=${RC}）"

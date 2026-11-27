@@ -78,6 +78,9 @@ lib/target/
 lib/*/.sqlx/
 **/sqlx-data.json
 
+# 并行工作树（约定见 docs/ops/ops-workspace-and-build-cache-convention-2026-11-27.md）
+.worktrees/
+
 # Docker
 docker-compose.override.yml
 docker-compose.*.yml
