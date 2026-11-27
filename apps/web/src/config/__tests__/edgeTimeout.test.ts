@@ -49,7 +49,9 @@ describe('导航类端点放宽到 15s（2026-11-27）', () => {
     expect(isNavigationEndpoint('/menus?x=1')).toBe(true);
     expect(isNavigationEndpoint('/tenant/00000000-0000-0000-0000-000000000001/modules')).toBe(true);
     expect(isNavigationEndpoint('/tenant/abc/modules?page=1')).toBe(true);
-    expect(isNavigationEndpoint('/tenant/tenants/00000000-0000-0000-0000-000000000001/modules')).toBe(true);
+    expect(
+      isNavigationEndpoint('/tenant/tenants/00000000-0000-0000-0000-000000000001/modules')
+    ).toBe(true);
     expect(isNavigationEndpoint('/navigation-config')).toBe(true);
     expect(isNavigationEndpoint('/menus-extra')).toBe(false);
     expect(isNavigationEndpoint('/tenant/abc/users')).toBe(false);
@@ -58,6 +60,8 @@ describe('导航类端点放宽到 15s（2026-11-27）', () => {
 
   it('请求拦截器对导航端点覆盖为 EDGE_TOLERANT_TIMEOUT_MS', () => {
     const src = readFileSync(join(root, 'api/client.ts'), 'utf-8');
-    expect(src).toMatch(/isNavigationEndpoint\(url\)[\s\S]{0,120}timeout = EDGE_TOLERANT_TIMEOUT_MS/);
+    expect(src).toMatch(
+      /isNavigationEndpoint\(url\)[\s\S]{0,120}timeout = EDGE_TOLERANT_TIMEOUT_MS/
+    );
   });
 });
