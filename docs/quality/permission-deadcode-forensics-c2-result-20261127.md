@@ -294,4 +294,16 @@
 - 产物（`artifacts/audit/forensics-c2/`，gitignore）：矩阵 `c2-matrix.json/.csv` v3.3（逐行 `write_smoke` 三轮判定 + `write_smoke_note`，顶层 `write_smoke_scan`）；写冒烟请求记录 `/tmp/topems-c2/write-smoke-<role>.json`；脚本 `/tmp/topems-c2/write-smoke.py`、`login-write.py`、`refresh-matrix-v33.py`、`refresh-csv-v33.py`；v3.2 备份 `/tmp/topems-c2/c2-matrix.v32.bak.json/.csv`。
 - 回退：停隔离实例（8199）；隔离库 `DELETE FROM iam.users WHERE username LIKE 'c2_%'` 级联会话/刷新令牌/登录日志；还原两份埋点 `.rs` 备份并重编；清 `artifacts/audit/*.jsonl` 与 `/tmp/topems-c2/`；隔离库可 `DROP DATABASE topems_replay_verify`。
 
+### 13.6 兜底 27 码引用面分层复核（#104，静态只读）
+
+- **背景**：承接 §13.3 `monitor:admin` 维持兜底，对兜底分类全部 27 码做一次引用面分层甄别，确认 #98/#99 静态普查是否漏扫生产消费点。全程静态只读：不起实例、不写隔离库、不改鉴权、不下死码定论。
+- **分层口径**：`be_prod`（`svc/**/*.rs`，排除 tests，守卫/业务消费点）、`fe_component`（`apps/web/src` 组件，排除目录表/配置/locales）、`fe_catalog`（前端 `config/permissions.ts` 目录登记表）、`seed_sql`（`database/**/*.sql` 授予侧目录）、`test_lib`（测试断言）。
+- **统一画像**：27 码均 `in_token=false`（6 个取证账号令牌均不带）、`role_cnt=1`、仅 admin 角色令牌携带（`in_admin_token=true`）、业务角色零授予；运行期只在低鉴别力 admin 路径出现。
+- **复核结果**：27/27 `be_prod=0`、`fe_component=0`；全部登记于前端目录表（`fe_catalog=1`）与 seed/migration SQL；仅 `iam:delete` 另有 1 处 `lib/tests` 断言。即生产守卫与前端组件均无字面量消费点，命中均为目录/授予侧/测试残留，不构成守卫消费证据。
+- **两点口径辨析**：
+  1. `monitor:admin` 的后端接线来自 #98 A 类写门**动态拼接**（`require_module_write` 拼 `{module}:admin`），非字面量，故 `be_prod` 字面量扫描为 0 属预期；它仍挂 30 个写候选（#99），只是业务角色未授予、被访问门前置拦截，证据不足维持兜底。
+  2. 其余 26 码（`iam:delete`、`iam:permission:*`、`migration:service:*`、`monitor:alert/log/rule:*`、`plugin:plugin:*`、`system:*`、`admin:dashboard:write`、`tenant:member:delete`）无写门/守卫静态挂载点，属目录/seed 残留候选；是否下线目录登记待业务拍板，不据本轮静态复核自动清理或解绑。
+- **产物**（`artifacts/audit/forensics-c2/`，gitignore）：`fallback-27-reference-scan.json`（逐码分层命中文件/计数 + 口径注记）；脚本 `/tmp/topems-c2/scan-fallback-refs.py`。矩阵主分类不变：活码 6 / 待复核 548 / 兜底 27。
+
+
 
