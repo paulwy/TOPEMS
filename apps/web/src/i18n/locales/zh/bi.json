@@ -997,5 +997,9 @@
   "dashboard.dash_srm_name": "SRM 供应商管理",
   "bi.bi_dashboard_page.clone": "克隆",
   "bi.bi_dashboard_page.visibility": "可见性",
-  "bi.report_builder_page.error_load": "报表加载失败，请重试"
+  "bi.report_builder_page.error_load": "报表加载失败，请重试",
+  "bi.bi_dashboard_page.cancel_dialog": "取消",
+  "bi.bi_module_detail_page.status_col_alt": "状态",
+  "bi.bi.data_analysis_page.order_no_col": "订单号",
+  "bi.bi.dataset_page.status_label": "状态"
 }

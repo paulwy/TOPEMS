@@ -574,1293 +574,4881 @@
     "report_builder_page.select_dataset_label": "Select Dataset",
     "report_builder_page.execution_frequency_label": "Execution frequency",
     "bi_permission_page": [
-      ["text_eca37c", "Created At"],
-      ["k18", "Created At"],
-      ["text_30512b", "WMS Warehouse Database"],
-      ["text_7c8ebb", "HR Human Resources Database"],
-      ["text_b18f1c", "MES Production Database"],
-      ["sql_0", "Permission rule validation passed, SQLcondition syntax is correct"],
-      ["k1", "Permission rule validation failed, please check condition syntax"],
-      ["k2", "Simulation test passed, condition syntax is correct"],
-      ["k3", "No row-level permission rules"],
-      ["k4", "Click the button above to create the first permission rule"],
-      ["k5", "Rule Name"],
-      ["k6", "Data Table"],
-      ["k7", "Permission Condition"],
-      ["k8", "Applicable Roles"],
-      ["k9", "Priority"],
-      ["k10", "Status"],
-      ["k11", "Actions"],
-      ["k12", "No data permission rules"],
-      ["k13", "Rule Name"],
-      ["k14", "Resource Type"],
-      ["k15", "Permission Type"],
-      ["k16", "Role"],
-      ["k17", "User"],
-      ["k19", "Actions"],
-      ["k20", "Data Source"],
-      ["k21", "Business Main Database"],
-      ["k22", "Cancel"],
-      ["confirm", "Confirm"],
-      ["text_3fa8b3", "Text 3fa8b3"],
-      ["text_e20804", "Datasets"],
-      ["text_fc00f3", "Report"],
-      ["view", "View"],
-      ["edit", "Edit"],
-      ["text_08b55f", "System Management"],
-      ["export", "Export"],
-      ["text_c62b5d", "Metric name"],
-      ["text_6a9997", "Metric name"],
-      ["home", "Home"],
-      ["text_23bbdd", "Label"],
-      ["text_578248", "Label"],
-      ["text_679f4e", "Label"],
-      ["search", "Search"],
-      ["active", "Active"],
-      ["inactive", "Inactive"],
-      ["test", "Title"],
-      ["edit_1", "Edit"],
-      ["delete", "Delete"],
-      ["delete_1", "Label"],
-      ["edit_2", "Edit"],
-      ["delete_2", "Label"],
-      ["edit_3", "Edit"],
-      ["text_f36bf2", "Create New Rule"],
-      ["name", "Name"],
-      ["description", "Description"],
-      ["text_099652", "Label"],
-      ["text_924fa0", "Label"],
-      ["text_848c70", "Enter SQL condition, e.g. customer_id = 1"],
-      ["text_5885b5", "Label"],
-      ["text_d0959e", "Label"],
-      ["text_3446e5", "Higher number means higher priority"],
-      ["active_1", "Enabled"],
-      ["text_54dd4b", "Text 0bf60b"],
-      ["message_e7fc60", ", SQL"],
-      ["message_c0ea04", ", "],
-      ["message_dd26a1", ", "],
-      ["text_ae1917", "Text Ae1917"],
-      ["text_9f56c8", "Text 9f56c8"],
-      ["text_2f54ee", "Text 2f54ee"],
-      ["text_c23dd1", "Text C23dd1"],
-      ["text_f10ed4", "Text F10ed4"],
-      ["text_33c90a", "Text 33c90a"],
-      ["text_02f836", "Text 02f836"],
-      ["text_870802", "Text 870802"],
-      ["text_e92734", "Text E92734"],
-      ["text_3ca9ce", "Text 3ca9ce"],
-      ["text_97d956", "Text 97d956"],
-      ["text_ee8ecb", "Text Ee8ecb"],
-      ["text_3fea7c", "Status"],
-      ["text_2b6bc0", "Actions"],
-      ["text_10510a", "Text 10510a"],
-      ["text_14871a", "Text 14871a"],
-      ["text_1463e1", "Text 1463e1"],
-      ["text_464f3d", "Text 464f3d"],
-      ["text_1fd02a", "Text 1fd02a"],
-      ["text_c11322", "Text C11322"],
-      ["text_f13875", "Text F13875"],
-      ["text_625fb2", "Cancel"],
-      ["text_3455fc", "Save"],
-      ["text_be5fbb", "Text Be5fbb"]
+      [
+        "text_eca37c",
+        "Created At"
+      ],
+      [
+        "k18",
+        "Created At"
+      ],
+      [
+        "text_30512b",
+        "WMS Warehouse Database"
+      ],
+      [
+        "text_7c8ebb",
+        "HR Human Resources Database"
+      ],
+      [
+        "text_b18f1c",
+        "MES Production Database"
+      ],
+      [
+        "sql_0",
+        "Permission rule validation passed, SQLcondition syntax is correct"
+      ],
+      [
+        "k1",
+        "Permission rule validation failed, please check condition syntax"
+      ],
+      [
+        "k2",
+        "Simulation test passed, condition syntax is correct"
+      ],
+      [
+        "k3",
+        "No row-level permission rules"
+      ],
+      [
+        "k4",
+        "Click the button above to create the first permission rule"
+      ],
+      [
+        "k5",
+        "Rule Name"
+      ],
+      [
+        "k6",
+        "Data Table"
+      ],
+      [
+        "k7",
+        "Permission Condition"
+      ],
+      [
+        "k8",
+        "Applicable Roles"
+      ],
+      [
+        "k9",
+        "Priority"
+      ],
+      [
+        "k10",
+        "Status"
+      ],
+      [
+        "k11",
+        "Actions"
+      ],
+      [
+        "k12",
+        "No data permission rules"
+      ],
+      [
+        "k13",
+        "Rule Name"
+      ],
+      [
+        "k14",
+        "Resource Type"
+      ],
+      [
+        "k15",
+        "Permission Type"
+      ],
+      [
+        "k16",
+        "Role"
+      ],
+      [
+        "k17",
+        "User"
+      ],
+      [
+        "k19",
+        "Actions"
+      ],
+      [
+        "k20",
+        "Data Source"
+      ],
+      [
+        "k21",
+        "Business Main Database"
+      ],
+      [
+        "k22",
+        "Cancel"
+      ],
+      [
+        "confirm",
+        "Confirm"
+      ],
+      [
+        "text_3fa8b3",
+        "Text 3fa8b3"
+      ],
+      [
+        "text_e20804",
+        "Datasets"
+      ],
+      [
+        "text_fc00f3",
+        "Report"
+      ],
+      [
+        "view",
+        "View"
+      ],
+      [
+        "edit",
+        "Edit"
+      ],
+      [
+        "text_08b55f",
+        "System Management"
+      ],
+      [
+        "export",
+        "Export"
+      ],
+      [
+        "text_c62b5d",
+        "Metric name"
+      ],
+      [
+        "text_6a9997",
+        "Metric name"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "text_23bbdd",
+        "Label"
+      ],
+      [
+        "text_578248",
+        "Label"
+      ],
+      [
+        "text_679f4e",
+        "Label"
+      ],
+      [
+        "search",
+        "Search"
+      ],
+      [
+        "active",
+        "Active"
+      ],
+      [
+        "inactive",
+        "Inactive"
+      ],
+      [
+        "test",
+        "Title"
+      ],
+      [
+        "edit_1",
+        "Edit"
+      ],
+      [
+        "delete",
+        "Delete"
+      ],
+      [
+        "delete_1",
+        "Label"
+      ],
+      [
+        "edit_2",
+        "Edit"
+      ],
+      [
+        "delete_2",
+        "Label"
+      ],
+      [
+        "edit_3",
+        "Edit"
+      ],
+      [
+        "text_f36bf2",
+        "Create New Rule"
+      ],
+      [
+        "name",
+        "Name"
+      ],
+      [
+        "description",
+        "Description"
+      ],
+      [
+        "text_099652",
+        "Label"
+      ],
+      [
+        "text_924fa0",
+        "Label"
+      ],
+      [
+        "text_848c70",
+        "Enter SQL condition, e.g. customer_id = 1"
+      ],
+      [
+        "text_5885b5",
+        "Label"
+      ],
+      [
+        "text_d0959e",
+        "Label"
+      ],
+      [
+        "text_3446e5",
+        "Higher number means higher priority"
+      ],
+      [
+        "active_1",
+        "Enabled"
+      ],
+      [
+        "text_54dd4b",
+        "Text 0bf60b"
+      ],
+      [
+        "message_e7fc60",
+        ", SQL"
+      ],
+      [
+        "message_c0ea04",
+        ", "
+      ],
+      [
+        "message_dd26a1",
+        ", "
+      ],
+      [
+        "text_ae1917",
+        "Text Ae1917"
+      ],
+      [
+        "text_9f56c8",
+        "Text 9f56c8"
+      ],
+      [
+        "text_2f54ee",
+        "Text 2f54ee"
+      ],
+      [
+        "text_c23dd1",
+        "Text C23dd1"
+      ],
+      [
+        "text_f10ed4",
+        "Text F10ed4"
+      ],
+      [
+        "text_33c90a",
+        "Text 33c90a"
+      ],
+      [
+        "text_02f836",
+        "Text 02f836"
+      ],
+      [
+        "text_870802",
+        "Text 870802"
+      ],
+      [
+        "text_e92734",
+        "Text E92734"
+      ],
+      [
+        "text_3ca9ce",
+        "Text 3ca9ce"
+      ],
+      [
+        "text_97d956",
+        "Text 97d956"
+      ],
+      [
+        "text_ee8ecb",
+        "Text Ee8ecb"
+      ],
+      [
+        "text_3fea7c",
+        "Status"
+      ],
+      [
+        "text_2b6bc0",
+        "Actions"
+      ],
+      [
+        "text_10510a",
+        "Text 10510a"
+      ],
+      [
+        "text_14871a",
+        "Text 14871a"
+      ],
+      [
+        "text_1463e1",
+        "Text 1463e1"
+      ],
+      [
+        "text_464f3d",
+        "Text 464f3d"
+      ],
+      [
+        "text_1fd02a",
+        "Text 1fd02a"
+      ],
+      [
+        "text_c11322",
+        "Text C11322"
+      ],
+      [
+        "text_f13875",
+        "Text F13875"
+      ],
+      [
+        "text_625fb2",
+        "Cancel"
+      ],
+      [
+        "text_3455fc",
+        "Save"
+      ],
+      [
+        "text_be5fbb",
+        "Text Be5fbb"
+      ]
     ],
     "dataset_page": [
-      ["text_a001a2", "Updated At"],
-      ["k6", "Updated At"],
-      ["k14", "Archived"],
-      ["text_c3ba16", "Archived"],
-      ["text_b18f1c", "MES Production Database"],
-      ["k0", "No datasets"],
-      ["k1", "Click the button above to create your first dataset"],
-      ["k2", "Dataset Name"],
-      ["k3", "Data Source"],
-      ["k4", "Status"],
-      ["k5", "rowcount"],
-      ["k7", "Actions"],
-      ["k8", "Data Source"],
-      ["k9", "Business Main Database"],
-      ["k10", "Data Warehouse"],
-      ["k11", "Status"],
-      ["k12", "Draft"],
-      ["k13", "released"],
-      ["k15", "Field Name"],
-      ["k16", "Display Name"],
-      ["k17", "Type"],
-      ["k18", "Actions"],
-      ["k19", "String"],
-      ["k20", "Number"],
-      ["k21", "Date"],
-      ["k22", "Datetime"],
-      ["k23", "Boolean"],
-      ["k24", "Dimension"],
-      ["k25", "Measure"],
-      ["confirm", "Confirm"],
-      ["search", "Search"],
-      ["edit", "Edit"],
-      ["edit_1", "Edit"],
-      ["view", "View"],
-      ["view_1", "View"],
-      ["text_83611a", "Metric name"],
-      ["text_490e76", "Label"],
-      ["refresh", "Refresh"],
-      ["refresh_1", "Label"],
-      ["delete", "Delete"],
-      ["delete_1", "Label"],
-      ["create", "Create"],
-      ["info", "Label"],
-      ["text_5656f1", "Label"],
-      ["search_1", "Label"],
-      ["name", "Name"],
-      ["description", "Description"],
-      ["status", "Status"],
-      ["delete_2", "Label"],
-      ["text_3392ac", "Metric name"],
-      ["home", "Home"],
-      ["text_e20804", "Label"],
-      ["text_db302a", "Text Db302a"],
-      ["text_a56f00", "Text A56f00"],
-      ["text_694fc5", "Text 694fc5"],
-      ["text_0ce2ec", "Text 0ce2ec"],
-      ["text_fe0a07", "Text Fe0a07"],
-      ["text_9da412", "Text 9da412"],
-      ["text_c11322", "Text C11322"],
-      ["text_3fea7c", "Status"],
-      ["text_656800", "Text 656800"],
-      ["text_2b6bc0", "Actions"],
-      ["text_adcd1d", "Text Adcd1d"],
-      ["text_625fb2", "Cancel"],
-      ["text_be5fbb", "Text Be5fbb"],
-      ["text_f13875", "Text F13875"],
-      ["text_f86bf0", "Text F86bf0"],
-      ["text_22b433", "Draft"],
-      ["text_dca0c1", "Text Dca0c1"],
-      ["text_4484fa", "Text 4484fa"],
-      ["text_d31455", "Text D31455"],
-      ["text_fdf6f7", "Text Fdf6f7"],
-      ["text_226b09", "Text 226b09"],
-      ["text_e3751d", "/"],
-      ["text_cc4dd1", "Text Cc4dd1"],
-      ["text_55d479", "Text 55d479"],
-      ["text_4ff1e7", "Text 4ff1e7"],
-      ["text_0c3bf4", "Text 0c3bf4"],
-      ["text_97b0b6", "Text 97b0b6"],
-      ["text_f29c54", "Text F29c54"],
-      ["text_42c117", "Text 42c117"],
-      ["text_3c8a84", "SQL"],
-      ["text_41e45b", "Text 41e45b"],
-      ["text_8f1c59", "{{form Data_fields_length_0_1}}"]
+      [
+        "text_a001a2",
+        "Updated At"
+      ],
+      [
+        "k6",
+        "Updated At"
+      ],
+      [
+        "k14",
+        "Archived"
+      ],
+      [
+        "text_c3ba16",
+        "Archived"
+      ],
+      [
+        "text_b18f1c",
+        "MES Production Database"
+      ],
+      [
+        "k0",
+        "No datasets"
+      ],
+      [
+        "k1",
+        "Click the button above to create your first dataset"
+      ],
+      [
+        "k2",
+        "Dataset Name"
+      ],
+      [
+        "k3",
+        "Data Source"
+      ],
+      [
+        "k4",
+        "Status"
+      ],
+      [
+        "k5",
+        "rowcount"
+      ],
+      [
+        "k7",
+        "Actions"
+      ],
+      [
+        "k8",
+        "Data Source"
+      ],
+      [
+        "k9",
+        "Business Main Database"
+      ],
+      [
+        "k10",
+        "Data Warehouse"
+      ],
+      [
+        "k11",
+        "Status"
+      ],
+      [
+        "k12",
+        "Draft"
+      ],
+      [
+        "k13",
+        "released"
+      ],
+      [
+        "k15",
+        "Field Name"
+      ],
+      [
+        "k16",
+        "Display Name"
+      ],
+      [
+        "k17",
+        "Type"
+      ],
+      [
+        "k18",
+        "Actions"
+      ],
+      [
+        "k19",
+        "String"
+      ],
+      [
+        "k20",
+        "Number"
+      ],
+      [
+        "k21",
+        "Date"
+      ],
+      [
+        "k22",
+        "Datetime"
+      ],
+      [
+        "k23",
+        "Boolean"
+      ],
+      [
+        "k24",
+        "Dimension"
+      ],
+      [
+        "k25",
+        "Measure"
+      ],
+      [
+        "confirm",
+        "Confirm"
+      ],
+      [
+        "search",
+        "Search"
+      ],
+      [
+        "edit",
+        "Edit"
+      ],
+      [
+        "edit_1",
+        "Edit"
+      ],
+      [
+        "view",
+        "View"
+      ],
+      [
+        "view_1",
+        "View"
+      ],
+      [
+        "text_83611a",
+        "Metric name"
+      ],
+      [
+        "text_490e76",
+        "Label"
+      ],
+      [
+        "refresh",
+        "Refresh"
+      ],
+      [
+        "refresh_1",
+        "Label"
+      ],
+      [
+        "delete",
+        "Delete"
+      ],
+      [
+        "delete_1",
+        "Label"
+      ],
+      [
+        "create",
+        "Create"
+      ],
+      [
+        "info",
+        "Label"
+      ],
+      [
+        "text_5656f1",
+        "Label"
+      ],
+      [
+        "search_1",
+        "Label"
+      ],
+      [
+        "name",
+        "Name"
+      ],
+      [
+        "description",
+        "Description"
+      ],
+      [
+        "status",
+        "Status"
+      ],
+      [
+        "delete_2",
+        "Label"
+      ],
+      [
+        "text_3392ac",
+        "Metric name"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "text_e20804",
+        "Label"
+      ],
+      [
+        "text_db302a",
+        "Text Db302a"
+      ],
+      [
+        "text_a56f00",
+        "Text A56f00"
+      ],
+      [
+        "text_694fc5",
+        "Text 694fc5"
+      ],
+      [
+        "text_0ce2ec",
+        "Text 0ce2ec"
+      ],
+      [
+        "text_fe0a07",
+        "Text Fe0a07"
+      ],
+      [
+        "text_9da412",
+        "Text 9da412"
+      ],
+      [
+        "text_c11322",
+        "Text C11322"
+      ],
+      [
+        "text_3fea7c",
+        "Status"
+      ],
+      [
+        "text_656800",
+        "Text 656800"
+      ],
+      [
+        "text_2b6bc0",
+        "Actions"
+      ],
+      [
+        "text_adcd1d",
+        "Text Adcd1d"
+      ],
+      [
+        "text_625fb2",
+        "Cancel"
+      ],
+      [
+        "text_be5fbb",
+        "Text Be5fbb"
+      ],
+      [
+        "text_f13875",
+        "Text F13875"
+      ],
+      [
+        "text_f86bf0",
+        "Text F86bf0"
+      ],
+      [
+        "text_22b433",
+        "Draft"
+      ],
+      [
+        "text_dca0c1",
+        "Text Dca0c1"
+      ],
+      [
+        "text_4484fa",
+        "Text 4484fa"
+      ],
+      [
+        "text_d31455",
+        "Text D31455"
+      ],
+      [
+        "text_fdf6f7",
+        "Text Fdf6f7"
+      ],
+      [
+        "text_226b09",
+        "Text 226b09"
+      ],
+      [
+        "text_e3751d",
+        "/"
+      ],
+      [
+        "text_cc4dd1",
+        "Text Cc4dd1"
+      ],
+      [
+        "text_55d479",
+        "Text 55d479"
+      ],
+      [
+        "text_4ff1e7",
+        "Text 4ff1e7"
+      ],
+      [
+        "text_0c3bf4",
+        "Text 0c3bf4"
+      ],
+      [
+        "text_97b0b6",
+        "Text 97b0b6"
+      ],
+      [
+        "text_f29c54",
+        "Text F29c54"
+      ],
+      [
+        "text_42c117",
+        "Text 42c117"
+      ],
+      [
+        "text_3c8a84",
+        "SQL"
+      ],
+      [
+        "text_41e45b",
+        "Text 41e45b"
+      ],
+      [
+        "text_8f1c59",
+        "{{form Data_fields_length_0_1}}"
+      ]
     ],
     "report_builder_page": [
-      ["text_a001a2", "Updated At"],
-      ["k21", "Updated At"],
-      ["k34", "Archived"],
-      ["k39", "Execution Frequency"],
-      ["text_c3ba16", "Archived"],
-      ["text_6b6f80", "Execution Frequency"],
-      ["k0", "Monthly Sales Report"],
-      ["k1", "Monthly sales data summary report, includes sales, orders, customers metrics"],
-      ["k2", "Zhang San"],
-      ["k3", "Quality Weekly"],
-      ["k4", "Weekly production QC data summary, includes defect rate, pass rate, etc."],
-      ["k5", "Li Si"],
-      ["k6", "Inventory Monthly Report"],
+      [
+        "text_a001a2",
+        "Updated At"
+      ],
+      [
+        "k21",
+        "Updated At"
+      ],
+      [
+        "k34",
+        "Archived"
+      ],
+      [
+        "k39",
+        "Execution Frequency"
+      ],
+      [
+        "text_c3ba16",
+        "Archived"
+      ],
+      [
+        "text_6b6f80",
+        "Execution Frequency"
+      ],
+      [
+        "k0",
+        "Monthly Sales Report"
+      ],
+      [
+        "k1",
+        "Monthly sales data summary report, includes sales, orders, customers metrics"
+      ],
+      [
+        "k2",
+        "Zhang San"
+      ],
+      [
+        "k3",
+        "Quality Weekly"
+      ],
+      [
+        "k4",
+        "Weekly production QC data summary, includes defect rate, pass rate, etc."
+      ],
+      [
+        "k5",
+        "Li Si"
+      ],
+      [
+        "k6",
+        "Inventory Monthly Report"
+      ],
       [
         "k7",
         "Monthly inventory turnover analysis report, includes inbound/outbound, inventory balance, etc."
       ],
-      ["k8", "Wang Wu"],
-      ["k9", "HR Monthly Report"],
-      ["k10", "Monthly HR data report, includes hires, leavers, staffing structure, etc."],
-      ["k11", "Zhao Liu"],
-      ["k12", "Report exported successfully!"],
-      ["k13", "Report exported successfully! (simulated)"],
-      ["k14", "No reports"],
-      ["k15", "Click the button above to create your first report"],
-      ["k16", "Report Name"],
-      ["k17", "Type"],
-      ["k18", "Format"],
-      ["k19", "Status"],
-      ["k20", "Creator"],
-      ["k22", "Actions"],
-      ["k23", "Report Type"],
-      ["k24", "Sales Report"],
-      ["k25", "Quality Report"],
-      ["k26", "Inventory Report"],
-      ["k27", "HR Report"],
-      ["k28", "Finance Report"],
-      ["k29", "Production Report"],
-      ["k30", "Default Format"],
-      ["k31", "Status"],
-      ["k32", "Draft"],
-      ["k33", "released"],
-      ["k35", "Select Dataset"],
-      ["k36", "Sales Data Analysis Set"],
-      ["k37", "Production Quality Dataset"],
-      ["k38", "Inventory Turnover Dataset"],
-      ["k40", "Daily"],
-      ["k41", "Weekly"],
-      ["k42", "Monthly"],
-      ["k43", "Hourly"],
-      ["confirm", "Confirm"],
-      ["production", "Production"],
-      ["search", "Search"],
-      ["edit", "Edit"],
-      ["edit_1", "Edit"],
-      ["view", "View"],
-      ["view_1", "View"],
-      ["export", "Export"],
-      ["export_1", "Label"],
-      ["delete", "Delete"],
-      ["delete_1", "Label"],
-      ["create", "Create"],
-      ["info", "Label"],
-      ["text_8abf44", "Label"],
-      ["text_d75a79", "Label"],
-      ["text_a1bd97", "Label"],
-      ["name", "Name"],
-      ["description", "Description"],
-      ["type", "Type"],
-      ["status", "Status"],
-      ["text_93c5b1", "Monthly Sales Report"],
+      [
+        "k8",
+        "Wang Wu"
+      ],
+      [
+        "k9",
+        "HR Monthly Report"
+      ],
+      [
+        "k10",
+        "Monthly HR data report, includes hires, leavers, staffing structure, etc."
+      ],
+      [
+        "k11",
+        "Zhao Liu"
+      ],
+      [
+        "k12",
+        "Report exported successfully!"
+      ],
+      [
+        "k13",
+        "Report exported successfully! (simulated)"
+      ],
+      [
+        "k14",
+        "No reports"
+      ],
+      [
+        "k15",
+        "Click the button above to create your first report"
+      ],
+      [
+        "k16",
+        "Report Name"
+      ],
+      [
+        "k17",
+        "Type"
+      ],
+      [
+        "k18",
+        "Format"
+      ],
+      [
+        "k19",
+        "Status"
+      ],
+      [
+        "k20",
+        "Creator"
+      ],
+      [
+        "k22",
+        "Actions"
+      ],
+      [
+        "k23",
+        "Report Type"
+      ],
+      [
+        "k24",
+        "Sales Report"
+      ],
+      [
+        "k25",
+        "Quality Report"
+      ],
+      [
+        "k26",
+        "Inventory Report"
+      ],
+      [
+        "k27",
+        "HR Report"
+      ],
+      [
+        "k28",
+        "Finance Report"
+      ],
+      [
+        "k29",
+        "Production Report"
+      ],
+      [
+        "k30",
+        "Default Format"
+      ],
+      [
+        "k31",
+        "Status"
+      ],
+      [
+        "k32",
+        "Draft"
+      ],
+      [
+        "k33",
+        "released"
+      ],
+      [
+        "k35",
+        "Select Dataset"
+      ],
+      [
+        "k36",
+        "Sales Data Analysis Set"
+      ],
+      [
+        "k37",
+        "Production Quality Dataset"
+      ],
+      [
+        "k38",
+        "Inventory Turnover Dataset"
+      ],
+      [
+        "k40",
+        "Daily"
+      ],
+      [
+        "k41",
+        "Weekly"
+      ],
+      [
+        "k42",
+        "Monthly"
+      ],
+      [
+        "k43",
+        "Hourly"
+      ],
+      [
+        "confirm",
+        "Confirm"
+      ],
+      [
+        "production",
+        "Production"
+      ],
+      [
+        "search",
+        "Search"
+      ],
+      [
+        "edit",
+        "Edit"
+      ],
+      [
+        "edit_1",
+        "Edit"
+      ],
+      [
+        "view",
+        "View"
+      ],
+      [
+        "view_1",
+        "View"
+      ],
+      [
+        "export",
+        "Export"
+      ],
+      [
+        "export_1",
+        "Label"
+      ],
+      [
+        "delete",
+        "Delete"
+      ],
+      [
+        "delete_1",
+        "Label"
+      ],
+      [
+        "create",
+        "Create"
+      ],
+      [
+        "info",
+        "Label"
+      ],
+      [
+        "text_8abf44",
+        "Label"
+      ],
+      [
+        "text_d75a79",
+        "Label"
+      ],
+      [
+        "text_a1bd97",
+        "Label"
+      ],
+      [
+        "name",
+        "Name"
+      ],
+      [
+        "description",
+        "Description"
+      ],
+      [
+        "type",
+        "Type"
+      ],
+      [
+        "status",
+        "Status"
+      ],
+      [
+        "text_93c5b1",
+        "Monthly Sales Report"
+      ],
       [
         "text_08d85e",
         "Monthly sales data summary report, includes sales, orders, customers metrics"
       ],
-      ["text_945783", "Quality Weekly"],
-      ["text_a13eb6", "Weekly production QC data summary, includes defect rate, pass rate, etc."],
-      ["text_4ae3a8", "Inventory Monthly Report"],
+      [
+        "text_945783",
+        "Quality Weekly"
+      ],
+      [
+        "text_a13eb6",
+        "Weekly production QC data summary, includes defect rate, pass rate, etc."
+      ],
+      [
+        "text_4ae3a8",
+        "Inventory Monthly Report"
+      ],
       [
         "text_386c14",
         "Monthly inventory turnover analysis report, includes inbound/outbound, inventory balance, etc."
       ],
-      ["text_3d2c48", "HR Monthly Report"],
-      ["text_95ccc2", "Monthly HR data report, includes hires, leavers, staffing structure, etc."],
-      ["time", "Time"],
-      ["email", "Email"],
-      ["email_1", "Label"],
-      ["create_1", "Create"],
-      ["home", "Home"],
-      ["text_fc00f3", "Label"],
-      ["name_a71de2", "Name A71de2"],
-      ["description_88219b", ", , , "],
-      ["created_by_615db5", "Created By 615db5"],
-      ["name_da4ee0", "Name Da4ee0"],
-      ["description_b305a3", ", , "],
-      ["created_by_36c942", "Created By 36c942"],
-      ["name_51c296", "Name 51c296"],
-      ["description_904405", ", , "],
-      ["created_by_3228f3", "Created By 3228f3"],
-      ["name_c272ae", "Name C272ae"],
-      ["description_b78c37", ", , , "],
-      ["created_by_b43536", "Created By B43536"],
-      ["text_95a8d1", "Text 95a8d1"],
-      ["text_07230a", "Text 07230a"],
-      ["text_694fc5", "Text 694fc5"],
-      ["text_1f82c4", "Text 1f82c4"],
-      ["text_b9555d", "Text B9555d"],
-      ["text_a2e063", "Text A2e063"],
-      ["text_226b09", "Text 226b09"],
-      ["text_e3127c", "Text E3127c"],
-      ["text_3fea7c", "Status"],
-      ["text_95a43e", "Text 95a43e"],
-      ["text_2b6bc0", "Actions"],
-      ["text_adcd1d", "Text Adcd1d"],
-      ["text_645dbc", "Text 645dbc"],
-      ["text_625fb2", "Cancel"],
-      ["text_be5fbb", "Text Be5fbb"],
-      ["text_b5c067", "Text B5c067"],
-      ["text_87821b", "Text 87821b"],
-      ["text_c42f64", "Text C42f64"],
-      ["text_25f371", "Text 25f371"],
-      ["text_76cb67", "Text 76cb67"],
-      ["text_af7d91", "Text Af7d91"],
-      ["text_e0d517", "Text E0d517"],
-      ["text_6f07cd", "Text 6f07cd"],
-      ["text_22b433", "Draft"],
-      ["text_dca0c1", "Text Dca0c1"],
-      ["text_2a2b29", "Text 2a2b29"],
-      ["text_321b41", "Text 321b41"],
-      ["text_0bca05", "Text 0bca05"],
-      ["text_f94f6c", "Text F94f6c"],
-      ["text_825070", "Text 825070"],
-      ["text_7252f8", "Text 7252f8"],
-      ["text_667218", ": , , , . "],
-      ["text_88f9c8", "Text 88f9c8"],
-      ["text_78623e", "Text 78623e"],
-      ["text_09b03b", "Text 09b03b"],
-      ["text_aa3d57", "Text Aa3d57"],
-      ["text_860c00", "Text 860c00"],
-      ["text_886f37", ": , . "]
+      [
+        "text_3d2c48",
+        "HR Monthly Report"
+      ],
+      [
+        "text_95ccc2",
+        "Monthly HR data report, includes hires, leavers, staffing structure, etc."
+      ],
+      [
+        "time",
+        "Time"
+      ],
+      [
+        "email",
+        "Email"
+      ],
+      [
+        "email_1",
+        "Label"
+      ],
+      [
+        "create_1",
+        "Create"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "text_fc00f3",
+        "Label"
+      ],
+      [
+        "name_a71de2",
+        "Name A71de2"
+      ],
+      [
+        "description_88219b",
+        ", , , "
+      ],
+      [
+        "created_by_615db5",
+        "Created By 615db5"
+      ],
+      [
+        "name_da4ee0",
+        "Name Da4ee0"
+      ],
+      [
+        "description_b305a3",
+        ", , "
+      ],
+      [
+        "created_by_36c942",
+        "Created By 36c942"
+      ],
+      [
+        "name_51c296",
+        "Name 51c296"
+      ],
+      [
+        "description_904405",
+        ", , "
+      ],
+      [
+        "created_by_3228f3",
+        "Created By 3228f3"
+      ],
+      [
+        "name_c272ae",
+        "Name C272ae"
+      ],
+      [
+        "description_b78c37",
+        ", , , "
+      ],
+      [
+        "created_by_b43536",
+        "Created By B43536"
+      ],
+      [
+        "text_95a8d1",
+        "Text 95a8d1"
+      ],
+      [
+        "text_07230a",
+        "Text 07230a"
+      ],
+      [
+        "text_694fc5",
+        "Text 694fc5"
+      ],
+      [
+        "text_1f82c4",
+        "Text 1f82c4"
+      ],
+      [
+        "text_b9555d",
+        "Text B9555d"
+      ],
+      [
+        "text_a2e063",
+        "Text A2e063"
+      ],
+      [
+        "text_226b09",
+        "Text 226b09"
+      ],
+      [
+        "text_e3127c",
+        "Text E3127c"
+      ],
+      [
+        "text_3fea7c",
+        "Status"
+      ],
+      [
+        "text_95a43e",
+        "Text 95a43e"
+      ],
+      [
+        "text_2b6bc0",
+        "Actions"
+      ],
+      [
+        "text_adcd1d",
+        "Text Adcd1d"
+      ],
+      [
+        "text_645dbc",
+        "Text 645dbc"
+      ],
+      [
+        "text_625fb2",
+        "Cancel"
+      ],
+      [
+        "text_be5fbb",
+        "Text Be5fbb"
+      ],
+      [
+        "text_b5c067",
+        "Text B5c067"
+      ],
+      [
+        "text_87821b",
+        "Text 87821b"
+      ],
+      [
+        "text_c42f64",
+        "Text C42f64"
+      ],
+      [
+        "text_25f371",
+        "Text 25f371"
+      ],
+      [
+        "text_76cb67",
+        "Text 76cb67"
+      ],
+      [
+        "text_af7d91",
+        "Text Af7d91"
+      ],
+      [
+        "text_e0d517",
+        "Text E0d517"
+      ],
+      [
+        "text_6f07cd",
+        "Text 6f07cd"
+      ],
+      [
+        "text_22b433",
+        "Draft"
+      ],
+      [
+        "text_dca0c1",
+        "Text Dca0c1"
+      ],
+      [
+        "text_2a2b29",
+        "Text 2a2b29"
+      ],
+      [
+        "text_321b41",
+        "Text 321b41"
+      ],
+      [
+        "text_0bca05",
+        "Text 0bca05"
+      ],
+      [
+        "text_f94f6c",
+        "Text F94f6c"
+      ],
+      [
+        "text_825070",
+        "Text 825070"
+      ],
+      [
+        "text_7252f8",
+        "Text 7252f8"
+      ],
+      [
+        "text_667218",
+        ": , , , . "
+      ],
+      [
+        "text_88f9c8",
+        "Text 88f9c8"
+      ],
+      [
+        "text_78623e",
+        "Text 78623e"
+      ],
+      [
+        "text_09b03b",
+        "Text 09b03b"
+      ],
+      [
+        "text_aa3d57",
+        "Text Aa3d57"
+      ],
+      [
+        "text_860c00",
+        "Text 860c00"
+      ],
+      [
+        "text_886f37",
+        ": , . "
+      ]
     ],
     "data_table_section": [
-      ["text_21efd8", "No data"],
-      ["k0", "No data"],
-      ["text_c3f9a1", "Text C3f9a1"]
+      [
+        "text_21efd8",
+        "No data"
+      ],
+      [
+        "k0",
+        "No data"
+      ],
+      [
+        "text_c3f9a1",
+        "Text C3f9a1"
+      ]
     ],
     "categories": [
-      ["failed", "Non-Conforming"],
-      ["electronics", "Electronics"],
-      ["clothing", "Clothing & Accessories"],
-      ["home", "Home Goods"],
-      ["food", "Food & Beverage"],
-      ["rs", "R&D"],
-      ["improvement", "Improvement"],
-      ["innovation", "Innovation"],
-      ["chemical", "Chemical Testing"],
-      ["physical", "Physical Testing"],
-      ["microbial", "Microbial Testing"],
-      ["other", "Other"],
-      ["passed", "Passed"],
-      ["high_risk", "High Risk"],
-      ["medium_risk", "Medium Risk"],
-      ["low_risk", "Low Risk"],
-      ["pending_review", "Pending Review"],
-      ["completed", "Completed"],
-      ["in_progress", "In Progress"],
-      ["cancelled", "Cancelled"]
+      [
+        "failed",
+        "Non-Conforming"
+      ],
+      [
+        "electronics",
+        "Electronics"
+      ],
+      [
+        "clothing",
+        "Clothing & Accessories"
+      ],
+      [
+        "home",
+        "Home Goods"
+      ],
+      [
+        "food",
+        "Food & Beverage"
+      ],
+      [
+        "rs",
+        "R&D"
+      ],
+      [
+        "improvement",
+        "Improvement"
+      ],
+      [
+        "innovation",
+        "Innovation"
+      ],
+      [
+        "chemical",
+        "Chemical Testing"
+      ],
+      [
+        "physical",
+        "Physical Testing"
+      ],
+      [
+        "microbial",
+        "Microbial Testing"
+      ],
+      [
+        "other",
+        "Other"
+      ],
+      [
+        "passed",
+        "Passed"
+      ],
+      [
+        "high_risk",
+        "High Risk"
+      ],
+      [
+        "medium_risk",
+        "Medium Risk"
+      ],
+      [
+        "low_risk",
+        "Low Risk"
+      ],
+      [
+        "pending_review",
+        "Pending Review"
+      ],
+      [
+        "completed",
+        "Completed"
+      ],
+      [
+        "in_progress",
+        "In Progress"
+      ],
+      [
+        "cancelled",
+        "Cancelled"
+      ]
     ],
     "gis": [
-      ["created_failed", "Create failed"],
+      [
+        "created_failed",
+        "Create failed"
+      ],
       [
         "validation",
         [
-          ["required", "This Field is required"],
-          ["latitude_range", "Latitude must be between -90 and 90"],
-          ["longitude_range", "Longitude must be between -180 and 180"],
-          ["start_lat_invalid", "Invalid start latitude"],
-          ["start_lng_invalid", "Invalid start longitude"],
-          ["end_lat_invalid", "Invalid end latitude"],
-          ["end_lng_invalid", "Invalid end longitude"]
+          [
+            "required",
+            "This Field is required"
+          ],
+          [
+            "latitude_range",
+            "Latitude must be between -90 and 90"
+          ],
+          [
+            "longitude_range",
+            "Longitude must be between -180 and 180"
+          ],
+          [
+            "start_lat_invalid",
+            "Invalid start latitude"
+          ],
+          [
+            "start_lng_invalid",
+            "Invalid start longitude"
+          ],
+          [
+            "end_lat_invalid",
+            "Invalid end latitude"
+          ],
+          [
+            "end_lng_invalid",
+            "Invalid end longitude"
+          ]
         ]
       ],
-      ["select_csv", "Select A CSV File..."],
-      ["created_success", "Created successfully"],
-      ["updated_success", "Updated successfully"],
-      ["updated_failed", "Update failed"],
-      ["deleted_success", "Deleted successfully"],
-      ["deleted_failed", "Delete failed"],
-      ["parse_failed", "File parsing failed"],
-      ["imported_success", "Imported successfully"],
-      ["imported_failed", "Import failed"],
+      [
+        "select_csv",
+        "Select A CSV File..."
+      ],
+      [
+        "created_success",
+        "Created successfully"
+      ],
+      [
+        "updated_success",
+        "Updated successfully"
+      ],
+      [
+        "updated_failed",
+        "Update failed"
+      ],
+      [
+        "deleted_success",
+        "Deleted successfully"
+      ],
+      [
+        "deleted_failed",
+        "Delete failed"
+      ],
+      [
+        "parse_failed",
+        "File parsing failed"
+      ],
+      [
+        "imported_success",
+        "Imported successfully"
+      ],
+      [
+        "imported_failed",
+        "Import failed"
+      ],
       [
         "sample",
         [
-          ["equipment_a", "Equipment A"],
-          ["sensor", "Sensor"],
-          ["equipment_desc", "Equipment Description"],
-          ["pipe_a", "Pipeline A"],
-          ["water_pipe", "Water Pipe"],
-          ["warehouse_a", "Warehouse A"],
-          ["raw_material_warehouse", "Raw Material Warehouse"],
-          ["photo_1", "Site Photo 1"],
-          ["photo", "Photo"],
-          ["evidence_desc", "Evidence Description"],
-          ["factory_plan", "Factory Plan"],
-          ["floor_plan", "Floor Plan"],
-          ["map_desc", "Map Description"],
-          ["store_a", "Store A"],
-          ["retail", "Retail"],
-          ["address", "Address"],
-          ["description", "Description"],
-          ["sample_data", "Sample Data"]
+          [
+            "equipment_a",
+            "Equipment A"
+          ],
+          [
+            "sensor",
+            "Sensor"
+          ],
+          [
+            "equipment_desc",
+            "Equipment Description"
+          ],
+          [
+            "pipe_a",
+            "Pipeline A"
+          ],
+          [
+            "water_pipe",
+            "Water Pipe"
+          ],
+          [
+            "warehouse_a",
+            "Warehouse A"
+          ],
+          [
+            "raw_material_warehouse",
+            "Raw Material Warehouse"
+          ],
+          [
+            "photo_1",
+            "Site Photo 1"
+          ],
+          [
+            "photo",
+            "Photo"
+          ],
+          [
+            "evidence_desc",
+            "Evidence Description"
+          ],
+          [
+            "factory_plan",
+            "Factory Plan"
+          ],
+          [
+            "floor_plan",
+            "Floor Plan"
+          ],
+          [
+            "map_desc",
+            "Map Description"
+          ],
+          [
+            "store_a",
+            "Store A"
+          ],
+          [
+            "retail",
+            "Retail"
+          ],
+          [
+            "address",
+            "Address"
+          ],
+          [
+            "description",
+            "Description"
+          ],
+          [
+            "sample_data",
+            "Sample Data"
+          ]
         ]
       ],
-      ["selected", "Selected"]
+      [
+        "selected",
+        "Selected"
+      ]
     ],
     "index": [
-      ["k0", "This Field is required"],
-      ["9090_1", "Latitude must be between -90 to 90"],
-      ["180180_2", "Longitude must be between -180 to 180"],
-      ["9090_3", "Latitude must be between -90 to 90"],
-      ["180180_4", "Longitude must be between -180 to 180"],
-      ["csv_42", "A CSV file is required"],
-      ["attr_f309e0", "Latitude must be between -90 to 90"],
-      ["attr_64a562", "Longitude must be between -180 to 180"],
-      ["k5", "Invalid start latitude"],
-      ["k6", "Invalid start longitude"],
-      ["k7", "Invalid end latitude"],
-      ["k8", "Invalid end longitude"],
-      ["k9", "Created successfully"],
-      ["k10", "Create failed"],
-      ["k11", "Updated successfully"],
-      ["k12", "Update failed"],
-      ["k13", "Deleted successfully"],
-      ["k14", "Delete failed"],
-      ["k15", "Map View"],
-      ["k16", "Equipment Points"],
-      ["k17", "Pipeline Management"],
-      ["k18", "Warehouse Location"],
-      ["k19", "Field Evidence"],
-      ["k20", "Plant Map"],
-      ["k21", "Business Location"],
-      ["k22", "Equipment Description"],
-      ["k23", "Sensor"],
-      ["a_24", "EquipmentA"],
-      ["k25", "Water Pipe"],
-      ["a_26", "PipelineA"],
-      ["k27", "Raw Material Warehouse"],
-      ["a_28", "WarehouseA"],
-      ["k29", "Evidence Description"],
-      ["k30", "Zhang San"],
-      ["k31", "Photo"],
-      ["1_32", "Field Photo1"],
-      ["k33", "Map Description"],
-      ["k34", "Floor Plan"],
-      ["k35", "Plant Floor Plan"],
-      ["a_36", "doorstoreA"],
-      ["k37", "Retail"],
-      ["k38", "Address"],
-      ["k39", "Zhang San"],
-      ["k40", "Description"],
-      ["k41", "Sample Data"],
-      ["k43", "File parsing failed"],
-      ["k44", "Imported successfully"],
-      ["k45", "Import failed"],
-      ["attr_17f93c", "Attr 17f93c"],
-      ["attr_6bb735", "Attr 6bb735"],
-      ["attr_a12b4e", "Attr A12b4e"],
-      ["attr_47876e", "Attr 47876e"],
-      ["label_6ef99d", "Label 6ef99d"],
-      ["label_390b2c", "Label 390b2c"],
-      ["label_09a0d3", "Label 09a0d3"],
-      ["label_423a98", "Label 423a98"],
-      ["label_3548b7", "Label 3548b7"],
-      ["label_0ab201", "Label 0ab201"],
-      ["label_71c01c", "Label 71c01c"]
+      [
+        "k0",
+        "This Field is required"
+      ],
+      [
+        "9090_1",
+        "Latitude must be between -90 to 90"
+      ],
+      [
+        "180180_2",
+        "Longitude must be between -180 to 180"
+      ],
+      [
+        "9090_3",
+        "Latitude must be between -90 to 90"
+      ],
+      [
+        "180180_4",
+        "Longitude must be between -180 to 180"
+      ],
+      [
+        "csv_42",
+        "A CSV file is required"
+      ],
+      [
+        "attr_f309e0",
+        "Latitude must be between -90 to 90"
+      ],
+      [
+        "attr_64a562",
+        "Longitude must be between -180 to 180"
+      ],
+      [
+        "k5",
+        "Invalid start latitude"
+      ],
+      [
+        "k6",
+        "Invalid start longitude"
+      ],
+      [
+        "k7",
+        "Invalid end latitude"
+      ],
+      [
+        "k8",
+        "Invalid end longitude"
+      ],
+      [
+        "k9",
+        "Created successfully"
+      ],
+      [
+        "k10",
+        "Create failed"
+      ],
+      [
+        "k11",
+        "Updated successfully"
+      ],
+      [
+        "k12",
+        "Update failed"
+      ],
+      [
+        "k13",
+        "Deleted successfully"
+      ],
+      [
+        "k14",
+        "Delete failed"
+      ],
+      [
+        "k15",
+        "Map View"
+      ],
+      [
+        "k16",
+        "Equipment Points"
+      ],
+      [
+        "k17",
+        "Pipeline Management"
+      ],
+      [
+        "k18",
+        "Warehouse Location"
+      ],
+      [
+        "k19",
+        "Field Evidence"
+      ],
+      [
+        "k20",
+        "Plant Map"
+      ],
+      [
+        "k21",
+        "Business Location"
+      ],
+      [
+        "k22",
+        "Equipment Description"
+      ],
+      [
+        "k23",
+        "Sensor"
+      ],
+      [
+        "a_24",
+        "EquipmentA"
+      ],
+      [
+        "k25",
+        "Water Pipe"
+      ],
+      [
+        "a_26",
+        "PipelineA"
+      ],
+      [
+        "k27",
+        "Raw Material Warehouse"
+      ],
+      [
+        "a_28",
+        "WarehouseA"
+      ],
+      [
+        "k29",
+        "Evidence Description"
+      ],
+      [
+        "k30",
+        "Zhang San"
+      ],
+      [
+        "k31",
+        "Photo"
+      ],
+      [
+        "1_32",
+        "Field Photo1"
+      ],
+      [
+        "k33",
+        "Map Description"
+      ],
+      [
+        "k34",
+        "Floor Plan"
+      ],
+      [
+        "k35",
+        "Plant Floor Plan"
+      ],
+      [
+        "a_36",
+        "doorstoreA"
+      ],
+      [
+        "k37",
+        "Retail"
+      ],
+      [
+        "k38",
+        "Address"
+      ],
+      [
+        "k39",
+        "Zhang San"
+      ],
+      [
+        "k40",
+        "Description"
+      ],
+      [
+        "k41",
+        "Sample Data"
+      ],
+      [
+        "k43",
+        "File parsing failed"
+      ],
+      [
+        "k44",
+        "Imported successfully"
+      ],
+      [
+        "k45",
+        "Import failed"
+      ],
+      [
+        "attr_17f93c",
+        "Attr 17f93c"
+      ],
+      [
+        "attr_6bb735",
+        "Attr 6bb735"
+      ],
+      [
+        "attr_a12b4e",
+        "Attr A12b4e"
+      ],
+      [
+        "attr_47876e",
+        "Attr 47876e"
+      ],
+      [
+        "label_6ef99d",
+        "Label 6ef99d"
+      ],
+      [
+        "label_390b2c",
+        "Label 390b2c"
+      ],
+      [
+        "label_09a0d3",
+        "Label 09a0d3"
+      ],
+      [
+        "label_423a98",
+        "Label 423a98"
+      ],
+      [
+        "label_3548b7",
+        "Label 3548b7"
+      ],
+      [
+        "label_0ab201",
+        "Label 0ab201"
+      ],
+      [
+        "label_71c01c",
+        "Label 71c01c"
+      ]
     ],
     "bi_analytics_page": [
-      ["k4", "Safety and Environmental Protection"],
-      ["name_9a76dc", "Safety and Environmental Protection"],
-      ["k5", "Supply Chain"],
-      ["name_517854", "Supply Chain"],
-      ["k0", "R&D Management"],
-      ["k1", "Quality Management"],
-      ["k2", "Production Data"],
-      ["k3", "Laboratory"],
-      ["k6", "System Status"],
-      ["k7", "Data Updated At"],
-      ["k8", "Running Normally"],
-      ["k9", "Data Source Connection"],
-      ["k10", "Connected"],
-      ["fail", "Failed"],
-      ["text_3ea3ec", "Metric name"],
-      ["last_month", "Label"],
-      ["text_14078c", "Metric name"],
-      ["pass_rate", "Title"],
-      ["text_b77979", "Metric name"],
-      ["text_7057af", "Metric name"],
-      ["text_f9e510", "Metric name"],
-      ["text_c7dd9d", "Metric name"],
-      ["text_ab0b07", "Metric name"],
-      ["text_9cfb27", "Metric name"],
-      ["text_1ca74a", "Metric name"],
-      ["home", "Home"],
-      ["text_c93998", "Label"],
-      ["name_8f122e", "Name 8f122e"],
-      ["name_054f5e", "Name 054f5e"],
-      ["name_9fb669", "Name 9fb669"],
-      ["name_c53cfe", "Name C53cfe"],
-      ["text_a838a9", "Text A838a9"],
-      ["text_af427d", "Text Af427d"],
-      ["text_7f50e2", "Text 7f50e2"],
-      ["text_d3d949", "Text D3d949"],
-      ["text_c5ea9c", "Text C5ea9c"]
+      [
+        "k4",
+        "Safety and Environmental Protection"
+      ],
+      [
+        "name_9a76dc",
+        "Safety and Environmental Protection"
+      ],
+      [
+        "k5",
+        "Supply Chain"
+      ],
+      [
+        "name_517854",
+        "Supply Chain"
+      ],
+      [
+        "k0",
+        "R&D Management"
+      ],
+      [
+        "k1",
+        "Quality Management"
+      ],
+      [
+        "k2",
+        "Production Data"
+      ],
+      [
+        "k3",
+        "Laboratory"
+      ],
+      [
+        "k6",
+        "System Status"
+      ],
+      [
+        "k7",
+        "Data Updated At"
+      ],
+      [
+        "k8",
+        "Running Normally"
+      ],
+      [
+        "k9",
+        "Data Source Connection"
+      ],
+      [
+        "k10",
+        "Connected"
+      ],
+      [
+        "fail",
+        "Failed"
+      ],
+      [
+        "text_3ea3ec",
+        "Metric name"
+      ],
+      [
+        "last_month",
+        "Label"
+      ],
+      [
+        "text_14078c",
+        "Metric name"
+      ],
+      [
+        "pass_rate",
+        "Title"
+      ],
+      [
+        "text_b77979",
+        "Metric name"
+      ],
+      [
+        "text_7057af",
+        "Metric name"
+      ],
+      [
+        "text_f9e510",
+        "Metric name"
+      ],
+      [
+        "text_c7dd9d",
+        "Metric name"
+      ],
+      [
+        "text_ab0b07",
+        "Metric name"
+      ],
+      [
+        "text_9cfb27",
+        "Metric name"
+      ],
+      [
+        "text_1ca74a",
+        "Metric name"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "text_c93998",
+        "Label"
+      ],
+      [
+        "name_8f122e",
+        "Name 8f122e"
+      ],
+      [
+        "name_054f5e",
+        "Name 054f5e"
+      ],
+      [
+        "name_9fb669",
+        "Name 9fb669"
+      ],
+      [
+        "name_c53cfe",
+        "Name C53cfe"
+      ],
+      [
+        "text_a838a9",
+        "Text A838a9"
+      ],
+      [
+        "text_af427d",
+        "Text Af427d"
+      ],
+      [
+        "text_7f50e2",
+        "Text 7f50e2"
+      ],
+      [
+        "text_d3d949",
+        "Text D3d949"
+      ],
+      [
+        "text_c5ea9c",
+        "Text C5ea9c"
+      ]
     ],
     "bi_module_detail_page": [
-      ["k3", "Safety and Environmental Protection"],
-      ["k27", "Average Cycle (days)"],
-      ["k31", "Average Cycle (Hour)"],
-      ["k42", "Average Rating"],
-      ["k66", "Processing Status"],
-      ["name_9a76dc", "Safety and Environmental Protection"],
-      ["avg_duration_d66526", "Average Cycle (days)"],
-      ["avg_turnaround_1c93ff", "Average Cycle (Hour)"],
-      ["avg_rating_93d5f3", "Average Rating"],
-      ["text_21b314", "Processing Status"],
-      ["k4", "Supply Chain Management"],
-      ["k7", "Improvement"],
-      ["k8", "Innovation"],
-      ["k38", "Security Event"],
-      ["k51", "Progress"],
-      ["k71", "Rating"],
-      ["name_7fa120", "Supply Chain Management"],
-      ["name_50b419", "Improvement"],
-      ["name_03a944", "Innovation"],
-      ["incidents_8eab49", "Security Event"],
-      ["text_c7bff7", "Progress"],
-      ["text_108db1", "Rating"],
-      ["k62", "Quality Grade"],
-      ["text_e6ce57", "Quality Grade"],
-      ["text_f24691", "{{config_name}} - Module Details"],
-      ["k0", "R&D Management"],
-      ["k1", "Lab Management"],
-      ["k2", "Quality Management"],
-      ["k5", "Production Data"],
-      ["k6", "R&D"],
-      ["k9", "Chemical Inspection"],
-      ["k10", "Physical Inspection"],
-      ["k11", "Microbiological Inspection"],
-      ["k12", "Other"],
-      ["k13", "Qualified"],
-      ["k14", "Non-Conforming"],
-      ["k15", "High Risk"],
-      ["k16", "Medium Risk"],
-      ["k17", "Low Risk"],
-      ["k18", "Qualified"],
-      ["k19", "Pending Audit"],
-      ["k20", "Non-Conforming"],
-      ["k21", "Completed"],
-      ["k22", "In Progress"],
-      ["k23", "Cancelled"],
-      ["k24", "Total Projects"],
-      ["k25", "In Progress"],
-      ["k26", "Completed"],
-      ["k28", "Total Samples"],
-      ["k29", "Complete Inspection"],
-      ["k30", "Pending Inspection"],
-      ["k32", "Total Inspections"],
-      ["k33", "Qualified Count"],
-      ["k34", "Unqualified Count"],
-      ["k35", "Pass Rate(%)"],
-      ["k36", "Risk Total"],
-      ["k37", "High Risk"],
-      ["k39", "Resolved"],
-      ["k40", "Supplier Total"],
-      ["k41", "Qualified Supplier"],
-      ["k43", "Pending Orders"],
-      ["k44", "Total Batches"],
-      ["k45", "Completed"],
-      ["k46", "In Progress"],
-      ["k47", "Efficiency (%)"],
-      ["k48", "Project Code"],
-      ["k49", "Project Name"],
-      ["k50", "Status"],
-      ["k52", "Owner"],
-      ["k53", "Sample Code"],
-      ["k54", "Sample Name"],
-      ["k55", "Inspection Type"],
-      ["k56", "Status"],
-      ["k57", "Result"],
-      ["k58", "Inspection Order No."],
-      ["k59", "Inspection Item"],
-      ["k60", "Batch"],
-      ["k61", "Status"],
-      ["k63", "Risk Code"],
-      ["k64", "Risk Description"],
-      ["k65", "Risk Level"],
-      ["k67", "Date"],
-      ["k68", "Supplier Code"],
-      ["k69", "Supplier Name"],
-      ["k70", "Type"],
-      ["k72", "Status"],
-      ["k73", "Batch Code"],
-      ["k74", "Product"],
-      ["k75", "Status"],
-      ["k76", "Output"],
-      ["text_912fa5", "R&D management"],
-      ["text_fc7393", "Research"],
-      ["text_3ff3c3", "Development"],
-      ["text_50b419", "Improvement"],
-      ["inspection", "Inspection"],
-      ["inspection_1", "Inspection 1"],
-      ["inspection_2", "Inspection 2"],
-      ["other", "Other"],
-      ["text_ebc9d9", "Materials"],
-      ["process_route", "Process route"],
-      ["equipment", "Equipment"],
-      ["text_4433e7", "High Risks"],
-      ["text_8a8992", "Medium Risk"],
-      ["text_b56976", "Low Risk"],
-      ["fail", "Failed"],
-      ["text_a819e1", "Metric name"],
-      ["text_8268d9", "Metric name"],
-      ["text_772b34", "Metric name"],
-      ["text_c9454d", "Metric name"],
-      ["detail", "Details"],
-      ["text_b5cd64", "Metric name"],
-      ["home", "Home"],
-      ["text_615db0", "Metric name"],
-      ["text_e6af8d", "Module Data Details"],
-      ["name_8f122e", "Name 8f122e"],
-      ["name_612345", "Name 612345"],
-      ["name_054f5e", "Name 054f5e"],
-      ["name_9fb669", "Name 9fb669"],
-      ["name_fc7393", "Name Fc7393"],
-      ["name_f94fd4", "Name F94fd4"],
-      ["name_e30abf", "Name E30abf"],
-      ["name_861e65", "Name 861e65"],
-      ["name_0d98c7", "Name 0d98c7"],
-      ["name_86f720", "Name 86f720"],
-      ["name_6e5a12", "Name 6e5a12"],
-      ["name_4433e7", "Name 4433e7"],
-      ["name_8a8992", "Name 8a8992"],
-      ["name_b56976", "Name B56976"],
-      ["name_5cb424", "Name 5cb424"],
-      ["name_fad522", "Completed"],
-      ["name_fb852f", "In Progress"],
-      ["name_2111cc", "Name 2111cc"],
-      ["total_projects_3ea3ec", "Total Projects 3ea3ec"],
-      ["active_projects_fb852f", "Active Projects Fb852f"],
-      ["completed_projects_fad522", "Completed Projects Fad522"],
-      ["total_samples_14078c", "Total Samples 14078c"],
-      ["completed_tests_9d5dc6", "Completed Tests 9d5dc6"],
-      ["pending_tests_ae33b1", "Pending Tests Ae33b1"],
-      ["total_inspections_9e3188", "Total Inspections 9e3188"],
-      ["passed_24da01", "Passed 24da01"],
-      ["failed_0318fe", "Failed 0318fe"],
-      ["pass_rate_8907ed", "(%)"],
-      ["total_risks_85ee2c", "Total Risks 85ee2c"],
-      ["high_risks_4433e7", "High Risks 4433e7"],
-      ["resolved_d7d257", "Resolved D7d257"],
-      ["total_suppliers_83c35b", "Total Suppliers 83c35b"],
-      ["qualified_b0da9f", "Qualified B0da9f"],
-      ["pending_orders_2b1c9a", "Pending Orders 2b1c9a"],
-      ["total_batches_60157a", "Total Batches 60157a"],
-      ["completed_fad522", "Completed Fad522"],
-      ["in_progress_fb852f", "In Progress Fb852f"],
-      ["efficiency_a876d1", "(%)"],
-      ["text_a3f817", "Text A3f817"],
-      ["text_738a41", "Text 738a41"],
-      ["text_3fea7c", "Status"],
-      ["text_b29725", "Text B29725"],
-      ["text_003685", "Text 003685"],
-      ["text_71b598", "Text 71b598"],
-      ["text_57b6ea", "Text 57b6ea"],
-      ["text_5ad7f5", "Text 5ad7f5"],
-      ["text_cfed5e", "Text Cfed5e"],
-      ["text_222c0f", "Text 222c0f"],
-      ["text_e68351", "Text E68351"],
-      ["text_095301", "Text 095301"],
-      ["text_b39e47", "Text B39e47"],
-      ["text_25eb6b", "Text 25eb6b"],
-      ["text_4ff1e7", "Text 4ff1e7"],
-      ["text_fe7f5e", "Text Fe7f5e"],
-      ["text_9190cc", "Text 9190cc"],
-      ["text_226b09", "Text 226b09"],
-      ["text_811036", "Text 811036"],
-      ["text_a01543", "Text A01543"],
-      ["text_c906b7", "Text C906b7"],
-      ["text_ffb694", "/> :"]
+      [
+        "k3",
+        "Safety and Environmental Protection"
+      ],
+      [
+        "k27",
+        "Average Cycle (days)"
+      ],
+      [
+        "k31",
+        "Average Cycle (Hour)"
+      ],
+      [
+        "k42",
+        "Average Rating"
+      ],
+      [
+        "k66",
+        "Processing Status"
+      ],
+      [
+        "name_9a76dc",
+        "Safety and Environmental Protection"
+      ],
+      [
+        "avg_duration_d66526",
+        "Average Cycle (days)"
+      ],
+      [
+        "avg_turnaround_1c93ff",
+        "Average Cycle (Hour)"
+      ],
+      [
+        "avg_rating_93d5f3",
+        "Average Rating"
+      ],
+      [
+        "text_21b314",
+        "Processing Status"
+      ],
+      [
+        "k4",
+        "Supply Chain Management"
+      ],
+      [
+        "k7",
+        "Improvement"
+      ],
+      [
+        "k8",
+        "Innovation"
+      ],
+      [
+        "k38",
+        "Security Event"
+      ],
+      [
+        "k51",
+        "Progress"
+      ],
+      [
+        "k71",
+        "Rating"
+      ],
+      [
+        "name_7fa120",
+        "Supply Chain Management"
+      ],
+      [
+        "name_50b419",
+        "Improvement"
+      ],
+      [
+        "name_03a944",
+        "Innovation"
+      ],
+      [
+        "incidents_8eab49",
+        "Security Event"
+      ],
+      [
+        "text_c7bff7",
+        "Progress"
+      ],
+      [
+        "text_108db1",
+        "Rating"
+      ],
+      [
+        "k62",
+        "Quality Grade"
+      ],
+      [
+        "text_e6ce57",
+        "Quality Grade"
+      ],
+      [
+        "text_f24691",
+        "{{config_name}} - Module Details"
+      ],
+      [
+        "k0",
+        "R&D Management"
+      ],
+      [
+        "k1",
+        "Lab Management"
+      ],
+      [
+        "k2",
+        "Quality Management"
+      ],
+      [
+        "k5",
+        "Production Data"
+      ],
+      [
+        "k6",
+        "R&D"
+      ],
+      [
+        "k9",
+        "Chemical Inspection"
+      ],
+      [
+        "k10",
+        "Physical Inspection"
+      ],
+      [
+        "k11",
+        "Microbiological Inspection"
+      ],
+      [
+        "k12",
+        "Other"
+      ],
+      [
+        "k13",
+        "Qualified"
+      ],
+      [
+        "k14",
+        "Non-Conforming"
+      ],
+      [
+        "k15",
+        "High Risk"
+      ],
+      [
+        "k16",
+        "Medium Risk"
+      ],
+      [
+        "k17",
+        "Low Risk"
+      ],
+      [
+        "k18",
+        "Qualified"
+      ],
+      [
+        "k19",
+        "Pending Audit"
+      ],
+      [
+        "k20",
+        "Non-Conforming"
+      ],
+      [
+        "k21",
+        "Completed"
+      ],
+      [
+        "k22",
+        "In Progress"
+      ],
+      [
+        "k23",
+        "Cancelled"
+      ],
+      [
+        "k24",
+        "Total Projects"
+      ],
+      [
+        "k25",
+        "In Progress"
+      ],
+      [
+        "k26",
+        "Completed"
+      ],
+      [
+        "k28",
+        "Total Samples"
+      ],
+      [
+        "k29",
+        "Complete Inspection"
+      ],
+      [
+        "k30",
+        "Pending Inspection"
+      ],
+      [
+        "k32",
+        "Total Inspections"
+      ],
+      [
+        "k33",
+        "Qualified Count"
+      ],
+      [
+        "k34",
+        "Unqualified Count"
+      ],
+      [
+        "k35",
+        "Pass Rate(%)"
+      ],
+      [
+        "k36",
+        "Risk Total"
+      ],
+      [
+        "k37",
+        "High Risk"
+      ],
+      [
+        "k39",
+        "Resolved"
+      ],
+      [
+        "k40",
+        "Supplier Total"
+      ],
+      [
+        "k41",
+        "Qualified Supplier"
+      ],
+      [
+        "k43",
+        "Pending Orders"
+      ],
+      [
+        "k44",
+        "Total Batches"
+      ],
+      [
+        "k45",
+        "Completed"
+      ],
+      [
+        "k46",
+        "In Progress"
+      ],
+      [
+        "k47",
+        "Efficiency (%)"
+      ],
+      [
+        "k48",
+        "Project Code"
+      ],
+      [
+        "k49",
+        "Project Name"
+      ],
+      [
+        "k50",
+        "Status"
+      ],
+      [
+        "k52",
+        "Owner"
+      ],
+      [
+        "k53",
+        "Sample Code"
+      ],
+      [
+        "k54",
+        "Sample Name"
+      ],
+      [
+        "k55",
+        "Inspection Type"
+      ],
+      [
+        "k56",
+        "Status"
+      ],
+      [
+        "k57",
+        "Result"
+      ],
+      [
+        "k58",
+        "Inspection Order No."
+      ],
+      [
+        "k59",
+        "Inspection Item"
+      ],
+      [
+        "k60",
+        "Batch"
+      ],
+      [
+        "k61",
+        "Status"
+      ],
+      [
+        "k63",
+        "Risk Code"
+      ],
+      [
+        "k64",
+        "Risk Description"
+      ],
+      [
+        "k65",
+        "Risk Level"
+      ],
+      [
+        "k67",
+        "Date"
+      ],
+      [
+        "k68",
+        "Supplier Code"
+      ],
+      [
+        "k69",
+        "Supplier Name"
+      ],
+      [
+        "k70",
+        "Type"
+      ],
+      [
+        "k72",
+        "Status"
+      ],
+      [
+        "k73",
+        "Batch Code"
+      ],
+      [
+        "k74",
+        "Product"
+      ],
+      [
+        "k75",
+        "Status"
+      ],
+      [
+        "k76",
+        "Output"
+      ],
+      [
+        "text_912fa5",
+        "R&D management"
+      ],
+      [
+        "text_fc7393",
+        "Research"
+      ],
+      [
+        "text_3ff3c3",
+        "Development"
+      ],
+      [
+        "text_50b419",
+        "Improvement"
+      ],
+      [
+        "inspection",
+        "Inspection"
+      ],
+      [
+        "inspection_1",
+        "Inspection 1"
+      ],
+      [
+        "inspection_2",
+        "Inspection 2"
+      ],
+      [
+        "other",
+        "Other"
+      ],
+      [
+        "text_ebc9d9",
+        "Materials"
+      ],
+      [
+        "process_route",
+        "Process route"
+      ],
+      [
+        "equipment",
+        "Equipment"
+      ],
+      [
+        "text_4433e7",
+        "High Risks"
+      ],
+      [
+        "text_8a8992",
+        "Medium Risk"
+      ],
+      [
+        "text_b56976",
+        "Low Risk"
+      ],
+      [
+        "fail",
+        "Failed"
+      ],
+      [
+        "text_a819e1",
+        "Metric name"
+      ],
+      [
+        "text_8268d9",
+        "Metric name"
+      ],
+      [
+        "text_772b34",
+        "Metric name"
+      ],
+      [
+        "text_c9454d",
+        "Metric name"
+      ],
+      [
+        "detail",
+        "Details"
+      ],
+      [
+        "text_b5cd64",
+        "Metric name"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "text_615db0",
+        "Metric name"
+      ],
+      [
+        "text_e6af8d",
+        "Module Data Details"
+      ],
+      [
+        "name_8f122e",
+        "Name 8f122e"
+      ],
+      [
+        "name_612345",
+        "Name 612345"
+      ],
+      [
+        "name_054f5e",
+        "Name 054f5e"
+      ],
+      [
+        "name_9fb669",
+        "Name 9fb669"
+      ],
+      [
+        "name_fc7393",
+        "Name Fc7393"
+      ],
+      [
+        "name_f94fd4",
+        "Name F94fd4"
+      ],
+      [
+        "name_e30abf",
+        "Name E30abf"
+      ],
+      [
+        "name_861e65",
+        "Name 861e65"
+      ],
+      [
+        "name_0d98c7",
+        "Name 0d98c7"
+      ],
+      [
+        "name_86f720",
+        "Name 86f720"
+      ],
+      [
+        "name_6e5a12",
+        "Name 6e5a12"
+      ],
+      [
+        "name_4433e7",
+        "Name 4433e7"
+      ],
+      [
+        "name_8a8992",
+        "Name 8a8992"
+      ],
+      [
+        "name_b56976",
+        "Name B56976"
+      ],
+      [
+        "name_5cb424",
+        "Name 5cb424"
+      ],
+      [
+        "name_fad522",
+        "Completed"
+      ],
+      [
+        "name_fb852f",
+        "In Progress"
+      ],
+      [
+        "name_2111cc",
+        "Name 2111cc"
+      ],
+      [
+        "total_projects_3ea3ec",
+        "Total Projects 3ea3ec"
+      ],
+      [
+        "active_projects_fb852f",
+        "Active Projects Fb852f"
+      ],
+      [
+        "completed_projects_fad522",
+        "Completed Projects Fad522"
+      ],
+      [
+        "total_samples_14078c",
+        "Total Samples 14078c"
+      ],
+      [
+        "completed_tests_9d5dc6",
+        "Completed Tests 9d5dc6"
+      ],
+      [
+        "pending_tests_ae33b1",
+        "Pending Tests Ae33b1"
+      ],
+      [
+        "total_inspections_9e3188",
+        "Total Inspections 9e3188"
+      ],
+      [
+        "passed_24da01",
+        "Passed 24da01"
+      ],
+      [
+        "failed_0318fe",
+        "Failed 0318fe"
+      ],
+      [
+        "pass_rate_8907ed",
+        "(%)"
+      ],
+      [
+        "total_risks_85ee2c",
+        "Total Risks 85ee2c"
+      ],
+      [
+        "high_risks_4433e7",
+        "High Risks 4433e7"
+      ],
+      [
+        "resolved_d7d257",
+        "Resolved D7d257"
+      ],
+      [
+        "total_suppliers_83c35b",
+        "Total Suppliers 83c35b"
+      ],
+      [
+        "qualified_b0da9f",
+        "Qualified B0da9f"
+      ],
+      [
+        "pending_orders_2b1c9a",
+        "Pending Orders 2b1c9a"
+      ],
+      [
+        "total_batches_60157a",
+        "Total Batches 60157a"
+      ],
+      [
+        "completed_fad522",
+        "Completed Fad522"
+      ],
+      [
+        "in_progress_fb852f",
+        "In Progress Fb852f"
+      ],
+      [
+        "efficiency_a876d1",
+        "(%)"
+      ],
+      [
+        "text_a3f817",
+        "Text A3f817"
+      ],
+      [
+        "text_738a41",
+        "Text 738a41"
+      ],
+      [
+        "text_3fea7c",
+        "Status"
+      ],
+      [
+        "text_b29725",
+        "Text B29725"
+      ],
+      [
+        "text_003685",
+        "Text 003685"
+      ],
+      [
+        "text_71b598",
+        "Text 71b598"
+      ],
+      [
+        "text_57b6ea",
+        "Text 57b6ea"
+      ],
+      [
+        "text_5ad7f5",
+        "Text 5ad7f5"
+      ],
+      [
+        "text_cfed5e",
+        "Text Cfed5e"
+      ],
+      [
+        "text_222c0f",
+        "Text 222c0f"
+      ],
+      [
+        "text_e68351",
+        "Text E68351"
+      ],
+      [
+        "text_095301",
+        "Text 095301"
+      ],
+      [
+        "text_b39e47",
+        "Text B39e47"
+      ],
+      [
+        "text_25eb6b",
+        "Text 25eb6b"
+      ],
+      [
+        "text_4ff1e7",
+        "Text 4ff1e7"
+      ],
+      [
+        "text_fe7f5e",
+        "Text Fe7f5e"
+      ],
+      [
+        "text_9190cc",
+        "Text 9190cc"
+      ],
+      [
+        "text_226b09",
+        "Text 226b09"
+      ],
+      [
+        "text_811036",
+        "Text 811036"
+      ],
+      [
+        "text_a01543",
+        "Text A01543"
+      ],
+      [
+        "text_c906b7",
+        "Text C906b7"
+      ],
+      [
+        "text_ffb694",
+        "/> :"
+      ]
     ],
     "bi_index_page": [
-      ["text_7e1406", "Use AI assistant to quickly create data analysis reports"],
-      ["text_e20804", "Dataset"],
-      ["text_433d87", "Create"],
-      ["text_73ca7a", "AI Smart Analysis"],
-      ["k0", "New Dashboard"],
-      ["k1", "Create Report"],
-      ["k2", "Dataset Management"],
-      ["k3", "Data Analysis"],
-      ["k4", "Visualization"],
-      ["k5", "Permission Management"],
-      ["k6", "updated row-level permission rules"],
-      ["k7", "Yesterday"],
-      ["k8", "Edited 「Sales Overview Dashboard」"],
-      ["k9", "Exported 「Monthly Sales Report」"],
-      ["k10", "Created 「Inventory Analysis Dataset」"],
-      ["k11", "Performed 「Regional Sales Comparison Analysis」"],
-      ["k12", "Welcome to Business Intelligence Platform"],
-      ["k13", "Explore data insights to drive business decisions"],
-      ["k14", "Quick Actions"],
-      ["k15", "Weekly Usage Trend"],
-      ["k16", "My Dashboards"],
-      ["k17", "View All"],
-      ["k18", "Popular Reports"],
-      ["k19", "Recent Activities"],
-      ["k20", "Datasets"],
-      ["k21", "Manage Datasets"],
-      ["k22", "Quick Create"],
-      ["k23", "Use AI assistant to quickly create data analysis reports"],
-      ["k24", "AI Smart Analysis"],
-      ["text_3fa8b3", "Dashboard"],
-      ["text_930882", "units_placeholder"],
-      ["text_fc00f3", "Report"],
-      ["text_2a5da6", "TODO: translate"],
-      ["text_fff307", "Insights"],
-      ["text_cc1bac", "units_placeholder"],
-      ["text_1603b0", "Monday"],
-      ["text_b5a6a0", "Tuesday"],
-      ["text_e60725", "Wednesday"],
-      ["text_170fc8", "Thursday"],
-      ["text_eb79ce", "Friday"],
-      ["text_245751", "Saturday"],
-      ["text_562d74", "Sunday"],
-      ["text_7d6871", "Metric name"],
-      ["text_22e202", "Metric name"],
-      ["home", "Home"],
-      ["search", "Search"],
-      ["text_531609", "Label"],
-      ["text_4461a6", "Visit Count"],
-      ["text_67211e", "Report Count"],
-      ["text_3d5d87", "Analysis Count"],
-      ["text_5c4640", "R&D management"],
-      ["text_e8ccfa", "R&D Project Data Analysis"],
-      ["production", "Product"],
-      ["text_1a3263", "Production Operation Data Analysis"],
-      ["text_e556ab", "Supply Chain"],
-      ["warehouse", "Warehouse"],
-      ["text_96f1d5", "Quality Management"],
-      ["text_f9b6a5", "Quality Inspection Data Analysis"],
-      ["text_a71de2", "Monthly Sales Report"],
-      ["text_7f0dc5", "Sales Report"],
-      ["text_da4ee0", "Quality Weekly"],
-      ["text_3a7170", "Quality Report"],
-      ["text_51c296", "Inventory Monthly Report"],
-      ["text_0eac88", "Inventory Reports"],
-      ["text_c272ae", "HR Monthly Report"],
-      ["text_f94f6c", "Sales Data Analysis Set"],
-      ["text_bbaf48", "12,450 rows"],
-      ["normal", "Normal"],
-      ["production_1", "Product"],
-      ["text_1d93f6", "3,680 rows"],
-      ["text_7252f8", "Inventory Turnover Dataset"],
-      ["text_2ded3c", "8,215 rows"],
-      ["text_22b433", "Draft"],
-      ["label_047da9", "Label 047da9"],
-      ["label_07230a", "Label 07230a"],
-      ["label_db302a", "Label Db302a"],
-      ["label_6450d8", "Label 6450d8"],
-      ["label_5f0eec", "Label 5f0eec"],
-      ["label_23bbdd", "Label 23bbdd"],
-      ["title_84bb06", "「」"],
-      ["time_b3216f", "10"],
-      ["title_e0242f", "「」"],
-      ["time_c03306", "30"],
-      ["title_6fb344", "「」"],
-      ["time_75aa52", "1"],
-      ["title_f649c9", "「」"],
-      ["time_285840", "2"],
-      ["title_22da57", "Title 22da57"],
-      ["time_2f8d6f", "Time 2f8d6f"],
-      ["text_e1dbca", "Text E1dbca"],
-      ["text_fecd6f", ", "],
-      ["text_9fdf0e", "Text 9fdf0e"],
-      ["text_0e73fb", "Text 0e73fb"],
-      ["text_92a022", "Text 92a022"],
-      ["text_0467cc", "Text 0467cc"],
-      ["text_a06dba", "Text A06dba"],
-      ["text_32773c", "Text 32773c"],
-      ["text_d527f3", "Text D527f3"]
+      [
+        "text_7e1406",
+        "Use AI assistant to quickly create data analysis reports"
+      ],
+      [
+        "text_e20804",
+        "Dataset"
+      ],
+      [
+        "text_433d87",
+        "Create"
+      ],
+      [
+        "text_73ca7a",
+        "AI Smart Analysis"
+      ],
+      [
+        "k0",
+        "New Dashboard"
+      ],
+      [
+        "k1",
+        "Create Report"
+      ],
+      [
+        "k2",
+        "Dataset Management"
+      ],
+      [
+        "k3",
+        "Data Analysis"
+      ],
+      [
+        "k4",
+        "Visualization"
+      ],
+      [
+        "k5",
+        "Permission Management"
+      ],
+      [
+        "k6",
+        "updated row-level permission rules"
+      ],
+      [
+        "k7",
+        "Yesterday"
+      ],
+      [
+        "k8",
+        "Edited 「Sales Overview Dashboard」"
+      ],
+      [
+        "k9",
+        "Exported 「Monthly Sales Report」"
+      ],
+      [
+        "k10",
+        "Created 「Inventory Analysis Dataset」"
+      ],
+      [
+        "k11",
+        "Performed 「Regional Sales Comparison Analysis」"
+      ],
+      [
+        "k12",
+        "Welcome to Business Intelligence Platform"
+      ],
+      [
+        "k13",
+        "Explore data insights to drive business decisions"
+      ],
+      [
+        "k14",
+        "Quick Actions"
+      ],
+      [
+        "k15",
+        "Weekly Usage Trend"
+      ],
+      [
+        "k16",
+        "My Dashboards"
+      ],
+      [
+        "k17",
+        "View All"
+      ],
+      [
+        "k18",
+        "Popular Reports"
+      ],
+      [
+        "k19",
+        "Recent Activities"
+      ],
+      [
+        "k20",
+        "Datasets"
+      ],
+      [
+        "k21",
+        "Manage Datasets"
+      ],
+      [
+        "k22",
+        "Quick Create"
+      ],
+      [
+        "k23",
+        "Use AI assistant to quickly create data analysis reports"
+      ],
+      [
+        "k24",
+        "AI Smart Analysis"
+      ],
+      [
+        "text_3fa8b3",
+        "Dashboard"
+      ],
+      [
+        "text_930882",
+        "units_placeholder"
+      ],
+      [
+        "text_fc00f3",
+        "Report"
+      ],
+      [
+        "text_2a5da6",
+        "TODO: translate"
+      ],
+      [
+        "text_fff307",
+        "Insights"
+      ],
+      [
+        "text_cc1bac",
+        "units_placeholder"
+      ],
+      [
+        "text_1603b0",
+        "Monday"
+      ],
+      [
+        "text_b5a6a0",
+        "Tuesday"
+      ],
+      [
+        "text_e60725",
+        "Wednesday"
+      ],
+      [
+        "text_170fc8",
+        "Thursday"
+      ],
+      [
+        "text_eb79ce",
+        "Friday"
+      ],
+      [
+        "text_245751",
+        "Saturday"
+      ],
+      [
+        "text_562d74",
+        "Sunday"
+      ],
+      [
+        "text_7d6871",
+        "Metric name"
+      ],
+      [
+        "text_22e202",
+        "Metric name"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "search",
+        "Search"
+      ],
+      [
+        "text_531609",
+        "Label"
+      ],
+      [
+        "text_4461a6",
+        "Visit Count"
+      ],
+      [
+        "text_67211e",
+        "Report Count"
+      ],
+      [
+        "text_3d5d87",
+        "Analysis Count"
+      ],
+      [
+        "text_5c4640",
+        "R&D management"
+      ],
+      [
+        "text_e8ccfa",
+        "R&D Project Data Analysis"
+      ],
+      [
+        "production",
+        "Product"
+      ],
+      [
+        "text_1a3263",
+        "Production Operation Data Analysis"
+      ],
+      [
+        "text_e556ab",
+        "Supply Chain"
+      ],
+      [
+        "warehouse",
+        "Warehouse"
+      ],
+      [
+        "text_96f1d5",
+        "Quality Management"
+      ],
+      [
+        "text_f9b6a5",
+        "Quality Inspection Data Analysis"
+      ],
+      [
+        "text_a71de2",
+        "Monthly Sales Report"
+      ],
+      [
+        "text_7f0dc5",
+        "Sales Report"
+      ],
+      [
+        "text_da4ee0",
+        "Quality Weekly"
+      ],
+      [
+        "text_3a7170",
+        "Quality Report"
+      ],
+      [
+        "text_51c296",
+        "Inventory Monthly Report"
+      ],
+      [
+        "text_0eac88",
+        "Inventory Reports"
+      ],
+      [
+        "text_c272ae",
+        "HR Monthly Report"
+      ],
+      [
+        "text_f94f6c",
+        "Sales Data Analysis Set"
+      ],
+      [
+        "text_bbaf48",
+        "12,450 rows"
+      ],
+      [
+        "normal",
+        "Normal"
+      ],
+      [
+        "production_1",
+        "Product"
+      ],
+      [
+        "text_1d93f6",
+        "3,680 rows"
+      ],
+      [
+        "text_7252f8",
+        "Inventory Turnover Dataset"
+      ],
+      [
+        "text_2ded3c",
+        "8,215 rows"
+      ],
+      [
+        "text_22b433",
+        "Draft"
+      ],
+      [
+        "label_047da9",
+        "Label 047da9"
+      ],
+      [
+        "label_07230a",
+        "Label 07230a"
+      ],
+      [
+        "label_db302a",
+        "Label Db302a"
+      ],
+      [
+        "label_6450d8",
+        "Label 6450d8"
+      ],
+      [
+        "label_5f0eec",
+        "Label 5f0eec"
+      ],
+      [
+        "label_23bbdd",
+        "Label 23bbdd"
+      ],
+      [
+        "title_84bb06",
+        "「」"
+      ],
+      [
+        "time_b3216f",
+        "10"
+      ],
+      [
+        "title_e0242f",
+        "「」"
+      ],
+      [
+        "time_c03306",
+        "30"
+      ],
+      [
+        "title_6fb344",
+        "「」"
+      ],
+      [
+        "time_75aa52",
+        "1"
+      ],
+      [
+        "title_f649c9",
+        "「」"
+      ],
+      [
+        "time_285840",
+        "2"
+      ],
+      [
+        "title_22da57",
+        "Title 22da57"
+      ],
+      [
+        "time_2f8d6f",
+        "Time 2f8d6f"
+      ],
+      [
+        "text_e1dbca",
+        "Text E1dbca"
+      ],
+      [
+        "text_fecd6f",
+        ", "
+      ],
+      [
+        "text_9fdf0e",
+        "Text 9fdf0e"
+      ],
+      [
+        "text_0e73fb",
+        "Text 0e73fb"
+      ],
+      [
+        "text_92a022",
+        "Text 92a022"
+      ],
+      [
+        "text_0467cc",
+        "Text 0467cc"
+      ],
+      [
+        "text_a06dba",
+        "Text A06dba"
+      ],
+      [
+        "text_32773c",
+        "Text 32773c"
+      ],
+      [
+        "text_d527f3",
+        "Text D527f3"
+      ]
     ],
     "import_modal": [
-      ["text_017488", "Select CSV file"],
-      ["text_42058f", "Support CSV format file"],
-      ["k0", "Close"],
-      ["k1", "Click or drag file here"],
-      ["k2", "Close"],
-      ["text_8ef83f", "Text 8ef83f"],
-      ["text_86cedd", "Text 86cedd"],
-      ["text_7f111a", " (10) "],
-      ["text_625fb2", "Cancel"],
-      ["text_3e36a9", "Text 3e36a9"]
+      [
+        "text_017488",
+        "Select CSV file"
+      ],
+      [
+        "text_42058f",
+        "Support CSV format file"
+      ],
+      [
+        "k0",
+        "Close"
+      ],
+      [
+        "k1",
+        "Click or drag file here"
+      ],
+      [
+        "k2",
+        "Close"
+      ],
+      [
+        "text_8ef83f",
+        "Text 8ef83f"
+      ],
+      [
+        "text_86cedd",
+        "Text 86cedd"
+      ],
+      [
+        "text_7f111a",
+        " (10) "
+      ],
+      [
+        "text_625fb2",
+        "Cancel"
+      ],
+      [
+        "text_3e36a9",
+        "Text 3e36a9"
+      ]
     ],
     "bi_dashboard_page": [
-      ["k4", "View"],
-      ["k0", "No dashboards"],
-      ["k1", "Click the button above to create your first dashboard"],
-      ["k2", "Edit"],
-      ["k3", "Copy"],
-      ["k5", "Delete"],
-      ["k6", "Create Dashboard"],
-      ["k7", "Create from Template"],
-      ["text_d5e229", "Create failed"],
-      ["confirm", "Confirm"],
-      ["text_286397", "Metric name"],
-      ["create", "Create"],
-      ["home", "Home"],
-      ["text_3fa8b3", "Label"],
-      ["text_59cf15", "Label"],
-      ["search", "Search"],
-      ["text_b6a098", "Label"],
-      ["text_d09504", "Label"],
-      ["text_7e6875", "Label"],
-      ["edit", "Edit"],
-      ["text_a81fcd", "Public"],
-      ["text_8b4b56", "Private"],
-      ["delete", "Delete"],
-      ["name", "Name"],
-      ["description", "Description"],
-      ["text_18da01", "Text 18da01"],
-      ["text_c2fe62", "Text C2fe62"],
-      ["text_c360e9", "Text C360e9"],
-      ["text_d10403", "Text D10403"],
-      ["text_71745c", "Text 71745c"],
-      ["text_4ed3c3", "Text 4ed3c3"],
-      ["text_adac24", "Text Adac24"],
-      ["text_625fb2", "Cancel"],
-      ["text_d9ac92", "Text D9ac92"],
-      ["text_95b351", "Edit"],
-      ["text_25fe25", "Text 25fe25"],
-      ["text_2f4aad", "Text 2f4aad"]
+      [
+        "k4",
+        "View"
+      ],
+      [
+        "k0",
+        "No dashboards"
+      ],
+      [
+        "k1",
+        "Click the button above to create your first dashboard"
+      ],
+      [
+        "k2",
+        "Edit"
+      ],
+      [
+        "k3",
+        "Copy"
+      ],
+      [
+        "k5",
+        "Delete"
+      ],
+      [
+        "k6",
+        "Create Dashboard"
+      ],
+      [
+        "k7",
+        "Create from Template"
+      ],
+      [
+        "text_d5e229",
+        "Create failed"
+      ],
+      [
+        "confirm",
+        "Confirm"
+      ],
+      [
+        "text_286397",
+        "Metric name"
+      ],
+      [
+        "create",
+        "Create"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "text_3fa8b3",
+        "Label"
+      ],
+      [
+        "text_59cf15",
+        "Label"
+      ],
+      [
+        "search",
+        "Search"
+      ],
+      [
+        "text_b6a098",
+        "Label"
+      ],
+      [
+        "text_d09504",
+        "Label"
+      ],
+      [
+        "text_7e6875",
+        "Label"
+      ],
+      [
+        "edit",
+        "Edit"
+      ],
+      [
+        "text_a81fcd",
+        "Public"
+      ],
+      [
+        "text_8b4b56",
+        "Private"
+      ],
+      [
+        "delete",
+        "Delete"
+      ],
+      [
+        "name",
+        "Name"
+      ],
+      [
+        "description",
+        "Description"
+      ],
+      [
+        "text_18da01",
+        "Text 18da01"
+      ],
+      [
+        "text_c2fe62",
+        "Text C2fe62"
+      ],
+      [
+        "text_c360e9",
+        "Text C360e9"
+      ],
+      [
+        "text_d10403",
+        "Text D10403"
+      ],
+      [
+        "text_71745c",
+        "Text 71745c"
+      ],
+      [
+        "text_4ed3c3",
+        "Text 4ed3c3"
+      ],
+      [
+        "text_adac24",
+        "Text Adac24"
+      ],
+      [
+        "text_625fb2",
+        "Cancel"
+      ],
+      [
+        "text_d9ac92",
+        "Text D9ac92"
+      ],
+      [
+        "text_95b351",
+        "Edit"
+      ],
+      [
+        "text_25fe25",
+        "Text 25fe25"
+      ],
+      [
+        "text_2f4aad",
+        "Text 2f4aad"
+      ]
     ],
     "bi_visualization_page": [
-      ["k12", "Image"],
-      ["name_20def7", "Image"],
-      ["k0", "Bar Chart"],
-      ["k1", "Display comparison of categorical data"],
-      ["k2", "Line Chart"],
-      ["k3", "Display data trend changes"],
-      ["k4", "Pie Chart"],
-      ["k5", "Display data proportion"],
-      ["k6", "Dashboard"],
-      ["k7", "Display metric completion progress"],
-      ["k8", "Data Table"],
-      ["k9", "Display structured data"],
-      ["k10", "Text Box"],
-      ["k11", "Add title or description"],
-      ["k13", "Add image element"],
-      ["k14", "Metric Card"],
-      ["k15", "Display a single key metric"],
-      ["k16", "Grid"],
-      ["k17", "List"],
-      ["k18", "Component Type"],
-      ["k19", "All Types"],
-      ["k20", "Bar Chart"],
-      ["k21", "Line Chart"],
-      ["k22", "Pie Chart"],
-      ["k23", "Dashboard"],
-      ["k24", "Table"],
-      ["k25", "Text"],
-      ["k26", "Metric Card"],
-      ["k27", "Drag component here"],
-      ["k28", "Delete"],
-      ["k29", "Select a component to edit properties"],
-      ["fail", "Failed"],
-      ["text_e798a0", "Metric name"],
-      ["text_c95a1a", "Metric name"],
-      ["type", "Type"],
-      ["edit", "Edit"],
-      ["create", "Create"],
-      ["home", "Home"],
-      ["edit_1", "Edit"],
-      ["list", "List"],
-      ["text_90581a", "Metric name"],
-      ["list_1", "List"],
-      ["search", "Search"],
-      ["text_6cfd0e", "Metric name"],
-      ["edit_2", "Edit"],
-      ["text_01c85e", "Data Table"],
-      ["content", "Content"],
-      ["text_20def7", "Image"],
-      ["text_6aab38", "Metric name"],
-      ["title", "Title"],
-      ["text_c28479", "Label"],
-      ["text_c1df04", "Label"],
-      ["name_7c8ee6", "Name 7c8ee6"],
-      ["description_ca6d6e", "Description Ca6d6e"],
-      ["name_c9c9bd", "Name C9c9bd"],
-      ["description_039dd8", "Description 039dd8"],
-      ["name_d5e33d", "Name D5e33d"],
-      ["description_58b5cd", "Description 58b5cd"],
-      ["name_3fa8b3", "Name 3fa8b3"],
-      ["description_649c7a", "Description 649c7a"],
-      ["name_01c85e", "Name 01c85e"],
-      ["description_c5a253", "Description C5a253"],
-      ["name_5ac57c", "Name 5ac57c"],
-      ["description_ee0eb6", "Description Ee0eb6"],
-      ["description_4325e5", "Description 4325e5"],
-      ["name_f49201", "Name F49201"],
-      ["description_3d35a6", "Description 3d35a6"],
-      ["text_573677", "Text 573677"],
-      ["text_c079e7", "Text C079e7"],
-      ["text_7c8ee6", "Text 7c8ee6"],
-      ["text_c9c9bd", "Text C9c9bd"],
-      ["text_d5e33d", "Text D5e33d"],
-      ["text_3fa8b3", "Text 3fa8b3"],
-      ["text_b339aa", "Text B339aa"],
-      ["text_97d076", "Text 97d076"],
-      ["text_f49201", "Text F49201"],
-      ["text_38bc1a", "Text 38bc1a"],
-      ["text_645dbc", "Text 645dbc"],
-      ["text_be5fbb", "Text Be5fbb"],
-      ["text_984e39", "Text 984e39"],
-      ["text_84a925", "Text 84a925"],
-      ["text_c1e034", "Text C1e034"],
-      ["text_2534d3", "Text 2534d3"],
-      ["text_6ccbe6", ": {{comp_config_value_0}}"]
+      [
+        "k12",
+        "Image"
+      ],
+      [
+        "name_20def7",
+        "Image"
+      ],
+      [
+        "k0",
+        "Bar Chart"
+      ],
+      [
+        "k1",
+        "Display comparison of categorical data"
+      ],
+      [
+        "k2",
+        "Line Chart"
+      ],
+      [
+        "k3",
+        "Display data trend changes"
+      ],
+      [
+        "k4",
+        "Pie Chart"
+      ],
+      [
+        "k5",
+        "Display data proportion"
+      ],
+      [
+        "k6",
+        "Dashboard"
+      ],
+      [
+        "k7",
+        "Display metric completion progress"
+      ],
+      [
+        "k8",
+        "Data Table"
+      ],
+      [
+        "k9",
+        "Display structured data"
+      ],
+      [
+        "k10",
+        "Text Box"
+      ],
+      [
+        "k11",
+        "Add title or description"
+      ],
+      [
+        "k13",
+        "Add image element"
+      ],
+      [
+        "k14",
+        "Metric Card"
+      ],
+      [
+        "k15",
+        "Display a single key metric"
+      ],
+      [
+        "k16",
+        "Grid"
+      ],
+      [
+        "k17",
+        "List"
+      ],
+      [
+        "k18",
+        "Component Type"
+      ],
+      [
+        "k19",
+        "All Types"
+      ],
+      [
+        "k20",
+        "Bar Chart"
+      ],
+      [
+        "k21",
+        "Line Chart"
+      ],
+      [
+        "k22",
+        "Pie Chart"
+      ],
+      [
+        "k23",
+        "Dashboard"
+      ],
+      [
+        "k24",
+        "Table"
+      ],
+      [
+        "k25",
+        "Text"
+      ],
+      [
+        "k26",
+        "Metric Card"
+      ],
+      [
+        "k27",
+        "Drag component here"
+      ],
+      [
+        "k28",
+        "Delete"
+      ],
+      [
+        "k29",
+        "Select a component to edit properties"
+      ],
+      [
+        "fail",
+        "Failed"
+      ],
+      [
+        "text_e798a0",
+        "Metric name"
+      ],
+      [
+        "text_c95a1a",
+        "Metric name"
+      ],
+      [
+        "type",
+        "Type"
+      ],
+      [
+        "edit",
+        "Edit"
+      ],
+      [
+        "create",
+        "Create"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "edit_1",
+        "Edit"
+      ],
+      [
+        "list",
+        "List"
+      ],
+      [
+        "text_90581a",
+        "Metric name"
+      ],
+      [
+        "list_1",
+        "List"
+      ],
+      [
+        "search",
+        "Search"
+      ],
+      [
+        "text_6cfd0e",
+        "Metric name"
+      ],
+      [
+        "edit_2",
+        "Edit"
+      ],
+      [
+        "text_01c85e",
+        "Data Table"
+      ],
+      [
+        "content",
+        "Content"
+      ],
+      [
+        "text_20def7",
+        "Image"
+      ],
+      [
+        "text_6aab38",
+        "Metric name"
+      ],
+      [
+        "title",
+        "Title"
+      ],
+      [
+        "text_c28479",
+        "Label"
+      ],
+      [
+        "text_c1df04",
+        "Label"
+      ],
+      [
+        "name_7c8ee6",
+        "Name 7c8ee6"
+      ],
+      [
+        "description_ca6d6e",
+        "Description Ca6d6e"
+      ],
+      [
+        "name_c9c9bd",
+        "Name C9c9bd"
+      ],
+      [
+        "description_039dd8",
+        "Description 039dd8"
+      ],
+      [
+        "name_d5e33d",
+        "Name D5e33d"
+      ],
+      [
+        "description_58b5cd",
+        "Description 58b5cd"
+      ],
+      [
+        "name_3fa8b3",
+        "Name 3fa8b3"
+      ],
+      [
+        "description_649c7a",
+        "Description 649c7a"
+      ],
+      [
+        "name_01c85e",
+        "Name 01c85e"
+      ],
+      [
+        "description_c5a253",
+        "Description C5a253"
+      ],
+      [
+        "name_5ac57c",
+        "Name 5ac57c"
+      ],
+      [
+        "description_ee0eb6",
+        "Description Ee0eb6"
+      ],
+      [
+        "description_4325e5",
+        "Description 4325e5"
+      ],
+      [
+        "name_f49201",
+        "Name F49201"
+      ],
+      [
+        "description_3d35a6",
+        "Description 3d35a6"
+      ],
+      [
+        "text_573677",
+        "Text 573677"
+      ],
+      [
+        "text_c079e7",
+        "Text C079e7"
+      ],
+      [
+        "text_7c8ee6",
+        "Text 7c8ee6"
+      ],
+      [
+        "text_c9c9bd",
+        "Text C9c9bd"
+      ],
+      [
+        "text_d5e33d",
+        "Text D5e33d"
+      ],
+      [
+        "text_3fa8b3",
+        "Text 3fa8b3"
+      ],
+      [
+        "text_b339aa",
+        "Text B339aa"
+      ],
+      [
+        "text_97d076",
+        "Text 97d076"
+      ],
+      [
+        "text_f49201",
+        "Text F49201"
+      ],
+      [
+        "text_38bc1a",
+        "Text 38bc1a"
+      ],
+      [
+        "text_645dbc",
+        "Text 645dbc"
+      ],
+      [
+        "text_be5fbb",
+        "Text Be5fbb"
+      ],
+      [
+        "text_984e39",
+        "Text 984e39"
+      ],
+      [
+        "text_84a925",
+        "Text 84a925"
+      ],
+      [
+        "text_c1e034",
+        "Text C1e034"
+      ],
+      [
+        "text_2534d3",
+        "Text 2534d3"
+      ],
+      [
+        "text_6ccbe6",
+        ": {{comp_config_value_0}}"
+      ]
     ],
     "bi_comparison_page": [
-      ["text_a08b9e", "2024 H1"],
-      ["text_eac3f4", "2024 H2"],
-      ["k0", "Comparative Analysis"],
-      ["k1", "Time Range"],
-      ["k2", "All Time"],
-      ["k3", "Comparison Dimension"],
-      ["k4", "Semi-Annual Comparison"],
-      ["k5", "Quarterly Comparison"],
-      ["k6", "Monthly Comparison"],
-      ["k7", "Annual Comparison"],
-      ["k8", "Comparison Item"],
-      ["a_9", "Metric A"],
-      ["b_10", "Metric B"],
-      ["k11", "Difference"],
-      ["k12", "Change Rate"],
-      ["k13", "H1 2024"],
-      ["k14", "H2 2024"],
-      ["k15", "2023"],
-      ["fail", "Failed"],
-      ["fail_1", "Failure 1"],
-      ["create", "Create"],
-      ["text_82bbf6", "Metric name"],
-      ["text_192089", "Metric name"],
-      ["text_dd5404", "Metric name"],
-      ["text_440e3b", "Metric name"],
-      ["time", "Time"],
-      ["home", "Home"],
-      ["text_faa198", "Label"],
-      ["time_1", "Label"],
-      ["difference", "Variance"],
-      ["text_70ef92", "Metric name"],
-      ["text_d7d403", "Comparison Item Change Rate Trend"],
-      ["text_f9aa62", "Metric name"],
-      ["text_008210", "Comparison Item Details"],
-      ["text_b6960b", "Per Page Row Count"],
-      ["text_94fddb", "Text 94fddb"],
-      ["text_924412", "Text 924412"],
-      ["text_5148fc", "Text 5148fc"],
-      ["text_1a2beb", "Text 1a2beb"],
-      ["text_cd649f", "Text Cd649f"],
-      ["text_98c99f", "Text 98c99f"],
-      ["text_457941", "Text 457941"],
-      ["text_3329a3", "Text 3329a3"],
-      ["text_a50b49", "Text A50b49"],
-      ["text_8dee25", "Text 8dee25"],
-      ["text_a4273b", "Text A4273b"],
-      ["text_73c463", "Text 73c463"],
-      ["text_97d1f3", "Text 97d1f3"],
-      ["text_f776bc", "A"],
-      ["text_841866", "B"],
-      ["text_5fdfba", "Text 5fdfba"],
-      ["text_afb4b6", "Text Afb4b6"]
+      [
+        "text_a08b9e",
+        "2024 H1"
+      ],
+      [
+        "text_eac3f4",
+        "2024 H2"
+      ],
+      [
+        "k0",
+        "Comparative Analysis"
+      ],
+      [
+        "k1",
+        "Time Range"
+      ],
+      [
+        "k2",
+        "All Time"
+      ],
+      [
+        "k3",
+        "Comparison Dimension"
+      ],
+      [
+        "k4",
+        "Semi-Annual Comparison"
+      ],
+      [
+        "k5",
+        "Quarterly Comparison"
+      ],
+      [
+        "k6",
+        "Monthly Comparison"
+      ],
+      [
+        "k7",
+        "Annual Comparison"
+      ],
+      [
+        "k8",
+        "Comparison Item"
+      ],
+      [
+        "a_9",
+        "Metric A"
+      ],
+      [
+        "b_10",
+        "Metric B"
+      ],
+      [
+        "k11",
+        "Difference"
+      ],
+      [
+        "k12",
+        "Change Rate"
+      ],
+      [
+        "k13",
+        "H1 2024"
+      ],
+      [
+        "k14",
+        "H2 2024"
+      ],
+      [
+        "k15",
+        "2023"
+      ],
+      [
+        "fail",
+        "Failed"
+      ],
+      [
+        "fail_1",
+        "Failure 1"
+      ],
+      [
+        "create",
+        "Create"
+      ],
+      [
+        "text_82bbf6",
+        "Metric name"
+      ],
+      [
+        "text_192089",
+        "Metric name"
+      ],
+      [
+        "text_dd5404",
+        "Metric name"
+      ],
+      [
+        "text_440e3b",
+        "Metric name"
+      ],
+      [
+        "time",
+        "Time"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "text_faa198",
+        "Label"
+      ],
+      [
+        "time_1",
+        "Label"
+      ],
+      [
+        "difference",
+        "Variance"
+      ],
+      [
+        "text_70ef92",
+        "Metric name"
+      ],
+      [
+        "text_d7d403",
+        "Comparison Item Change Rate Trend"
+      ],
+      [
+        "text_f9aa62",
+        "Metric name"
+      ],
+      [
+        "text_008210",
+        "Comparison Item Details"
+      ],
+      [
+        "text_b6960b",
+        "Per Page Row Count"
+      ],
+      [
+        "text_94fddb",
+        "Text 94fddb"
+      ],
+      [
+        "text_924412",
+        "Text 924412"
+      ],
+      [
+        "text_5148fc",
+        "Text 5148fc"
+      ],
+      [
+        "text_1a2beb",
+        "Text 1a2beb"
+      ],
+      [
+        "text_cd649f",
+        "Text Cd649f"
+      ],
+      [
+        "text_98c99f",
+        "Text 98c99f"
+      ],
+      [
+        "text_457941",
+        "Text 457941"
+      ],
+      [
+        "text_3329a3",
+        "Text 3329a3"
+      ],
+      [
+        "text_a50b49",
+        "Text A50b49"
+      ],
+      [
+        "text_8dee25",
+        "Text 8dee25"
+      ],
+      [
+        "text_a4273b",
+        "Text A4273b"
+      ],
+      [
+        "text_73c463",
+        "Text 73c463"
+      ],
+      [
+        "text_97d1f3",
+        "Text 97d1f3"
+      ],
+      [
+        "text_f776bc",
+        "A"
+      ],
+      [
+        "text_841866",
+        "B"
+      ],
+      [
+        "text_5fdfba",
+        "Text 5fdfba"
+      ],
+      [
+        "text_afb4b6",
+        "Text Afb4b6"
+      ]
     ],
     "analytics": [
       [
         "modules",
         [
-          ["development", "R&D Management"],
-          ["quality", "Quality Management"],
-          ["production", "Production Data"],
-          ["laboratory", "Laboratory"],
-          ["ehs", "Safety & Environment"],
-          ["srm", "Supply Chain"]
+          [
+            "development",
+            "R&D Management"
+          ],
+          [
+            "quality",
+            "Quality Management"
+          ],
+          [
+            "production",
+            "Production Data"
+          ],
+          [
+            "laboratory",
+            "Laboratory"
+          ],
+          [
+            "ehs",
+            "Safety & Environment"
+          ],
+          [
+            "srm",
+            "Supply Chain"
+          ]
         ]
       ],
       [
         "stats",
         [
-          ["total_projects", "Total Projects"],
-          ["in_progress", "In Progress"],
-          ["completion_rate", "Completion Rate"],
-          ["total_inspections", "Total Inspections"],
-          ["pass_rate", "Pass Rate"],
-          ["pending", "Pending"],
-          ["total_batches", "Total Batches"],
-          ["completed", "Completed"],
-          ["efficiency", "Efficiency"],
-          ["total_samples", "Total Samples"],
-          ["completed_tests", "Completed Tests"],
-          ["instrument_usage", "Instrument Usage"],
-          ["total_risks", "Total Risks"],
-          ["high_risks", "High Risks"],
-          ["incidents", "Incidents"],
-          ["total_suppliers", "Total Suppliers"],
-          ["qualified", "Qualified"],
-          ["avg_rating", "Avg Rating"],
-          ["active_projects", "In Progress"],
-          ["completed_projects", "Completed"],
-          ["avg_duration", "Avg Duration (days)"],
-          ["pending_tests", "Pending Tests"],
-          ["avg_turnaround", "Avg Turnaround (hrs)"],
-          ["passed", "Passed Count"],
-          ["failed", "Failed Count"],
-          ["resolved", "Resolved"],
-          ["qualified_suppliers", "Qualified Suppliers"],
-          ["pending_orders", "Pending Orders"]
+          [
+            "total_projects",
+            "Total Projects"
+          ],
+          [
+            "in_progress",
+            "In Progress"
+          ],
+          [
+            "completion_rate",
+            "Completion Rate"
+          ],
+          [
+            "total_inspections",
+            "Total Inspections"
+          ],
+          [
+            "pass_rate",
+            "Pass Rate"
+          ],
+          [
+            "pending",
+            "Pending"
+          ],
+          [
+            "total_batches",
+            "Total Batches"
+          ],
+          [
+            "completed",
+            "Completed"
+          ],
+          [
+            "efficiency",
+            "Efficiency"
+          ],
+          [
+            "total_samples",
+            "Total Samples"
+          ],
+          [
+            "completed_tests",
+            "Completed Tests"
+          ],
+          [
+            "instrument_usage",
+            "Instrument Usage"
+          ],
+          [
+            "total_risks",
+            "Total Risks"
+          ],
+          [
+            "high_risks",
+            "High Risks"
+          ],
+          [
+            "incidents",
+            "Incidents"
+          ],
+          [
+            "total_suppliers",
+            "Total Suppliers"
+          ],
+          [
+            "qualified",
+            "Qualified"
+          ],
+          [
+            "avg_rating",
+            "Avg Rating"
+          ],
+          [
+            "active_projects",
+            "In Progress"
+          ],
+          [
+            "completed_projects",
+            "Completed"
+          ],
+          [
+            "avg_duration",
+            "Avg Duration (days)"
+          ],
+          [
+            "pending_tests",
+            "Pending Tests"
+          ],
+          [
+            "avg_turnaround",
+            "Avg Turnaround (hrs)"
+          ],
+          [
+            "passed",
+            "Passed Count"
+          ],
+          [
+            "failed",
+            "Failed Count"
+          ],
+          [
+            "resolved",
+            "Resolved"
+          ],
+          [
+            "qualified_suppliers",
+            "Qualified Suppliers"
+          ],
+          [
+            "pending_orders",
+            "Pending Orders"
+          ]
         ]
       ],
       [
         "time",
         [
-          ["10_min_ago", "10 min ago"],
-          ["30_min_ago", "30 min ago"],
-          ["1_hour_ago", "1 hour ago"],
-          ["2_hours_ago", "2 hours ago"],
-          ["yesterday", "Yesterday"]
+          [
+            "10_min_ago",
+            "10 min ago"
+          ],
+          [
+            "30_min_ago",
+            "30 min ago"
+          ],
+          [
+            "1_hour_ago",
+            "1 hour ago"
+          ],
+          [
+            "2_hours_ago",
+            "2 hours ago"
+          ],
+          [
+            "yesterday",
+            "Yesterday"
+          ]
         ]
       ]
     ],
     "modules": [
-      ["rs", "R&D Management"],
-      ["lims", "Laboratory Management"],
-      ["qms", "Quality Management"],
-      ["ehs", "Safety & Environment"],
-      ["srm", "Supply Chain Management"],
-      ["pdm", "Production Data"]
+      [
+        "rs",
+        "R&D Management"
+      ],
+      [
+        "lims",
+        "Laboratory Management"
+      ],
+      [
+        "qms",
+        "Quality Management"
+      ],
+      [
+        "ehs",
+        "Safety & Environment"
+      ],
+      [
+        "srm",
+        "Supply Chain Management"
+      ],
+      [
+        "pdm",
+        "Production Data"
+      ]
     ],
     "months": [
-      ["jan", "Jan"],
-      ["feb", "Feb"],
-      ["mar", "Mar"],
-      ["apr", "Apr"],
-      ["may", "May"],
-      ["jun", "Jun"],
-      ["jul", "Jul"],
-      ["aug", "Aug"],
-      ["sep", "Sep"],
-      ["oct", "Oct"],
-      ["nov", "Nov"],
-      ["dec", "Dec"]
+      [
+        "jan",
+        "Jan"
+      ],
+      [
+        "feb",
+        "Feb"
+      ],
+      [
+        "mar",
+        "Mar"
+      ],
+      [
+        "apr",
+        "Apr"
+      ],
+      [
+        "may",
+        "May"
+      ],
+      [
+        "jun",
+        "Jun"
+      ],
+      [
+        "jul",
+        "Jul"
+      ],
+      [
+        "aug",
+        "Aug"
+      ],
+      [
+        "sep",
+        "Sep"
+      ],
+      [
+        "oct",
+        "Oct"
+      ],
+      [
+        "nov",
+        "Nov"
+      ],
+      [
+        "dec",
+        "Dec"
+      ]
     ],
     "regions": [
-      ["east", "East China"],
-      ["south", "South China"],
-      ["north", "North China"],
-      ["southwest", "Southwest China"],
-      ["other", "Other"]
+      [
+        "east",
+        "East China"
+      ],
+      [
+        "south",
+        "South China"
+      ],
+      [
+        "north",
+        "North China"
+      ],
+      [
+        "southwest",
+        "Southwest China"
+      ],
+      [
+        "other",
+        "Other"
+      ]
     ],
     "bi_data_source_page": [
-      ["k0", "Failed to load data source"],
-      ["k1", "Create failed"],
-      ["k2", "Update failed"],
-      ["k3", "Delete failed"],
-      ["text_6a620e", "Label"],
-      ["test", "Label"],
-      ["text_4feab2", "Metric name"],
-      ["text_b72c3a", "Metric name"]
+      [
+        "k0",
+        "Failed to load data source"
+      ],
+      [
+        "k1",
+        "Create failed"
+      ],
+      [
+        "k2",
+        "Update failed"
+      ],
+      [
+        "k3",
+        "Delete failed"
+      ],
+      [
+        "text_6a620e",
+        "Label"
+      ],
+      [
+        "test",
+        "Label"
+      ],
+      [
+        "text_4feab2",
+        "Metric name"
+      ],
+      [
+        "text_b72c3a",
+        "Metric name"
+      ]
     ],
     "bi_report_page": [
-      ["k0", "Failed to load report data"],
-      ["k1", "Create failed"],
-      ["k2", "Update failed"],
-      ["k3", "Delete failed"],
-      ["text_645dbc", "Label"],
-      ["download", "Download"],
-      ["text_256969", "Metric name"],
-      ["create", "Create"]
+      [
+        "k0",
+        "Failed to load report data"
+      ],
+      [
+        "k1",
+        "Create failed"
+      ],
+      [
+        "k2",
+        "Update failed"
+      ],
+      [
+        "k3",
+        "Delete failed"
+      ],
+      [
+        "text_645dbc",
+        "Label"
+      ],
+      [
+        "download",
+        "Download"
+      ],
+      [
+        "text_256969",
+        "Metric name"
+      ],
+      [
+        "create",
+        "Create"
+      ]
     ],
     "data_analysis_page": [
-      ["k0", "East China"],
-      ["k1", "South China"],
-      ["k2", "North China"],
-      ["k3", "Southwest"],
-      ["k4", "Other"],
-      ["k5", "Electronics"],
-      ["k6", "Apparel & Accessories"],
-      ["k7", "Home Goods"],
-      ["k8", "Food & Beverage"],
-      ["k9", "Time Range"],
-      ["k10", "This Month"],
-      ["k11", "Last Month"],
-      ["3_12", "near3 month"],
-      ["6_13", "near6 month"],
-      ["k14", "This Year"],
-      ["k15", "Region"],
-      ["k16", "All Regions"],
-      ["k17", "East China"],
-      ["k18", "South China"],
-      ["k19", "North China"],
-      ["k20", "Product Category"],
-      ["k21", "All Categories"],
-      ["k22", "Electronics"],
-      ["k23", "Apparel & Accessories"],
-      ["k24", "Home Goods"],
-      ["k25", "Date"],
-      ["k26", "Order No."],
-      ["k27", "Customer"],
-      ["k28", "Product"],
-      ["k29", "Quantity"],
-      ["k30", "Amount"],
-      ["k31", "Status"],
-      ["k32", "Sales Amount"],
-      ["k33", "Orders"],
-      ["k34", "Customers"],
-      ["k35", "Share"],
-      ["k36", "Drill Down"],
-      ["k37", "Roll Up"],
-      ["k38", "Export"],
-      ["k39", "Refresh"],
-      ["k40", "Export Data"],
-      ["k41", "Sales Trend Analysis"],
-      ["k42", "Regional Sales Distribution"],
-      ["k43", "Key Metrics"],
-      ["k44", "Pivot Table"],
-      ["k45", "Data Details"],
-      ["k46", "Multi-dimensional Data Analysis"],
-      ["text_7c8ee6", "Text 7c8ee6"],
-      ["text_c9c9bd", "Text C9c9bd"],
-      ["text_af99db", "Area Chart"],
-      ["text_d5e33d", "Text D5e33d"],
-      ["text_047d4a", "Nationwide"],
-      ["text_4a7b52", "Region"],
-      ["product_2", "Product"],
-      ["text_53c7e7", "Label"],
-      ["text_615db5", "Zhang San"],
-      ["text_161783", "Electronics"],
-      ["completed", "Completed"],
-      ["text_36c942", "Li Si"],
-      ["text_86f5cb", "Clothing & Accessories"],
-      ["text_3228f3", "Wang Wu"],
-      ["text_0c3bd4", "Home Goods"],
-      ["text_d8476e", "Completed"],
-      ["text_b43536", "Zhao Six"],
-      ["text_e7e7de", "Food & Beverage"],
-      ["text_f9c684", "Qian Seven"],
-      ["text_467546", "Other"],
-      ["text_131448", "Metric name"],
-      ["home", "Home"],
-      ["text_3faef8", "Label"],
-      ["text_c6b32e", "Label"],
-      ["text_7f3ddd", "Label"],
-      ["region_4dea7c", "Region 4dea7c"],
-      ["region_c89adb", "Region C89adb"],
-      ["region_3f0cb8", "Region 3f0cb8"],
-      ["region_f1fe0f", "Region F1fe0f"],
-      ["region_0d98c7", "Region 0d98c7"],
-      ["category_cdce86", "Category Cdce86"],
-      ["category_1ba4e0", "Category 1ba4e0"],
-      ["category_229a02", "Category 229a02"],
-      ["category_dd2a49", "Category Dd2a49"],
-      ["label_cd649f", "Label Cd649f"],
-      ["label_0ec94a", "Label 0ec94a"],
-      ["label_c5d358", "Label C5d358"],
-      ["label_218a4e", "3"],
-      ["label_bc23df", "6"],
-      ["label_04ab9d", "Label 04ab9d"],
-      ["label_2560b3", "Label 2560b3"],
-      ["label_435853", "Label 435853"],
-      ["label_4dea7c", "Label 4dea7c"],
-      ["label_c89adb", "Label C89adb"],
-      ["label_3f0cb8", "Label 3f0cb8"],
-      ["label_8d5425", "Label 8d5425"],
-      ["label_7d25b4", "Label 7d25b4"],
-      ["label_cdce86", "Label Cdce86"],
-      ["label_1ba4e0", "Label 1ba4e0"],
-      ["label_229a02", "Label 229a02"],
-      ["text_75023a", "Text 75023a"],
-      ["text_4e17d0", "Text 4e17d0"],
-      ["text_55405e", "Text 55405e"],
-      ["text_894205", "Text 894205"],
-      ["text_1ecab8", "Text 1ecab8"],
-      ["text_94635d", "Text 94635d"],
-      ["text_7376c6", "Text 7376c6"],
-      ["text_694fc5", "Text 694fc5"],
-      ["text_8d5425", "Text 8d5425"],
-      ["text_56a37c", "Text 56a37c"],
-      ["text_c7f0d5", "Text C7f0d5"],
-      ["text_4ff1e7", "Text 4ff1e7"],
-      ["text_1e8dc2", "Text 1e8dc2"],
-      ["text_ff0b20", "Text Ff0b20"],
-      ["text_a01543", "Text A01543"],
-      ["text_0bf60b", "Text 0bf60b"],
-      ["text_4cf24a", "Text 4cf24a"],
-      ["text_3fea7c", "Status"],
-      ["text_ffa095", "Text Ffa095"]
+      [
+        "k0",
+        "East China"
+      ],
+      [
+        "k1",
+        "South China"
+      ],
+      [
+        "k2",
+        "North China"
+      ],
+      [
+        "k3",
+        "Southwest"
+      ],
+      [
+        "k4",
+        "Other"
+      ],
+      [
+        "k5",
+        "Electronics"
+      ],
+      [
+        "k6",
+        "Apparel & Accessories"
+      ],
+      [
+        "k7",
+        "Home Goods"
+      ],
+      [
+        "k8",
+        "Food & Beverage"
+      ],
+      [
+        "k9",
+        "Time Range"
+      ],
+      [
+        "k10",
+        "This Month"
+      ],
+      [
+        "k11",
+        "Last Month"
+      ],
+      [
+        "3_12",
+        "near3 month"
+      ],
+      [
+        "6_13",
+        "near6 month"
+      ],
+      [
+        "k14",
+        "This Year"
+      ],
+      [
+        "k15",
+        "Region"
+      ],
+      [
+        "k16",
+        "All Regions"
+      ],
+      [
+        "k17",
+        "East China"
+      ],
+      [
+        "k18",
+        "South China"
+      ],
+      [
+        "k19",
+        "North China"
+      ],
+      [
+        "k20",
+        "Product Category"
+      ],
+      [
+        "k21",
+        "All Categories"
+      ],
+      [
+        "k22",
+        "Electronics"
+      ],
+      [
+        "k23",
+        "Apparel & Accessories"
+      ],
+      [
+        "k24",
+        "Home Goods"
+      ],
+      [
+        "k25",
+        "Date"
+      ],
+      [
+        "k26",
+        "Order No."
+      ],
+      [
+        "k27",
+        "Customer"
+      ],
+      [
+        "k28",
+        "Product"
+      ],
+      [
+        "k29",
+        "Quantity"
+      ],
+      [
+        "k30",
+        "Amount"
+      ],
+      [
+        "k31",
+        "Status"
+      ],
+      [
+        "k32",
+        "Sales Amount"
+      ],
+      [
+        "k33",
+        "Orders"
+      ],
+      [
+        "k34",
+        "Customers"
+      ],
+      [
+        "k35",
+        "Share"
+      ],
+      [
+        "k36",
+        "Drill Down"
+      ],
+      [
+        "k37",
+        "Roll Up"
+      ],
+      [
+        "k38",
+        "Export"
+      ],
+      [
+        "k39",
+        "Refresh"
+      ],
+      [
+        "k40",
+        "Export Data"
+      ],
+      [
+        "k41",
+        "Sales Trend Analysis"
+      ],
+      [
+        "k42",
+        "Regional Sales Distribution"
+      ],
+      [
+        "k43",
+        "Key Metrics"
+      ],
+      [
+        "k44",
+        "Pivot Table"
+      ],
+      [
+        "k45",
+        "Data Details"
+      ],
+      [
+        "k46",
+        "Multi-dimensional Data Analysis"
+      ],
+      [
+        "text_7c8ee6",
+        "Text 7c8ee6"
+      ],
+      [
+        "text_c9c9bd",
+        "Text C9c9bd"
+      ],
+      [
+        "text_af99db",
+        "Area Chart"
+      ],
+      [
+        "text_d5e33d",
+        "Text D5e33d"
+      ],
+      [
+        "text_047d4a",
+        "Nationwide"
+      ],
+      [
+        "text_4a7b52",
+        "Region"
+      ],
+      [
+        "product_2",
+        "Product"
+      ],
+      [
+        "text_53c7e7",
+        "Label"
+      ],
+      [
+        "text_615db5",
+        "Zhang San"
+      ],
+      [
+        "text_161783",
+        "Electronics"
+      ],
+      [
+        "completed",
+        "Completed"
+      ],
+      [
+        "text_36c942",
+        "Li Si"
+      ],
+      [
+        "text_86f5cb",
+        "Clothing & Accessories"
+      ],
+      [
+        "text_3228f3",
+        "Wang Wu"
+      ],
+      [
+        "text_0c3bd4",
+        "Home Goods"
+      ],
+      [
+        "text_d8476e",
+        "Completed"
+      ],
+      [
+        "text_b43536",
+        "Zhao Six"
+      ],
+      [
+        "text_e7e7de",
+        "Food & Beverage"
+      ],
+      [
+        "text_f9c684",
+        "Qian Seven"
+      ],
+      [
+        "text_467546",
+        "Other"
+      ],
+      [
+        "text_131448",
+        "Metric name"
+      ],
+      [
+        "home",
+        "Home"
+      ],
+      [
+        "text_3faef8",
+        "Label"
+      ],
+      [
+        "text_c6b32e",
+        "Label"
+      ],
+      [
+        "text_7f3ddd",
+        "Label"
+      ],
+      [
+        "region_4dea7c",
+        "Region 4dea7c"
+      ],
+      [
+        "region_c89adb",
+        "Region C89adb"
+      ],
+      [
+        "region_3f0cb8",
+        "Region 3f0cb8"
+      ],
+      [
+        "region_f1fe0f",
+        "Region F1fe0f"
+      ],
+      [
+        "region_0d98c7",
+        "Region 0d98c7"
+      ],
+      [
+        "category_cdce86",
+        "Category Cdce86"
+      ],
+      [
+        "category_1ba4e0",
+        "Category 1ba4e0"
+      ],
+      [
+        "category_229a02",
+        "Category 229a02"
+      ],
+      [
+        "category_dd2a49",
+        "Category Dd2a49"
+      ],
+      [
+        "label_cd649f",
+        "Label Cd649f"
+      ],
+      [
+        "label_0ec94a",
+        "Label 0ec94a"
+      ],
+      [
+        "label_c5d358",
+        "Label C5d358"
+      ],
+      [
+        "label_218a4e",
+        "3"
+      ],
+      [
+        "label_bc23df",
+        "6"
+      ],
+      [
+        "label_04ab9d",
+        "Label 04ab9d"
+      ],
+      [
+        "label_2560b3",
+        "Label 2560b3"
+      ],
+      [
+        "label_435853",
+        "Label 435853"
+      ],
+      [
+        "label_4dea7c",
+        "Label 4dea7c"
+      ],
+      [
+        "label_c89adb",
+        "Label C89adb"
+      ],
+      [
+        "label_3f0cb8",
+        "Label 3f0cb8"
+      ],
+      [
+        "label_8d5425",
+        "Label 8d5425"
+      ],
+      [
+        "label_7d25b4",
+        "Label 7d25b4"
+      ],
+      [
+        "label_cdce86",
+        "Label Cdce86"
+      ],
+      [
+        "label_1ba4e0",
+        "Label 1ba4e0"
+      ],
+      [
+        "label_229a02",
+        "Label 229a02"
+      ],
+      [
+        "text_75023a",
+        "Text 75023a"
+      ],
+      [
+        "text_4e17d0",
+        "Text 4e17d0"
+      ],
+      [
+        "text_55405e",
+        "Text 55405e"
+      ],
+      [
+        "text_894205",
+        "Text 894205"
+      ],
+      [
+        "text_1ecab8",
+        "Text 1ecab8"
+      ],
+      [
+        "text_94635d",
+        "Text 94635d"
+      ],
+      [
+        "text_7376c6",
+        "Text 7376c6"
+      ],
+      [
+        "text_694fc5",
+        "Text 694fc5"
+      ],
+      [
+        "text_8d5425",
+        "Text 8d5425"
+      ],
+      [
+        "text_56a37c",
+        "Text 56a37c"
+      ],
+      [
+        "text_c7f0d5",
+        "Text C7f0d5"
+      ],
+      [
+        "text_4ff1e7",
+        "Text 4ff1e7"
+      ],
+      [
+        "text_1e8dc2",
+        "Text 1e8dc2"
+      ],
+      [
+        "text_ff0b20",
+        "Text Ff0b20"
+      ],
+      [
+        "text_a01543",
+        "Text A01543"
+      ],
+      [
+        "text_0bf60b",
+        "Text 0bf60b"
+      ],
+      [
+        "text_4cf24a",
+        "Text 4cf24a"
+      ],
+      [
+        "text_3fea7c",
+        "Status"
+      ],
+      [
+        "text_ffa095",
+        "Text Ffa095"
+      ]
     ],
     "page_header": [
-      ["k0", "Refresh"],
-      ["text_039174", "Text 039174"],
-      ["text_d1843e", ", , , , "],
-      ["text_8d9a07", "Text 8d9a07"],
-      ["text_26bb84", "Text 26bb84"]
+      [
+        "k0",
+        "Refresh"
+      ],
+      [
+        "text_039174",
+        "Text 039174"
+      ],
+      [
+        "text_d1843e",
+        ", , , , "
+      ],
+      [
+        "text_8d9a07",
+        "Text 8d9a07"
+      ],
+      [
+        "text_26bb84",
+        "Text 26bb84"
+      ]
     ],
     "table_utils": [
-      ["k0", "Edit"],
-      ["k1", "Delete"]
+      [
+        "k0",
+        "Edit"
+      ],
+      [
+        "k1",
+        "Delete"
+      ]
     ],
     "quarters": [
-      ["q1", "Q1"],
-      ["q2", "Q2"],
-      ["q3", "Q3"],
-      ["q4", "Q4"]
+      [
+        "q1",
+        "Q1"
+      ],
+      [
+        "q2",
+        "Q2"
+      ],
+      [
+        "q3",
+        "Q3"
+      ],
+      [
+        "q4",
+        "Q4"
+      ]
     ],
     "gis_page_components__data_table_section": [
-      ["equipment_name", "Please enter..."],
-      ["search", "Search"],
-      ["location_name", "Please enter..."],
-      ["search_1", "Please enter..."],
-      ["search_2", "Please enter..."],
-      ["search_3", "Please enter..."],
-      ["search_4", "Search4"]
+      [
+        "equipment_name",
+        "Please enter..."
+      ],
+      [
+        "search",
+        "Search"
+      ],
+      [
+        "location_name",
+        "Please enter..."
+      ],
+      [
+        "search_1",
+        "Please enter..."
+      ],
+      [
+        "search_2",
+        "Please enter..."
+      ],
+      [
+        "search_3",
+        "Please enter..."
+      ],
+      [
+        "search_4",
+        "Search4"
+      ]
     ],
     "gis_page_components__entity_form_modal": [
-      ["name", "Name"],
-      ["equipment_type", "Label"],
-      ["text_6acaee", "Label"],
-      ["text_3d18ca", "Label"],
-      ["description", "Description"],
-      ["type", "Type"],
-      ["text_981a2b", "Label"],
-      ["text_777f6f", "Label"],
-      ["text_60619a", "Label"],
-      ["text_0ead9c", "Label"],
-      ["type_1", "Label"],
-      ["text_fe7d74", "Label"],
-      ["text_de3b57", "Label"],
-      ["title", "Title"],
-      ["text_bf425d", "Label"],
-      ["text_c515f3", "Label"],
-      ["type_2", "Label"],
-      ["text_c2ef90", "Label"],
-      ["name_1", "Label"],
-      ["type_3", "Label"],
-      ["address", "Address"],
-      ["contact", "Label"],
-      ["phone", "Phone"],
-      ["text_26bb84", "Text 26bb84"],
-      ["edit", "Edit"],
-      ["close", "Close"],
-      ["create", "Create"],
-      ["save", "Save"]
+      [
+        "name",
+        "Name"
+      ],
+      [
+        "equipment_type",
+        "Label"
+      ],
+      [
+        "text_6acaee",
+        "Label"
+      ],
+      [
+        "text_3d18ca",
+        "Label"
+      ],
+      [
+        "description",
+        "Description"
+      ],
+      [
+        "type",
+        "Type"
+      ],
+      [
+        "text_981a2b",
+        "Label"
+      ],
+      [
+        "text_777f6f",
+        "Label"
+      ],
+      [
+        "text_60619a",
+        "Label"
+      ],
+      [
+        "text_0ead9c",
+        "Label"
+      ],
+      [
+        "type_1",
+        "Label"
+      ],
+      [
+        "text_fe7d74",
+        "Label"
+      ],
+      [
+        "text_de3b57",
+        "Label"
+      ],
+      [
+        "title",
+        "Title"
+      ],
+      [
+        "text_bf425d",
+        "Label"
+      ],
+      [
+        "text_c515f3",
+        "Label"
+      ],
+      [
+        "type_2",
+        "Label"
+      ],
+      [
+        "text_c2ef90",
+        "Label"
+      ],
+      [
+        "name_1",
+        "Label"
+      ],
+      [
+        "type_3",
+        "Label"
+      ],
+      [
+        "address",
+        "Address"
+      ],
+      [
+        "contact",
+        "Label"
+      ],
+      [
+        "phone",
+        "Phone"
+      ],
+      [
+        "text_26bb84",
+        "Text 26bb84"
+      ],
+      [
+        "edit",
+        "Edit"
+      ],
+      [
+        "close",
+        "Close"
+      ],
+      [
+        "create",
+        "Create"
+      ],
+      [
+        "save",
+        "Save"
+      ]
     ],
-    "gis_page_components__import_modal": [["import", "Import"]],
-    "gis_page_components__page_header": [["back", "Back"]],
+    "gis_page_components__import_modal": [
+      [
+        "import",
+        "Import"
+      ]
+    ],
+    "gis_page_components__page_header": [
+      [
+        "back",
+        "Back"
+      ]
+    ],
     "gis_page_components__stats_section": [
-      ["equipment", "Title"],
-      ["text_09a0d3", "Metric name"],
-      ["text_423a98", "Metric name"],
-      ["text_3548b7", "Metric name"],
-      ["text_0ab201", "Metric name"],
-      ["text_71c01c", "Metric name"],
-      ["type", "Type"],
-      ["text_87c037", "Pipeline"],
-      ["status", "Status"],
-      ["active_2", "Active2"],
-      ["text_9ed7d3", "Disabled"]
+      [
+        "equipment",
+        "Title"
+      ],
+      [
+        "text_09a0d3",
+        "Metric name"
+      ],
+      [
+        "text_423a98",
+        "Metric name"
+      ],
+      [
+        "text_3548b7",
+        "Metric name"
+      ],
+      [
+        "text_0ab201",
+        "Metric name"
+      ],
+      [
+        "text_71c01c",
+        "Metric name"
+      ],
+      [
+        "type",
+        "Type"
+      ],
+      [
+        "text_87c037",
+        "Pipeline"
+      ],
+      [
+        "status",
+        "Status"
+      ],
+      [
+        "active_2",
+        "Active2"
+      ],
+      [
+        "text_9ed7d3",
+        "Disabled"
+      ]
     ],
     "gis_page_components__table_utils": [
-      ["active", "Active"],
-      ["pending", "Pending"],
-      ["text_710ad0", "Disabled"],
-      ["confirm", "Confirm"],
-      ["equipment_name", "Equipment Name"],
-      ["type", "Type"],
-      ["text_6acaee", "Latitude"],
-      ["text_3d18ca", "Longitude"],
-      ["status", "Status"],
-      ["action", "Actions"],
-      ["name", "Name"],
-      ["text_9b5774", "Origin"],
-      ["text_950b2a", "Col End Point"],
-      ["location_name", "Location Name"],
-      ["text_fe7d74", "Col Capacity"],
-      ["text_de3b57", "Current Quantity"],
-      ["text_d5490c", "Latitude"],
-      ["title", "Title"],
-      ["text_bf425d", "Recorder"],
-      ["time", "Time"],
-      ["name_1", "Name1"],
-      ["text_c515f3", "Encoding"],
-      ["type_1", "Type1"],
-      ["created_at", "Created At"],
-      ["name_2", "Name2"],
-      ["type_2", "Type2"],
-      ["address", "Address"],
-      ["contact", "Contact"]
+      [
+        "active",
+        "Active"
+      ],
+      [
+        "pending",
+        "Pending"
+      ],
+      [
+        "text_710ad0",
+        "Disabled"
+      ],
+      [
+        "confirm",
+        "Confirm"
+      ],
+      [
+        "equipment_name",
+        "Equipment Name"
+      ],
+      [
+        "type",
+        "Type"
+      ],
+      [
+        "text_6acaee",
+        "Latitude"
+      ],
+      [
+        "text_3d18ca",
+        "Longitude"
+      ],
+      [
+        "status",
+        "Status"
+      ],
+      [
+        "action",
+        "Actions"
+      ],
+      [
+        "name",
+        "Name"
+      ],
+      [
+        "text_9b5774",
+        "Origin"
+      ],
+      [
+        "text_950b2a",
+        "Col End Point"
+      ],
+      [
+        "location_name",
+        "Location Name"
+      ],
+      [
+        "text_fe7d74",
+        "Col Capacity"
+      ],
+      [
+        "text_de3b57",
+        "Current Quantity"
+      ],
+      [
+        "text_d5490c",
+        "Latitude"
+      ],
+      [
+        "title",
+        "Title"
+      ],
+      [
+        "text_bf425d",
+        "Recorder"
+      ],
+      [
+        "time",
+        "Time"
+      ],
+      [
+        "name_1",
+        "Name1"
+      ],
+      [
+        "text_c515f3",
+        "Encoding"
+      ],
+      [
+        "type_1",
+        "Type1"
+      ],
+      [
+        "created_at",
+        "Created At"
+      ],
+      [
+        "name_2",
+        "Name2"
+      ],
+      [
+        "type_2",
+        "Type2"
+      ],
+      [
+        "address",
+        "Address"
+      ],
+      [
+        "contact",
+        "Contact"
+      ]
     ],
-    "entity_form_modal": [["text_625fb2", "Cancel"]],
+    "entity_form_modal": [
+      [
+        "text_625fb2",
+        "Cancel"
+      ]
+    ],
     "stats_section": [
-      ["text_dc0dcb", ": {{statistics_active_devices_0}}"],
-      ["text_4cf0b3", ": {{statistics_active_pipelines_0}}"]
+      [
+        "text_dc0dcb",
+        ": {{statistics_active_devices_0}}"
+      ],
+      [
+        "text_4cf0b3",
+        ": {{statistics_active_pipelines_0}}"
+      ]
     ]
   },
   "doc": {
@@ -2270,5 +5858,11 @@
   "bi.dataset_page.no_data_sources": "No data sources yet (create one in Data Source Management first)",
   "bi.bi_dashboard_page.clone": "Clone",
   "bi.bi_dashboard_page.visibility": "Visibility",
-  "bi.report_builder_page.error_load": "Failed to load reports, please retry"
+  "bi.report_builder_page.error_load": "Failed to load reports, please retry",
+  "dashboard.dash_ehs_desc": "Environment, Health & Safety Management System",
+  "dashboard.dash_ehs_name": "EHS Safety Management",
+  "dashboard.dash_lims_desc": "Laboratory Information Management System",
+  "dashboard.dash_lims_name": "LIMS Laboratory Management",
+  "dashboard.dash_pdm_desc": "Product Data Management System",
+  "dashboard.dash_pdm_name": "PDM Product Data Management"
 }
