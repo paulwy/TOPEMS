@@ -9,6 +9,7 @@ import React from 'react';
 import { Chip } from '@mui/material';
 import type { ColumnDef } from '@/components/templates/list/types';
 import type { FormFieldConfig } from '@/components/common/FormBuilder';
+import { formatDateCell, formatDateTimeCell } from './formatDate';
 
 // ============ 字段类型 ============
 
@@ -478,6 +479,13 @@ export function toColumnDef(field: SchemaField): ColumnDef | null {
       const label = optionMap.get(String(value));
       return label ?? String(value);
     };
+  }
+
+  // date / datetime 默认格式化：不写 renderCell 的日期列以前会原样输出后端字符串
+  // （如 `2026-11-20 01:00:00+00`，UTC 且格式难看）。统一按本地时区呈现。
+  if (!render && (field.type === 'date' || field.type === 'datetime')) {
+    const formatter = field.type === 'date' ? formatDateCell : formatDateTimeCell;
+    render = (row: Record<string, unknown>) => formatter((row ?? {})[field.name]) || '-';
   }
 
   // 行内编辑配置
