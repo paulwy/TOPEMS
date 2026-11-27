@@ -523,5 +523,8 @@
   "monitor.nav.monitor-settings_desc": "监控设置",
   "monitor.monitor_settings.save_failed": "设置保存失败，请稍后重试",
   "monitor.monitor_alert_rules_page.error_load": "告警规则加载失败",
-  "monitor.monitor_alert_rules_page.error_save": "告警规则保存失败"
+  "monitor.monitor_alert_rules_page.error_save": "告警规则保存失败",
+  "monitor.monitor_metrics_page.mem_percent": "内存 %",
+  "monitor.monitor_metrics_page.disk_percent": "磁盘 %",
+  "monitor.monitor_metrics_page.network_mbps": "网络 MB/s"
 }

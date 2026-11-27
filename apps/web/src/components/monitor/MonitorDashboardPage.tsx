@@ -345,7 +345,7 @@ export const MonitorDashboardPage: React.FC = () => {
         const prev = samples[i - 1];
         const dt = Math.max(1, s.ts - prev.ts);
         return Number(
-          (((s.net_in + s.net_out) - (prev.net_in + prev.net_out)) / dt / 1024 / 1024).toFixed(2)
+          ((s.net_in + s.net_out - (prev.net_in + prev.net_out)) / dt / 1024 / 1024).toFixed(2)
         );
       }),
     [samples]
@@ -538,7 +538,17 @@ export const MonitorDashboardPage: React.FC = () => {
         color: 'success',
       },
     ];
-  }, [systemMetrics, dbMetrics, apiServices, apiAlerts, apiPerf, cpuSeries, memorySeries, diskSeries, netSeries]);
+  }, [
+    systemMetrics,
+    dbMetrics,
+    apiServices,
+    apiAlerts,
+    apiPerf,
+    cpuSeries,
+    memorySeries,
+    diskSeries,
+    netSeries,
+  ]);
   const systemResourceData = useMemo(
     () => ({ cpu: cpuSeries, memory: memorySeries, disk: diskSeries }),
     [cpuSeries, memorySeries, diskSeries]

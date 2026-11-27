@@ -206,6 +206,7 @@ pub async fn list_material_boms(
     clippy::cast_possible_wrap
 )]
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/boms",
     tag = "mes",
@@ -497,6 +498,7 @@ pub async fn get_material_bom(
     clippy::cast_possible_wrap
 )]
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/boms/{id}",
     tag = "mes",
@@ -654,6 +656,7 @@ pub async fn update_material_bom(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/boms/{id}",
     tag = "mes",

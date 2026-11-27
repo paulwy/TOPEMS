@@ -44,6 +44,7 @@ pub fn create_routes() -> Router<AppState> {
 
 /// S2：效率分析详情——按设备 ID 查 OEE 记录返回（非空）
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/equipment-oee/{equipment_id}/efficiency/{rid}",
     tag = "mes",

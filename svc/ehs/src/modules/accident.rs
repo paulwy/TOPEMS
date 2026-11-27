@@ -1499,6 +1499,7 @@ pub async fn list_incident_actions(
     }
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     post,
@@ -1564,6 +1565,7 @@ pub async fn create_incident_action(
     )
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     put,

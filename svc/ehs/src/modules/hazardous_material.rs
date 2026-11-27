@@ -1227,6 +1227,7 @@ pub fn storage_compatibility(classes: &[&str]) -> bool {
 // 以下端点为前端契约已调用、但后端尚未建表的资源；
 // 详情类 GET 返回 200 + 内层 404，PUT/DELETE 返回成功（幂等）。
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     put,
@@ -1245,6 +1246,7 @@ pub async fn update_stock_record(
     ApiResponse::not_implemented("出入库记录数据源尚未启用")
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     delete,
@@ -1285,6 +1287,7 @@ pub async fn get_msds_by_id(
     .await
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     put,
@@ -1304,6 +1307,7 @@ pub async fn update_msds_by_id(
     ApiResponse::not_found("MSDS 不存在")
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     delete,
@@ -1321,6 +1325,7 @@ pub async fn delete_msds_by_id(
     ApiResponse::not_implemented("MSDS 数据源尚未启用，删除操作暂不可用")
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     put,
@@ -1339,6 +1344,7 @@ pub async fn update_material_category(
     ApiResponse::not_implemented("危险品分类数据源尚未启用，更新操作暂不可用")
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     delete,

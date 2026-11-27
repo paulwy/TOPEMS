@@ -281,6 +281,7 @@ pub async fn get_material_plan(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/material-plans",
     tag = "mes",
@@ -373,6 +374,7 @@ pub async fn create_material_plan(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/material-plans/{id}",
     tag = "mes",
@@ -472,6 +474,7 @@ pub async fn update_material_plan(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/material-plans/{id}",
     tag = "mes",

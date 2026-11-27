@@ -28,8 +28,7 @@ const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: '24h', label: i18n.t('monitor.monitor_metrics_page.24_2') },
 ];
 
-const toMinutes = (range: TimeRange): number =>
-  range === '1h' ? 60 : range === '6h' ? 360 : 1440;
+const toMinutes = (range: TimeRange): number => (range === '1h' ? 60 : range === '6h' ? 360 : 1440);
 
 const formatTime = (ts: number): string =>
   new Date(ts * 1000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
@@ -77,7 +76,7 @@ export const MonitorMetricsPage: React.FC = () => {
         const prev = samples[i - 1];
         const dt = Math.max(1, s.ts - prev.ts);
         return Number(
-          (((s.net_in + s.net_out) - (prev.net_in + prev.net_out)) / dt / 1024 / 1024).toFixed(2)
+          ((s.net_in + s.net_out - (prev.net_in + prev.net_out)) / dt / 1024 / 1024).toFixed(2)
         );
       }),
     [samples]
@@ -145,16 +144,37 @@ export const MonitorMetricsPage: React.FC = () => {
       yKeys: [{ key, name, color }],
     });
     const cpuTrend = trend('cpu', 'CPU %', cpuSeries, 'primary.main');
-    const memTrend = trend('memory', '内存 %', memorySeries, 'success.main');
-    const diskTrend = trend('disk', '磁盘 %', diskSeries, 'warning.main');
-    const netTrend = trend('net', '网络 MB/s', netSeries, 'secondary.main');
+    const memTrend = trend(
+      'memory',
+      i18n.t('monitor.monitor_metrics_page.mem_percent'),
+      memorySeries,
+      'success.main'
+    );
+    const diskTrend = trend(
+      'disk',
+      i18n.t('monitor.monitor_metrics_page.disk_percent'),
+      diskSeries,
+      'warning.main'
+    );
+    const netTrend = trend(
+      'net',
+      i18n.t('monitor.monitor_metrics_page.network_mbps'),
+      netSeries,
+      'secondary.main'
+    );
     return [
       {
         id: 'cpu-trend',
         title: i18n.t('pages.monitor_metrics_page.cpu_1'),
         subtitle: i18n.t('monitor.monitor_metrics_page.cpu_38'),
         chart: (
-          <LazyChart type='line' data={cpuTrend.data} xKey='name' yKeys={cpuTrend.yKeys} height={280} />
+          <LazyChart
+            type='line'
+            data={cpuTrend.data}
+            xKey='name'
+            yKeys={cpuTrend.yKeys}
+            height={280}
+          />
         ),
         height: 360,
         type: 'line',
@@ -165,7 +185,13 @@ export const MonitorMetricsPage: React.FC = () => {
         title: i18n.t('monitor.monitor_metrics_page.k39'),
         subtitle: i18n.t('monitor.monitor_metrics_page.k40'),
         chart: (
-          <LazyChart type='line' data={memTrend.data} xKey='name' yKeys={memTrend.yKeys} height={280} />
+          <LazyChart
+            type='line'
+            data={memTrend.data}
+            xKey='name'
+            yKeys={memTrend.yKeys}
+            height={280}
+          />
         ),
         height: 360,
         type: 'line',
@@ -176,7 +202,13 @@ export const MonitorMetricsPage: React.FC = () => {
         title: i18n.t('monitor.monitor_metrics_page.k30'),
         subtitle: i18n.t('monitor.monitor_metrics_page.k42'),
         chart: (
-          <LazyChart type='area' data={diskTrend.data} xKey='name' yKeys={diskTrend.yKeys} height={280} />
+          <LazyChart
+            type='area'
+            data={diskTrend.data}
+            xKey='name'
+            yKeys={diskTrend.yKeys}
+            height={280}
+          />
         ),
         height: 360,
         type: 'area',
@@ -187,7 +219,13 @@ export const MonitorMetricsPage: React.FC = () => {
         title: i18n.t('monitor.monitor_metrics_page.k47'),
         subtitle: i18n.t('monitor.monitor_metrics_page.k48'),
         chart: (
-          <LazyChart type='area' data={netTrend.data} xKey='name' yKeys={netTrend.yKeys} height={280} />
+          <LazyChart
+            type='area'
+            data={netTrend.data}
+            xKey='name'
+            yKeys={netTrend.yKeys}
+            height={280}
+          />
         ),
         height: 360,
         type: 'area',
@@ -200,7 +238,11 @@ export const MonitorMetricsPage: React.FC = () => {
     timeRangeOptions.find((o) => o.value === timeRange)?.label ?? timeRange;
 
   const headerContent = (
-    <Stack direction='row' spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+    <Stack
+      direction='row'
+      spacing={2}
+      sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+    >
       <Button
         size='small'
         variant='outlined'

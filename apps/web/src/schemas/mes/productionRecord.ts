@@ -20,9 +20,12 @@ export const productionRecordSchema: EntitySchema = {
   // 报工：订单必填、工位可选，两者此前都是手填 UUID
   dynamicOptions: [
     { field: 'order_id', queryKey: ['mes', 'orders', 'forRecord'], loader: loadMesOrderOptions },
-    { field: 'work_station_id', queryKey: ['mes', 'workstations', 'forRecord'], loader: loadMesWorkstationOptions },
+    {
+      field: 'work_station_id',
+      queryKey: ['mes', 'workstations', 'forRecord'],
+      loader: loadMesWorkstationOptions,
+    },
   ],
-
 
   fields: [
     {

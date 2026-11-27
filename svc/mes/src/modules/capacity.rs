@@ -318,6 +318,7 @@ pub async fn get_capacity(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/capacities",
     tag = "mes",
@@ -436,6 +437,7 @@ pub async fn create_capacity(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/capacities/{id}",
     tag = "mes",
@@ -548,6 +550,7 @@ pub async fn update_capacity(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/capacities/{id}",
     tag = "mes",

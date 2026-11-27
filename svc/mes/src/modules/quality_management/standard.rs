@@ -441,6 +441,7 @@ pub async fn get_standard(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/quality/standards",
     tag = "mes",
@@ -634,6 +635,7 @@ struct StandardUpdateRow {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/quality/standards/{id}",
     tag = "mes",
@@ -888,6 +890,7 @@ pub async fn update_standard(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/quality/standards/{id}",
     tag = "mes",

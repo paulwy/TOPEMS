@@ -437,6 +437,7 @@ pub async fn get_material_requirement(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/material-requirements",
     tag = "mes",
@@ -577,6 +578,7 @@ pub async fn create_material_requirement(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/material-requirements/{id}",
     tag = "mes",
@@ -718,6 +720,7 @@ pub async fn update_material_requirement(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/material-requirements/{id}",
     tag = "mes",

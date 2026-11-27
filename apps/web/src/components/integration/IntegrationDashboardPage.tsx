@@ -93,9 +93,14 @@ export const IntegrationDashboardPage: React.FC = () => {
   const syncStats = statsQuery.data;
   const totalSyncs = Number(syncStats?.total_syncs ?? 0);
   const successRate = Number(syncStats?.success_rate ?? 0);
-  const failed = Number(syncStats?.integration_stats
-    ? Object.values(syncStats.integration_stats).reduce((sum, v) => sum + Number(v.failed ?? 0), 0)
-    : 0);
+  const failed = Number(
+    syncStats?.integration_stats
+      ? Object.values(syncStats.integration_stats).reduce(
+          (sum, v) => sum + Number(v.failed ?? 0),
+          0
+        )
+      : 0
+  );
   const lastSyncText = syncStats?.last_sync_at
     ? new Date(syncStats.last_sync_at).toLocaleString('zh-CN', { hour12: false })
     : '--';
@@ -236,13 +241,11 @@ export const IntegrationDashboardPage: React.FC = () => {
         time: ev.created_at
           ? new Date(ev.created_at).toLocaleString('zh-CN', { hour12: false })
           : '',
-        status: (
-          ev.status === 'success' || ev.status === 'synced'
-            ? 'success'
-            : ev.status === 'failed' || ev.status === 'error'
-              ? 'error'
-              : 'default'
-        ) as 'success' | 'error' | 'default',
+        status: (ev.status === 'success' || ev.status === 'synced'
+          ? 'success'
+          : ev.status === 'failed' || ev.status === 'error'
+            ? 'error'
+            : 'default') as 'success' | 'error' | 'default',
         onClick: () => navigate(INTEGRATION_PATHS.events),
       })),
     [eventsQuery.data, navigate]

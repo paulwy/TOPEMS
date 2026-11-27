@@ -335,6 +335,7 @@ pub async fn list_records(
 
 #[allow(clippy::as_conversions)]
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/records",
     tag = "mes",
@@ -533,6 +534,7 @@ pub async fn get_record(
 
 #[allow(clippy::as_conversions)]
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/records/{id}",
     tag = "mes",
@@ -678,6 +680,7 @@ pub async fn update_record(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/records/{id}",
     tag = "mes",

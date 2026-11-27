@@ -40,7 +40,11 @@ export const experimentSchema: EntitySchema = {
   permissionResource: 'rd:experiment',
 
   dynamicOptions: [
-    { field: 'project_id', queryKey: ['rd', 'projects', 'forExperiment'], loader: loadRdProjectOptions },
+    {
+      field: 'project_id',
+      queryKey: ['rd', 'projects', 'forExperiment'],
+      loader: loadRdProjectOptions,
+    },
   ],
 
   fields: [

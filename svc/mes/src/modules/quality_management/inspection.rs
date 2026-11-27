@@ -88,6 +88,7 @@ pub struct InspectionResponse {
 
 #[allow(clippy::as_conversions)]
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/quality/inspections",
     tag = "mes",
@@ -435,6 +436,7 @@ pub async fn get_inspection(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/quality/inspections",
     tag = "mes",
@@ -605,6 +607,7 @@ struct InspectionUpdateRow {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/quality/inspections/{id}",
     tag = "mes",
@@ -753,6 +756,7 @@ pub async fn update_inspection(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/quality/inspections/{id}",
     tag = "mes",

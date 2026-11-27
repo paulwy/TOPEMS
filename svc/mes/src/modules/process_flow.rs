@@ -477,6 +477,7 @@ pub async fn get_process_flow(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/process-flows",
     tag = "mes",
@@ -597,6 +598,7 @@ struct ProcessFlowUpdateRow {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/process-flows/{id}",
     tag = "mes",
@@ -755,6 +757,7 @@ pub async fn update_process_flow(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/process-flows/{id}",
     tag = "mes",
@@ -931,6 +934,7 @@ pub async fn get_flow_steps(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/process-flows/{id}/steps",
     tag = "mes",
@@ -1232,6 +1236,7 @@ pub async fn update_flow_step(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/process-flows/{id}/steps/{step_id}",
     tag = "mes",

@@ -332,6 +332,7 @@ pub async fn list_work_stations(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/workstations",
     tag = "mes",
@@ -507,6 +508,7 @@ pub async fn get_work_station(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/workstations/{id}",
     tag = "mes",
@@ -651,6 +653,7 @@ pub async fn update_work_station(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/workstations/{id}",
     tag = "mes",

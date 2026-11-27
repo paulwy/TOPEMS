@@ -1068,6 +1068,7 @@ pub async fn close_hazard(
     }
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     post,
@@ -1195,6 +1196,7 @@ pub async fn create_rectification(
     )
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     put,
@@ -1364,6 +1366,7 @@ pub async fn update_rectification(
     )
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     post,
@@ -1469,6 +1472,7 @@ pub async fn submit_rectification(
     )
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     post,

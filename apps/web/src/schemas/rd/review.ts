@@ -46,9 +46,12 @@ export const reviewSchema: EntitySchema = {
 
   // 外键改为真实下拉（此前是手填 UUID）
   dynamicOptions: [
-    { field: 'project_id', queryKey: ['rd', 'projects', 'forReview'], loader: loadRdProjectOptions },
+    {
+      field: 'project_id',
+      queryKey: ['rd', 'projects', 'forReview'],
+      loader: loadRdProjectOptions,
+    },
   ],
-
 
   fields: [
     {

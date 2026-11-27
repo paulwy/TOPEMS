@@ -305,6 +305,7 @@ pub async fn list_processes(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/processes",
     tag = "mes",
@@ -503,6 +504,7 @@ pub async fn get_process(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/processes/{id}",
     tag = "mes",
@@ -631,6 +633,7 @@ pub async fn update_process(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/processes/{id}",
     tag = "mes",

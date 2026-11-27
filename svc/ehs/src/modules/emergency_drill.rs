@@ -593,6 +593,7 @@ pub async fn create_drill_plan(
     }
     ApiResponse::success(plan, "创建演练计划成功")
 }
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     post,

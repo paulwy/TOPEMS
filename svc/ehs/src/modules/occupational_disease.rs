@@ -1436,6 +1436,7 @@ pub async fn get_disease_statistics(
     ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     put,

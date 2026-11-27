@@ -44,7 +44,6 @@ export const buildSchema: EntitySchema = {
     { field: 'project_id', queryKey: ['rd', 'projects', 'forBuild'], loader: loadRdProjectOptions },
   ],
 
-
   fields: [
     {
       name: 'build_no',

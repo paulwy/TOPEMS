@@ -406,6 +406,7 @@ pub async fn get_anomaly_rule(
 
 /// 更新预警规则
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/anomaly/rules",
     tag = "mes",

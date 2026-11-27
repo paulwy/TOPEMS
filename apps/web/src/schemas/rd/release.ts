@@ -3,7 +3,11 @@ import { Chip, Box, Typography, Button } from '@mui/material';
 import { Tag, Calendar, User, Globe, FlaskConical } from 'lucide-react';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
-import { loadRdBuildOptions, loadRdFormulaOptions, loadRdProjectOptions } from '@/schemas/dynamicLoaders';
+import {
+  loadRdBuildOptions,
+  loadRdFormulaOptions,
+  loadRdProjectOptions,
+} from '@/schemas/dynamicLoaders';
 
 /**
  * 批 38：发布页保留 rd.deploys 作为数据源。
@@ -59,11 +63,18 @@ export const releaseSchema: EntitySchema = {
 
   // 外键改为真实下拉（此前是手填 UUID）
   dynamicOptions: [
-    { field: 'project_id', queryKey: ['rd', 'projects', 'forRelease'], loader: loadRdProjectOptions },
+    {
+      field: 'project_id',
+      queryKey: ['rd', 'projects', 'forRelease'],
+      loader: loadRdProjectOptions,
+    },
     { field: 'build_id', queryKey: ['rd', 'builds', 'forRelease'], loader: loadRdBuildOptions },
-    { field: 'formula_id', queryKey: ['rd', 'formulas', 'forRelease'], loader: loadRdFormulaOptions },
+    {
+      field: 'formula_id',
+      queryKey: ['rd', 'formulas', 'forRelease'],
+      loader: loadRdFormulaOptions,
+    },
   ],
-
 
   fields: [
     {

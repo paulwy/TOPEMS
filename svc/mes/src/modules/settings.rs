@@ -104,6 +104,7 @@ pub async fn get_settings(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/settings/{category}",
     tag = "mes",

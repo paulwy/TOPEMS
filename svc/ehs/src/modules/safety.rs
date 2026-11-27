@@ -186,6 +186,7 @@ pub struct UpdateInspectionRecordRequest {
     pub issues: Option<Vec<String>>,
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     post,
@@ -301,6 +302,7 @@ pub async fn create_plan_item(
     }
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     delete,
@@ -393,6 +395,7 @@ pub struct CreateSafetyCheckRequest {
     pub status: String,
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     post,

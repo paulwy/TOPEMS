@@ -412,6 +412,7 @@ pub async fn get_record(
     }
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     put,
@@ -566,6 +567,7 @@ pub async fn update_record(
     )
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     delete,

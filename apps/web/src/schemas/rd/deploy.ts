@@ -55,10 +55,13 @@ export const deploySchema: EntitySchema = {
 
   // 外键改为真实下拉（此前是手填 UUID）
   dynamicOptions: [
-    { field: 'project_id', queryKey: ['rd', 'projects', 'forDeploy'], loader: loadRdProjectOptions },
+    {
+      field: 'project_id',
+      queryKey: ['rd', 'projects', 'forDeploy'],
+      loader: loadRdProjectOptions,
+    },
     { field: 'build_id', queryKey: ['rd', 'builds', 'forDeploy'], loader: loadRdBuildOptions },
   ],
-
 
   fields: [
     {

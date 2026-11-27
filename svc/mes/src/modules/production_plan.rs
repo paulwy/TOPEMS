@@ -266,6 +266,7 @@ pub async fn get_plan(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/production-plans",
     tag = "mes",
@@ -331,6 +332,7 @@ pub async fn create_plan(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/production-plans/{id}",
     tag = "mes",
@@ -434,6 +436,7 @@ pub async fn update_plan(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/production-plans/{id}",
     tag = "mes",

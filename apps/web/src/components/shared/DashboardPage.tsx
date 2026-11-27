@@ -85,7 +85,6 @@ const tabs = [
   { id: 'alerts', labelKey: 'dashboard.dash_alerts', badge: 3 },
 ];
 
-
 const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
@@ -659,44 +658,44 @@ const DashboardPage: React.FC = () => {
         />
 
         <div className={styles.il28}>
-        {error && (
-          <Alert
-            variant='warning'
-            title={i18n.t('dashboard.dash_load_error')}
-          >
-            {i18n.t('dashboard.dash_load_error_desc')}
-            <Button
-              size='sm'
-              variant='ghost'
-              onClick={() => refetch()}
+          {error && (
+            <Alert
+              variant='warning'
+              title={i18n.t('dashboard.dash_load_error')}
             >
-              {i18n.t('dashboard.dash_retry')}
-            </Button>
-          </Alert>
-        )}
-
-        <Tabs
-          tabs={tabs.map((t) => ({
-            ...t,
-            label: i18n.t(t.labelKey),
-            badge:
-              t.id === 'modules' ? modules.length : t.id === 'alerts' ? alerts.length : t.badge,
-          }))}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-        />
-
-        <div className={styles.il31}>
-          {isLoading ? (
-            <div className={styles.il32}>{i18n.t('dashboard.dash_loading')}</div>
-          ) : activeTab === 'overview' ? (
-            renderOverview()
-          ) : activeTab === 'modules' ? (
-            renderModules()
-          ) : (
-            renderAlerts()
+              {i18n.t('dashboard.dash_load_error_desc')}
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={() => refetch()}
+              >
+                {i18n.t('dashboard.dash_retry')}
+              </Button>
+            </Alert>
           )}
-        </div>
+
+          <Tabs
+            tabs={tabs.map((t) => ({
+              ...t,
+              label: i18n.t(t.labelKey),
+              badge:
+                t.id === 'modules' ? modules.length : t.id === 'alerts' ? alerts.length : t.badge,
+            }))}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+          />
+
+          <div className={styles.il31}>
+            {isLoading ? (
+              <div className={styles.il32}>{i18n.t('dashboard.dash_loading')}</div>
+            ) : activeTab === 'overview' ? (
+              renderOverview()
+            ) : activeTab === 'modules' ? (
+              renderModules()
+            ) : (
+              renderAlerts()
+            )}
+          </div>
         </div>
       </div>
     </PageContainer>

@@ -459,6 +459,7 @@ pub async fn get_process_route(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/process-routes",
     tag = "mes",
@@ -572,6 +573,7 @@ struct ProcessRouteUpdateRow {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/process-routes/{id}",
     tag = "mes",
@@ -689,6 +691,7 @@ pub async fn update_process_route(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/process-routes/{id}",
     tag = "mes",
@@ -876,6 +879,7 @@ pub async fn get_route_steps(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/process-routes/{id}/steps",
     tag = "mes",
@@ -1143,6 +1147,7 @@ pub async fn update_route_step(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/process-routes/{id}/steps/{step_id}",
     tag = "mes",

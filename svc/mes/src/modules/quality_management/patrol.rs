@@ -363,6 +363,7 @@ pub async fn get_patrol(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/quality/patrols",
     tag = "mes",
@@ -497,6 +498,7 @@ struct PatrolUpdateRow {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/quality/patrols/{id}",
     tag = "mes",
@@ -636,6 +638,7 @@ pub async fn update_patrol(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/quality/patrols/{id}",
     tag = "mes",
@@ -827,6 +830,7 @@ pub async fn list_patrol_items(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/quality/patrols/{patrol_id}/items",
     tag = "mes",
@@ -1084,6 +1088,7 @@ pub async fn update_patrol_item(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/quality/patrol-items/{id}",
     tag = "mes",

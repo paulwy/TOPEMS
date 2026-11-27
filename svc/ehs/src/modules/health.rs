@@ -207,6 +207,7 @@ pub async fn list_records(
     ApiResponse::success(records, "获取健康监测记录列表成功")
 }
 
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     post,
@@ -349,6 +350,7 @@ pub async fn get_record(
     };
     ApiResponse::success(health_record_from_row(&row), "获取健康记录成功")
 }
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     put,
@@ -442,6 +444,7 @@ pub async fn update_record(
     }
     ApiResponse::success(health_record_from_row(&row), "更新健康记录成功")
 }
+// admin-only: gate 显式标注（Perm-Gate R3）
 #[utoipa::path(
     security(("BearerAuth" = ["ehs:admin"])),
     delete,

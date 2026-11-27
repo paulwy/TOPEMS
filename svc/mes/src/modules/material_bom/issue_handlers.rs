@@ -34,6 +34,7 @@ struct MaterialIssueRow {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/material-issues",
     tag = "mes",
@@ -477,6 +478,7 @@ pub async fn get_material_issue(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/material-issues/{id}",
     tag = "mes",
@@ -593,6 +595,7 @@ pub async fn update_material_issue(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/material-issues/{id}",
     tag = "mes",

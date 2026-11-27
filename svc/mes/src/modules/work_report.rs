@@ -191,6 +191,7 @@ pub struct TodayOutputQuery {
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/work-reports/today-output",
     tag = "mes",

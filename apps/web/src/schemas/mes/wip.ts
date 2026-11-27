@@ -19,7 +19,6 @@ export const wipSchema: EntitySchema = {
     { field: 'order_id', queryKey: ['mes', 'orders', 'forWip'], loader: loadMesOrderOptions },
   ],
 
-
   fields: [
     {
       name: 'order_id',

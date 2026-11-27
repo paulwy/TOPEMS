@@ -976,5 +976,8 @@
   "monitor.nav.monitor-settings_desc": "Settings",
   "monitor.monitor_settings.save_failed": "Failed to save settings. Please try again later.",
   "monitor.monitor_alert_rules_page.error_load": "Failed to load alert rules",
-  "monitor.monitor_alert_rules_page.error_save": "Failed to save alert rules"
+  "monitor.monitor_alert_rules_page.error_save": "Failed to save alert rules",
+  "monitor.monitor_metrics_page.mem_percent": "Memory %",
+  "monitor.monitor_metrics_page.disk_percent": "Disk %",
+  "monitor.monitor_metrics_page.network_mbps": "Network MB/s"
 }

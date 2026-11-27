@@ -31,7 +31,11 @@ export const formulaSchema: EntitySchema = {
   permissionResource: 'rd:formula',
 
   dynamicOptions: [
-    { field: 'project_id', queryKey: ['rd', 'projects', 'forFormula'], loader: loadRdProjectOptions },
+    {
+      field: 'project_id',
+      queryKey: ['rd', 'projects', 'forFormula'],
+      loader: loadRdProjectOptions,
+    },
   ],
 
   fields: [

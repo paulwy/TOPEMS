@@ -301,6 +301,7 @@ pub async fn get_forecast(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/demand-forecasts",
     tag = "mes",
@@ -372,6 +373,7 @@ pub async fn create_forecast(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/demand-forecasts/{id}",
     tag = "mes",
@@ -474,6 +476,7 @@ pub async fn update_forecast(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/demand-forecasts/{id}",
     tag = "mes",

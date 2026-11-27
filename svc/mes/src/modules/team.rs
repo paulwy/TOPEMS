@@ -453,6 +453,7 @@ pub async fn get_team(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/teams",
     tag = "mes",
@@ -605,6 +606,7 @@ pub async fn create_team(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/teams/{id}",
     tag = "mes",
@@ -730,6 +732,7 @@ pub async fn update_team(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/teams/{id}",
     tag = "mes",
@@ -889,6 +892,7 @@ pub async fn get_team_members(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/teams/{id}/members",
     tag = "mes",

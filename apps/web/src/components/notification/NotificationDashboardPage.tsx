@@ -223,9 +223,7 @@ export const NotificationDashboardPage: React.FC = () => {
         id: n.id,
         title: n.title,
         description: n.content ?? '',
-        time: n.created_at
-          ? new Date(n.created_at).toLocaleString('zh-CN', { hour12: false })
-          : '',
+        time: n.created_at ? new Date(n.created_at).toLocaleString('zh-CN', { hour12: false }) : '',
         icon: n.is_read ? <CheckCircle size={18} /> : <AlertCircle size={18} />,
         status: (n.is_read ? 'success' : 'warning') as 'success' | 'warning',
         onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', n.id)),

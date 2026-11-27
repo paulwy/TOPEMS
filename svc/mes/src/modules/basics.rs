@@ -202,6 +202,7 @@ pub struct WorkCalendarResponse {
 // ==================== 车间 ====================
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/workshops",
     tag = "mes",
@@ -309,6 +310,7 @@ async fn list_workshops(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/workshops/{id}",
     tag = "mes",
@@ -371,6 +373,7 @@ async fn get_workshop(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/workshops",
     tag = "mes",
@@ -442,6 +445,7 @@ async fn create_workshop(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/workshops/{id}",
     tag = "mes",
@@ -510,6 +514,7 @@ async fn update_workshop(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/workshops/{id}",
     tag = "mes",
@@ -570,6 +575,7 @@ async fn delete_workshop(
 // ==================== 产线 ====================
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/production-lines",
     tag = "mes",
@@ -677,6 +683,7 @@ async fn list_production_lines(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/production-lines/{id}",
     tag = "mes",
@@ -740,6 +747,7 @@ async fn get_production_line(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/production-lines",
     tag = "mes",
@@ -830,6 +838,7 @@ async fn create_production_line(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/production-lines/{id}",
     tag = "mes",
@@ -917,6 +926,7 @@ async fn update_production_line(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/production-lines/{id}",
     tag = "mes",
@@ -979,6 +989,7 @@ async fn delete_production_line(
 // ==================== 班次 ====================
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/shifts",
     tag = "mes",
@@ -1086,6 +1097,7 @@ async fn list_shifts(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/shifts/{id}",
     tag = "mes",
@@ -1149,6 +1161,7 @@ async fn get_shift(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/shifts",
     tag = "mes",
@@ -1221,6 +1234,7 @@ async fn create_shift(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/shifts/{id}",
     tag = "mes",
@@ -1291,6 +1305,7 @@ async fn update_shift(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/shifts/{id}",
     tag = "mes",
@@ -1351,6 +1366,7 @@ async fn delete_shift(
 // ==================== 工作日历 ====================
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/work-calendars",
     tag = "mes",
@@ -1460,6 +1476,7 @@ async fn list_work_calendars(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     get,
     path = "/work-calendars/{id}",
     tag = "mes",
@@ -1525,6 +1542,7 @@ async fn get_work_calendar(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/work-calendars",
     tag = "mes",
@@ -1599,6 +1617,7 @@ async fn create_work_calendar(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/work-calendars/{id}",
     tag = "mes",
@@ -1671,6 +1690,7 @@ async fn update_work_calendar(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/work-calendars/{id}",
     tag = "mes",

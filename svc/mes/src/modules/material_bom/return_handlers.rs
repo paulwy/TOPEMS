@@ -33,6 +33,7 @@ struct MaterialReturnRow {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     post,
     path = "/material-returns",
     tag = "mes",
@@ -464,6 +465,7 @@ pub async fn get_material_return(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     put,
     path = "/material-returns/{id}",
     tag = "mes",
@@ -567,6 +569,7 @@ pub async fn update_material_return(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = [])),
     delete,
     path = "/material-returns/{id}",
     tag = "mes",

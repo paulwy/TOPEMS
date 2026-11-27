@@ -19,7 +19,6 @@ export const productionScheduleSchema: EntitySchema = {
     { field: 'order_id', queryKey: ['mes', 'orders', 'forSchedule'], loader: loadMesOrderOptions },
   ],
 
-
   fields: [
     {
       name: 'order_id',
