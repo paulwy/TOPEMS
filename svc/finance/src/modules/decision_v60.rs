@@ -1920,6 +1920,7 @@ async fn acknowledge_alert_handler(
     path = "/api/finance/finance-v60/alert/{id}/resolve",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:dashboard:read"])),
 )]
 pub async fn resolve_alert_handler(
     State(state): State<AppState>,

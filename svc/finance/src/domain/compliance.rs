@@ -188,8 +188,8 @@ impl<T: EventStore + Send + Sync + 'static> ComplianceChecker<T> {
 
     pub fn check_data_retention(
         &self,
-        period_start: DateTime<Utc>,
-        period_end: DateTime<Utc>,
+        _period_start: DateTime<Utc>,
+        _period_end: DateTime<Utc>,
     ) -> Vec<ComplianceIssue> {
         let mut issues = Vec::new();
 
@@ -219,9 +219,6 @@ impl<T: EventStore + Send + Sync + 'static> ComplianceChecker<T> {
                 }),
             });
         }
-
-        let _ = period_start;
-        let _ = period_end;
 
         issues
     }

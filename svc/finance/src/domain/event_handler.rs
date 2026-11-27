@@ -36,8 +36,7 @@ impl HandlerResult {
         }
     }
 
-    pub fn failure(message: impl Into<String>) -> Self {
-        let _ = message;
+    pub fn failure(_message: impl Into<String>) -> Self {
         Self {
             success: false,
             ..Default::default()

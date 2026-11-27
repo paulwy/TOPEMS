@@ -44,6 +44,7 @@ fn current_user_id(claims: &Claims) -> Option<Uuid> {
     path = "/api/finance/api/core/settlement-center/reconciliations",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:read"])),
 )]
 pub async fn list_reconciliations(
     State(state): State<AppState>,
@@ -84,6 +85,7 @@ pub async fn list_reconciliations(
     path = "/api/finance/api/core/settlement-center/reconciliations",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:write"])),
 )]
 pub async fn create_reconciliation(
     State(state): State<AppState>,
@@ -227,6 +229,7 @@ pub async fn reconcile(
     path = "/api/finance/api/core/settlement-center/auto-reconcile",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:write"])),
 )]
 pub async fn auto_reconcile(
     State(state): State<AppState>,
@@ -267,6 +270,7 @@ pub async fn auto_reconcile(
     path = "/api/finance/api/core/settlement-center/settlements",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:read"])),
 )]
 pub async fn list_settlements(
     State(state): State<AppState>,
@@ -307,6 +311,7 @@ pub async fn list_settlements(
     path = "/api/finance/api/core/settlement-center/settlements",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:write"])),
 )]
 pub async fn create_settlement(
     State(state): State<AppState>,
@@ -399,6 +404,7 @@ pub async fn get_settlement(
     path = "/api/finance/api/core/settlement-center/reconciliations/{id}/approve",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:approve"])),
 )]
 pub async fn approve_reconciliation(
     State(state): State<AppState>,
@@ -445,6 +451,7 @@ pub async fn approve_reconciliation(
     path = "/api/finance/api/core/settlement-center/settlements/{id}/approve",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:approve"])),
 )]
 pub async fn approve_settlement(
     State(state): State<AppState>,
@@ -495,6 +502,7 @@ pub async fn approve_settlement(
     path = "/api/finance/api/core/settlement-center/links",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:write"])),
 )]
 pub async fn create_link(
     State(state): State<AppState>,
@@ -574,6 +582,7 @@ pub async fn delete_link(
     path = "/api/finance/api/core/settlement-center/links",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:read"])),
 )]
 pub async fn list_links(
     State(state): State<AppState>,
@@ -618,6 +627,7 @@ pub async fn list_links(
     path = "/api/finance/api/core/settlement-center/differences",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:read"])),
 )]
 pub async fn list_differences(
     State(state): State<AppState>,
@@ -659,6 +669,7 @@ pub async fn list_differences(
     path = "/api/finance/api/core/settlement-center/differences",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:write"])),
 )]
 pub async fn create_difference(
     State(state): State<AppState>,
@@ -713,6 +724,7 @@ pub async fn create_difference(
     path = "/api/finance/api/core/settlement-center/differences/{id}/approve",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:approve"])),
 )]
 pub async fn approve_difference(
     State(state): State<AppState>,
@@ -753,6 +765,7 @@ pub async fn approve_difference(
     path = "/api/finance/api/core/settlement-center/differences/{id}/reject",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:approve"])),
 )]
 pub async fn reject_difference(
     State(state): State<AppState>,
@@ -829,6 +842,7 @@ pub async fn get_dashboard(
     path = "/api/finance/api/core/settlement-center/statistics",
     tag = "Settlement-Center",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:settlement:read"])),
 )]
 pub async fn get_statistics(
     State(state): State<AppState>,

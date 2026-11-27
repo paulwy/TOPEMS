@@ -419,34 +419,22 @@ impl FinanceService {
             return Err(TopemsError::ValidationFailed(message));
         }
 
-        let row = sqlx::query(only_own_schema_query!(
-            "finance",
-            "UPDATE finance.erp_payment_records
-             SET status = 'written_off', updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $1 AND id = $2 AND status = 'active' AND deleted_at IS NULL
-             RETURNING id, payment_no, status"
+        // 该 legacy 核销（finance.erp_payment_records）只把记录状态改成 written_off，
+        // 从不更新应付余额、也不写核销明细——于是回「核销成功」而账上应付一分未减，
+        // 付款记录已核销 + 应付仍挂账 = 账实不符（对账时最难查的一类）。
+        // 真正落账的核销是 write_off_payment_item（finance.core_finance_payment_items，
+        // 写 write_off_amount / remaining_amount / write_off_status）。
+        tracing::warn!(
+            tenant_id = %tenant_id,
+            payment_id = %payment_id,
+            payable_id = %payable_id,
+            write_off_amount = write_off_amount,
+            current_status = current_status.as_str(),
+            "legacy erp_payment_records 核销未实现应付落账，已拒绝"
+        );
+        Err(TopemsError::ServiceUnavailable(
+            "付款核销落账尚未实现（X-Stub）：未更新应付余额，已拒绝；请改用付款明细核销 /payment-items/{id}/write-off".to_string(),
         ))
-        .bind(tenant_id)
-        .bind(payment_id)
-        .fetch_optional(&mut scope)
-        .await?
-        .ok_or_else(|| {
-            TopemsError::ValidationFailed("付款记录状态已被并发修改，核销失败".to_string())
-        })?;
-
-        let id: Uuid = sqlx::Row::get(&row, "id");
-        let status: String = sqlx::Row::get(&row, "status");
-
-        let _ = payable_id;
-        let _ = write_off_amount;
-
-        scope.commit().await?;
-
-        Ok(json!({
-            "id": id.to_string(),
-            "status": status,
-            "message": "核销成功"
-        }))
     }
 
     pub async fn batch_write_off_payments(

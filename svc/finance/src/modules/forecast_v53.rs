@@ -1636,6 +1636,7 @@ pub async fn get_variance_report_handler(
     path = "/api/finance/audit-v52/anomaly/detect",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:budget:read"])),
 )]
 pub async fn detect_anomalies_handler(
     State(state): State<AppState>,

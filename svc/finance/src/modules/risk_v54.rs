@@ -40,6 +40,7 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== 辅助函数 ====================
@@ -985,7 +986,7 @@ impl AutoComplianceReviewer {
         tenant_id: Uuid,
         req: ReviewEntityRequest,
         reviewer: String,
-    ) -> Result<Vec<ReviewResult>, sqlx::Error> {
+    ) -> Result<Vec<ReviewResult>, TopemsError> {
         let mut scope = db.scope_with(txn).await?;
         let rules: Vec<ReviewRule> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, regulation, category, severity, action FROM finance.finance_v54_review_rules WHERE tenant_id = $1 ORDER BY severity DESC"),
@@ -998,7 +999,7 @@ impl AutoComplianceReviewer {
         let now = Utc::now();
 
         for rule in &rules {
-            let passed = Self::evaluate_rule(rule, &req.entity_type, &req.entity_id);
+            let passed = Self::evaluate_rule(rule, &req.entity_type, &req.entity_id)?;
             let details = serde_json::json!({
                 "rule": rule.id,
                 "severity": rule.severity,
@@ -1040,9 +1041,27 @@ impl AutoComplianceReviewer {
         Ok(results)
     }
 
-    fn evaluate_rule(rule: &ReviewRule, _entity_type: &str, _entity_id: &str) -> bool {
-        let _ = rule;
-        true
+    /// 规则求值：**尚未实现**。
+    ///
+    /// 此前这里恒返回 `true`，于是 `review_entity` 对每一条规则都判定「通过」并写进
+    /// `finance.finance_v54_review_results`——审查记录全绿，等于伪造合规审计轨迹
+    /// （监管抽查时"全部通过"比"没有记录"更难解释）。现在显形为未实现：
+    /// 不写任何审查结果，调用方拿到明确的 503。
+    fn evaluate_rule(
+        rule: &ReviewRule,
+        entity_type: &str,
+        entity_id: &str,
+    ) -> Result<bool, TopemsError> {
+        tracing::warn!(
+            rule_id = %rule.id,
+            regulation = %rule.regulation,
+            entity_type = entity_type,
+            entity_id = entity_id,
+            "合规自动审查规则引擎未实现，拒绝伪造审查结果"
+        );
+        Err(TopemsError::ServiceUnavailable(
+            "合规自动审查规则引擎尚未实现（X-Stub）：未生成任何审查结果，请人工审查".to_string(),
+        ))
     }
 
     pub async fn get_review_results(
@@ -1377,6 +1396,7 @@ pub async fn get_risk_alerts_handler(
     tag = "Finance",
     params(("id" = Uuid, Path, description = "预警 ID")),
     responses((status = 200, description = "确认预警成功")),
+    security(("BearerAuth" = ["finance:risk:read"])),
 )]
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
@@ -1744,6 +1764,7 @@ pub struct ComplianceReportQueryParams {
     path = "/finance/finance-v54/compliance/report",
     tag = "Filled",
     responses((status = 200, description = "ok")),
+    security(("BearerAuth" = ["finance:risk:read"])),
 )]
 pub async fn generate_compliance_report_handler(
     State(state): State<AppState>,
@@ -2259,7 +2280,7 @@ mod tests {
     }
 
     #[test]
-    fn evaluate_rule_always_returns_true() {
+    fn evaluate_rule_refuses_to_fabricate_a_pass() {
         let rule = ReviewRule {
             id: Uuid::new_v4(),
             regulation: "sox".into(),
@@ -2267,12 +2288,9 @@ mod tests {
             severity: "high".into(),
             action: "escalate".into(),
         };
-        assert!(AutoComplianceReviewer::evaluate_rule(
-            &rule,
-            "transaction",
-            "TX-001"
-        ));
-        assert!(AutoComplianceReviewer::evaluate_rule(&rule, "", ""));
+        // 规则引擎未实现时必须显形失败：以前恒返回 true，等于每条规则都“通过”。
+        assert!(AutoComplianceReviewer::evaluate_rule(&rule, "transaction", "TX-001").is_err());
+        assert!(AutoComplianceReviewer::evaluate_rule(&rule, "", "").is_err());
     }
 }
 
