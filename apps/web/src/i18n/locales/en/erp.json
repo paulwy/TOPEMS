@@ -940,6 +940,7 @@
   "erp.financial_report_page.k27": "Monthly",
   "erp.financial_report_page.k28": "Select Period",
   "erp.financial_report_page.k29": "Select Period",
+  "erp.financial_report_page.company": "Company",
   "erp.inventory_management_page.k0": "Failed to create inventory",
   "erp.inventory_management_page.k1": "Failed to update inventory",
   "erp.inventory_management_page.k2": "Delete Inventory failed",

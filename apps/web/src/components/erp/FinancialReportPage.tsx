@@ -14,7 +14,8 @@ import i18n from '@/i18n';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { Box, Typography, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
-import { financeReportApi } from '@/api/finance';
+import { financeReportApi, toBackendPeriod } from '@/api/finance';
+import { companyApi } from '@/api/hrm';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
@@ -24,34 +25,64 @@ const FinancialReportPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('balance-sheet');
-  const [periodType, setPeriodType] = useState('year');
-  const [period, setPeriod] = useState('2024');
+  // 期间统一成后端账套口径 YYYY-MM，查询时经 toBackendPeriod 转 YYYYMM。
+  // 原来默认 '2024' + 年/季/月三档硬编码选项：后端 get_balance_sheet 要求
+  // period 命中账套期间，年度/季度值永远查不到数据，属假控件。
+  const [period, setPeriod] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  // 报表读取端点（balance-sheet / income-statement / cash-flow）一律要求
+  // company_id（单公司租户也不省略），不传直接 400。公司主体取 HRM 主数据。
+  const [companyId, setCompanyId] = useState('');
+
+  const companiesQuery = useQuery({
+    queryKey: ['financial-report-companies'],
+    queryFn: async () => {
+      const res = await companyApi.list({ page: 1, pageSize: 50 });
+      return res.data?.items ?? [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+  const companies = companiesQuery.data ?? [];
+  useEffect(() => {
+    if (!companyId && companies.length > 0) setCompanyId(companies[0].id);
+  }, [companies, companyId]);
 
   const balanceSheetQuery = useQuery<BalanceSheet | null>({
-    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.BALANCE_SHEET(period),
+    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.BALANCE_SHEET(`${companyId}:${period}`),
     queryFn: async () => {
-      const res = await financeReportApi.balanceSheet({ period });
+      const res = await financeReportApi.balanceSheet({
+        period: toBackendPeriod(period),
+        company_id: companyId,
+      });
       return res.success && res.data ? res.data : null;
     },
-    enabled: activeTab === 'balance-sheet',
+    enabled: activeTab === 'balance-sheet' && Boolean(companyId),
     staleTime: 5 * 60 * 1000,
   });
   const incomeStatementQuery = useQuery<IncomeStatement | null>({
-    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(period),
+    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(`${companyId}:${period}`),
     queryFn: async () => {
-      const res = await financeReportApi.incomeStatement({ period });
+      const res = await financeReportApi.incomeStatement({
+        period: toBackendPeriod(period),
+        company_id: companyId,
+      });
       return res.success && res.data ? res.data : null;
     },
-    enabled: activeTab === 'income-statement',
+    enabled: activeTab === 'income-statement' && Boolean(companyId),
     staleTime: 5 * 60 * 1000,
   });
   const cashFlowQuery = useQuery<CashFlowStatement | null>({
-    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.CASH_FLOW(period),
+    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.CASH_FLOW(`${companyId}:${period}`),
     queryFn: async () => {
-      const res = await financeReportApi.cashFlowStatement({ period });
+      const res = await financeReportApi.cashFlowStatement({
+        period: toBackendPeriod(period),
+        company_id: companyId,
+      });
       return res.success && res.data ? res.data : null;
     },
-    enabled: activeTab === 'cash-flow',
+    enabled: activeTab === 'cash-flow' && Boolean(companyId),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -120,31 +151,18 @@ const FinancialReportPage: React.FC = () => {
   };
 
   const periodOptions = useMemo(() => {
-    if (periodType === 'year') {
-      return [
-        { value: '2024', label: i18n.t('pages.financial_report_page.2024_3') },
-        { value: '2023', label: i18n.t('pages.financial_report_page.2023_4') },
-        { value: '2022', label: i18n.t('pages.financial_report_page.2022_5') },
-        { value: '2021', label: i18n.t('pages.financial_report_page.2021_6') },
-      ];
-    } else if (periodType === 'quarter') {
-      return [
-        { value: '2024-Q1', label: i18n.t('pages.financial_report_page.2024_7') },
-        { value: '2024-Q2', label: i18n.t('pages.financial_report_page.2024_8') },
-        { value: '2024-Q3', label: i18n.t('pages.financial_report_page.2024_9') },
-        { value: '2024-Q4', label: i18n.t('pages.financial_report_page.2024_10') },
-      ];
-    } else {
-      return [
-        { value: '2024-01', label: i18n.t('pages.financial_report_page.202401_11') },
-        { value: '2024-02', label: i18n.t('pages.financial_report_page.202402_12') },
-        { value: '2024-03', label: i18n.t('pages.financial_report_page.202403_13') },
-        { value: '2024-04', label: i18n.t('pages.financial_report_page.202404_14') },
-        { value: '2024-05', label: i18n.t('pages.financial_report_page.202405_15') },
-        { value: '2024-06', label: i18n.t('pages.financial_report_page.202406_16') },
-      ];
+    // 真实可选期间：最近 12 个自然月（后端账套期间为 YYYYMM）
+    const list: Array<{ value: string; label: string }> = [];
+    const cursor = new Date();
+    for (let i = 0; i < 12; i += 1) {
+      const y = cursor.getFullYear();
+      const m = cursor.getMonth() + 1;
+      const value = `${y}-${String(m).padStart(2, '0')}`;
+      list.push({ value, label: `${y}-${String(m).padStart(2, '0')}` });
+      cursor.setMonth(cursor.getMonth() - 1);
     }
-  }, [periodType]);
+    return list;
+  }, []);
 
   const tabs = useMemo(
     () => [
@@ -484,27 +502,30 @@ const FinancialReportPage: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <FormControl
           size='small'
-          sx={{ minWidth: 120 }}
+          sx={{ minWidth: 220 }}
         >
-          <InputLabel>{i18n.t('erp.financial_report_page.k23')}</InputLabel>
+          <InputLabel>{i18n.t('erp.financial_report_page.company')}</InputLabel>
           <Select
-            value={periodType}
-            label={i18n.t('erp.financial_report_page.k24')}
-            onChange={(e) => {
-              setPeriodType(e.target.value);
-              setPeriod(periodOptions[0]?.value || '');
-            }}
+            value={companyId}
+            label={i18n.t('erp.financial_report_page.company')}
+            onChange={(e) => setCompanyId(e.target.value)}
+            disabled={companies.length === 0}
           >
-            <MenuItem value='year'>{i18n.t('erp.financial_report_page.k25')}</MenuItem>
-            <MenuItem value='quarter'>{i18n.t('erp.financial_report_page.k26')}</MenuItem>
-            <MenuItem value='month'>{i18n.t('erp.financial_report_page.k27')}</MenuItem>
+            {companies.map((item) => (
+              <MenuItem
+                key={item.id}
+                value={item.id}
+              >
+                {item.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <FormControl
           size='small'
           sx={{ minWidth: 160 }}
         >
-          <InputLabel>{i18n.t('erp.financial_report_page.k28')}</InputLabel>
+          <InputLabel>{i18n.t('erp.financial_report_page.k29')}</InputLabel>
           <Select
             value={period}
             label={i18n.t('erp.financial_report_page.k29')}
@@ -522,7 +543,7 @@ const FinancialReportPage: React.FC = () => {
         </FormControl>
       </Box>
     ),
-    [periodType, period, periodOptions]
+    [companyId, companies, period, periodOptions]
   );
 
   return (

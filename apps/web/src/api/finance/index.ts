@@ -23,7 +23,7 @@ import { openingBalanceApi } from './openingBalance';
 export { accountApi } from './account';
 export { voucherApi } from './voucher';
 export { reportApi } from './report';
-export { financeReportApi } from './report';
+export { financeReportApi, toBackendPeriod } from './report';
 export { counterpartyFinanceApi } from './counterparty';
 export { paymentApi } from './payment';
 export { expenseApprovalApi } from './expenseApproval';

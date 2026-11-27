@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import i18n from '@/i18n';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -10,12 +10,14 @@ import type {
   TimeRangeOption,
 } from '@/components/templates/StatsPageTemplate';
 import { useNotificationStore } from '@/store';
-import { financeReportApi } from '@/api/finance';
+import { financeReportApi, toBackendPeriod, budgetApi } from '@/api/finance';
+import { companyApi } from '@/api/hrm';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
+import { formatCompactMoney } from '@/utils/format';
 import { BarChart3, TrendingUp, PieChart, FileText } from 'lucide-react';
-import { useTheme } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select, useTheme } from '@mui/material';
 
 type TabValue =
   'balanceSheet' | 'incomeStatement' | 'cashFlow' | 'agingAnalysis' | 'budgetAnalysis';
@@ -26,6 +28,20 @@ const FinancialAnalysisPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeTab, setActiveTab] = useState<TabValue>('balanceSheet');
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
+  // 报表读取端点一律要求 company_id（单公司租户也不省略），不传直接 400。
+  const [companyId, setCompanyId] = useState('');
+  const companiesQuery = useQuery({
+    queryKey: ['financial-analysis-companies'],
+    queryFn: async () => {
+      const res = await companyApi.list({ page: 1, pageSize: 50 });
+      return res.data?.items ?? [];
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+  const companies = companiesQuery.data ?? [];
+  useEffect(() => {
+    if (!companyId && companies.length > 0) setCompanyId(companies[0].id);
+  }, [companies, companyId]);
 
   const invalidateData = () => {
     queryClient.invalidateQueries({
@@ -36,42 +52,51 @@ const FinancialAnalysisPage: React.FC = () => {
   };
 
   const { data: balanceSheetData, isPending: balanceSheetLoading } = useQuery<BalanceSheet | null>({
-    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.BALANCE_SHEET(period),
+    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.BALANCE_SHEET(`${companyId}:${period}`),
     queryFn: async () => {
-      const response = await financeReportApi.balanceSheet({ period });
+      const response = await financeReportApi.balanceSheet({
+        period: toBackendPeriod(period),
+        company_id: companyId,
+      });
       if (response.success && response.data) {
         return response.data;
       }
       return null;
     },
-    enabled: activeTab === 'balanceSheet',
+    enabled: activeTab === 'balanceSheet' && Boolean(companyId),
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
   const { data: incomeStatementData, isPending: incomeStatementLoading } =
     useQuery<IncomeStatement | null>({
-      queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(period),
+      queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(`${companyId}:${period}`),
       queryFn: async () => {
-        const response = await financeReportApi.incomeStatement({ period });
+        const response = await financeReportApi.incomeStatement({
+          period: toBackendPeriod(period),
+          company_id: companyId,
+        });
         if (response.success && response.data) {
           return response.data;
         }
         return null;
       },
-      enabled: activeTab === 'incomeStatement',
+      enabled: activeTab === 'incomeStatement' && Boolean(companyId),
       staleTime: CACHE_DURATIONS.MEDIUM,
     });
 
   const { data: cashFlowData, isPending: cashFlowLoading } = useQuery<CashFlowStatement | null>({
-    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.CASH_FLOW(period),
+    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.CASH_FLOW(`${companyId}:${period}`),
     queryFn: async () => {
-      const response = await financeReportApi.cashFlowStatement({ period });
+      const response = await financeReportApi.cashFlowStatement({
+        period: toBackendPeriod(period),
+        company_id: companyId,
+      });
       if (response.success && response.data) {
         return response.data;
       }
       return null;
     },
-    enabled: activeTab === 'cashFlow',
+    enabled: activeTab === 'cashFlow' && Boolean(companyId),
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
@@ -82,13 +107,18 @@ const FinancialAnalysisPage: React.FC = () => {
     queryKey: [...QUERY_KEYS.ERP.FINANCIAL_REPORTS.AGING_ANALYSIS, period],
     queryFn: async (): Promise<Record<string, number> | null> => {
       const response = await financeReportApi.agingAnalysis();
-      if (response.success && response.data) {
-        const result: Record<string, number> = {};
-        for (const item of response.data as unknown as Array<{
-          category: string;
-          amount: number;
-        }>) {
-          result[item.category] = item.amount;
+      // 后端 /reports/aging-analysis 实际返回 { aging: [{ bucket: "0-30天", amount: "100.0000" }] }，
+      // 旧实现按数组遍历 { category, amount }，容器与字段名都对不上，页签抛错后只剩空白。
+      const payload = response.data as unknown as {
+        aging?: Array<{ bucket: string; amount: string | number }>;
+      } | null;
+      if (response.success && payload?.aging) {
+        const result: Record<string, number> = { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
+        for (const item of payload.aging) {
+          const amount = Number(item.amount) || 0;
+          const start = Number((item.bucket.match(/^\d+/) || ['0'])[0]);
+          const key = start >= 90 ? '90+' : start >= 61 ? '61-90' : start >= 31 ? '31-60' : '0-30';
+          result[key] += amount;
         }
         return result;
       }
@@ -103,19 +133,14 @@ const FinancialAnalysisPage: React.FC = () => {
   } | null>({
     queryKey: [...QUERY_KEYS.ERP.FINANCIAL_REPORTS.EXPENSE_ANALYSIS, 'budget', period],
     queryFn: async () => {
-      const response = await (
-        financeReportApi as unknown as {
-          budgetAnalysis: (params: { period: string }) => Promise<{
-            success: boolean;
-            data: { budget_amount: number; actual_amount: number } | null;
-            message?: string;
-          }>;
-        }
-      ).budgetAnalysis({ period });
-      if (response.success && response.data) {
-        return response.data;
-      }
-      return null;
+      // financeReportApi 上并没有 budgetAnalysis 方法，旧代码靠 as unknown 强转出一个不存在的
+      // 函数，运行时 TypeError → 预算页签永远空白。改为读真实预算台账 /budgets 汇总。
+      const response = await budgetApi.list({ page: 1, page_size: 100 });
+      const items = response.data?.items ?? [];
+      if (!response.success || items.length === 0) return null;
+      const budget_amount = items.reduce((acc, it) => acc + Number(it.total_budget ?? 0), 0);
+      const actual_amount = items.reduce((acc, it) => acc + Number(it.used_amount ?? 0), 0);
+      return { budget_amount, actual_amount };
     },
     enabled: activeTab === 'budgetAnalysis',
     staleTime: CACHE_DURATIONS.MEDIUM,
@@ -305,25 +330,19 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'total-assets',
             title: i18n.t('erp.financial_analysis_page.k24'),
-            value: i18n.t('erp:financial_analysis_page.v0_17', {
-              v0: (balanceSheetData.total_assets / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(balanceSheetData.total_assets),
             color: 'success',
           },
           {
             id: 'total-liabilities',
             title: i18n.t('erp.financial_analysis_page.k25'),
-            value: i18n.t('erp:financial_analysis_page.v0_16', {
-              v0: (balanceSheetData.total_liabilities / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(balanceSheetData.total_liabilities),
             color: 'error',
           },
           {
             id: 'total-equity',
             title: i18n.t('erp.financial_analysis_page.k26'),
-            value: i18n.t('erp:financial_analysis_page.v0_15', {
-              v0: (balanceSheetData.total_equity / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(balanceSheetData.total_equity),
             color: 'primary',
           },
         ];
@@ -335,25 +354,19 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'total-revenue',
             title: i18n.t('erp.financial_analysis_page.k27'),
-            value: i18n.t('erp:financial_analysis_page.v0_14', {
-              v0: (incomeStatementData.total_revenue / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(incomeStatementData.total_revenue),
             color: 'success',
           },
           {
             id: 'total-cost',
             title: i18n.t('erp.financial_analysis_page.k28'),
-            value: i18n.t('erp:financial_analysis_page.v0_13', {
-              v0: (incomeStatementData.total_expense / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(incomeStatementData.total_expense),
             color: 'error',
           },
           {
             id: 'net-profit',
             title: i18n.t('erp.financial_analysis_page.k29'),
-            value: i18n.t('erp:financial_analysis_page.v0_12', {
-              v0: (incomeStatementData.net_income / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(incomeStatementData.net_income),
             color: 'primary',
           },
         ];
@@ -365,25 +378,19 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'net-cash-flow',
             title: i18n.t('erp.financial_analysis_page.k30'),
-            value: i18n.t('erp:financial_analysis_page.v0_11', {
-              v0: (cashFlowData.net_change / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(cashFlowData.net_change),
             color: 'success',
           },
           {
             id: 'operating-cash-flow',
             title: i18n.t('erp.financial_report.label.total_inflow'),
-            value: i18n.t('erp:financial_analysis_page.v0_10', {
-              v0: (cashFlowData.total_inflow / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(cashFlowData.total_inflow),
             color: 'warning',
           },
           {
             id: 'financing-cash-flow',
             title: i18n.t('erp.financial_report.label.total_outflow'),
-            value: i18n.t('erp:financial_analysis_page.v0_9', {
-              v0: (cashFlowData.total_outflow / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(cashFlowData.total_outflow),
             color: 'info',
           },
         ];
@@ -395,25 +402,21 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'aging-0-30',
             title: i18n.t('erp.financial_analysis_page.030_8'),
-            value: i18n.t('erp:financial_analysis_page.v0_7', {
-              v0: (agingAnalysisData['0-30'] / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(agingAnalysisData['0-30']),
             color: 'success',
           },
           {
             id: 'aging-31-60',
             title: i18n.t('erp.financial_analysis_page.3160_6'),
-            value: i18n.t('erp:financial_analysis_page.v0_5', {
-              v0: (agingAnalysisData['31-60'] / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(agingAnalysisData['31-60']),
             color: 'warning',
           },
           {
             id: 'aging-overdue',
             title: i18n.t('erp.financial_analysis_page.k33'),
-            value: i18n.t('erp:financial_analysis_page.v0_4', {
-              v0: ((agingAnalysisData['61-90'] || 0) + (agingAnalysisData['90+'] || 0)) / 10000,
-            }),
+            value: formatCompactMoney(
+              (agingAnalysisData['61-90'] || 0) + (agingAnalysisData['90+'] || 0)
+            ),
             color: 'error',
           },
         ];
@@ -425,17 +428,13 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'budget-amount',
             title: i18n.t('erp.financial_analysis_page.k34'),
-            value: i18n.t('erp:financial_analysis_page.v0_3', {
-              v0: (budgetAnalysisData.budget_amount / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(budgetAnalysisData.budget_amount),
             color: 'success',
           },
           {
             id: 'actual-amount',
             title: i18n.t('erp.financial_analysis_page.k35'),
-            value: i18n.t('erp:financial_analysis_page.v0_2', {
-              v0: (budgetAnalysisData.actual_amount / 10000).toFixed(1),
-            }),
+            value: formatCompactMoney(budgetAnalysisData.actual_amount),
             color: 'primary',
           },
           {
@@ -468,7 +467,9 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'balance-sheet-chart',
             title: chartTitle,
-            type: 'pie',
+            // 资产 = 负债 + 权益，三者放同一饼图会把合计重复计入（占比失真、标签被裁）。
+            // 改成柱状对比，只表达量级。
+            type: 'bar',
             dataKey: 'value',
             nameKey: 'name',
             data: [
@@ -550,7 +551,8 @@ const FinancialAnalysisPage: React.FC = () => {
         ];
       }
       case 'agingAnalysis': {
-        if (!agingAnalysisData) return [];
+        // 无数据也返回图表骨架：全 0 时模板渲染「暂无数据」，而不是整块空白
+        const aging = agingAnalysisData;
         return [
           {
             id: 'aging-analysis-chart',
@@ -561,22 +563,22 @@ const FinancialAnalysisPage: React.FC = () => {
             data: [
               {
                 name: i18n.t('pages.financial_analysis_page.030_0'),
-                value: agingAnalysisData['0-30'] || 0,
+                value: aging?.['0-30'] || 0,
                 color: theme.palette.success[700],
               },
               {
                 name: i18n.t('pages.financial_analysis_page.3160_1'),
-                value: agingAnalysisData['31-60'] || 0,
+                value: aging?.['31-60'] || 0,
                 color: theme.palette.warning[700],
               },
               {
                 name: i18n.t('pages.financial_analysis_page.6190_2'),
-                value: agingAnalysisData['61-90'] || 0,
+                value: aging?.['61-90'] || 0,
                 color: theme.palette.error.main,
               },
               {
                 name: i18n.t('pages.financial_analysis_page.90_3'),
-                value: agingAnalysisData['90+'] || 0,
+                value: aging?.['90+'] || 0,
                 color: theme.palette.error.dark,
               },
             ],
@@ -584,7 +586,7 @@ const FinancialAnalysisPage: React.FC = () => {
         ];
       }
       case 'budgetAnalysis': {
-        if (!budgetAnalysisData) return [];
+        const budget = budgetAnalysisData;
         return [
           {
             id: 'budget-analysis-chart',
@@ -595,18 +597,18 @@ const FinancialAnalysisPage: React.FC = () => {
             data: [
               {
                 name: i18n.t('erp.financial_analysis_page.k11'),
-                value: budgetAnalysisData.budget_amount || 0,
+                value: budget?.budget_amount || 0,
                 color: theme.palette.primary.main,
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k12'),
-                value: budgetAnalysisData.actual_amount || 0,
+                value: budget?.actual_amount || 0,
                 color: theme.palette.success[700],
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k13'),
                 value:
-                  (budgetAnalysisData.budget_amount || 0) - (budgetAnalysisData.actual_amount || 0),
+                  (budget?.budget_amount || 0) - (budget?.actual_amount || 0),
                 color: theme.palette.warning[700],
               },
             ],
@@ -748,7 +750,8 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 metric: i18n.t('erp.financial_analysis_page.k13'),
                 amount:
-                  (budgetAnalysisData.budget_amount || 0) - (budgetAnalysisData.actual_amount || 0),
+                  (budgetAnalysisData.budget_amount || 0) -
+                  (budgetAnalysisData.actual_amount || 0),
               },
             ],
           },
@@ -770,7 +773,7 @@ const FinancialAnalysisPage: React.FC = () => {
 
   return (
     <StatsPageTemplate
-      title={i18n.t('shared.config.k24')}
+      title={i18n.t('erp.financial_report_page.k19')}
       tabs={tabItems}
       tabValue={activeTab}
       onTabChange={(value) => setActiveTab(value as TabValue)}
@@ -780,13 +783,34 @@ const FinancialAnalysisPage: React.FC = () => {
       tables={tables}
       loading={loading}
       timeRangeOptions={timeRangeOptions}
+      customToolbar={
+        <FormControl
+          size='small'
+          sx={{ minWidth: 240 }}
+        >
+          <InputLabel>{i18n.t('erp.financial_report_page.company')}</InputLabel>
+          <Select
+            value={companyId}
+            label={i18n.t('erp.financial_report_page.company')}
+            onChange={(e) => setCompanyId(e.target.value)}
+            disabled={companies.length === 0}
+          >
+            {companies.map((item) => (
+              <MenuItem
+                key={item.id}
+                value={item.id}
+              >
+                {item.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      }
       timeRange={period}
       onTimeRangeChange={setPeriod}
       onRefresh={handleRefresh}
       onExport={handleExport}
       showSearch={false}
-      chartSectionTitle={i18n.t('erp:financial_analysis_page.v0_1', { v0: activeTabLabel })}
-      tableSectionTitle={i18n.t('erp:financial_analysis_page.v0_0', { v0: activeTabLabel })}
     />
   );
 };

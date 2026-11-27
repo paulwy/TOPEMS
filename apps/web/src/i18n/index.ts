@@ -23,8 +23,12 @@ function flattenToNested(obj: Record<string, unknown>): Record<string, unknown> 
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       const nestedValue = flattenToNested(value as Record<string, unknown>);
       // 深度合并，避免覆盖已有的同名顶层 key
-      if (typeof result[key] === 'object' && result[key] !== null && !Array.isArray(result[key])) {
-        result[key] = deepMerge(result[key] as Record<string, unknown>, nestedValue);
+      const existing = result[key];
+      if (typeof existing === 'string') {
+        // 父级已是字符串（如 "master.commercial"），保留为 .title，避免被子键覆盖成对象
+        result[key] = deepMerge({ title: existing }, nestedValue);
+      } else if (typeof existing === 'object' && existing !== null) {
+        result[key] = deepMerge(existing as Record<string, unknown>, nestedValue);
       } else {
         result[key] = nestedValue;
       }
@@ -34,16 +38,31 @@ function flattenToNested(obj: Record<string, unknown>): Record<string, unknown> 
     let current = result;
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
-      if (
-        typeof current[part] !== 'object' ||
-        current[part] === null ||
-        Array.isArray(current[part])
-      ) {
+      const existing = current[part];
+      if (typeof existing === 'string') {
+        // 父级字符串先转存为 .title，再继续向下挂子键
+        current[part] = { title: existing };
+      } else if (typeof existing !== 'object' || existing === null || Array.isArray(existing)) {
         current[part] = {};
       }
       current = current[part] as Record<string, unknown>;
     }
-    current[parts[parts.length - 1]] = value;
+    const leaf = parts[parts.length - 1];
+    const existingLeaf = current[leaf];
+    if (
+      typeof existingLeaf === 'object' &&
+      existingLeaf !== null &&
+      !Array.isArray(existingLeaf) &&
+      typeof value === 'string'
+    ) {
+      // 该路径已被子键占用为对象时，父级字符串值保留到 .title（若未占用）
+      const leafObject = existingLeaf as Record<string, unknown>;
+      if (typeof leafObject.title !== 'string') {
+        leafObject.title = value;
+      }
+    } else {
+      current[leaf] = value;
+    }
   }
   return result;
 }
@@ -311,12 +330,20 @@ export async function ensureLanguageLoaded(lng: string): Promise<void> {
     // schema 命名空间：eager 已加载，直接 addResourceBundle（幂等）
     const schema = lang === 'zh' ? schemaZh : schemaEn;
     i18n.addResourceBundle(lang, 'schema', schema, true, true);
-    // 串行加载所有命名空间（避免并行 read-modify-write 竞态）
-    // 顺序：根 JSON → BOOTSTRAP 命名空间
-    const allNss = ['__root__', ...BOOTSTRAP_NAMESPACES];
-    for (const ns of allNss) {
-      await _ensureNsInstalled(lang, ns);
-    }
+    // 根 JSON 必须先落地（提供公共 base key），随后 BOOTSTRAP 命名空间限并发。
+    // 原实现严格串行：17 个 NS 每个都要等上一次 import 完成，经隧道每跳数百
+    // 毫秒，dcl 被拖到 5s+。addResourceBundle 的合并是同步的，不同 NS 之间
+    // 没有共享可变状态，限并发不会产生覆盖竞态。
+    await _ensureNsInstalled(lang, '__root__');
+    const restNss = [...BOOTSTRAP_NAMESPACES];
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(4, restNss.length) }, async () => {
+      while (cursor < restNss.length) {
+        const ns = restNss[cursor++];
+        await _ensureNsInstalled(lang, ns);
+      }
+    });
+    await Promise.all(workers);
     langBootstrapped.add(lang);
   })();
   langBootstrapPromises.set(lng, p);
@@ -580,19 +607,16 @@ export const i18nReady = ensureLanguageLoaded(initialLanguage);
 // 空闲时：先预加载其他语言骨架，再逐步加载其框架层 NS；业务 NS 留给路由预载。
 const otherLang: LanguageCode = initialLanguage === 'zh' ? 'en' : 'zh';
 if (typeof window !== 'undefined') {
-  const schedulePreload = (cb: () => void, delayMs = 2000) => {
-    if ('requestIdleCallback' in window) {
-      (
-        window as unknown as {
-          requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void;
-        }
-      ).requestIdleCallback(cb, { timeout: 5000 });
+  // Phase 1：当前语言框架层命名空间（等首屏 load 之后再预热，避免和页面
+  // chunk 抢带宽 —— 之前是 dcl 刚结束就开跑，正好压住首屏渲染）
+  const afterLoad = (cb: () => void) => {
+    if (document.readyState === 'complete') {
+      setTimeout(cb, 3000);
     } else {
-      setTimeout(cb, delayMs);
+      window.addEventListener('load', () => setTimeout(cb, 3000), { once: true });
     }
   };
-  // Phase 1：当前语言框架层命名空间（等待 bootstrap 完成后串行加载）
-  schedulePreload(() => {
+  afterLoad(() => {
     i18nReady.then(() =>
       Promise.resolve()
         .then(async () => {
@@ -606,26 +630,14 @@ if (typeof window !== 'undefined') {
         })
         .catch(() => {})
     );
-  }, 2000);
+  });
 
-  // Phase 2：另一语言骨架 + 框架层命名空间（等待 Phase 1 完成后启动）
-  schedulePreload(() => {
-    ensureLanguageLoaded(otherLang)
-      .then(() =>
-        Promise.resolve()
-          .then(async () => {
-            for (const ns of FRAMEWORK_NAMESPACES) {
-              try {
-                await _ensureNsInstalled(otherLang as 'zh' | 'en', ns);
-              } catch {
-                /* skip */
-              }
-            }
-          })
-          .catch(() => {})
-      )
-      .catch(() => {});
-  }, 3500);
+  // Phase 2（已移除）：原先在 3.5s 后把「另一语言」的整套 root + BOOTSTRAP +
+  // FRAMEWORK 命名空间也拉一遍。中文用户从不用 en，这批字节（http 实测约
+  // 0.9MB/次）纯属抢占首屏带宽 —— 首屏十几秒里将近一半耗在给 en 预热。
+  // 语言切换时 LanguageSelector 会 await ensureLanguageLoaded(新语言)，
+  // 因此按需加载路径完整，无需空闲预取。otherLang 仍保留给语言切换逻辑使用。
+  void otherLang;
 }
 
 // 语言切换时：确保骨架已加载 + 触发全局重渲染（i18n.t() 直接调用的组件也能拿到新语言）
