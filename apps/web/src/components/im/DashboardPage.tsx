@@ -32,8 +32,6 @@ export const DashboardPage: React.FC = () => {
         title: t('im.dashboard_page.k3'),
         value: String(total),
         icon: <MessageSquare size={20} />,
-        change: 0,
-        changeLabel: t('im.dashboard_page.k4'),
         color: 'primary',
       },
       {
@@ -41,8 +39,6 @@ export const DashboardPage: React.FC = () => {
         title: t('im.dashboard_page.k5'),
         value: String(groups),
         icon: <Users size={20} />,
-        change: 0,
-        changeLabel: t('im.dashboard_page.k6'),
         color: 'info',
       },
       {
@@ -50,8 +46,6 @@ export const DashboardPage: React.FC = () => {
         title: t('im.dashboard_page.k7'),
         value: String(direct),
         icon: <User size={20} />,
-        change: 0,
-        changeLabel: t('im.dashboard_page.k8'),
         color: 'success',
       },
       {
@@ -59,8 +53,6 @@ export const DashboardPage: React.FC = () => {
         title: t('im.dashboard_page.k9'),
         value: String(members),
         icon: <Hash size={20} />,
-        change: 0,
-        changeLabel: t('im.dashboard_page.k10'),
         color: 'warning',
       },
     ];

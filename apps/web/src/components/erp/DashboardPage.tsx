@@ -61,8 +61,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('erp.dashboard_page.k3'),
         value: (statsData.total_assets || 0).toLocaleString(),
         icon: iconMap.Landmark,
-        change: 8.5,
-        changeLabel: i18n.t('pages.dashboard_page.vs_0'),
         color: 'success',
       },
       {
@@ -70,8 +68,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('erp.dashboard_page.k4'),
         value: (statsData.active_assets || 0).toLocaleString(),
         icon: iconMap.Wallet,
-        change: 2.3,
-        changeLabel: i18n.t('pages.dashboard_page.vs_1'),
         color: 'info',
       },
       {
@@ -79,8 +75,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('erp.dashboard_page.k5'),
         value: (statsData.total_inventory || 0).toLocaleString(),
         icon: iconMap.Package,
-        change: -3.2,
-        changeLabel: i18n.t('pages.dashboard_page.vs_2'),
         color: 'warning',
       },
       {
@@ -88,8 +82,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('erp.dashboard_page.k6'),
         value: (statsData.pending_orders || 0).toLocaleString(),
         icon: iconMap.FileText,
-        change: 12.8,
-        changeLabel: i18n.t('pages.dashboard_page.vs_3'),
         color: 'primary',
       },
       {
@@ -97,8 +89,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('erp.dashboard_page.k7'),
         value: (statsData.total_customers || 0).toLocaleString(),
         icon: iconMap.TrendingUp,
-        change: 5.6,
-        changeLabel: i18n.t('pages.dashboard_page.vs_4'),
         color: 'success',
       },
       {
@@ -106,8 +96,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('erp.dashboard_page.k8'),
         value: (statsData.total_suppliers || 0).toLocaleString(),
         icon: iconMap.CreditCard,
-        change: 3.1,
-        changeLabel: i18n.t('pages.dashboard_page.vs_5'),
         color: 'info',
       },
       {
@@ -115,8 +103,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('erp.dashboard_page.k9'),
         value: (statsData.total_vouchers || 0).toLocaleString(),
         icon: iconMap.Banknote,
-        change: 15.2,
-        changeLabel: i18n.t('pages.dashboard_page.vs_6'),
         color: 'primary',
       },
       {
@@ -124,8 +110,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('erp.dashboard_page.k10'),
         value: (statsData.pending_vouchers || 0).toLocaleString(),
         icon: iconMap.Target,
-        change: -8.7,
-        changeLabel: i18n.t('pages.dashboard_page.vs_7'),
         color: 'warning',
       },
     ];

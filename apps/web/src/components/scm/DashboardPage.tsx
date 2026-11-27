@@ -188,12 +188,8 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'suppliers',
         title: i18n.t('scm.dashboard_page.k10'),
-        value: overview?.active_suppliers?.toString() || '128',
+        value: ((overview as unknown as { suppliers?: { active_count?: number } })?.suppliers?.active_count ?? overview?.active_suppliers ?? 0).toString(),
         icon: <Users size={24} />,
-        change: overview?.total_suppliers
-          ? Math.round((overview.active_suppliers / overview.total_suppliers) * 100)
-          : 5,
-        changeLabel: i18n.t('scm.dashboard_page.k11'),
         color: 'primary',
       },
       {
@@ -202,12 +198,8 @@ export const DashboardPage: React.FC = () => {
         value:
           realtime?.pending_purchase_orders?.toString() ??
           overview?.pending_orders?.toString() ??
-          '45',
+          '0',
         icon: <ShoppingCart size={24} />,
-        change: overview?.total_purchase_orders
-          ? Math.round((overview.pending_orders / overview.total_purchase_orders) * 100)
-          : 8,
-        changeLabel: i18n.t('scm.dashboard_page.k13'),
         color: 'success',
       },
       {
@@ -215,8 +207,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('scm.dashboard_page.k31'),
         value: realtime?.pending_inbound_orders?.toString() ?? '0',
         icon: <Inbox size={24} />,
-        change: 0,
-        changeLabel: i18n.t('scm.dashboard_page.k32'),
         color: 'info',
       },
       {
@@ -224,8 +214,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('scm.dashboard_page.k33'),
         value: realtime?.pending_outbound_orders?.toString() ?? '0',
         icon: <Warehouse size={24} />,
-        change: 0,
-        changeLabel: i18n.t('scm.dashboard_page.k34'),
         color: 'info',
       },
       {
@@ -233,17 +221,13 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('scm.dashboard_page.k35'),
         value: realtime?.low_stock_items?.toString() ?? '0',
         icon: <AlertTriangle size={24} />,
-        change: 0,
-        changeLabel: i18n.t('scm.dashboard_page.k36'),
         color: 'error',
       },
       {
         id: 'turnover',
         title: i18n.t('scm.dashboard_page.k14'),
-        value: overview?.inventory_turnover_rate?.toFixed(1) || '4.2',
+        value: overview?.inventory_turnover_rate?.toFixed(1) ?? '0',
         icon: <RefreshCw size={24} />,
-        change: 0.3,
-        changeLabel: i18n.t('scm.dashboard_page.k15'),
         color: 'info',
       },
       {
@@ -255,8 +239,6 @@ export const DashboardPage: React.FC = () => {
             )}`
           : '—',
         icon: <RefreshCw size={24} />,
-        change: turnoverDaysStat?.overall_turnover_rate ?? 0,
-        changeLabel: i18n.t('scm.dashboard_page.k38'),
         color: 'info',
       },
       {
@@ -264,8 +246,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('scm.dashboard_page.k16'),
         value: `${overview?.quality_pass_rate || 0}%`,
         icon: <ClipboardCheck size={24} />,
-        change: overview?.quality_pass_rate ? Math.round(overview.quality_pass_rate) : 5,
-        changeLabel: i18n.t('scm.dashboard_page.k17'),
         color: 'warning',
       },
       {
@@ -273,8 +253,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('scm.dashboard_page.k18'),
         value: `${overview?.on_time_delivery_rate || 0}%`,
         icon: <Truck size={24} />,
-        change: overview?.on_time_delivery_rate ? Math.round(overview.on_time_delivery_rate) : 3,
-        changeLabel: i18n.t('scm.dashboard_page.k19'),
         color: 'success',
       },
       {
@@ -282,8 +260,6 @@ export const DashboardPage: React.FC = () => {
         title: t('scm.dashboard_page.k20'),
         value: `${overview?.order_completion_rate || 0}%`,
         icon: <TrendingUp size={24} />,
-        change: overview?.order_completion_rate ? Math.round(overview.order_completion_rate) : 2,
-        changeLabel: t('scm.dashboard_page.k21'),
         color: 'primary',
       },
       {
@@ -294,8 +270,6 @@ export const DashboardPage: React.FC = () => {
           overview?.pending_inspection_count?.toString() ??
           '0',
         icon: <Package size={24} />,
-        change: 0,
-        changeLabel: t('scm.dashboard_page.k23'),
         color: 'error',
       },
       {
@@ -303,8 +277,6 @@ export const DashboardPage: React.FC = () => {
         title: t('scm.dashboard_page.k24'),
         value: `¥${(overview?.total_amount_month || 0).toLocaleString()}`,
         icon: <DollarSign size={24} />,
-        change: 12,
-        changeLabel: t('scm.dashboard_page.k25'),
         color: 'info',
       },
     ],
@@ -375,6 +347,7 @@ export const DashboardPage: React.FC = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         stats={stats}
         charts={charts}

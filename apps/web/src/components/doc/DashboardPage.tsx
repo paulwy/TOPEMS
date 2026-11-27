@@ -65,8 +65,6 @@ const DocumentDashboardPage: React.FC = () => {
         title: i18n.t('doc.documents.stat_files'),
         value: statsData.total_documents.toLocaleString(),
         icon: iconMap.FileText,
-        change: 0,
-        changeLabel: i18n.t('pages.dashboard_page.vs_0'),
         color: 'primary',
       },
       {
@@ -74,8 +72,6 @@ const DocumentDashboardPage: React.FC = () => {
         title: i18n.t('doc.status.published'),
         value: statsData.published_documents.toLocaleString(),
         icon: iconMap.FolderOpen,
-        change: 0,
-        changeLabel: i18n.t('pages.dashboard_page.vs_1'),
         color: 'success',
       },
       {
@@ -83,8 +79,6 @@ const DocumentDashboardPage: React.FC = () => {
         title: i18n.t('doc.status.draft'),
         value: statsData.draft_documents.toLocaleString(),
         icon: iconMap.Clock,
-        change: 0,
-        changeLabel: i18n.t('pages.dashboard_page.vs_2'),
         color: 'info',
       },
       {
@@ -92,8 +86,6 @@ const DocumentDashboardPage: React.FC = () => {
         title: i18n.t('doc.status.archived'),
         value: statsData.archived_documents.toLocaleString(),
         icon: iconMap.Star,
-        change: 0,
-        changeLabel: i18n.t('pages.dashboard_page.vs_3'),
         color: 'warning',
       },
       {
@@ -101,8 +93,6 @@ const DocumentDashboardPage: React.FC = () => {
         title: i18n.t('doc.documents.stat_folders'),
         value: statsData.total_folders.toLocaleString(),
         icon: iconMap.HardDrive,
-        change: 0,
-        changeLabel: i18n.t('pages.dashboard_page.vs_4'),
         color: 'secondary',
       },
       {
@@ -110,8 +100,6 @@ const DocumentDashboardPage: React.FC = () => {
         title: i18n.t('doc.menu.template'),
         value: statsData.total_templates.toLocaleString(),
         icon: iconMap.FileSpreadsheet,
-        change: 0,
-        changeLabel: i18n.t('pages.dashboard_page.vs_5'),
         color: 'error',
       },
     ];

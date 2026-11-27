@@ -1395,7 +1395,7 @@
   "rd.dashboard_page.quick_action.write_test_case": "编写测试用例",
   "rd.dashboard_page.quick_action.release_new_version": "发布新版本",
   "rd.dashboard_page.title": "研发管理",
-  "rd.dashboard_page.subtitle": "副标题",
+  "rd.dashboard_page.subtitle": "研发项目、文档与实验进展总览",
   "rd.dashboard_page.quick_action.title": "快捷操作",
   "rd.material_list_page.error.import_failed": "导入failed",
   "rd.material_list_page.notification.import_success_title": "导入成功",

@@ -46,8 +46,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('gis.dashboard_page.k3'),
         value: statistics.factory_maps.toString(),
         icon: iconMap.Layers,
-        change: 0,
-        changeLabel: i18n.t('gis.dashboard_page.m1'),
         color: 'primary',
       },
       {
@@ -55,8 +53,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('gis.dashboard_page.k4'),
         value: statistics.device_points.toLocaleString(),
         icon: iconMap.MapPin,
-        change: 0,
-        changeLabel: i18n.t('gis.dashboard_page.m1'),
         color: 'info',
       },
       {
@@ -64,8 +60,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('gis.dashboard_page.k5'),
         value: statistics.storage_locations.toLocaleString(),
         icon: iconMap.Activity,
-        change: 0,
-        changeLabel: i18n.t('gis.dashboard_page.m1'),
         color: 'success',
       },
       {
@@ -73,8 +67,6 @@ export const DashboardPage: React.FC = () => {
         title: i18n.t('gis.dashboard_page.k6'),
         value: statistics.active_devices.toString(),
         icon: iconMap.Globe,
-        change: 0,
-        changeLabel: i18n.t('gis.dashboard_page.m1'),
         color: 'warning',
       },
     ];
@@ -89,12 +81,6 @@ export const DashboardPage: React.FC = () => {
       { name: i18n.t('gis.dashboard_page.k10'), value: statistics.business_locations },
       { name: i18n.t('gis.dashboard_page.k11'), value: statistics.factory_maps },
     ];
-    const lineData = [
-      { name: 'Q1', value: statistics.active_devices * 100 },
-      { name: 'Q2', value: statistics.active_devices * 120 },
-      { name: 'Q3', value: statistics.active_devices * 110 },
-      { name: 'Q4', value: statistics.active_devices * 150 },
-    ];
     return [
       {
         id: 'city-data-distribution',
@@ -103,19 +89,6 @@ export const DashboardPage: React.FC = () => {
           <LazyChart
             type='bar'
             data={barData}
-            xKey='name'
-            yKey='value'
-          />
-        ),
-        height: 300,
-      },
-      {
-        id: 'quarterly-data-trend',
-        title: i18n.t('gis.dashboard_page.k13'),
-        chart: (
-          <LazyChart
-            type='line'
-            data={lineData}
             xKey='name'
             yKey='value'
           />
