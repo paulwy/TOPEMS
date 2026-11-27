@@ -128,6 +128,7 @@ pub async fn sentiment(
 
 /// POST /api/analysis/classify - 文本分类
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/analysis/classify",
     tag = "Filled",
@@ -188,6 +189,7 @@ pub async fn classify(
 
 /// POST /api/analysis/entities - 实体提取
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/analysis/entities",
     tag = "Filled",
@@ -249,6 +251,7 @@ pub async fn extract_keywords(
 )]
 /// GET /api/analysis/history - 获取分析历史
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/analysis/history",
     tag = "Filled",

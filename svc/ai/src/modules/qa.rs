@@ -660,6 +660,7 @@ pub async fn ask_conversation(
 
 /// POST /api/qa/classify - 分类问题类型
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/qa/classify",
     tag = "Filled",
@@ -685,6 +686,7 @@ pub async fn classify(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// GET /api/qa/history - 获取问答历史（支持分页和搜索）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/qa/history",
     tag = "Filled",
@@ -831,6 +833,7 @@ pub async fn batch_delete_history(
 
 /// POST /api/qa/feedback - 提交答案反馈
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/qa/feedback",
     tag = "Filled",

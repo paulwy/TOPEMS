@@ -65,6 +65,7 @@ impl<T: Serialize> ApiResponse<T> {
 ///
 /// GET /dsh/agent/performance/metrics
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/dsh/agent/performance/metrics",
     tag = "Filled",

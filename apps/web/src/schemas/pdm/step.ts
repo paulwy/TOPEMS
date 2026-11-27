@@ -17,7 +17,11 @@ export const stepSchema: EntitySchema = {
 
   // 工序下拉：process_id 是 uuid，裸文本填任何非 UUID 必 422
   dynamicOptions: [
-    { field: 'process_id', queryKey: ['pdm', 'processes', 'forStep'], loader: loadPdmProcessOptions },
+    {
+      field: 'process_id',
+      queryKey: ['pdm', 'processes', 'forStep'],
+      loader: loadPdmProcessOptions,
+    },
   ],
 
   fields: [

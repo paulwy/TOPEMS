@@ -50,6 +50,7 @@ impl Default for SmartFormsAppState {
 
 /// 表单模板列表
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/dsh/smart-forms/templates",
     tag = "Filled",
@@ -117,6 +118,7 @@ pub async fn ai_fill(
 
 /// 表单校验
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/dsh/smart-forms/validate",
     tag = "Filled",

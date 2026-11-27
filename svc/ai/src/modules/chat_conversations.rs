@@ -44,6 +44,7 @@ impl From<&sqlx::postgres::PgRow> for ConversationDto {
 
 /// GET /api/ai/conversations
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/conversations",
     tag = "Filled",
@@ -98,6 +99,7 @@ pub async fn list_conversations(
 
 /// GET /api/ai/conversations/{id}
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/conversations/{id}",
     tag = "Filled",
@@ -159,6 +161,7 @@ pub struct CreateConversationRequest {
 
 /// POST /api/ai/conversations
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/conversations",
     tag = "Filled",
@@ -217,6 +220,7 @@ pub async fn create_conversation(
 
 /// DELETE /api/ai/conversations/{id}
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     delete,
     path = "/api/ai/conversations/{id}",
     tag = "Filled",
@@ -296,6 +300,7 @@ pub fn create_routes() -> axum::Router<AppState> {
 
 /// GET /api/ai/conversations/{id}/messages - 会话消息列表（待上游支持，返回空）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/conversations/{id}/messages",
     tag = "Filled",
@@ -341,6 +346,7 @@ pub async fn list_messages(
 
 /// POST /api/ai/conversations/{id}/messages/{message_id}/regenerate - 重新生成（待上游支持）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/conversations/{id}/messages/{message_id}/regenerate",
     tag = "Filled",

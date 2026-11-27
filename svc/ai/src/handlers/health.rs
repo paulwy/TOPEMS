@@ -14,6 +14,7 @@ pub async fn home() -> &'static str {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/health",
     tag = "Filled",
@@ -29,6 +30,7 @@ pub async fn health() -> Json<ApiResponse<String>> {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/health/detailed",
     tag = "Filled",

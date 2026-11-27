@@ -317,6 +317,7 @@ pub async fn create_session(
 
 /// 获取会话信息
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/dsh/copilot/sessions/{session_id}",
     tag = "Filled",
@@ -407,6 +408,7 @@ pub async fn get_session(
 
 /// 删除会话
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     delete,
     path = "/api/ai/dsh/copilot/sessions/{session_id}",
     tag = "Filled",
@@ -523,6 +525,7 @@ pub async fn send_message(
 /// 复用 CopilotSessionManager.update_selected_records 真实写入内存会话上下文；
 /// 会话不存在时按 get_session 的 404 分支返回。
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     put,
     path = "/api/ai/dsh/copilot/sessions/{session_id}/records",
     tag = "Filled",
@@ -591,6 +594,7 @@ pub async fn update_selected_records(
 /// 复用 CopilotSessionManager.set_context_data 真实写入内存会话上下文；
 /// 会话不存在时按 get_session 的 404 分支返回。
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     put,
     path = "/api/ai/dsh/copilot/sessions/{session_id}/context",
     tag = "Filled",
@@ -658,6 +662,7 @@ pub async fn set_context_data(
 
 /// 获取活跃会话列表
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/dsh/copilot/sessions",
     tag = "Filled",

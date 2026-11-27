@@ -170,6 +170,7 @@ pub async fn get_entity(
 
 /// 删除实体
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     delete,
     path = "/api/ai/dsh/kg/entities/{entity_id}",
     tag = "Filled",
@@ -195,6 +196,7 @@ pub async fn delete_entity(
 
 /// 列出所有实体
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/dsh/kg/entities",
     tag = "Filled",
@@ -271,6 +273,7 @@ pub async fn add_relation(
 
 /// 列出所有关系
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/dsh/kg/relations",
     tag = "Filled",
@@ -413,6 +416,7 @@ pub async fn get_graph_stats(
 
 /// 从文本中提取实体和关系
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/dsh/kg/extract",
     tag = "Filled",

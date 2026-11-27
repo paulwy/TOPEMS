@@ -103,7 +103,8 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   };
 
   const hasMeaningfulHeaderProp = Object.keys(mergedHeaderProps).some(
-    (k) => k !== 'title' && (mergedHeaderProps as unknown as Record<string, unknown>)[k] !== undefined
+    (k) =>
+      k !== 'title' && (mergedHeaderProps as unknown as Record<string, unknown>)[k] !== undefined
   );
   const hasHeader = Boolean(title || headerTitle || hasMeaningfulHeaderProp);
 

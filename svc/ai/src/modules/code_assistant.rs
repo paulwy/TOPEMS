@@ -370,6 +370,7 @@ mod tests {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/code/generate",
     tag = "Filled",

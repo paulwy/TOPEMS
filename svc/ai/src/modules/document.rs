@@ -318,6 +318,7 @@ pub async fn process(
 
 /// GET /api/documents/{id} - 获取文档信息
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/documents/{id}",
     tag = "Filled",
@@ -352,6 +353,7 @@ pub async fn get(
 /// application/octet-stream + Content-Disposition attachment 附件响应。
 /// 记录不存在 → 内层 404；记录存在但本地文件缺失 → 404「文件不存在」。
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/documents/{id}/download",
     tag = "Filled",
@@ -418,6 +420,7 @@ pub async fn download(
 
 /// DELETE /api/documents/{id} - 删除文档
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     delete,
     path = "/api/ai/documents/{id}",
     tag = "Filled",
@@ -490,6 +493,7 @@ pub async fn delete(
 
 /// GET /api/documents - 获取文档列表
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/documents",
     tag = "Filled",
@@ -515,6 +519,7 @@ pub async fn list(
 
 /// POST /api/documents - 创建文档（JSON 元数据）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/documents",
     tag = "Filled",
@@ -531,6 +536,7 @@ pub async fn create(
 
 /// PUT /api/documents/{id} - 更新文档元数据
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     put,
     path = "/api/ai/documents/{id}",
     tag = "Filled",
@@ -773,6 +779,7 @@ pub async fn vectorize_from_file(
 
 /// POST /api/documents/{id}/summarize - 生成文档摘要
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/documents/{id}/summarize",
     tag = "Filled",
@@ -935,6 +942,7 @@ macro_rules! doc_not_found_or_ok {
 
 /// POST /api/documents/{id}/translate - 文档翻译（待上游支持）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/documents/{id}/translate",
     tag = "Filled",
@@ -963,6 +971,7 @@ pub async fn translate(
 
 /// POST /api/documents/{id}/ocr - 文档 OCR（待上游支持）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/documents/{id}/ocr",
     tag = "Filled",
@@ -990,6 +999,7 @@ pub async fn ocr(
 
 /// POST /api/documents/{id}/classify - 文档分类（待上游支持）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/documents/{id}/classify",
     tag = "Filled",
@@ -1017,6 +1027,7 @@ pub async fn classify(
 
 /// POST /api/documents/{id}/entities - 文档实体抽取（待上游支持）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/documents/{id}/entities",
     tag = "Filled",

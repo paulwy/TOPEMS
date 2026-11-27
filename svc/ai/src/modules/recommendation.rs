@@ -235,6 +235,7 @@ pub async fn recommend_knowledge(
 
 /// POST /api/ai/recommendations - 通用推荐（待上游支持，返回空列表）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/recommendations",
     tag = "Filled",
@@ -253,6 +254,7 @@ pub async fn recommendations(
 
 /// GET /api/ai/recommendations/personalized - 个性化推荐（待上游支持，返回空 items）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/recommendations/personalized",
     tag = "Filled",
@@ -270,6 +272,7 @@ pub async fn personalized(
 
 /// POST /api/ai/recommendations/feedback - 推荐反馈回执（待上游支持）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/recommendations/feedback",
     tag = "Filled",

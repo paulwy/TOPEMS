@@ -41,6 +41,7 @@ fn generate_embedding(text: &str, dimension: usize) -> Vec<f32> {
 
 /// POST /api/embedding/generate - 生成文本向量
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/embedding/generate",
     tag = "Filled",

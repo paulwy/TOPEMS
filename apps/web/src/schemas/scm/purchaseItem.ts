@@ -17,7 +17,11 @@ export const purchaseItemSchema: EntitySchema = {
 
   // order_id 是 uuid 外键：裸文本必 422，改挂采购订单下拉
   dynamicOptions: [
-    { field: 'order_id', queryKey: ['scm', 'purchaseOrders', 'forItem'], loader: loadScmPurchaseOrderOptions },
+    {
+      field: 'order_id',
+      queryKey: ['scm', 'purchaseOrders', 'forItem'],
+      loader: loadScmPurchaseOrderOptions,
+    },
   ],
 
   fields: [

@@ -148,6 +148,7 @@ pub async fn search(
 
 /// GET /api/vectors/{id} - 获取向量信息
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/vectors/{id}",
     tag = "Filled",
@@ -407,6 +408,7 @@ pub async fn hybrid_search(
 
 /// GET /api/vectors/stats - 获取向量统计信息
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/vectors/stats",
     tag = "Filled",
@@ -467,6 +469,7 @@ pub async fn clear_all(
 
 /// GET /api/ai/vector/collections - 向量集合列表（待上游支持，返回空）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:read"])),
     get,
     path = "/api/ai/vector/collections",
     tag = "Filled",
@@ -484,6 +487,7 @@ pub async fn list_collections(
 
 /// POST /api/ai/vector/collections - 创建向量集合（待上游支持，回显 name）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/vector/collections",
     tag = "Filled",
@@ -508,6 +512,7 @@ pub async fn create_collection(
 
 /// DELETE /api/ai/vector/collections/{id} - 删除向量集合（待上游支持）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     delete,
     path = "/api/ai/vector/collections/{id}",
     tag = "Filled",
@@ -526,6 +531,7 @@ pub async fn delete_collection(
 
 /// POST /api/ai/vector/index/{document_id} - 重建文档索引（待上游支持）
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/vector/index/{document_id}",
     tag = "Filled",

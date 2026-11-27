@@ -424,6 +424,7 @@ pub async fn get_prompt_template(
 
 /// POST /prompts/templates
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     post,
     path = "/api/ai/prompts/templates",
     tag = "Filled",
@@ -479,6 +480,7 @@ pub async fn create_prompt_template(
 
 /// PUT /prompts/templates/{id}
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     put,
     path = "/api/ai/prompts/templates/{id}",
     tag = "Filled",
@@ -538,6 +540,7 @@ pub async fn update_prompt_template(
 
 /// DELETE /prompts/templates/{id}
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     delete,
     path = "/api/ai/prompts/templates/{id}",
     tag = "Filled",

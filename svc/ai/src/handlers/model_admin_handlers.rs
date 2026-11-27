@@ -575,6 +575,7 @@ pub async fn get_model_config(
 
 /// PUT /models/{id}/config
 #[utoipa::path(
+    security(("BearerAuth" = ["ai:write"])),
     put,
     path = "/api/ai/models/{id}/config",
     tag = "Filled",
