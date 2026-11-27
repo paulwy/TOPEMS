@@ -47,7 +47,7 @@ impl EmployeeService {
                    e.position, e.joblevel, e.work_location, e.report_to_name,
                    e.education, e.emergency_contact_name, e.emergency_contact_phone,
                    e.emergency_relation, e.hukou_location, e.remark, e.employee_type, e.user_id,
-                   e.status, e.created_at, e.updated_at,
+                   e.status, e.created_at, e.updated_at, e.monthly_salary,
                    d.name as department_name
             FROM hrm.employees e
             LEFT JOIN hrm.departments d ON e.department_id = d.id
@@ -126,7 +126,7 @@ impl EmployeeService {
                    e.position, e.joblevel, e.work_location, e.report_to_name,
                    e.education, e.emergency_contact_name, e.emergency_contact_phone,
                    e.emergency_relation, e.hukou_location, e.remark, e.employee_type, e.user_id,
-                   e.status, e.created_at, e.updated_at,
+                   e.status, e.created_at, e.updated_at, e.monthly_salary,
                    d.name as department_name
             FROM hrm.employees e
             LEFT JOIN hrm.departments d ON e.department_id = d.id
@@ -186,6 +186,7 @@ impl EmployeeService {
 
         let id = Uuid::new_v4();
         let now = Utc::now();
+        let new_salary = req.salary;
 
         let encrypted_phone = match &req.phone {
             Some(p) if !p.is_empty() => {
@@ -254,7 +255,7 @@ impl EmployeeService {
                       work_location, report_to_name, education,
                       emergency_contact_name, emergency_contact_phone, emergency_relation,
                       hukou_location, remark, employee_type, user_id,
-                      status, created_at, updated_at
+                      status, created_at, updated_at, monthly_salary
             "#,
         )
         .bind(id)
@@ -294,6 +295,17 @@ impl EmployeeService {
 
         match result {
             Ok(mut employee) => {
+                if let Some(salary) = new_salary {
+                    let _ = sqlx::query(
+                        "UPDATE hrm.employees SET monthly_salary = $3 WHERE id = $1 AND tenant_id = $2",
+                    )
+                    .bind(id)
+                    .bind(self.tenant_id)
+                    .bind(salary)
+                    .execute(&mut *conn)
+                    .await;
+                    employee.salary = Some(salary);
+                }
                 let _ = employee.decrypt_fields(&self.encryption);
                 ApiResponse::success(employee, "员工创建成功")
             }
@@ -319,7 +331,7 @@ impl EmployeeService {
                    e.position, e.joblevel, e.work_location, e.report_to_name,
                    e.education, e.emergency_contact_name, e.emergency_contact_phone,
                    e.emergency_relation, e.hukou_location, e.remark, e.employee_type, e.user_id,
-                   e.status, e.created_at, e.updated_at,
+                   e.status, e.created_at, e.updated_at, e.monthly_salary,
                    d.name as department_name
             FROM hrm.employees e
             LEFT JOIN hrm.departments d ON e.department_id = d.id
@@ -473,6 +485,17 @@ impl EmployeeService {
 
         match result {
             Ok(mut employee) => {
+                if let Some(salary) = req.salary {
+                    let _ = sqlx::query(
+                        "UPDATE hrm.employees SET monthly_salary = $3 WHERE id = $1 AND tenant_id = $2",
+                    )
+                    .bind(id)
+                    .bind(self.tenant_id)
+                    .bind(salary)
+                    .execute(&mut *conn)
+                    .await;
+                    employee.salary = Some(salary);
+                }
                 let _ = employee.decrypt_fields(&self.encryption);
                 ApiResponse::success(employee, "员工更新成功")
             }

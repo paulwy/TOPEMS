@@ -123,7 +123,7 @@ const mapApiEmployees = (apiEmployees: RawApiEmployee[]): Employee[] => {
     phone: isEncryptedBlob(e.phone) ? '-' : e.phone || e.mobile || '-',
     email: e.email || '-',
     join_date: e.join_date || e.hire_date || '-',
-    salary: e.salary || 0,
+    salary: Number(e.salary ?? 0),
     manager: e.manager || e.leader || '-',
     created_at: e.created_at ?? '-',
   }));

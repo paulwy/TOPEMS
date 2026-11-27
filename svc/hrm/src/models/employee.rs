@@ -95,6 +95,10 @@ pub struct Employee {
     pub created_at: DateTime<Utc>,
     #[schema(example = "2024-01-15T12:00:00Z")]
     pub updated_at: DateTime<Utc>,
+    #[serde(rename = "salary")]
+    #[sqlx(rename = "monthly_salary", default)]
+    #[schema(example = 12000.00)]
+    pub salary: Option<Decimal>,
 }
 
 impl Employee {
@@ -249,6 +253,8 @@ impl EmployeeFinance {
     "phone": "13800138000"
 }))]
 pub struct CreateEmployeeRequest {
+    #[schema(example = 12000.00)]
+    pub salary: Option<Decimal>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
     pub org_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440002")]
@@ -320,6 +326,8 @@ pub struct CreateEmployeeRequest {
     "status": "active"
 }))]
 pub struct UpdateEmployeeRequest {
+    #[schema(example = 12000.00)]
+    pub salary: Option<Decimal>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
     pub org_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440004")]
