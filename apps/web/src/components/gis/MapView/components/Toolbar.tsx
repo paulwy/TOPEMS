@@ -69,7 +69,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         overflow: 'hidden',
       }}
     >
-      <MuiBox sx={{ padding: 1.5, borderBottom: '1px solid grey.100' }}>
+      <MuiBox sx={{ padding: 1.5, borderBottom: '1px solid var(--divider)' }}>
         <Typography
           variant='caption'
           sx={{ fontWeight: 'medium', color: 'text.secondary' }}
@@ -108,7 +108,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             sx={{
               width: 16,
               height: 16,
-              border: '2px solid grey.700',
+              border: '2px solid var(--border-active)',
               borderRadius: 1,
             }}
           />
@@ -158,7 +158,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Ruler size={16} />
           {i18n.t('components.toolbar.k3')}
         </Button>
-        <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
+        <MuiBox sx={{ borderTop: '1px solid var(--divider)', my: 1 }} />
         <Button
           fullWidth
           onClick={() => setTool('draw-point')}
@@ -225,7 +225,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Pencil size={16} />
           {i18n.t('components.toolbar.k6')}
         </Button>
-        <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
+        <MuiBox sx={{ borderTop: '1px solid var(--divider)', my: 1 }} />
         {(toolMode === 'measure-distance' || toolMode === 'measure-area') && (
           <Button
             fullWidth
@@ -294,7 +294,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             {i18n.t('components.toolbar.k9')}
           </Button>
         )}
-        <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
+        <MuiBox sx={{ borderTop: '1px solid var(--divider)', my: 1 }} />
         <Button
           fullWidth
           onClick={() => {
@@ -319,7 +319,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <PlayCircle size={16} />
           {i18n.t('components.toolbar.k10')}
         </Button>
-        <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
+        <MuiBox sx={{ borderTop: '1px solid var(--divider)', my: 1 }} />
         <Button
           fullWidth
           onClick={() => exportGeoJSON()}
@@ -362,7 +362,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <FileJson size={16} />
           {i18n.t('components.toolbar.k12')}
         </Button>
-        <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
+        <MuiBox sx={{ borderTop: '1px solid var(--divider)', my: 1 }} />
         <Button
           fullWidth
           onClick={() => handleSetMapType(mapType === 'osm' ? 'amap' : 'osm')}
@@ -387,7 +387,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             ? i18n.t('components.toolbar.k14')
             : i18n.t('components.toolbar.osm_13')}
         </Button>
-        <MuiBox sx={{ borderTop: '1px solid grey.100', my: 1 }} />
+        <MuiBox sx={{ borderTop: '1px solid var(--divider)', my: 1 }} />
         <Button
           fullWidth
           onClick={() => setShowHeatmap(!showHeatmap)}

@@ -114,14 +114,14 @@ const getStatusIcon = (status: SyncStatus) => {
       return (
         <CheckCircle2
           size={16}
-          color='#2e7d32'
+          color='success.main'
         />
       );
     case 'syncing':
       return (
         <RefreshCw
           size={16}
-          color='#1976d2'
+          color='primary.main'
           className='spin'
         />
       );
@@ -129,14 +129,14 @@ const getStatusIcon = (status: SyncStatus) => {
       return (
         <AlertCircle
           size={16}
-          color='#d32f2f'
+          color='error.main'
         />
       );
     case 'pending':
       return (
         <Clock
           size={16}
-          color='#bdbdbd'
+          color='text.disabled'
         />
       );
   }

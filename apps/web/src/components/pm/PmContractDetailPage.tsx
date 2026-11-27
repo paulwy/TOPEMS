@@ -332,7 +332,7 @@ const PmContractDetailPage: React.FC = () => {
                 <Box
                   key={milestone.id}
                   sx={{
-                    border: '1px solid grey.100',
+                    border: '1px solid var(--divider)',
                     borderRadius: 3,
                     p: 2,
                     transition: 'border-color 0.2s',

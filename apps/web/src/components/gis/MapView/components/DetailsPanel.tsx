@@ -28,7 +28,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
         borderRadius: 3,
         boxShadow: designTokens.shadows.xl,
         overflow: 'hidden',
-        border: '1px solid grey.200',
+        border: '1px solid var(--divider)',
       }}
     >
       <MuiBox
@@ -198,7 +198,7 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({ selectedItem, onClose }) =>
             </Typography>
           </MuiBox>
         )}
-        <MuiBox sx={{ paddingTop: 1, borderTop: '1px solid grey.200' }}>
+        <MuiBox sx={{ paddingTop: 1, borderTop: '1px solid var(--divider)' }}>
           <Typography
             variant='caption'
             sx={{ color: 'text.secondary', marginBottom: 0.5 }}

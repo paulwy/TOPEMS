@@ -171,7 +171,7 @@ const DetailsPanel: React.FC<{
         borderRadius: '0.75rem',
         boxShadow: `0 20px 25px -5px ${designTokens.colors.action.selected}, 0 10px 10px -5px ${designTokens.colors.action.hover}`,
         overflow: 'hidden',
-        border: '1px solid grey.200',
+        border: '1px solid var(--divider)',
       }}
     >
       <div
@@ -329,7 +329,7 @@ const DetailsPanel: React.FC<{
         <div
           style={{
             paddingTop: '0.5rem',
-            borderTop: '1px solid grey.200',
+            borderTop: '1px solid var(--divider)',
           }}
         >
           <div
@@ -767,7 +767,7 @@ const MapView: React.FC<MapViewProps> = ({
                         style={{
                           fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                           color: theme.palette.text.secondary,
-                          borderTop: '1px solid grey.200',
+                          borderTop: '1px solid var(--divider)',
                           paddingTop: '0.5rem',
                           marginTop: '0.5rem',
                         }}

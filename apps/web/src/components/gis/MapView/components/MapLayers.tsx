@@ -183,7 +183,7 @@ const MapLayers: React.FC<MapLayersProps> = ({
                     sx={{
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       color: 'text.secondary',
-                      borderTop: '1px solid grey.200',
+                      borderTop: '1px solid var(--divider)',
                       paddingTop: 1,
                       marginTop: 1,
                     }}

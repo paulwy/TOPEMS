@@ -136,7 +136,7 @@ const ForceChangePasswordPage: React.FC = () => {
           maxWidth: 440,
           mx: 2,
           my: 8,
-          background: 'common.white',
+          bgcolor: 'background.paper',
           backdropFilter: 'blur(20px)',
           borderRadius: 3,
           boxShadow: designTokens.shadows['2xl'],
@@ -155,7 +155,7 @@ const ForceChangePasswordPage: React.FC = () => {
             sx={{
               width: 72,
               height: 72,
-              background: 'action.disabledBackground',
+              bgcolor: 'action.disabledBackground',
               borderRadius: '2xl',
               display: 'flex',
               alignItems: 'center',

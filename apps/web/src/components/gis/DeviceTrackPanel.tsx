@@ -179,7 +179,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             justifyContent: 'space-between',
             px: 4,
             py: 3,
-            background: `linear-gradient(to right, ${designTokens.colors.purple['600']}, primary.dark)`,
+            background: `linear-gradient(to right, ${designTokens.colors.purple['600']}, ${theme.palette.primary.dark})`,
             color: 'common.white',
           }}
         >
@@ -754,7 +754,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
           justifyContent: 'space-between',
           px: 4,
           py: 3,
-          background: `linear-gradient(to right, ${designTokens.colors.purple['600']}, primary.dark)`,
+          background: `linear-gradient(to right, ${designTokens.colors.purple['600']}, ${theme.palette.primary.dark})`,
           color: 'common.white',
         }}
       >

@@ -417,7 +417,7 @@ const GisContent: React.FC = () => {
               (data as DevicePoint[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid grey.200' }}
+                  style={{ borderTop: '1px solid var(--divider)' }}
                 >
                   <td
                     style={{ padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px` }}
@@ -449,7 +449,7 @@ const GisContent: React.FC = () => {
               (data as Pipeline[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid grey.200' }}
+                  style={{ borderTop: '1px solid var(--divider)' }}
                 >
                   <td
                     style={{ padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px` }}
@@ -494,7 +494,7 @@ const GisContent: React.FC = () => {
               (data as StorageLocation[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid grey.200' }}
+                  style={{ borderTop: '1px solid var(--divider)' }}
                 >
                   <td
                     style={{ padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px` }}
@@ -526,7 +526,7 @@ const GisContent: React.FC = () => {
               (data as EvidenceRecord[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid grey.200' }}
+                  style={{ borderTop: '1px solid var(--divider)' }}
                 >
                   <td
                     style={{ padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px` }}
@@ -554,7 +554,7 @@ const GisContent: React.FC = () => {
               (data as FactoryMap[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid grey.200' }}
+                  style={{ borderTop: '1px solid var(--divider)' }}
                 >
                   <td
                     style={{ padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px` }}
@@ -582,7 +582,7 @@ const GisContent: React.FC = () => {
               (data as BusinessLocation[]).map((item) => (
                 <tr
                   key={item.id}
-                  style={{ borderTop: '1px solid grey.200' }}
+                  style={{ borderTop: '1px solid var(--divider)' }}
                 >
                   <td
                     style={{ padding: `${designTokens.spacing.md} ${designTokens.spacing.md}px` }}

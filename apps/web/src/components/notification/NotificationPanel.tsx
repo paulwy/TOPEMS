@@ -146,7 +146,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         backgroundColor: 'var(--bg-elevated)',
         borderRadius: 8,
         boxShadow: designTokens.shadows['2xl'],
-        border: '1px solid grey.200',
+        border: '1px solid var(--divider)',
         zIndex: designTokens.zIndex.overlay,
       }}
     >
@@ -156,7 +156,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: 16,
-          borderBottom: '1px solid grey.200',
+          borderBottom: '1px solid var(--divider)',
         }}
       >
         <h3 style={{ fontSize: 18, fontWeight: 600, color: theme.palette.text.primary }}>
@@ -302,7 +302,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           style={{
             padding: `${designTokens.spacing.sm} ${designTokens.spacing.md}px`,
             backgroundColor: theme.palette.primary.light,
-            borderBottom: '1px solid primary.100',
+            borderBottom: '1px solid var(--divider)',
           }}
         >
           <button
@@ -333,7 +333,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
                 width: 32,
                 height: 32,
                 borderRadius: 'var(--radius-full)',
-                border: '2px solid grey.200',
+                border: '2px solid var(--border-default)',
                 borderTopColor: theme.palette.primary.dark,
                 animation: 'spin 1s linear infinite',
               }}
@@ -392,7 +392,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         <div
           style={{
             padding: 12,
-            borderTop: '1px solid grey.200',
+            borderTop: '1px solid var(--divider)',
             backgroundColor: theme.palette.grey[50],
           }}
         >

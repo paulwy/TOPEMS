@@ -81,7 +81,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 1,
-            borderTop: '1px solid grey.200',
+            borderTop: '1px solid var(--divider)',
           }}
         >
           <LayerToggle
@@ -108,7 +108,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({
           {drawFeaturesLength > 0 && (
             <MuiBox
               sx={{
-                borderTop: '1px solid grey.200',
+                borderTop: '1px solid var(--divider)',
                 paddingTop: 1,
                 marginTop: 1,
               }}

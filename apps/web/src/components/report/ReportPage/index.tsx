@@ -474,7 +474,7 @@ const ReportPage: React.FC = () => {
         padding: false,
         sx: {
           minHeight: '100vh',
-          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, border.default 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.divider} 100%)`,
         },
       }}
       filterBar={

@@ -328,7 +328,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
           justifyContent: 'space-between',
           px: 4,
           py: 3,
-          background: `linear-gradient(to right, primary.light, ${designTokens.colors.purple['600']})`,
+          background: `linear-gradient(to right, var(--color-primary-400), ${designTokens.colors.purple['600']})`,
           color: 'common.white',
         }}
       >

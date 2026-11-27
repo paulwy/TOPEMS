@@ -16,7 +16,7 @@ const NotificationSettings: React.FC = () => {
       style={{
         padding: 16,
         backgroundColor: 'var(--bg-elevated)',
-        borderBottom: '1px solid grey.200',
+        borderBottom: '1px solid var(--divider)',
       }}
     >
       <h4 className={styles.il1}>{i18n.t('components.notification_settings.k0')}</h4>
@@ -236,7 +236,7 @@ const NotificationSettings: React.FC = () => {
                   flex: 1,
                   padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                   fontSize: 12,
-                  border: '1px solid grey.300',
+                  border: '1px solid var(--border-default)',
                   borderRadius: 4,
                   outline: 'none',
                 }}
@@ -250,7 +250,7 @@ const NotificationSettings: React.FC = () => {
                   flex: 1,
                   padding: `${designTokens.spacing.xs} ${designTokens.spacing.sm}px`,
                   fontSize: 12,
-                  border: '1px solid grey.300',
+                  border: '1px solid var(--border-default)',
                   borderRadius: 4,
                   outline: 'none',
                 }}

@@ -172,7 +172,7 @@ const ForgotPasswordPage: React.FC = () => {
           right: -100,
           width: 300,
           height: 300,
-          background: 'action.disabledBackground',
+          bgcolor: 'action.disabledBackground',
           borderRadius: '50%',
           filter: 'blur(60px)',
         }}
@@ -184,7 +184,7 @@ const ForgotPasswordPage: React.FC = () => {
           left: -100,
           width: 300,
           height: 300,
-          background: 'action.disabledBackground',
+          bgcolor: 'action.disabledBackground',
           borderRadius: '50%',
           filter: 'blur(60px)',
         }}
@@ -207,7 +207,7 @@ const ForgotPasswordPage: React.FC = () => {
             sx={{
               width: 40,
               height: 40,
-              background: 'action.disabledBackground',
+              bgcolor: 'action.disabledBackground',
               borderRadius: 'lg',
               display: 'flex',
               alignItems: 'center',
@@ -238,7 +238,7 @@ const ForgotPasswordPage: React.FC = () => {
           width: '100%',
           maxWidth: 400,
           mx: 2,
-          background: 'common.white',
+          bgcolor: 'background.paper',
           backdropFilter: 'blur(20px)',
           borderRadius: 3,
           boxShadow: designTokens.shadows['2xl'],
@@ -257,7 +257,7 @@ const ForgotPasswordPage: React.FC = () => {
             sx={{
               width: 72,
               height: 72,
-              background: 'action.disabledBackground',
+              bgcolor: 'action.disabledBackground',
               borderRadius: '2xl',
               display: 'flex',
               alignItems: 'center',
@@ -411,7 +411,7 @@ const ForgotPasswordPage: React.FC = () => {
                       background: `linear-gradient(135deg, ${theme.palette.secondary[600]} 0%, ${theme.palette.secondary[800]} 100%)`,
                     },
                     '&:disabled': {
-                      background: 'grey.400',
+                      bgcolor: 'action.disabledBackground',
                     },
                   }}
                   disabled={loading}
@@ -523,7 +523,7 @@ const ForgotPasswordPage: React.FC = () => {
                       background: `linear-gradient(135deg, ${theme.palette.secondary[600]} 0%, ${theme.palette.secondary[800]} 100%)`,
                     },
                     '&:disabled': {
-                      background: 'grey.400',
+                      bgcolor: 'action.disabledBackground',
                     },
                   }}
                   disabled={loading}

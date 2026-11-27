@@ -209,7 +209,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: 4,
-            borderBottom: '1px solid grey.200',
+            borderBottom: '1px solid var(--divider)',
           }}
         >
           <div className={styles.il1}>
@@ -330,7 +330,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         <div
           style={{
             padding: 4,
-            borderTop: '1px solid grey.200',
+            borderTop: '1px solid var(--divider)',
             backgroundColor: theme.palette.grey[50],
           }}
         >

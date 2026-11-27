@@ -380,7 +380,7 @@ const LimsTaskDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.grey[100]} 100%)`,
         }}
       >
         <div className={styles.il1}>
@@ -411,7 +411,7 @@ const LimsTaskDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.grey[100]} 100%)`,
         }}
       >
         <div className={styles.il2}>

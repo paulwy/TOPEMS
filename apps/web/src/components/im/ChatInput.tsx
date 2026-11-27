@@ -79,7 +79,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div
       style={{
-        borderTop: '1px solid grey.200',
+        borderTop: '1px solid var(--divider)',
         backgroundColor: 'var(--bg-elevated)',
         padding: 16,
       }}
@@ -107,7 +107,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 backgroundColor: 'var(--bg-elevated)',
                 borderRadius: 8,
                 boxShadow: designTokens.shadows['2xl'],
-                border: '1px solid grey.200',
+                border: '1px solid var(--divider)',
                 padding: 4,
                 zIndex: designTokens.zIndex.contentLayer,
               }}
@@ -180,7 +180,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               width: 16,
               height: 16,
               borderRadius: 'var(--radius-full)',
-              border: '2px solid grey.200',
+              border: '2px solid var(--border-default)',
               borderTopColor: theme.palette.primary.light,
               animation: 'spin 1s linear infinite',
             }}

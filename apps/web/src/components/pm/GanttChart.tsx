@@ -105,7 +105,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
       sx={{
         backgroundColor: 'background.paper',
         borderRadius: 3,
-        border: '1px solid grey.200',
+        border: '1px solid var(--divider)',
         overflow: 'hidden',
       }}
     >
@@ -117,7 +117,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
           px: 4,
           py: 3,
           backgroundColor: 'grey.50',
-          borderBottom: '1px solid grey.200',
+          borderBottom: '1px solid var(--divider)',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -181,14 +181,14 @@ const GanttChart: React.FC<GanttChartProps> = ({
       </Box>
 
       <Box sx={{ display: 'flex' }}>
-        <Box sx={{ width: 192, flexShrink: 0, borderRight: '1px solid grey.200' }}>
+        <Box sx={{ width: 192, flexShrink: 0, borderRight: '1px solid var(--divider)' }}>
           <Box
             sx={{
               height: 64,
               px: 3,
               py: 2,
               backgroundColor: 'grey.50',
-              borderBottom: '1px solid grey.200',
+              borderBottom: '1px solid var(--divider)',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -211,7 +211,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   height: 48,
                   px: 3,
                   py: 2,
-                  borderBottom: '1px solid grey.100',
+                  borderBottom: '1px solid var(--divider)',
                   display: 'flex',
                   alignItems: 'center',
                   '&:hover': { backgroundColor: 'grey.50' },
@@ -260,7 +260,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               width: `${daysToShow * (zoom / 100) * 20}px`,
             }}
           >
-            <Box sx={{ height: 64, borderBottom: '1px solid grey.200' }}>
+            <Box sx={{ height: 64, borderBottom: '1px solid var(--divider)' }}>
               <Box sx={{ display: 'flex' }}>
                 {monthLabels.map((label, index) => (
                   <Box
@@ -284,7 +284,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   </Box>
                 ))}
               </Box>
-              <Box sx={{ display: 'flex', pt: 6, borderTop: '1px solid grey.200' }}>
+              <Box sx={{ display: 'flex', pt: 6, borderTop: '1px solid var(--divider)' }}>
                 {dayLabels.map((label, index) => (
                   <Box
                     key={index}
@@ -302,13 +302,13 @@ const GanttChart: React.FC<GanttChartProps> = ({
               </Box>
             </Box>
 
-            <Box sx={{ borderTop: '1px solid grey.100' }}>
+            <Box sx={{ borderTop: '1px solid var(--divider)' }}>
               {phases.map((phase) => (
                 <Box
                   key={phase.id}
                   sx={{
                     height: 48,
-                    borderBottom: '1px solid grey.100',
+                    borderBottom: '1px solid var(--divider)',
                     position: 'relative',
                   }}
                 >
@@ -371,7 +371,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                           width: 12,
                           height: 12,
                           borderRadius: '50%',
-                          border: '2px solid warning.main',
+                          border: '2px solid var(--warning-text)',
                           backgroundColor: 'warning.light',
                           left: `${48 + getDayOffset(milestone.date) * (zoom / 100) * 20 - 6}px`,
                         }}
@@ -390,7 +390,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
           px: 4,
           py: 3,
           backgroundColor: 'grey.50',
-          borderTop: '1px solid grey.200',
+          borderTop: '1px solid var(--divider)',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
@@ -438,7 +438,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               width: 12,
               height: 12,
               borderRadius: '50%',
-              border: '2px solid warning.main',
+              border: '2px solid var(--warning-text)',
               backgroundColor: 'warning.light',
             }}
           />

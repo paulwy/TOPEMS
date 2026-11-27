@@ -180,7 +180,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           gap: 1,
           padding: 2,
           backgroundColor: 'background.paper',
-          borderBottom: '1px solid grey.200',
+          borderBottom: '1px solid var(--divider)',
           boxShadow: `0 1px 3px ${designTokens.colors.action.selected}`,
           zIndex: (theme) => theme.zIndex.contentLayer,
         }}
@@ -452,12 +452,12 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           sx={{
             width: 320,
             backgroundColor: 'background.paper',
-            borderLeft: '1px solid grey.200',
+            borderLeft: '1px solid var(--divider)',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          <Box sx={{ padding: 2, borderBottom: '1px solid grey.200' }}>
+          <Box sx={{ padding: 2, borderBottom: '1px solid var(--divider)' }}>
             <Typography sx={{ fontWeight: 'semibold', color: 'grey.800' }}>
               {i18n.t('components.workflow_designer.k11')}
             </Typography>
