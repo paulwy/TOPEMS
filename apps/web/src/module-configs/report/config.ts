@@ -1,3 +1,5 @@
+import { createElement } from 'react';
+import { Navigate } from 'react-router-dom';
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
@@ -151,8 +153,15 @@ const reportRoutes: RouteConfigV2[] = [
     group: 'setting',
   } as RouteConfigV2<TemplateManagementPageProps>,
   {
+    /**
+     * 2026-11-27：该路径与 BI 报表中心是同一后端、同一入口（见本文件导航段的
+     * 「报表域唯一归属 bi」说明）。旧 ReportPage 假定后端返回带 config 包装的
+     * ReportData，而 /api/bi/reports 实际是扁平行（{id,name,report_type,...}），
+     * 页面因此长期卡在加载态 / 触发错误边界。这里改为重定向到 BI 报表中心，
+     * 保留 /report/report 作为兼容入口，不再维护两套报表页。
+     */
     path: REPORT_PATHS.report,
-    element: lazyWithRetry(() => import('@/components/report/ReportPage'), 'ReportPage'),
+    element: createElement(Navigate, { to: '/bi/report', replace: true }),
     module: 'report',
     title: i18n.t('report.nav.report-report'),
     titleKey: 'report.nav.report-report',

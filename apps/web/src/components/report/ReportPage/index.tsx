@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Box, Button, useTheme } from '@mui/material';
@@ -27,6 +27,7 @@ import ReportList from './components/ReportList';
 import TemplateList from './components/TemplateList';
 import TemplateFormDialog from './components/TemplateFormDialog';
 import { getModuleFromReportType } from '@/components/report/ReportPageUtils';
+import { normalizeReportRows } from '@/components/report/reportDataNormalize';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -187,7 +188,9 @@ const ReportPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const reports = reportsQuery.data ?? [];
+  // 后端 /api/bi/reports 返回扁平行（无 config 包装），这里统一归一化，
+  // 避免 filter / 列表渲染读 r.config.title 时 TypeError（2026-11-27 /report/report 错误边界）
+  const reports = useMemo(() => normalizeReportRows(reportsQuery.data), [reportsQuery.data]);
   const templates = templatesQuery.data ?? [];
   const reportTypes = mockReportTypes;
   const loading = reportsQuery.isLoading || templatesQuery.isLoading;
@@ -402,12 +405,13 @@ const ReportPage: React.FC = () => {
   };
 
   const filteredReports = reports.filter((r) => {
+    const keyword = searchTerm.toLowerCase();
     const matchesSearch =
-      r.config.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.config.report_type.toLowerCase().includes(searchTerm.toLowerCase());
+      (r.config?.title ?? '').toLowerCase().includes(keyword) ||
+      (r.config?.report_type ?? '').toLowerCase().includes(keyword);
     const matchesModule =
       filterModule === 'all' ||
-      getModuleFromReportType(r.config.report_type, reportTypes) === filterModule;
+      getModuleFromReportType(r.config?.report_type ?? '', reportTypes) === filterModule;
     return matchesSearch && matchesModule;
   });
 
