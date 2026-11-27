@@ -2046,7 +2046,7 @@ pub struct ApprovalRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:approval:admin"])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/reports/submit-approval",
     tag = "Report",
     request_body = ApprovalRequest,

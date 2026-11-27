@@ -44,7 +44,7 @@ use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:expense:read"])),
     path = "/expenses",
     tag = "Expense",
     params(
@@ -159,6 +159,18 @@ pub async fn list_expenses(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:expense:create"])),
+    path = "/expenses",
+    tag = "Expense",
+    request_body = Value,
+    responses(
+        (status = 200, description = "创建费用报销成功", body = ApiResponse<Value>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_expense(
     State(state): State<AppState>,
@@ -275,7 +287,7 @@ pub async fn create_expense(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:expense:read"])),
     path = "/expenses/{id}",
     tag = "Expense",
     params(("id" = Uuid, Path, description = "费用ID")),
@@ -338,6 +350,19 @@ pub async fn get_expense(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["finance:expense:update"])),
+    path = "/expenses/{id}",
+    tag = "Expense",
+    params(("id" = Uuid, Path, description = "费用ID")),
+    request_body = Value,
+    responses(
+        (status = 200, description = "费用报销更新成功", body = ApiResponse<Value>),
+        (status = 409, description = "费用报销状态已变化"),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_expense(
     State(state): State<AppState>,
@@ -599,7 +624,7 @@ pub async fn pay_expense(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["finance:delete"])),
+    security(("BearerAuth" = ["finance:expense:delete"])),
     path = "/expenses/{id}",
     tag = "Expense",
     params(("id" = Uuid, Path, description = "费用ID")),

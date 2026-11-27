@@ -1200,11 +1200,8 @@ pub async fn copy_file(
 }
 
 /// 分享文件
-
 /// 获取文件的分享列表
-
 /// 删除分享
-
 /// 设置文件权限
 #[utoipa::path(
     post,
@@ -1289,7 +1286,6 @@ pub async fn get_shared_files(
 }
 
 /// 获取分享给我的文件列表
-
 /// 获取文件统计信息
 #[utoipa::path(
     get,
@@ -1315,11 +1311,8 @@ pub async fn get_file_stats(
 }
 
 /// 收藏文件
-
 /// 取消收藏
-
 /// 列出收藏的文件
-
 /// 导出文件（批量）
 // gate: admin-only
 #[utoipa::path(
