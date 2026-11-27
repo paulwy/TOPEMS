@@ -105,6 +105,19 @@ after scopes       : ("<null>", "off")
 - 局限（下一波要补的验证）：本轮 HTTP 抽样命中的读路径多为平台/未收紧表，尚未对「收紧表 + 普通租户用户」
   组合做端点级差分；第二波起按「先挑收紧表对应的真实路由 → 造普通租户 token → 对比 0 行/自有行」做验证。
 
+## 8. 第二波（crm/qms/finance/hrm）与数据侧新发现
+
+- `20261127270000`（已推送 `84f8813267`，未投 dev/prod）：克隆库收紧 **140 条**、跳过 2 条（finance 两张表 56 行 NULL）、0 失败。
+- 端点差分（8123，克隆库，超管 vs 铸造的普通租户 token）：
+  `/api/crm/customers` 超管 **275** 行、普通租户 **0** 行。
+- 根因不是策略写错，而是**数据归属**：业务行大量挂在零 UUID 租户下。全库零租户行（表有 tenant_id 列）：
+  `mes` 20128 行、`wms` 12844、`public` 9926、`scm` 4895、`crm` 3871、`ehs` 3185、`hrm` 2312、`master_data` 2311、`erp` 1630 …
+- 已收紧表里零租户行只有 7 张 / 1042 行：`mes.core_menus` 902（历史菜单副本）、`mes.core_menu_groups` 130、
+  `hrm.attendance_records` 5、`erp.materials` 2、`crm.customer_finance` 1、`hrm.initialization_logs` 1、`erp.assets` 1。
+- 含义：**fail-closed 必须配一轮 B2 数据归一化**（零 UUID 业务行 → 真实租户），否则收口后普通租户看到的业务数据会「凭空消失」。
+  平台共享主数据（master_data.*、菜单/权限目录等）仍应留零 UUID，靠 `*_platform_read` 策略或 `rls_system` 通道读。
+- 第三波（public 83 张 / 100 条）**必须排在 B2 之后**：public 是业务主战场，9926 行零租户数据如果先收口会直接清空业务视角。
+
 ## 6. 风险与回滚
 
 - 第 1 步失败面：连接池 hook 抛错会导致全站取连接失败 → 必须 `if let Err` 记日志而非中断，先灰度 dev 全端点冒烟。
