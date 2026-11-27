@@ -3345,5 +3345,6 @@
   "finance.finance_expense_page.pay_confirm": "Mark this approved expense as paid? This only changes the status and cannot be undone.",
   "finance.finance_expense_page.pay_success": "Payment recorded",
   "finance.finance_expense_page.pay_failed": "Payment failed",
-  "finance.finance_expense_page.pay_missing_id": "Missing record id, cannot pay"
+  "finance.finance_expense_page.pay_missing_id": "Missing record id, cannot pay",
+  "finance.nav.finance-account-balance-report_desc": "Query account balance by company and period"
 }

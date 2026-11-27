@@ -559,8 +559,8 @@
       "msg_load_fail": "Failed to load sales funnel data",
       "title_load_fail": "Load failed",
       "stage_closed": "Closed",
-      "view_count": "View",
-      "view_weighted": "View"
+      "view_count": "Count",
+      "view_weighted": "Weighted value"
     },
     "contact_detail_page": {
       "k0": "Contact Detail"

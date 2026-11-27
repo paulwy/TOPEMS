@@ -1183,5 +1183,7 @@
   "crm.tags.empty": "暂无客户标签",
   "crm.customer_list_page.error_load": "客户列表加载失败",
   "crm.contract_redesign.error_load": "合同列表加载失败",
-  "crm.opportunity_redesign.error_load": "商机列表加载失败"
+  "crm.opportunity_redesign.error_load": "商机列表加载失败",
+  "crm.view_count": "按数量",
+  "crm.view_weighted": "按金额"
 }

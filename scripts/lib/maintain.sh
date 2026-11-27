@@ -174,6 +174,7 @@ _runtime_busy_procs() {
 #            DISK_BLOCK_GB=5 只够防"立刻写满"，挡不住冷编跑到一半 ENOSPC（release 20G / debug 30G）。
 # 返回: 0=磁盘充足, 1=磁盘不足（阻断）
 
+# shellcheck disable=SC2120  # 预留参数：调用方可传 need_gb/label
 _check_disk_space() {
     local need_gb="${1:-}"
     local label="${2:-本次构建}"
@@ -250,6 +251,7 @@ _check_available_memory() {
 _BUILD_LOCK="/tmp/topems-build.lock"
 
 
+# shellcheck disable=SC2120  # 预留参数：调用方可传 force
 _acquire_build_lock() {
     local force=${1:-false}
     if [ -f "$_BUILD_LOCK" ]; then
