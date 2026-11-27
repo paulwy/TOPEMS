@@ -28,6 +28,14 @@ fn tenant_filter(claims: &Claims) -> Option<Uuid> {
     }
 }
 
+/// 头像二进制上限（2 MiB）。base64 解码是手写全量展开，必须先挡住超大输入。
+const MAX_AVATAR_BYTES: usize = 2 * 1024 * 1024;
+
+/// 头像大小闸门（独立函数便于单测边界，不依赖 axum 请求生命周期）。
+fn avatar_within_limit(len: usize) -> bool {
+    len > 0 && len <= MAX_AVATAR_BYTES
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserProfile {
     pub id: Uuid,
@@ -189,12 +197,22 @@ pub async fn get_profile(
 
 pub async fn update_profile(
     headers: HeaderMap,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Json(payload): Json<UpdateProfileRequest>,
 ) -> impl IntoResponse {
+    // W5-B：写路径显式带租户谓词，不依赖 RLS 单层（超管上下文时 RLS 分支全放行）。
+    let tenant_id = match tenant_filter(&claims) {
+        Some(t) if !t.is_nil() => t,
+        _ => {
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::bad_request("缺少租户上下文：拒绝更新资料"),
+            )
+        }
+    };
     // 数据库作用域（事务级 search_path）。
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -235,13 +253,14 @@ pub async fn update_profile(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6"))
+    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6 AND tenant_id = $7::uuid AND deleted_at IS NULL"))
         .bind(payload.nickname)
         .bind(payload.phone)
         .bind(payload.email)
         .bind(payload.department)
         .bind(payload.position)
         .bind(user_id)
+        .bind(tenant_id)
         .execute(&mut scope)
         .await;
 
@@ -281,12 +300,22 @@ pub struct UploadAvatarRequest {
 )]
 pub async fn upload_avatar(
     headers: HeaderMap,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Json(payload): Json<UploadAvatarRequest>,
 ) -> impl IntoResponse {
+    // W5-B：头像写路径同样显式租户谓词；缺租户直接拒绝，不落到 RLS 分支上。
+    let tenant_id = match tenant_filter(&claims) {
+        Some(t) if !t.is_nil() => t,
+        _ => {
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::bad_request("缺少租户上下文：拒绝上传头像"),
+            )
+        }
+    };
     // 数据库作用域（事务级 search_path）。
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -327,6 +356,28 @@ pub async fn upload_avatar(
         }
     };
 
+    // 先确认用户行存在（同租户、未软删），把 404 分支前移到任何写入之前：
+    // 请求事务内写后再返回非 2xx 会被 tenant_middleware 回滚，且会留下孤儿头像文件。
+    let target_exists = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT 1 FROM mobile.mobile_users WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
+    ))
+    .bind(user_id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    match target_exists {
+        Ok(Some(_)) => {}
+        Ok(None) => return (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
+        Err(e) => {
+            tracing::error!("校验用户存在性失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("内部服务器错误"),
+            );
+        }
+    }
+
     let raw_bytes = match base64_decode(&payload.avatar_base64) {
         Ok(b) if !b.is_empty() => b,
         _ => {
@@ -336,6 +387,13 @@ pub async fn upload_avatar(
             )
         }
     };
+    // 头像上限 2 MiB：手写 base64 解码没有流式限制，不设闸等于允许任意内存放大。
+    if !avatar_within_limit(raw_bytes.len()) {
+        return (
+            StatusCode::PAYLOAD_TOO_LARGE,
+            ApiResponse::error(413, "头像超过 2 MiB 上限"),
+        );
+    }
 
     let file_name = format!("{}_{}", Uuid::new_v4(), "avatar.jpg");
     // 上传目录解析为绝对路径（默认锚定可执行文件目录，可用 UPLOAD_DIR 覆盖），不依赖 CWD
@@ -362,19 +420,25 @@ pub async fn upload_avatar(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2"
+        "UPDATE mobile.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3::uuid AND deleted_at IS NULL"
     ))
     .bind(&avatar_url)
     .bind(user_id)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
     let __mobile_response = {
         match result {
-            Ok(_) => (
+            Ok(r) if r.rows_affected() > 0 => (
                 StatusCode::OK,
                 ApiResponse::success(avatar_url, "上传头像成功"),
             ),
+            Ok(_) => {
+                // 竞态：预检后行被删。DB 未写入，清掉刚落盘的文件再返回 404。
+                let _ = fs::remove_file(&path);
+                (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在"))
+            }
             Err(e) => {
                 tracing::error!("更新头像URL失败: {}", e);
                 (
@@ -408,27 +472,25 @@ fn base64_decode(s: &str) -> Result<Vec<u8>, ()> {
     let mut out = Vec::new();
     let bytes: Vec<char> = cleaned.chars().collect();
     for i in (0..bytes.len()).step_by(4) {
-        let n1 = bytes.get(i).and_then(|c| map.get(c)).copied().unwrap_or(0);
-        let n2 = bytes
-            .get(i + 1)
-            .and_then(|c| map.get(c))
-            .copied()
-            .unwrap_or(0);
-        let n3 = bytes
-            .get(i + 2)
-            .and_then(|c| map.get(c))
-            .copied()
-            .unwrap_or(0);
-        let n4 = bytes
-            .get(i + 3)
-            .and_then(|c| map.get(c))
-            .copied()
-            .unwrap_or(0);
+        // B360：非法字符不再静默按 0 解码（旧实现会把 "!!!!" 解成合法字节），直接拒绝。
+        let Some(n1) = bytes.get(i).and_then(|c| map.get(c)).copied() else {
+            return Err(());
+        };
+        let n2 = bytes.get(i + 1).and_then(|c| map.get(c)).copied();
+        let n3 = bytes.get(i + 2).and_then(|c| map.get(c)).copied();
+        let n4 = bytes.get(i + 3).and_then(|c| map.get(c)).copied();
+        let n2 = match n2 {
+            Some(v) => v,
+            None => return Err(()),
+        };
         out.push((n1 << 2) | (n2 >> 4));
         if i + 2 < bytes.len() {
+            let Some(n3) = n3 else { return Err(()) };
             out.push(((n2 & 0x0F) << 4) | (n3 >> 2));
         }
         if i + 3 < bytes.len() {
+            let Some(n4) = n4 else { return Err(()) };
+            let Some(n3) = n3 else { return Err(()) };
             out.push(((n3 & 0x03) << 6) | n4);
         }
     }
@@ -909,5 +971,21 @@ mod tests {
         roundtrip(&UploadAvatarRequest {
             avatar_base64: "aGVsbG8=".into(),
         });
+    }
+
+    #[test]
+    fn avatar_size_gate_rejects_empty_and_oversize() {
+        assert!(!avatar_within_limit(0));
+        assert!(avatar_within_limit(1));
+        assert!(avatar_within_limit(MAX_AVATAR_BYTES));
+        assert!(!avatar_within_limit(MAX_AVATAR_BYTES + 1));
+    }
+
+    #[test]
+    fn base64_decode_roundtrip_hello() {
+        assert_eq!(base64_decode("aGVsbG8="), Ok(b"hello".to_vec()));
+        // 空串解码为空字节，由 handler 的 avatar_within_limit 拒绝（0 长度不放行）。
+        assert_eq!(base64_decode(""), Ok(Vec::new()));
+        assert!(base64_decode("!!!!").is_err());
     }
 }
