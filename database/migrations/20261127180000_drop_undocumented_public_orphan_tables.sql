@@ -72,17 +72,46 @@ END
 $mig$;
 
 -- 2) 物理删除（结构与数据均由 rollback 脚本原样重建）
+-- 说明：检查器要求每条 DROP 前紧邻自己的豁免标记块（12 行内），故四张表各带一块；
+--       票据同为 PUB-LEGACY-20261127，复核依据同为「0 行 + 零引用 + 零来源」。
 -- destructive-gate: allow
 -- destructive-kind: DROP TABLE
--- destructive-reason: 无来源、无引用、0 行的历史试验残骸（四个表名均已确认在 init/migrations/代码中零出现）
+-- destructive-reason: public.core_feedbacks 无来源、无引用、0 行（init/migrations/代码零出现）
 -- destructive-owner: platform
 -- destructive-ticket: PUB-LEGACY-20261127
 -- destructive-expires: 2027-05-26
 -- destructive-rows-at-review: 0
--- destructive-backup: 0 行；结构已归档于 rollback 脚本（pg_dump 原样导出）
+-- destructive-backup: 0 行；结构归档于本迁移 rollback
 DROP TABLE IF EXISTS public.core_feedbacks;
+
+-- destructive-gate: allow
+-- destructive-kind: DROP TABLE
+-- destructive-reason: public.hrm_master_data_refs 无来源、无引用、0 行（HRM 模块未落地）
+-- destructive-owner: platform
+-- destructive-ticket: PUB-LEGACY-20261127
+-- destructive-expires: 2027-05-26
+-- destructive-rows-at-review: 0
+-- destructive-backup: 0 行；结构归档于本迁移 rollback
 DROP TABLE IF EXISTS public.hrm_master_data_refs;
+
+-- destructive-gate: allow
+-- destructive-kind: DROP TABLE
+-- destructive-reason: public.wms_master_data_refs 无来源、无引用、0 行（镜像 hrm 的同一份残骸）
+-- destructive-owner: platform
+-- destructive-ticket: PUB-LEGACY-20261127
+-- destructive-expires: 2027-05-26
+-- destructive-rows-at-review: 0
+-- destructive-backup: 0 行；结构归档于本迁移 rollback
 DROP TABLE IF EXISTS public.wms_master_data_refs;
+
+-- destructive-gate: allow
+-- destructive-kind: DROP TABLE
+-- destructive-reason: public.qa_lab_samples_merge_backup_20260919 为 2026-09-19 一次性合并备份快照，早已清空
+-- destructive-owner: platform
+-- destructive-ticket: PUB-LEGACY-20261127
+-- destructive-expires: 2027-05-26
+-- destructive-rows-at-review: 0
+-- destructive-backup: 0 行；结构归档于本迁移 rollback
 DROP TABLE IF EXISTS public.qa_lab_samples_merge_backup_20260919;
 
 -- 3) 收尾断言
