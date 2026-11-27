@@ -1,1 +1,12 @@
-{}
+{
+  "system_settings.company_address": "Company Address",
+  "system_settings.company_name": "Company Name",
+  "system_settings.contact_email": "Contact Email",
+  "system_settings.contact_phone": "Contact Phone",
+  "system_settings.enable_email_service": "Enable Email Service",
+  "system_settings.enable_sms_service": "Enable SMS Service",
+  "system_settings.log_level": "Log Level",
+  "system_settings.log_retention_days": "Log Retention (Days)",
+  "system_settings.password": "Password",
+  "system_settings.reset": "Reset"
+}
