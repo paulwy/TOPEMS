@@ -149,6 +149,12 @@ mod tests {
     }
 
     #[test]
+    fn test_rls_system_value_superuser_on() {
+        assert_eq!(rls_system_value(true), "on");
+        assert_eq!(rls_system_value(false), "off");
+    }
+
+    #[test]
     fn test_rls_tenant_value_empty_for_reset_semantics() {
         // 归还连接前传 "" 清空：与 superuser/无租户分支一致，保证归还连接 app.tenant_id 为空
         assert_eq!(rls_tenant_value("anything", true), "");
@@ -201,6 +207,14 @@ fn rls_tenant_value(tenant_id: &str, is_superuser: bool) -> String {
     }
 }
 
+/// 系统特权会话标记：超管/后台系统路径显式置 `app.rls_system='on'`。
+///
+/// 旧实现靠「`app.tenant_id` 为空 ⇒ 策略空分支放行」拿全量可见性，属 fail-open；
+/// 策略收口（fail-closed）后该分支被移除，超管可见性只能经由显式 `app.rls_system`。
+fn rls_system_value(is_superuser: bool) -> &'static str {
+    if is_superuser { "on" } else { "off" }
+}
+
 /// 在【指定的、本请求独占的连接】上设置租户上下文。
 ///
 /// CORE-06 根因：旧实现 `set_config(..., false)` 直接作用于 `&PgPool`，sqlx 会随机借取
@@ -212,6 +226,7 @@ fn rls_tenant_value(tenant_id: &str, is_superuser: bool) -> String {
 async fn set_rls_policy_conn(
     conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
     tenant_id: &str,
+    is_superuser: bool,
 ) -> Result<(), sqlx::Error> {
     // is_local=false：会话级。仅作用于本请求独占连接，且请求结束后显式清空，不污染池。
     if tenant_id.is_empty() {
@@ -224,12 +239,25 @@ async fn set_rls_policy_conn(
         sqlx::query("RESET app.tenant_id")
             .execute(&mut **conn)
             .await?;
+        // fail-closed 改造配套：超管全量访问改走显式系统开关，不再依赖「GUC 为空即全开」
+        sqlx::query("SELECT set_config('app.rls_system', 'on', false)")
+            .execute(&mut **conn)
+            .await?;
     } else {
         sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
             .bind(tenant_id)
             .execute(&mut **conn)
             .await?;
+        sqlx::query("SELECT set_config('app.rls_system', 'off', false)")
+            .execute(&mut **conn)
+            .await?;
     }
+
+    // 系统特权标记：超管置 on，普通用户显式置 off，避免继承上一条连接的残留值。
+    sqlx::query("SELECT set_config('app.rls_system', $1, false)")
+        .bind(rls_system_value(is_superuser))
+        .execute(&mut **conn)
+        .await?;
 
     Ok(())
 }
@@ -293,7 +321,7 @@ pub async fn tenant_rls_middleware(
                 }
             };
 
-            if let Err(e) = set_rls_policy_conn(&mut conn, &rls_tenant).await {
+            if let Err(e) = set_rls_policy_conn(&mut conn, &rls_tenant, is_superuser).await {
                 tracing::error!("Failed to set RLS policy: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -318,6 +346,15 @@ pub async fn tenant_rls_middleware(
             // 池化下后续请求借到该连接时绑租户 INSERT 会被 RLS 拒绝）
             if let Err(e) = sqlx::query("RESET app.tenant_id").execute(&mut *conn).await {
                 tracing::error!("Failed to reset RLS policy on connection return: {}", e);
+            }
+            if let Err(e) = sqlx::query("RESET app.rls_system").execute(&mut *conn).await {
+                tracing::error!("Failed to reset RLS system flag on connection return: {}", e);
+            }
+            if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'off', false)")
+                .execute(&mut *conn)
+                .await
+            {
+                tracing::error!("Failed to reset app.rls_system on connection return: {}", e);
             }
             drop(conn); // 归还连接池（此时已清空会话租户状态）
 
