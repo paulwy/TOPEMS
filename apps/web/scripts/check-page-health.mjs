@@ -34,6 +34,12 @@ const USERNAME = process.env.USERNAME || 'admin';
 const PASSWORD = process.env.PASSWORD || 'Topems@2026';
 const TENANT_ID = process.env.TENANT_ID || '00000000-0000-0000-0000-000000000001';
 const PAGE_TIMEOUT = Number(argOf(argv, 'timeout', '18')) * 1000;
+// 移动端页面走 390×844 视口，且给更长的等待：这些页依赖大 chunk + 若干聚合接口，
+// 在 Cloudflare 隧道链路上冷启动常超过桌面页的 18s 预算（2026-11-27 实测两页曾被误判白屏）。
+const MOBILE_VIEWPORT = { width: 390, height: 844 };
+const DESKTOP_VIEWPORT = { width: 1440, height: 900 };
+const MOBILE_TIMEOUT_MS = 35 * 1000;
+const isMobileRoute = (route) => route.startsWith('/mobile');
 const MAX_ROUTES = Number(argOf(argv, 'max', '12'));
 const RETRIES = Number(argOf(argv, 'retries', '1'));
 const CONCURRENCY = Number(argOf(argv, 'concurrency', '3'));
@@ -111,11 +117,13 @@ async function visit(page, route) {
   page.on('response', onResponse);
 
   const t0 = Date.now();
+  const timeoutMs = isMobileRoute(route) ? MOBILE_TIMEOUT_MS : PAGE_TIMEOUT;
+  await page.setViewportSize(isMobileRoute(route) ? MOBILE_VIEWPORT : DESKTOP_VIEWPORT);
   await page.goto(`${WEB_BASE}${route}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
   let text = '';
   let stalled = true;
-  while (Date.now() - t0 < PAGE_TIMEOUT) {
+  while (Date.now() - t0 < timeoutMs) {
     await page.waitForTimeout(1000);
     text = await page.evaluate(() => document.body.innerText || '').catch(() => '');
     if (text && !/加载中/.test(text.slice(-40))) {
@@ -138,7 +146,9 @@ async function visit(page, route) {
     http4xx,
     softHttp,
     softConsole,
-    blank: text.trim().length < 40,
+    // 白屏判定：剔除纯「加载中」占位后仍无实质正文才算。移动端页正文很短
+    // （如 /mobile/quality 只有标题 + 空态 ≈ 60 字），阈值放到 20 字避免误杀。
+    blank: text.replace(/加载中[.…]*/g, '').trim().length < 20,
   };
 }
 
