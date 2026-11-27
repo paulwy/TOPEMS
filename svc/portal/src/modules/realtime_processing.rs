@@ -745,10 +745,15 @@ impl RealtimeAggregator {
             },
         );
 
-        let mut configs = store.aggregation_configs.lock().await;
-        if let Some(cfg) = configs.get_mut(config_id) {
-            let _ = cfg;
+        // 这里原本是一段 `if let Some(cfg) = configs.get_mut(..) { let _ = cfg; }` 的空转加锁：
+        // 既不校验配置是否存在、也不回写状态，等于拿到配置后什么也没做。改为校验配置存在。
+        let configs = store.aggregation_configs.lock().await;
+        if !configs.contains_key(config_id) {
+            return Err(TopemsError::ResourceNotFound(format!(
+                "聚合配置不存在: {config_id}"
+            )));
         }
+        drop(configs);
 
         Ok(true)
     }

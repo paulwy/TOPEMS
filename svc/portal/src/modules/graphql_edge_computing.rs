@@ -1222,7 +1222,6 @@ impl StreamingResponseManager {
     pub fn chunk_response(query_hash: &str, data: &serde_json::Value) -> Vec<StreamChunkGql> {
         let mut state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         let session_id = format!("stream-{}-{}", query_hash, state.total_streams);
-        let _ = session_id;
 
         let chunk_size = state.config.chunk_size as usize;
         let data_str = serde_json::to_string(data).unwrap_or_default();
@@ -1260,6 +1259,8 @@ impl StreamingResponseManager {
                 data: chunk_data,
                 is_final: i == num_chunks - 1,
                 metadata: serde_json::json!({
+                    // 会话标识必须随分片下发，否则客户端无法把分片归并到同一次流
+                    "session_id": session_id,
                     "query_hash": query_hash,
                     "chunk_index": i,
                     "total_chunks": num_chunks,

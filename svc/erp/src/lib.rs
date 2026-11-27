@@ -7,3 +7,6 @@ pub mod shared;
 pub mod utils;
 
 pub use modules::ApiState;
+
+#[cfg(test)]
+pub mod retirement_audit_ratchet;

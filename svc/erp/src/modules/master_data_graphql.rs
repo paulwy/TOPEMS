@@ -614,8 +614,8 @@ async fn handle_completion_suggestions(req: &GraphqlRequest) -> Json<GraphqlResp
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-async fn handle_mdm_stats(req: &GraphqlRequest) -> Json<GraphqlResponse> {
-    let _ = req;
+async fn handle_mdm_stats(_req: &GraphqlRequest) -> Json<GraphqlResponse> {
+    // 该查询不接收参数：显式命名为 _req，不再用 `let _ = req;` 吞掉入参
     let store = MDM_GRAPHQL_STORE.lock().await;
 
     let mut by_domain = HashMap::new();

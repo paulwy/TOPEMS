@@ -1218,7 +1218,11 @@ impl RollbackManager {
         Ok(policy.clone())
     }
 
-    pub async fn get_rollback_status(policy_id: Option<&str>) -> Vec<RollbackStatus> {
+    pub async fn get_rollback_status(
+        policy_id: Option<&str>,
+        trigger: Option<&str>,
+        enabled_only: bool,
+    ) -> Vec<RollbackStatus> {
         let store = get_deployment_store();
         let policies = store.rollback_policies.lock().await;
         let counters = store.rollback_counters.lock().await;
@@ -1226,6 +1230,8 @@ impl RollbackManager {
         policies
             .iter()
             .filter(|p| policy_id.is_none_or(|id| p.id == id))
+            .filter(|p| trigger.is_none_or(|t| p.trigger.as_str() == t))
+            .filter(|p| !enabled_only || p.enabled)
             .map(|p| {
                 let counter = counters.get(&p.id).cloned().unwrap_or((0, None, 0));
                 let last_result = if counter.2 > 0 {
@@ -1985,8 +1991,19 @@ pub async fn get_rollback_status_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListRollbackPoliciesQuery>,
 ) -> ApiResponse<Vec<RollbackStatus>> {
-    let status = RollbackManager::get_rollback_status(None).await;
-    let _ = params;
+    if let Some(trigger) = params.trigger.as_deref() {
+        if RollbackTrigger::from_str(trigger).is_none() {
+            return ApiResponse::bad_request("无效的 trigger，仅支持 automatic / manual");
+        }
+    }
+
+    // 查询条件此前被整体丢弃（永远按 None 取全量）：trigger / enabled_only 现在真正生效
+    let status = RollbackManager::get_rollback_status(
+        None,
+        params.trigger.as_deref(),
+        params.enabled_only.unwrap_or(false),
+    )
+    .await;
     ApiResponse::success(status, "回滚状态")
 }
 
@@ -2003,6 +2020,35 @@ mod tests {
         let json2 = serde_json::to_string(&back).unwrap();
         let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
         assert_eq!(v1, v2);
+    }
+
+    #[tokio::test]
+    async fn rollback_status_honors_trigger_and_enabled_filters() {
+        // 回归：get_rollback_status 此前忽略 query，恒返回全量
+        let all = RollbackManager::get_rollback_status(None, None, false).await;
+        let policies = RollbackManager::get_rollback_policies(None, None).await;
+        assert_eq!(all.len(), policies.len());
+
+        let mut expected: Vec<String> = policies
+            .iter()
+            .filter(|p| p.trigger == RollbackTrigger::Manual && p.enabled)
+            .map(|p| p.id.clone())
+            .collect();
+        expected.sort();
+
+        let mut actual: Vec<String> =
+            RollbackManager::get_rollback_status(None, Some("manual"), true)
+                .await
+                .into_iter()
+                .map(|s| s.policy_id)
+                .collect();
+        actual.sort();
+
+        assert_eq!(actual, expected);
+
+        // 不存在的 trigger 不得退化成「返回全量」
+        let none = RollbackManager::get_rollback_status(None, Some("no-such-trigger"), false).await;
+        assert!(none.is_empty());
     }
 
     // ==================== Enum roundtrip ====================

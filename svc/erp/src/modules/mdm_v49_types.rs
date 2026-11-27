@@ -158,6 +158,13 @@ pub struct RetirementPlan {
     pub confirmed_by: Option<String>,
     pub confirmed_at: Option<chrono::DateTime<chrono::Utc>>,
     pub executed_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// 实际执行退役的操作人（来自 RetirementExecuteRequest.executed_by）
+    pub executed_by: Option<String>,
+    /// 实际执行回滚的操作人（来自 RetirementRollbackRequest.rollback_by）
+    pub rolled_back_by: Option<String>,
+    /// 回滚原因（来自 RetirementRollbackRequest.reason）
+    pub rollback_reason: Option<String>,
+    pub rolled_back_at: Option<chrono::DateTime<chrono::Utc>>,
     pub rollback_window_days: i32,
     pub post_retirement_review_at: Option<chrono::DateTime<chrono::Utc>>,
 }
@@ -476,6 +483,10 @@ pub async fn ensure_initialized() {
         confirmed_by: Some("manager".to_string()),
         confirmed_at: Some(now),
         executed_at: None,
+        executed_by: None,
+        rolled_back_by: None,
+        rollback_reason: None,
+        rolled_back_at: None,
         rollback_window_days: 14,
         post_retirement_review_at: None,
     }];

@@ -108,7 +108,8 @@ pub struct SearchSuggestionsResponse {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn global_search(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    // claims 在这里不参与过滤：结果由下游服务按透传 token 做租户鉴权（见 docs/quality 说明）
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<SearchResponse> {
@@ -139,10 +140,11 @@ pub async fn global_search(
     let mut all_results = Vec::new();
     let mut by_service = std::collections::HashMap::new();
 
-    let mut add_results = |svc: &str, svc_name: &str, results: Vec<SearchResult>| {
+    // 说明：svc_name（人类可读名）当前只用于调用点可读性，聚合结果 by_service 仍按 code 计数；
+    // 显式命名为 _svc_name，不再用 `let _ = svc_name;` 假消费。
+    let mut add_results = |svc: &str, _svc_name: &str, results: Vec<SearchResult>| {
         by_service.insert(svc.to_string(), results.len());
         all_results.extend(results);
-        let _ = svc_name;
     };
 
     add_results("notification", "通知中心", notif_results);
@@ -153,7 +155,6 @@ pub async fn global_search(
     let total = all_results.len();
     let duration_ms = start.elapsed().as_millis() as u64;
 
-    let _ = claims;
     ApiResponse::success(
         SearchResponse {
             total,
@@ -177,7 +178,8 @@ pub async fn global_search(
 )]
 pub async fn search_suggestions(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    // claims 在这里不参与过滤：结果由下游服务按透传 token 做租户鉴权（见 docs/quality 说明）
+    Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<SearchSuggestionsResponse> {
@@ -209,7 +211,6 @@ pub async fn search_suggestions(
 
     all_titles.truncate(10);
 
-    let _ = claims;
     ApiResponse::success(
         SearchSuggestionsResponse {
             suggestions: all_titles,
