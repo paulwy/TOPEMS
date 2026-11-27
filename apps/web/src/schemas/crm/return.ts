@@ -1,9 +1,6 @@
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
-import {
-  loadCrmCustomerOptions,
-  loadWmsWarehouseOptions,
-} from '@/schemas/dynamicLoaders';
+import { loadCrmCustomerOptions, loadWmsWarehouseOptions } from '@/schemas/dynamicLoaders';
 
 export const returnSchema: EntitySchema = {
   entity: 'return',
@@ -19,8 +16,16 @@ export const returnSchema: EntitySchema = {
 
   // 客户/仓库都是 uuid 外键：裸文本框填任何非 UUID 必 422 UUID parsing failed
   dynamicOptions: [
-    { field: 'customer_id', queryKey: ['crm', 'customers', 'forReturn'], loader: loadCrmCustomerOptions },
-    { field: 'warehouse_id', queryKey: ['wms', 'warehouses', 'forReturn'], loader: loadWmsWarehouseOptions },
+    {
+      field: 'customer_id',
+      queryKey: ['crm', 'customers', 'forReturn'],
+      loader: loadCrmCustomerOptions,
+    },
+    {
+      field: 'warehouse_id',
+      queryKey: ['wms', 'warehouses', 'forReturn'],
+      loader: loadWmsWarehouseOptions,
+    },
   ],
 
   fields: [

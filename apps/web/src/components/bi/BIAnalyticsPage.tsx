@@ -145,7 +145,10 @@ const ModuleCard = ({
           }}
         >
           {Object.keys(stats).length === 0 && (
-            <Typography variant='caption' sx={{ color: 'text.secondary', gridColumn: '1 / -1', textAlign: 'center' }}>
+            <Typography
+              variant='caption'
+              sx={{ color: 'text.secondary', gridColumn: '1 / -1', textAlign: 'center' }}
+            >
               暂无数据
             </Typography>
           )}

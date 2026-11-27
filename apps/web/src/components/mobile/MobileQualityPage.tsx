@@ -282,7 +282,7 @@ const MobileQualityPage: React.FC = () => {
       id: 'approval',
       label: i18n.t('mobile.mobile_quality_page.k39'),
       icon: <CheckSquare className={styles.il4} />,
-      },
+    },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_quality_page.k40'),

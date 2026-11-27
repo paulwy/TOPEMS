@@ -10,9 +10,24 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { FolderKanban, Activity, Bug, Hammer, Rocket, GitBranch, ShieldCheck, Plus } from 'lucide-react';
+import {
+  FolderKanban,
+  Activity,
+  Bug,
+  Hammer,
+  Rocket,
+  GitBranch,
+  ShieldCheck,
+  Plus,
+} from 'lucide-react';
 import i18n from '@/i18n';
-import { DashboardTemplate, type StatCard, type ChartCard, type QuickAction, type RecentItem } from '@/components/templates';
+import {
+  DashboardTemplate,
+  type StatCard,
+  type ChartCard,
+  type QuickAction,
+  type RecentItem,
+} from '@/components/templates';
 import { RD_PATHS } from '@/module-configs/rd/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTheme } from '@mui/material';
@@ -64,9 +79,9 @@ const RsOverviewPage: React.FC = () => {
 
   const loading = projectsQuery.isLoading || bugsQuery.isLoading || buildsQuery.isLoading;
 
-  const projects = ((projectsQuery.data as { projects?: ProjectRow[] })?.projects ?? []);
-  const bugs: BugRow[] = ((bugsQuery.data as { bugs?: BugRow[] })?.bugs ?? []);
-  const builds: Build[] = ((buildsQuery.data as { builds?: Build[] })?.builds ?? []);
+  const projects = (projectsQuery.data as { projects?: ProjectRow[] })?.projects ?? [];
+  const bugs: BugRow[] = (bugsQuery.data as { bugs?: BugRow[] })?.bugs ?? [];
+  const builds: Build[] = (buildsQuery.data as { builds?: Build[] })?.builds ?? [];
 
   const projectsTotal = Number((projectsQuery.data as { total?: number })?.total ?? 0);
   const bugsTotal = Number((bugsQuery.data as { total?: number })?.total ?? 0);
@@ -78,7 +93,9 @@ const RsOverviewPage: React.FC = () => {
 
   const successRate = useMemo(() => {
     if (!builds.length) return 0;
-    const ok = builds.filter((b) => ['success', 'succeeded', 'passed'].includes(String(b.status))).length;
+    const ok = builds.filter((b) =>
+      ['success', 'succeeded', 'passed'].includes(String(b.status))
+    ).length;
     return (ok / builds.length) * 100;
   }, [builds]);
 
@@ -129,13 +146,17 @@ const RsOverviewPage: React.FC = () => {
         id: 'project-status',
         title: i18n.t('rd.rs_overview_page.k21'),
         type: 'pie',
-        data: groupBy(projects, (p) => String(p.status || i18n.t('rd.rs_overview_page.status_unknown'))),
+        data: groupBy(projects, (p) =>
+          String(p.status || i18n.t('rd.rs_overview_page.status_unknown'))
+        ),
       },
       {
         id: 'bug-severity',
         title: i18n.t('rd.rs_overview_page.bug_severity'),
         type: 'bar',
-        data: groupBy(bugs, (b) => String(b.severity || i18n.t('rd.rs_overview_page.status_unknown'))),
+        data: groupBy(bugs, (b) =>
+          String(b.severity || i18n.t('rd.rs_overview_page.status_unknown'))
+        ),
       },
     ],
     [projects, bugs]
@@ -143,12 +164,48 @@ const RsOverviewPage: React.FC = () => {
 
   const quickActions: QuickAction[] = useMemo(
     () => [
-      { id: 'new-project', label: i18n.t('rd.rs_overview_page.k24'), icon: <Plus size={20} />, onClick: () => navigate(RD_PATHS.projectCreate), color: theme.palette.primary.dark },
-      { id: 'bug-manage', label: i18n.t('rd.rs_overview_page.k25'), icon: <Bug size={20} />, onClick: () => navigate(RD_PATHS.bug), color: theme.palette.error.dark },
-      { id: 'code-manage', label: i18n.t('rd.rs_overview_page.k26'), icon: <GitBranch size={20} />, onClick: () => navigate(RD_PATHS.code), color: theme.palette.secondary.dark },
-      { id: 'build-manage', label: i18n.t('rd.rs_overview_page.k27'), icon: <Hammer size={20} />, onClick: () => navigate(RD_PATHS.build), color: theme.palette.warning.dark },
-      { id: 'release', label: i18n.t('rd.rs_overview_page.k28'), icon: <Rocket size={20} />, onClick: () => navigate(RD_PATHS.release), color: theme.palette.teal[700] },
-      { id: 'review', label: i18n.t('rd.rs_overview_page.k29'), icon: <ShieldCheck size={20} />, onClick: () => navigate(RD_PATHS.review), color: theme.palette.success.dark },
+      {
+        id: 'new-project',
+        label: i18n.t('rd.rs_overview_page.k24'),
+        icon: <Plus size={20} />,
+        onClick: () => navigate(RD_PATHS.projectCreate),
+        color: theme.palette.primary.dark,
+      },
+      {
+        id: 'bug-manage',
+        label: i18n.t('rd.rs_overview_page.k25'),
+        icon: <Bug size={20} />,
+        onClick: () => navigate(RD_PATHS.bug),
+        color: theme.palette.error.dark,
+      },
+      {
+        id: 'code-manage',
+        label: i18n.t('rd.rs_overview_page.k26'),
+        icon: <GitBranch size={20} />,
+        onClick: () => navigate(RD_PATHS.code),
+        color: theme.palette.secondary.dark,
+      },
+      {
+        id: 'build-manage',
+        label: i18n.t('rd.rs_overview_page.k27'),
+        icon: <Hammer size={20} />,
+        onClick: () => navigate(RD_PATHS.build),
+        color: theme.palette.warning.dark,
+      },
+      {
+        id: 'release',
+        label: i18n.t('rd.rs_overview_page.k28'),
+        icon: <Rocket size={20} />,
+        onClick: () => navigate(RD_PATHS.release),
+        color: theme.palette.teal[700],
+      },
+      {
+        id: 'review',
+        label: i18n.t('rd.rs_overview_page.k29'),
+        icon: <ShieldCheck size={20} />,
+        onClick: () => navigate(RD_PATHS.review),
+        color: theme.palette.success.dark,
+      },
     ],
     [navigate, theme]
   );
@@ -157,18 +214,23 @@ const RsOverviewPage: React.FC = () => {
     () =>
       builds.slice(0, 5).map((b) => ({
         id: b.id,
-        title: String((b as { build_number?: string; name?: string }).build_number || (b as { name?: string }).name || b.id),
+        title: String(
+          (b as { build_number?: string; name?: string }).build_number ||
+            (b as { name?: string }).name ||
+            b.id
+        ),
         description: String(b.status || ''),
         time: (b as { created_at?: string }).created_at
-          ? new Date((b as { created_at: string }).created_at).toLocaleString('zh-CN', { hour12: false })
+          ? new Date((b as { created_at: string }).created_at).toLocaleString('zh-CN', {
+              hour12: false,
+            })
           : '',
         icon: <Hammer size={18} />,
-        status:
-          ['success', 'succeeded', 'passed'].includes(String(b.status))
-            ? ('success' as const)
-            : String(b.status).includes('fail')
-              ? ('error' as const)
-              : ('info' as const),
+        status: ['success', 'succeeded', 'passed'].includes(String(b.status))
+          ? ('success' as const)
+          : String(b.status).includes('fail')
+            ? ('error' as const)
+            : ('info' as const),
         onClick: () => navigate(RD_PATHS.build),
       })),
     [builds, navigate]

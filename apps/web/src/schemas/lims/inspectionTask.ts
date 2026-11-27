@@ -146,14 +146,7 @@ export const inspectionTaskSchema: EntitySchema = {
   ],
 
   list: {
-    columns: [
-      'task_no',
-      'sample_no',
-      'test_items',
-      'status',
-      'assigned_to',
-      'actual_start_date',
-    ],
+    columns: ['task_no', 'sample_no', 'test_items', 'status', 'assigned_to', 'actual_start_date'],
     searchFields: ['task_no', 'sample_no'],
     pageSize: 10,
     statusBadge: {

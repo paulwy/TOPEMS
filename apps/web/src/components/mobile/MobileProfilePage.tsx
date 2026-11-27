@@ -207,7 +207,7 @@ const MobileSettingsPage: React.FC = () => {
       id: 'approval',
       label: i18n.t('mobile.mobile_profile_page.k25'),
       icon: <CheckSquare className={styles.il15} />,
-      },
+    },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_profile_page.k26'),

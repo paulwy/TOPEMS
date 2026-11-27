@@ -235,7 +235,7 @@ const MobileInventoryPage: React.FC = () => {
       id: 'approval',
       label: i18n.t('mobile.mobile_inventory_page.k43'),
       icon: <CheckSquare className={styles.il4} />,
-      },
+    },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_inventory_page.k44'),

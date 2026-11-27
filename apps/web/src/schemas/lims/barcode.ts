@@ -46,7 +46,11 @@ export const barcodeSchema: EntitySchema = {
 
   // 样品下拉：sample_id 是 uuid，裸文本填任何非 UUID 都无法关联
   dynamicOptions: [
-    { field: 'sample_id', queryKey: ['lims', 'samples', 'forBarcode'], loader: loadLimsSampleOptions },
+    {
+      field: 'sample_id',
+      queryKey: ['lims', 'samples', 'forBarcode'],
+      loader: loadLimsSampleOptions,
+    },
   ],
 
   fields: [

@@ -277,7 +277,7 @@ const MobileTaskListPage: React.FC = () => {
       id: 'approval',
       label: i18n.t('mobile.mobile_task_list_page.k18'),
       icon: <CheckSquare className={styles.il10} />,
-      },
+    },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_task_list_page.k19'),

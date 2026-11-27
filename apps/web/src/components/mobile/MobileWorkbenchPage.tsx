@@ -190,7 +190,7 @@ const MobileWorkbenchPage: React.FC = () => {
       icon: <CheckSquare className={styles.il12} />,
       path: MOBILE_PATHS.approvals,
       color: 'warning',
-      },
+    },
     {
       id: 'inventory',
       label: i18n.t('mobile.mobile_workbench_page.k16'),
@@ -323,7 +323,7 @@ const MobileWorkbenchPage: React.FC = () => {
       id: 'approval',
       label: i18n.t('mobile.mobile_workbench_page.k29'),
       icon: <CheckSquare className={styles.il21} />,
-      },
+    },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_workbench_page.k30'),
