@@ -221,6 +221,17 @@
       ],
       "evidence": "本机 topems 事务内 BEGIN→\\i→校验→ROLLBACK dry-run EXIT=0：三列/FK users_role_id_fkey/索引 idx_users_role_id 残留均=0；ROLLBACK 后本机对象恢复未落地；validate.sh Errors=0、Checksum errors=0；新 checksum 293c44e4…5ecb0f8d 已同步 checksums.txt/manifest；两账本无 20261126170000 记录。",
       "approved": true
+    },
+    {
+      "id": "B20261127-drop-dead-storage-empty-db-guard",
+      "date": "2026-11-27",
+      "committer": "paulwy",
+      "reason": "20261127200000 为当日新增、尚未在任何环境应用的前向迁移。其摘除外键的 DO 块把 _doomed33 名单直接 format(...)::regclass 转型，在空库/生产缺席场景（本批 33 张表均不存在）会因 relation 不存在中止，破坏性预演因此被拒。修正为 to_regclass(...) 判空后再参与 IN 子查询；仅改未应用迁移的输入，不改版本号与已执行历史。",
+      "files": [
+        "20261127200000_drop_dead_public_storage_cluster.sql"
+      ],
+      "evidence": "CI run 45932445455 Migration job 在 20261127200000 行数预演处报 relation \"public.configurations\" does not exist（FOR over SELECT rows, line 5），该版本未应用；空库复现 33 张均 skip。修正仅加 to_regclass 守卫，DROP 目标/顺序/断言不变；validate.sh 同步 checksum 后复跑静态与预演。",
+      "approved": true
     }
   ]
 }
