@@ -37,6 +37,9 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("🚀 TOPEMS Monitor Service (拆分自 unified-core / V68.1 A2.1) starting...");
 
+    // 系统指标真实采集（sysinfo）：每 5s 采样，供 /metrics/system 与 /metrics/history 使用
+    modules::monitor::sys_sampler::spawn_sampler();
+
     let start_time = Instant::now();
     let app_state = AppState {
         // 沿用模块原有 SEARCH_PATH：public。

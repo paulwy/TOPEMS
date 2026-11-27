@@ -172,7 +172,28 @@ const withRetry = async <T>(
   throw lastError instanceof Error ? lastError : new Error(String(lastError ?? 'Unknown error'));
 };
 
+export interface SystemMetricSample {
+  ts: number;
+  cpu: number;
+  memory: number;
+  disk: number;
+  net_in: number;
+  net_out: number;
+}
+
+export interface SystemMetricHistory {
+  interval_seconds: number;
+  samples: SystemMetricSample[];
+}
+
 export const monitorApi = {
+  /** 真实系统指标历史（后端 sysinfo 每 5s 采样，24h 环形缓冲） */
+  getSystemMetricsHistory: async (minutes = 60): Promise<ApiResponse<SystemMetricHistory>> => {
+    return apiClient.monitor.get<SystemMetricHistory>('/metrics/history', {
+      params: { minutes },
+    });
+  },
+
   getSystemMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
     return withRetry(
       () => apiClient.monitor.get<SystemMetrics>('/metrics/system'),

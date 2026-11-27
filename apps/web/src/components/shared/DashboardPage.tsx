@@ -31,7 +31,6 @@ import {
   Badge,
   Button,
   Card,
-  DateRangePicker,
   EmptyState,
   Input,
   PageHeader,
@@ -79,104 +78,6 @@ interface TaskItem {
 }
 
 // 默认模块状态（API 无数据时的兜底）
-const getDefaultModules = (): ModuleItem[] => [
-  {
-    id: 'mes',
-    name: i18n.t('dashboard.dash_mes_name'),
-    desc: i18n.t('dashboard.dash_mes_desc'),
-    icon: Factory,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'erp',
-    name: i18n.t('dashboard.dash_erp_name'),
-    desc: i18n.t('dashboard.dash_erp_desc'),
-    icon: Box,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'scm',
-    name: i18n.t('dashboard.dash_scm_name'),
-    desc: i18n.t('dashboard.dash_scm_desc'),
-    icon: Truck,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'qms',
-    name: i18n.t('dashboard.dash_qms_name'),
-    desc: i18n.t('dashboard.dash_qms_desc'),
-    icon: CheckCircle2,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'wms',
-    name: i18n.t('dashboard.dash_wms_name'),
-    desc: i18n.t('dashboard.dash_wms_desc'),
-    icon: Package,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'bi',
-    name: i18n.t('dashboard.dash_bi_name'),
-    desc: i18n.t('dashboard.dash_bi_desc'),
-    icon: TrendingUp,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'lims',
-    name: i18n.t('dashboard.dash_lims_name'),
-    desc: i18n.t('dashboard.dash_lims_desc'),
-    icon: FlaskConical,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'ehs',
-    name: i18n.t('dashboard.dash_ehs_name'),
-    desc: i18n.t('dashboard.dash_ehs_desc'),
-    icon: ShieldCheck,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'pdm',
-    name: i18n.t('dashboard.dash_pdm_name'),
-    desc: i18n.t('dashboard.dash_pdm_desc'),
-    icon: Boxes,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'rd',
-    name: i18n.t('dashboard.dash_rd_name'),
-    desc: i18n.t('dashboard.dash_rd_desc'),
-    icon: FlaskRound,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'srm',
-    name: i18n.t('dashboard.dash_srm_name'),
-    desc: i18n.t('dashboard.dash_srm_desc'),
-    icon: Handshake,
-    status: 'running' as const,
-    stat: '',
-  },
-  {
-    id: 'ai',
-    name: i18n.t('dashboard.dash_ai_name'),
-    desc: i18n.t('dashboard.dash_ai_desc'),
-    icon: Bot,
-    status: 'running' as const,
-    stat: '',
-  },
-];
 
 const tabs = [
   { id: 'overview', labelKey: 'dashboard.dash_overview' },
@@ -184,30 +85,15 @@ const tabs = [
   { id: 'alerts', labelKey: 'dashboard.dash_alerts', badge: 3 },
 ];
 
-const timeRangeOptions = [
-  { value: '1h', labelKey: 'dashboard.dash_time_1h' },
-  { value: '24h', labelKey: 'dashboard.dash_time_24h' },
-  { value: '7d', labelKey: 'dashboard.dash_time_7d' },
-  { value: '30d', labelKey: 'dashboard.dash_time_30d' },
-];
 
 const DashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
-  const [timeRange, setTimeRange] = useState('24h');
-  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
-  const [showCustomRange, setShowCustomRange] = useState(false);
-
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: [...QUERY_KEY, timeRange],
+    queryKey: [...QUERY_KEY, 'dashboard'],
     queryFn: async () => {
-      try {
-        const result = await getDashboard();
-        return result;
-      } catch (_e) {
-        // API 不可用时返回 null，使用默认数据
-        return null;
-      }
+      // 失败直接抛出，由 error 分支提示并允许重试；原先 return null 后页面靠默认数据装正常
+      return getDashboard();
     },
   });
 
@@ -274,7 +160,8 @@ const DashboardPage: React.FC = () => {
 
   // 从 BFF 真实返回（stats/todos/services）派生页面数据，无数据时回退默认
   const modules = useMemo<ModuleItem[]>(() => {
-    if (!data?.services || data.services.length === 0) return getDefaultModules();
+    // 无 services 时返回空数组，让区域显示「暂无数据」；原先这里造 6 个「运行中」模块。
+    if (!data?.services || data.services.length === 0) return [];
     const knownMeta: Record<string, { name: string; desc: string; icon: LucideIcon }> = {
       mes: {
         name: i18n.t('dashboard.dash_mes_name'),
@@ -402,8 +289,6 @@ const DashboardPage: React.FC = () => {
           label={i18n.t('dashboard.dash_kpi_oee')}
           value={kpis.oee?.toString() || '--'}
           unit='%'
-          trend='up'
-          trendValue='+2.4%'
           icon={Activity}
           accent='amber'
         />
@@ -411,8 +296,6 @@ const DashboardPage: React.FC = () => {
           label={i18n.t('dashboard.dash_kpi_production')}
           value={kpis.production?.toLocaleString() || '--'}
           unit={i18n.t('dashboard.dash_unit_pcs')}
-          trend='up'
-          trendValue='+5.1%'
           icon={Factory}
           accent='cyan'
         />
@@ -420,8 +303,6 @@ const DashboardPage: React.FC = () => {
           label={i18n.t('dashboard.dash_kpi_delivery')}
           value={kpis.deliveryRate?.toString() || '--'}
           unit='%'
-          trend='down'
-          trendValue='-1.2%'
           icon={Truck}
           accent='success'
         />
@@ -429,8 +310,6 @@ const DashboardPage: React.FC = () => {
           label={i18n.t('dashboard.dash_kpi_quality')}
           value={kpis.qualityRate?.toString() || '--'}
           unit='%'
-          trend='neutral'
-          trendValue='0.0%'
           icon={CheckCircle2}
           accent='warning'
         />
@@ -780,67 +659,6 @@ const DashboardPage: React.FC = () => {
         />
 
         <div className={styles.il28}>
-          {showCustomRange && (
-            <div className={styles.il29}>
-              <DateRangePicker
-                value={customDateRange}
-                onChange={setCustomDateRange}
-                presets={[
-                  {
-                    label: i18n.t('dashboard.dash_today'),
-                    value: () => {
-                      const d = new Date().toISOString().split('T')[0];
-                      return { start: d, end: d };
-                    },
-                  },
-                  {
-                    label: i18n.t('dashboard.dash_recent_7d'),
-                    value: () => {
-                      const e = new Date();
-                      const s = new Date();
-                      s.setDate(s.getDate() - 7);
-                      return {
-                        start: s.toISOString().split('T')[0],
-                        end: e.toISOString().split('T')[0],
-                      };
-                    },
-                  },
-                  {
-                    label: i18n.t('dashboard.dash_recent_30d'),
-                    value: () => {
-                      const e = new Date();
-                      const s = new Date();
-                      s.setDate(s.getDate() - 30);
-                      return {
-                        start: s.toISOString().split('T')[0],
-                        end: e.toISOString().split('T')[0],
-                      };
-                    },
-                  },
-                ]}
-              />
-            </div>
-          )}
-          <Select
-            value={timeRange}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === 'custom') {
-                setShowCustomRange(true);
-              } else {
-                setShowCustomRange(false);
-                setCustomDateRange(undefined);
-                setTimeRange(val);
-              }
-            }}
-            options={[
-              ...timeRangeOptions.map((o) => ({ ...o, label: i18n.t(o.labelKey) })),
-              { value: 'custom', label: i18n.t('dashboard.dash_custom_range') },
-            ]}
-            className={styles.il30}
-          />
-        </div>
-
         {error && (
           <Alert
             variant='warning'
@@ -878,6 +696,7 @@ const DashboardPage: React.FC = () => {
           ) : (
             renderAlerts()
           )}
+        </div>
         </div>
       </div>
     </PageContainer>

@@ -39,6 +39,10 @@ impl MonitorRealModule {
         };
 
         let ctx = bootstrap_service_shared(&config).await?;
+        // 系统指标真实采集（sysinfo）：独立部署时在 svc/monitor/main.rs 里启动，
+        // 进程内装配（topems-server）走不到那条 main，必须在这里显式拉起，
+        // 否则 /metrics/system 与 /metrics/history 永远是 0 / 空。
+        topems_monitor::modules::monitor::sys_sampler::spawn_sampler();
         // 沿用模块原有 SEARCH_PATH：public。
         let db = Db::new(ctx.db.clone(), "public");
         db.check_health().await?;

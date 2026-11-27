@@ -54,13 +54,12 @@ import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { monitorApi, type SystemMetrics, type DatabaseMetrics } from '@/api/monitor';
 
-type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
+type TimeRange = '1h' | '6h' | '24h';
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: '1h', label: i18n.t('monitor.monitor_dashboard_page.1_0') },
   { value: '6h', label: i18n.t('monitor.monitor_dashboard_page.6_1') },
   { value: '24h', label: i18n.t('monitor.monitor_dashboard_page.24_2') },
-  { value: '7d', label: i18n.t('monitor.monitor_dashboard_page.7_3') },
-  { value: '30d', label: i18n.t('monitor.monitor_dashboard_page.30_4') },
+  // 7d/30d 已撤：后端采样缓冲只保留 24h，再长的窗口只能伪造
 ];
 interface ServiceHealth {
   id: string;
@@ -313,9 +312,46 @@ export const MonitorDashboardPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [timeRangeAnchorEl, setTimeRangeAnchorEl] = useState<null | HTMLElement>(null);
-  const timeLabels = useMemo(() => generateTimeLabels(timeRange), [timeRange]);
+  // 真实趋势：后端 sysinfo 每 5s 采样（24h 环形缓冲），时间范围直接映射为回溯分钟数
+  const historyMinutes = timeRange === '1h' ? 60 : timeRange === '6h' ? 360 : 1440;
+  const historyQuery = useQuery({
+    queryKey: [...QUERY_KEYS.MONITOR.METRICS, 'history', historyMinutes],
+    queryFn: async () => {
+      const res = await monitorApi.getSystemMetricsHistory(historyMinutes);
+      return res.success ? res.data : null;
+    },
+    refetchInterval: 30 * 1000,
+    staleTime: 20 * 1000,
+  });
+  const samples = historyQuery.data?.samples ?? [];
+  const timeLabels = useMemo(
+    () =>
+      samples.map((s) =>
+        new Date(s.ts * 1000).toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      ),
+    [samples]
+  );
+  const cpuSeries = useMemo(() => samples.map((s) => Math.round(s.cpu)), [samples]);
+  const memorySeries = useMemo(() => samples.map((s) => Math.round(s.memory)), [samples]);
+  const diskSeries = useMemo(() => samples.map((s) => Math.round(s.disk)), [samples]);
+  // 网络吞吐按相邻样本的累计字节差折算 MB/s
+  const netSeries = useMemo(
+    () =>
+      samples.map((s, i) => {
+        if (i === 0) return 0;
+        const prev = samples[i - 1];
+        const dt = Math.max(1, s.ts - prev.ts);
+        return Number(
+          (((s.net_in + s.net_out) - (prev.net_in + prev.net_out)) / dt / 1024 / 1024).toFixed(2)
+        );
+      }),
+    [samples]
+  );
   const systemMetricsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.MONITOR.METRICS, timeRange],
+    queryKey: [...QUERY_KEYS.MONITOR.METRICS],
     queryFn: async () => {
       const res = await monitorApi.getSystemMetrics();
       return res.data;
@@ -324,7 +360,7 @@ export const MonitorDashboardPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const serviceHealthQuery = useQuery({
-    queryKey: [...QUERY_KEYS.MONITOR.HEALTH, timeRange],
+    queryKey: [...QUERY_KEYS.MONITOR.HEALTH],
     queryFn: async () => {
       const res = await monitorApi.getServiceHealth();
       return res.data ?? [];
@@ -333,7 +369,7 @@ export const MonitorDashboardPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const alertsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.MONITOR.ALERTS, timeRange],
+    queryKey: [...QUERY_KEYS.MONITOR.ALERTS],
     queryFn: async () => {
       const res = await monitorApi.listAlerts({ page_size: 10, status: 'active' });
       return res.data?.items ?? [];
@@ -342,7 +378,7 @@ export const MonitorDashboardPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const apiPerformanceQuery = useQuery({
-    queryKey: [...QUERY_KEYS.MONITOR.PERFORMANCE, timeRange],
+    queryKey: [...QUERY_KEYS.MONITOR.PERFORMANCE],
     queryFn: async () => {
       const res = await monitorApi.getApiPerformance();
       return res.data ?? [];
@@ -351,7 +387,7 @@ export const MonitorDashboardPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const dbMetricsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.MONITOR.DATABASE, timeRange],
+    queryKey: [...QUERY_KEYS.MONITOR.DATABASE],
     queryFn: async () => {
       const res = await monitorApi.getDatabaseMetrics();
       return res.data;
@@ -414,9 +450,8 @@ export const MonitorDashboardPage: React.FC = () => {
     const cpuUsage = Math.round(systemMetrics?.cpu_usage ?? 0);
     const memUsage = Math.round(systemMetrics?.memory_usage ?? 0);
     const diskUsage = Math.round(systemMetrics?.disk_usage ?? 0);
-    const networkThroughput = systemMetrics
-      ? Math.round((systemMetrics.network_in ?? 0) + (systemMetrics.network_out ?? 0))
-      : 0;
+    // 网络吞吐必须用相邻样本的字节差折算（累加字节直接展示会得到百 GB 级天文数字）
+    const networkThroughput = netSeries.length > 0 ? netSeries[netSeries.length - 1] : 0;
     const dbConnections = dbMetrics?.connections ?? 0;
     const onlineServices = apiServices.filter((s) => s.status === 'healthy').length;
     const alertCount = apiAlerts.length;
@@ -434,7 +469,6 @@ export const MonitorDashboardPage: React.FC = () => {
         unit: i18n.t('monitor.monitor_dashboard_page.k8'),
         icon: <Server size={20} />,
         color: 'success',
-        trend: createFlatTrend(12, onlineServices),
       },
       {
         id: 'alerts',
@@ -443,7 +477,6 @@ export const MonitorDashboardPage: React.FC = () => {
         unit: i18n.t('monitor.monitor_dashboard_page.k10'),
         icon: <AlertTriangle size={20} />,
         color: 'error',
-        trend: createFlatTrend(12, alertCount),
       },
       {
         id: 'cpu-usage',
@@ -454,7 +487,7 @@ export const MonitorDashboardPage: React.FC = () => {
         color: 'warning',
         progress: cpuUsage,
         progressLabel: i18n.t('monitor.monitor_dashboard_page.k11'),
-        trend: createFlatTrend(12, cpuUsage),
+        trend: cpuSeries.slice(-24),
       },
       {
         id: 'memory-usage',
@@ -465,7 +498,7 @@ export const MonitorDashboardPage: React.FC = () => {
         color: 'warning',
         progress: memUsage,
         progressLabel: i18n.t('monitor.monitor_dashboard_page.k13'),
-        trend: createFlatTrend(12, memUsage),
+        trend: memorySeries.slice(-24),
       },
       {
         id: 'disk-usage',
@@ -476,7 +509,7 @@ export const MonitorDashboardPage: React.FC = () => {
         color: 'info',
         progress: diskUsage,
         progressLabel: i18n.t('monitor.monitor_dashboard_page.k15'),
-        trend: createFlatTrend(12, diskUsage),
+        trend: diskSeries.slice(-24),
       },
       {
         id: 'network-throughput',
@@ -485,7 +518,7 @@ export const MonitorDashboardPage: React.FC = () => {
         unit: 'MB/s',
         icon: <Activity size={20} />,
         color: 'primary',
-        trend: createFlatTrend(12, networkThroughput),
+        trend: netSeries.slice(-24),
       },
       {
         id: 'db-connections',
@@ -494,7 +527,6 @@ export const MonitorDashboardPage: React.FC = () => {
         unit: i18n.t('monitor.monitor_dashboard_page.k18'),
         icon: <Database size={20} />,
         color: 'secondary',
-        trend: createFlatTrend(12, dbConnections),
       },
       {
         id: 'api-response-time',
@@ -503,17 +535,12 @@ export const MonitorDashboardPage: React.FC = () => {
         unit: 'ms',
         icon: <Clock size={20} />,
         color: 'success',
-        trend: createFlatTrend(12, apiResponseTime),
       },
     ];
-  }, [systemMetrics, dbMetrics, apiServices, apiAlerts, apiPerf]);
+  }, [systemMetrics, dbMetrics, apiServices, apiAlerts, apiPerf, cpuSeries, memorySeries, diskSeries, netSeries]);
   const systemResourceData = useMemo(
-    () => ({
-      cpu: createFlatTrend(timeLabels.length, Math.round(systemMetrics?.cpu_usage ?? 0)),
-      memory: createFlatTrend(timeLabels.length, Math.round(systemMetrics?.memory_usage ?? 0)),
-      disk: createFlatTrend(timeLabels.length, Math.round(systemMetrics?.disk_usage ?? 0)),
-    }),
-    [timeLabels, systemMetrics]
+    () => ({ cpu: cpuSeries, memory: memorySeries, disk: diskSeries }),
+    [cpuSeries, memorySeries, diskSeries]
   );
   const serviceHealthData = useMemo(
     () => [
@@ -940,8 +967,6 @@ export const MonitorDashboardPage: React.FC = () => {
                   <TableRow>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k44')}</TableCell>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k45')}</TableCell>
-                    <TableCell>{i18n.t('pages.monitor_dashboard_page.pu_0')}</TableCell>
-                    <TableCell>{i18n.t('monitor.monitor_dashboard_page.k46')}</TableCell>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k47')}</TableCell>
                     <TableCell>{i18n.t('monitor.monitor_dashboard_page.k48')}</TableCell>
                   </TableRow>
@@ -950,7 +975,7 @@ export const MonitorDashboardPage: React.FC = () => {
                   {loading
                     ? Array.from({ length: 5 }).map((_, index) => (
                         <TableRow key={index}>
-                          {Array.from({ length: 6 }).map((_, cellIndex) => (
+                          {Array.from({ length: 4 }).map((_, cellIndex) => (
                             <TableCell key={cellIndex}>
                               <Box
                                 sx={{ width: 80, height: 20, bgcolor: 'grey.200', borderRadius: 1 }}
@@ -973,78 +998,6 @@ export const MonitorDashboardPage: React.FC = () => {
                         >
                           <TableCell sx={{ fontWeight: 500 }}>{service.name}</TableCell>
                           <TableCell>{getStatusChip(service.status)}</TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Box sx={{ flex: 1, maxWidth: 100 }}>
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: 6,
-                                    bgcolor: 'grey.200',
-                                    borderRadius: 3,
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: `${service.cpu}%`,
-                                      height: '100%',
-                                      bgcolor:
-                                        service.cpu > 80
-                                          ? 'error.main'
-                                          : service.cpu > 60
-                                            ? 'warning.main'
-                                            : 'success.main',
-                                      transition: 'width 0.3s ease',
-                                    }}
-                                  />
-                                </Box>
-                              </Box>
-                              <Typography
-                                variant='body2'
-                                color='text.secondary'
-                                sx={{ minWidth: 40 }}
-                              >
-                                {service.cpu}%
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Box sx={{ flex: 1, maxWidth: 100 }}>
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: 6,
-                                    bgcolor: 'grey.200',
-                                    borderRadius: 3,
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: `${service.memory}%`,
-                                      height: '100%',
-                                      bgcolor:
-                                        service.memory > 80
-                                          ? 'error.main'
-                                          : service.memory > 60
-                                            ? 'warning.main'
-                                            : 'success.main',
-                                      transition: 'width 0.3s ease',
-                                    }}
-                                  />
-                                </Box>
-                              </Box>
-                              <Typography
-                                variant='body2'
-                                color='text.secondary'
-                                sx={{ minWidth: 40 }}
-                              >
-                                {service.memory}%
-                              </Typography>
-                            </Box>
-                          </TableCell>
                           <TableCell>{service.uptime}</TableCell>
                           <TableCell color='text.secondary'>{service.lastCheck}</TableCell>
                         </TableRow>

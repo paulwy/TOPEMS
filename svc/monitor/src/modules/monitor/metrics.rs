@@ -199,6 +199,7 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/metrics", get(list_metrics))
         .route("/metrics/system", get(get_system_metrics))
+        .route("/metrics/history", get(get_system_metrics_history))
         .route("/metrics/database", get(get_database_metrics))
         // 前端监控页 /metrics/realtime 与 /metrics/test-retry（withRetry 探活）复用系统指标
         .route("/metrics/realtime", get(get_system_metrics))
@@ -270,27 +271,67 @@ pub async fn get_system_metrics(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<SystemMetricsResponse> {
+    // 硬件指标来自 sys_sampler 的 sysinfo 采集（后台每 5s 刷新一次，读取最近快照，
+    // 未就绪时返回 0 而不是编造数值）。
+    let sys = super::sys_sampler::latest_snapshot();
     let metrics = SystemMetricsResponse {
         service_name: "topems-monitor".to_string(),
         uptime: state.metrics.get_uptime(),
         uptime_seconds: state.metrics.get_uptime_seconds(),
-        // 硬件指标（CPU/内存/磁盘/网络）需 OS 级采集（sysinfo/Prometheus node_exporter），
-        // 当前未接入，置 0 避免返回伪造数据误导告警评估。
-        cpu_usage: 0.0,
-        memory_usage: 0.0,
-        memory_total: 0,
-        memory_used: 0,
-        disk_usage: 0.0,
-        disk_total: 0,
-        disk_used: 0,
-        network_in: 0,
-        network_out: 0,
+        cpu_usage: f64::from(sys.cpu_usage),
+        memory_usage: f64::from(sys.memory_usage),
+        memory_total: sys.memory_total,
+        memory_used: sys.memory_used,
+        disk_usage: f64::from(sys.disk_usage),
+        disk_total: sys.disk_total,
+        disk_used: sys.disk_used,
+        network_in: sys.net_in,
+        network_out: sys.net_out,
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),
     };
 
     ApiResponse::success(metrics, "获取系统指标成功")
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SystemHistoryQuery {
+    /// 回溯窗口（分钟），默认 60，上限 1440（采样缓冲保留 24h）
+    pub minutes: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SystemHistoryResponse {
+    /// 采样间隔（秒）
+    pub interval_seconds: u64,
+    pub samples: Vec<super::sys_sampler::SysSample>,
+}
+
+/// 真实 CPU/内存/磁盘趋势样本。前端监控页用它替换原来 `createFlatTrend` 伪造的直线。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["monitor:metric:read"])),
+    path = "/api/monitor/metrics/history",
+    tag = "metrics",
+    params(("minutes" = Option<i64>, Query, description = "回溯分钟数，默认 60，最大 1440")),
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn get_system_metrics_history(
+    Extension(_claims): Extension<Claims>,
+    Query(q): Query<SystemHistoryQuery>,
+) -> ApiResponse<SystemHistoryResponse> {
+    let minutes = q.minutes.unwrap_or(60).clamp(1, 1440);
+    let samples = super::sys_sampler::history_minutes(minutes);
+    ApiResponse::success(
+        SystemHistoryResponse {
+            interval_seconds: 5,
+            samples,
+        },
+        "获取系统指标历史成功",
+    )
 }
 
 #[utoipa::path(
@@ -443,53 +484,11 @@ pub async fn get_api_performance(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ApiPerformance>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let performances = vec![
-        ApiPerformance {
-            id: Uuid::new_v4(),
-            tenant_id,
-            endpoint: "/api/customers".to_string(),
-            method: "GET".to_string(),
-            avg_response_time: 125.5,
-            max_response_time: 500.2,
-            min_response_time: 50.1,
-            request_count: 12345,
-            error_count: 12,
-            p95_response_time: 200.3,
-            p99_response_time: 400.5,
-            service_name: "topems-crm".to_string(),
-            created_at: chrono::Utc::now(),
-        },
-        ApiPerformance {
-            id: Uuid::new_v4(),
-            tenant_id,
-            endpoint: "/api/employees".to_string(),
-            method: "GET".to_string(),
-            avg_response_time: 98.2,
-            max_response_time: 350.8,
-            min_response_time: 45.2,
-            request_count: 8765,
-            error_count: 8,
-            p95_response_time: 150.2,
-            p99_response_time: 300.1,
-            service_name: "topems-hrm".to_string(),
-            created_at: chrono::Utc::now(),
-        },
-        ApiPerformance {
-            id: Uuid::new_v4(),
-            tenant_id,
-            endpoint: "/api/projects".to_string(),
-            method: "POST".to_string(),
-            avg_response_time: 256.8,
-            max_response_time: 800.5,
-            min_response_time: 120.3,
-            request_count: 4567,
-            error_count: 25,
-            p95_response_time: 400.8,
-            p99_response_time: 600.2,
-            service_name: "topems-pm".to_string(),
-            created_at: chrono::Utc::now(),
-        },
-    ];
+    // 原先这里是 3 条写死的 demo 记录（/api/customers 125.5ms 等），会把「演示值」当成
+    // 真实性能展示。真实来源应为网关 Prometheus 直方图聚合，接入前先返回空集，
+    // 前端按空态渲染，不再展示编造数字。
+    let _ = tenant_id;
+    let performances: Vec<ApiPerformance> = Vec::new();
 
     ApiResponse::success(performances, "获取API性能指标成功")
 }
@@ -509,32 +508,13 @@ pub async fn get_performance_trend(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
 ) -> ApiResponse<Vec<PerformanceTrend>> {
-    let _tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let period = params.period.unwrap_or("24h".to_string());
 
-    let mut trends = Vec::new();
-    let hours = match period.as_str() {
-        "1h" => 1,
-        "6h" => 6,
-        "24h" => 24,
-        "7d" => 168,
-        "30d" => 720,
-        _ => 24,
-    };
-
-    let now = chrono::Utc::now();
-    for i in (0..hours).rev() {
-        let timestamp = now - chrono::Duration::hours(i as i64);
-        let base_rt = 100.0 + (i as f64 * 2.5).sin() * 30.0;
-        trends.push(PerformanceTrend {
-            timestamp,
-            avg_response_time: base_rt,
-            request_count: 500 + (i as i64 * 10) % 300,
-            error_rate: 0.5 + ((i as f64 * 0.1).sin() * 0.3).abs(),
-            p95_response_time: base_rt * 1.5,
-            p99_response_time: base_rt * 2.0,
-        });
-    }
+    // 原实现按 sin(i) 造点（avg=100+sin*30、request_count=500+…），是纯编造曲线。
+    // 真实趋势需从网关 Prometheus 按时间桶聚合，接入前返回空集。
+    let _ = (tenant_id, period);
+    let trends: Vec<PerformanceTrend> = Vec::new();
 
     ApiResponse::success(trends, "获取性能趋势成功")
 }
@@ -552,76 +532,12 @@ pub async fn get_service_performance(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ServicePerformance>> {
-    let _tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let services = vec![
-        ServicePerformance {
-            service_name: "topems-crm".to_string(),
-            avg_response_time: 125.5,
-            request_count: 12345,
-            error_count: 12,
-            error_rate: 0.1,
-            p95_response_time: 200.3,
-            p99_response_time: 400.5,
-            availability: 99.95,
-            status: "healthy".to_string(),
-        },
-        ServicePerformance {
-            service_name: "topems-hrm".to_string(),
-            avg_response_time: 98.2,
-            request_count: 8765,
-            error_count: 8,
-            error_rate: 0.09,
-            p95_response_time: 150.2,
-            p99_response_time: 300.1,
-            availability: 99.98,
-            status: "healthy".to_string(),
-        },
-        ServicePerformance {
-            service_name: "topems-pm".to_string(),
-            avg_response_time: 256.8,
-            request_count: 4567,
-            error_count: 25,
-            error_rate: 0.55,
-            p95_response_time: 400.8,
-            p99_response_time: 600.2,
-            availability: 99.80,
-            status: "warning".to_string(),
-        },
-        ServicePerformance {
-            service_name: "topems-erp".to_string(),
-            avg_response_time: 189.3,
-            request_count: 6789,
-            error_count: 15,
-            error_rate: 0.22,
-            p95_response_time: 320.5,
-            p99_response_time: 520.8,
-            availability: 99.90,
-            status: "healthy".to_string(),
-        },
-        ServicePerformance {
-            service_name: "topems-wms".to_string(),
-            avg_response_time: 156.7,
-            request_count: 5432,
-            error_count: 20,
-            error_rate: 0.37,
-            p95_response_time: 280.2,
-            p99_response_time: 480.5,
-            availability: 99.85,
-            status: "warning".to_string(),
-        },
-        ServicePerformance {
-            service_name: "topems-ai".to_string(),
-            avg_response_time: 452.1,
-            request_count: 2345,
-            error_count: 5,
-            error_rate: 0.21,
-            p95_response_time: 700.5,
-            p99_response_time: 1200.0,
-            availability: 99.92,
-            status: "healthy".to_string(),
-        },
-    ];
+    // 原实现为 16 条写死的服务指标（crm 125.5ms/99.95% 等）。真实数据需按服务
+    // 从 Prometheus 指标聚合，接入前返回空集。
+    let _ = tenant_id;
+    let services: Vec<ServicePerformance> = Vec::new();
 
     ApiResponse::success(services, "获取服务性能成功")
 }
@@ -642,98 +558,19 @@ pub async fn get_performance_summary(
 ) -> ApiResponse<PerformanceSummary> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let now = chrono::Utc::now();
-    let trends = (0..24)
-        .rev()
-        .map(|i| PerformanceTrend {
-            timestamp: now - chrono::Duration::hours(i as i64),
-            avg_response_time: 120.0 + (i as f64 * 3.0).sin() * 40.0,
-            request_count: 600 + (i as i64 * 15) % 400,
-            error_rate: 0.4 + ((i as f64 * 0.15).sin() * 0.25).abs(),
-            p95_response_time: 180.0 + (i as f64 * 4.5).sin() * 60.0,
-            p99_response_time: 280.0 + (i as f64 * 6.0).sin() * 100.0,
-        })
-        .collect();
-
-    // 演示数据：query 文本仅用于展示，非真实执行 SQL；表名统一用 public.demo_* 形式，
-    // 避免被 schema-prefix（裸表/跨 schema）与 schema-boundary（跨 schema 引用）静态门禁误判。
-    let slow_queries = vec![
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT * FROM public.demo_orders WHERE customer_id = ?".to_string(),
-            duration_ms: 450.2,
-            service_name: "topems-crm".to_string(),
-            timestamp: now - chrono::Duration::minutes(15),
-            row_count: 1500,
-            called_count: 123,
-        },
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT SUM(amount) FROM public.demo_transactions WHERE date >= ?".to_string(),
-            duration_ms: 890.5,
-            service_name: "topems-erp".to_string(),
-            timestamp: now - chrono::Duration::minutes(45),
-            row_count: 50000,
-            called_count: 45,
-        },
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT * FROM public.demo_projects WHERE status = 'active'".to_string(),
-            duration_ms: 620.3,
-            service_name: "topems-pm".to_string(),
-            timestamp: now - chrono::Duration::hours(1),
-            row_count: 800,
-            called_count: 89,
-        },
-    ];
-
-    let services = vec![
-        ServicePerformance {
-            service_name: "topems-crm".to_string(),
-            avg_response_time: 125.5,
-            request_count: 12345,
-            error_count: 12,
-            error_rate: 0.1,
-            p95_response_time: 200.3,
-            p99_response_time: 400.5,
-            availability: 99.95,
-            status: "healthy".to_string(),
-        },
-        ServicePerformance {
-            service_name: "topems-hrm".to_string(),
-            avg_response_time: 98.2,
-            request_count: 8765,
-            error_count: 8,
-            error_rate: 0.09,
-            p95_response_time: 150.2,
-            p99_response_time: 300.1,
-            availability: 99.98,
-            status: "healthy".to_string(),
-        },
-        ServicePerformance {
-            service_name: "topems-pm".to_string(),
-            avg_response_time: 256.8,
-            request_count: 4567,
-            error_count: 25,
-            error_rate: 0.55,
-            p95_response_time: 400.8,
-            p99_response_time: 600.2,
-            availability: 99.80,
-            status: "warning".to_string(),
-        },
-    ];
-
+    // 原先 trends/慢查询/汇总值全是 sin 曲线与 public.demo_* 演示行，见 /performance/trend 说明。
+    // 接入 Prometheus 聚合前一律空态，只保留真实可算的部分（此处无可算字段）。
+    let _ = tenant_id;
+    let trends: Vec<PerformanceTrend> = Vec::new();
+    let slow_queries: Vec<SlowQuery> = Vec::new();
     let summary = PerformanceSummary {
-        total_requests: 35421,
-        total_errors: 55,
-        overall_avg_response_time: 160.2,
-        overall_p95_response_time: 280.5,
-        overall_p99_response_time: 480.8,
-        error_rate: 0.15,
-        services,
+        total_requests: 0,
+        total_errors: 0,
+        overall_avg_response_time: 0.0,
+        overall_p95_response_time: 0.0,
+        overall_p99_response_time: 0.0,
+        error_rate: 0.0,
+        services: Vec::new(),
         slow_queries,
         trends,
     };
@@ -758,68 +595,9 @@ pub async fn get_slow_queries(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = chrono::Utc::now();
 
-    let queries = vec![
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT * FROM public.demo_orders WHERE customer_id = ? AND status = 'pending'".to_string(),
-            duration_ms: 450.2,
-            service_name: "topems-crm".to_string(),
-            timestamp: now - chrono::Duration::minutes(15),
-            row_count: 1500,
-            called_count: 123,
-        },
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT SUM(amount) FROM public.demo_transactions WHERE date >= ? AND account_id = ?".to_string(),
-            duration_ms: 890.5,
-            service_name: "topems-erp".to_string(),
-            timestamp: now - chrono::Duration::minutes(45),
-            row_count: 50000,
-            called_count: 45,
-        },
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT * FROM public.demo_projects WHERE status = 'active' ORDER BY updated_at DESC".to_string(),
-            duration_ms: 620.3,
-            service_name: "topems-pm".to_string(),
-            timestamp: now - chrono::Duration::hours(1),
-            row_count: 800,
-            called_count: 89,
-        },
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT * FROM public.demo_inventory WHERE stock_level < ?".to_string(),
-            duration_ms: 380.7,
-            service_name: "topems-wms".to_string(),
-            timestamp: now - chrono::Duration::hours(2),
-            row_count: 200,
-            called_count: 56,
-        },
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT e.*, d.name as dept_name FROM public.demo_employees e JOIN public.demo_departments d ON e.dept_id = d.id WHERE d.org_id = ?".to_string(),
-            duration_ms: 520.8,
-            service_name: "topems-hrm".to_string(),
-            timestamp: now - chrono::Duration::hours(3),
-            row_count: 500,
-            called_count: 78,
-        },
-        SlowQuery {
-            id: Uuid::new_v4(),
-            tenant_id,
-            query: "SELECT * FROM public.demo_ai_models WHERE version = ? ORDER BY created_at DESC".to_string(),
-            duration_ms: 750.2,
-            service_name: "topems-ai".to_string(),
-            timestamp: now - chrono::Duration::hours(4),
-            row_count: 50,
-            called_count: 23,
-        },
-    ];
+    // 原为若干条 public.demo_* 编造慢查询；真实数据需 pg_stat_statements / 慢日志采集。
+    let _ = (tenant_id, params.period, now);
+    let queries: Vec<SlowQuery> = Vec::new();
 
     let filtered: Vec<SlowQuery> = queries
         .into_iter()

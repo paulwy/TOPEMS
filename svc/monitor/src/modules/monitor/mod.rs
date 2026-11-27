@@ -6,6 +6,7 @@ pub mod alerts;
 pub mod business_metrics;
 pub mod health_check;
 pub mod metrics;
+pub mod sys_sampler;
 pub mod monitor_plugin;
 pub mod settings;
 pub mod slo;

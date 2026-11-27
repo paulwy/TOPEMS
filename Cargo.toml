@@ -341,6 +341,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dotenv = { package = "dotenvy", version = "0.15" }
 thiserror = "2"
 anyhow = "1"
+sysinfo = "0.33"
 bcrypt = "0.15"
 reqwest = { version = "0.13", features = ["json", "query", "blocking", "form"] }
 utoipa = { version = "6", features = ["uuid", "chrono", "decimal", "bigdecimal"] }

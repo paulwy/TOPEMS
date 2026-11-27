@@ -24,6 +24,7 @@ topems-shared-db = { workspace = true }
 utoipa.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
+sysinfo.workspace = true
 
 [dev-dependencies]
 

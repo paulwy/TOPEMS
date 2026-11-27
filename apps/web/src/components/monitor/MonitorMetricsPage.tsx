@@ -3,467 +3,209 @@
  *
  * @module pages/monitor
  * @path /monitor/metrics
+ *
+ * 数据来源只有两处，且都是真实的：
+ * 1. GET /api/monitor/metrics/system —— 当前 CPU/内存/磁盘/网络累计字节（后端 sysinfo 快照）
+ * 2. GET /api/monitor/metrics/history —— 每 5s 采样、24h 环形缓冲的历史样本
+ * 原先的「多服务趋势」「API QPS 2,856」「P50/P90/P99 响应时间」都没有后端来源，已整块撤掉。
  */
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  BarChart3,
-  Cpu,
-  HardDrive,
-  Server,
-  Activity,
-  Zap,
-  ChevronDown,
-  Database,
-  Layers,
-  Box as BoxIcon,
-  Network,
-} from 'lucide-react';
+import { BarChart3, Cpu, HardDrive, Server, Activity, ChevronDown } from 'lucide-react';
 import i18n from '@/i18n';
-import { Box, Tabs, Tab, Stack, Menu, MenuItem, Button, useTheme } from '@mui/material';
+import { Stack, Menu, MenuItem, Button, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { LazyChart } from '@/components/charts';
-import { useNotificationStore } from '@/store';
-import { getErrorMessage } from '@/utils/errors';
 import { MONITOR_PATHS } from '@/module-configs/monitor/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { monitorApi } from '@/api/monitor';
 
-type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
-type MetricCategory = 'host' | 'service' | 'database' | 'middleware';
-type ServiceType = 'all' | 'user' | 'order' | 'payment' | 'inventory' | 'gateway';
+type TimeRange = '1h' | '6h' | '24h';
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: '1h', label: i18n.t('monitor.monitor_metrics_page.1_0') },
   { value: '6h', label: i18n.t('monitor.monitor_metrics_page.6_1') },
   { value: '24h', label: i18n.t('monitor.monitor_metrics_page.24_2') },
-  { value: '7d', label: i18n.t('monitor.monitor_metrics_page.7_3') },
-  { value: '30d', label: i18n.t('monitor.monitor_metrics_page.30_4') },
 ];
-const metricCategoryTabs: { value: MetricCategory; label: string; icon: React.ReactNode }[] = [
-  { value: 'host', label: i18n.t('monitor.monitor_metrics_page.k5'), icon: <Server size={16} /> },
-  {
-    value: 'service',
-    label: i18n.t('monitor.monitor_metrics_page.k6'),
-    icon: <BoxIcon size={16} />,
-  },
-  {
-    value: 'database',
-    label: i18n.t('monitor.monitor_metrics_page.k7'),
-    icon: <Database size={16} />,
-  },
-  {
-    value: 'middleware',
-    label: i18n.t('monitor.monitor_metrics_page.k8'),
-    icon: <Layers size={16} />,
-  },
-];
-const serviceOptions: { value: ServiceType; label: string }[] = [
-  { value: 'all', label: i18n.t('monitor.monitor_metrics_page.k9') },
-  { value: 'user', label: i18n.t('monitor.monitor_metrics_page.k10') },
-  { value: 'order', label: i18n.t('monitor.monitor_metrics_page.k11') },
-  { value: 'payment', label: i18n.t('monitor.monitor_metrics_page.k12') },
-  { value: 'inventory', label: i18n.t('monitor.monitor_metrics_page.k13') },
-  { value: 'gateway', label: i18n.t('monitor.monitor_metrics_page.k14') },
-];
-const generateTimeLabels = (range: TimeRange): string[] => {
-  const labels: string[] = [];
-  const now = new Date();
-  if (range === '1h') {
-    for (let i = 60; i >= 0; i -= 5) {
-      const time = new Date(now.getTime() - i * 60 * 1000);
-      labels.push(time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
-    }
-  } else if (range === '6h') {
-    for (let i = 6; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-      labels.push(time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
-    }
-  } else if (range === '24h') {
-    for (let i = 24; i >= 0; i -= 2) {
-      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-      labels.push(time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
-    }
-  } else if (range === '7d') {
-    for (let i = 7; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
-    }
-  } else {
-    for (let i = 30; i >= 0; i -= 3) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      labels.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
-    }
-  }
-  return labels;
-};
-const generateRandomData = (_length: number, _min: number, _max: number): number[] => {
-  return [];
-};
-const getServiceNames = () => [
-  i18n.t('monitor.monitor_metrics_page.k20'),
-  i18n.t('monitor.monitor_metrics_page.k19'),
-  i18n.t('monitor.monitor_metrics_page.k18'),
-  i18n.t('monitor.monitor_metrics_page.k17'),
-  i18n.t('monitor.monitor_metrics_page.k16'),
-  i18n.t('monitor.monitor_metrics_page.k15'),
-];
-const generateMultiServiceTrendData = (_labels: string[], _services: string[]) => {
-  return [] as Record<string, string | number>[];
-};
+
+const toMinutes = (range: TimeRange): number =>
+  range === '1h' ? 60 : range === '6h' ? 360 : 1440;
+
+const formatTime = (ts: number): string =>
+  new Date(ts * 1000).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
 export const MonitorMetricsPage: React.FC = () => {
   const theme = useTheme();
-  const {} = useQuery({
-    queryKey: ['monitor', 'metrics'],
-    queryFn: async () => {
-      try {
-        return await monitorApi.metrics.list();
-      } catch {
-        return {};
-      }
-    },
-  });
-  const addNotification = useNotificationStore((state) => state.addNotification);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [timeRangeAnchorEl, setTimeRangeAnchorEl] = useState<null | HTMLElement>(null);
-  const [serviceAnchorEl, setServiceAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedService, setSelectedService] = useState<ServiceType>('all');
-  const [activeCategory, setActiveCategory] = useState<MetricCategory>('host');
-  const timeLabels = useMemo(() => generateTimeLabels(timeRange), [timeRange]);
-  const metricsQuery = useQuery<boolean>({
-    queryKey: [
-      ...QUERY_KEYS.AD_HOC.MONITOR_METRICS_BASE,
-      timeRange,
-      selectedService,
-      activeCategory,
-    ],
-    queryFn: async () => true,
-    staleTime: 5 * 60 * 1000,
+
+  const systemQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_METRICS_BASE, 'system'],
+    queryFn: async () => {
+      const res = await monitorApi.getSystemMetrics();
+      return res.success ? res.data : null;
+    },
+    refetchInterval: 30 * 1000,
+    staleTime: 20 * 1000,
   });
-  const loading = metricsQuery.isFetching;
-  const refetchMetrics = metricsQuery.refetch;
-  useEffect(() => {
-    if (metricsQuery.isError) {
-      addNotification({
-        message: getErrorMessage(metricsQuery.error) || i18n.t('monitor.monitor_metrics_page.k21'),
-        type: 'error',
-        duration: 3000,
-      });
-    }
-  }, [metricsQuery.isError, metricsQuery.error, addNotification]);
-  const handleTimeRangeClick = (event: React.MouseEvent<HTMLElement>) => {
-    setTimeRangeAnchorEl(event.currentTarget);
-  };
-  const handleTimeRangeClose = () => {
-    setTimeRangeAnchorEl(null);
-  };
-  const handleTimeRangeSelect = (range: TimeRange) => {
-    setTimeRange(range);
-    handleTimeRangeClose();
-    refetchMetrics();
-  };
-  const handleServiceClick = (event: React.MouseEvent<HTMLElement>) => {
-    setServiceAnchorEl(event.currentTarget);
-  };
-  const handleServiceClose = () => {
-    setServiceAnchorEl(null);
-  };
-  const handleServiceSelect = (service: ServiceType) => {
-    setSelectedService(service);
-    handleServiceClose();
-    refetchMetrics();
-  };
-  const currentTimeRangeLabel =
-    timeRangeOptions.find((o) => o.value === timeRange)?.label ||
-    i18n.t('monitor.monitor_metrics_page.24_22');
-  const currentServiceLabel =
-    serviceOptions.find((o) => o.value === selectedService)?.label ||
-    i18n.t('monitor.monitor_metrics_page.k23');
-  const handleRefresh = useCallback(() => {
-    refetchMetrics();
-    addNotification({
-      message: i18n.t('monitor.monitor_metrics_page.k24'),
-      type: 'success',
-      duration: 3000,
-    });
-  }, [refetchMetrics, addNotification]);
-  const handleCategoryChange = (_event: React.SyntheticEvent, newValue: MetricCategory) => {
-    setActiveCategory(newValue);
-    refetchMetrics();
-  };
+
+  const historyQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.MONITOR_METRICS_BASE, 'history', toMinutes(timeRange)],
+    queryFn: async () => {
+      const res = await monitorApi.getSystemMetricsHistory(toMinutes(timeRange));
+      return res.success ? res.data : null;
+    },
+    refetchInterval: 30 * 1000,
+    staleTime: 20 * 1000,
+  });
+
+  const loading = systemQuery.isFetching || historyQuery.isFetching;
+  const refetchMetrics = useCallback(() => {
+    void systemQuery.refetch();
+    void historyQuery.refetch();
+  }, [systemQuery, historyQuery]);
+
+  const samples = historyQuery.data?.samples ?? [];
+  const labels = useMemo(() => samples.map((s) => formatTime(s.ts)), [samples]);
+  const cpuSeries = useMemo(() => samples.map((s) => Math.round(s.cpu)), [samples]);
+  const memorySeries = useMemo(() => samples.map((s) => Math.round(s.memory)), [samples]);
+  const diskSeries = useMemo(() => samples.map((s) => Math.round(s.disk)), [samples]);
+  const netSeries = useMemo(
+    () =>
+      samples.map((s, i) => {
+        if (i === 0) return 0;
+        const prev = samples[i - 1];
+        const dt = Math.max(1, s.ts - prev.ts);
+        return Number(
+          (((s.net_in + s.net_out) - (prev.net_in + prev.net_out)) / dt / 1024 / 1024).toFixed(2)
+        );
+      }),
+    [samples]
+  );
+
+  const latest = samples.length > 0 ? samples[samples.length - 1] : null;
+  const metrics = systemQuery.data;
+  const cpu = Math.round(latest?.cpu ?? metrics?.cpu_usage ?? 0);
+  const memory = Math.round(latest?.memory ?? metrics?.memory_usage ?? 0);
+  const disk = Math.round(latest?.disk ?? metrics?.disk_usage ?? 0);
+  const netThroughput = netSeries.length > 0 ? netSeries[netSeries.length - 1] : 0;
+  const hasHistory = samples.length > 1;
+
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'cpu-usage',
-        title: i18n.t('pages.monitor_metrics_page.cpu_0'),
-        value: '68.5',
+        title: i18n.t('pages.monitor_metrics_page.cpu_1'),
+        value: cpu,
         unit: '%',
         icon: <Cpu size={20} />,
-        change: 5.2,
-        changeLabel: i18n.t('monitor.monitor_metrics_page.k25'),
         color: 'warning',
-        progress: 68.5,
+        progress: cpu,
         progressLabel: i18n.t('monitor.monitor_metrics_page.k26'),
-        trend: generateRandomData(12, 50, 85),
+        trend: hasHistory ? cpuSeries.slice(-24) : undefined,
       },
       {
         id: 'memory-usage',
         title: i18n.t('monitor.monitor_metrics_page.k27'),
-        value: '72.3',
+        value: memory,
         unit: '%',
         icon: <Server size={20} />,
-        change: 3.1,
-        changeLabel: i18n.t('monitor.monitor_metrics_page.k28'),
         color: 'warning',
-        progress: 72.3,
+        progress: memory,
         progressLabel: i18n.t('monitor.monitor_metrics_page.k29'),
-        trend: generateRandomData(12, 60, 80),
+        trend: hasHistory ? memorySeries.slice(-24) : undefined,
       },
       {
         id: 'disk-usage',
         title: i18n.t('monitor.monitor_metrics_page.k30'),
-        value: '54.7',
+        value: disk,
         unit: '%',
         icon: <HardDrive size={20} />,
-        change: 1.8,
-        changeLabel: i18n.t('monitor.monitor_metrics_page.k31'),
         color: 'info',
-        progress: 54.7,
+        progress: disk,
         progressLabel: i18n.t('monitor.monitor_metrics_page.k32'),
-        trend: generateRandomData(12, 45, 60),
+        trend: hasHistory ? diskSeries.slice(-24) : undefined,
       },
       {
-        id: 'network-in',
-        title: i18n.t('monitor.monitor_metrics_page.k33'),
-        value: '128',
+        id: 'network-throughput',
+        title: i18n.t('monitor.monitor_metrics_page.k47'),
+        value: netThroughput,
         unit: 'MB/s',
         icon: <Activity size={20} />,
-        change: 12.5,
-        changeLabel: i18n.t('monitor.monitor_metrics_page.k34'),
         color: 'primary',
-        trend: generateRandomData(12, 80, 150),
-      },
-      {
-        id: 'network-out',
-        title: i18n.t('monitor.monitor_metrics_page.k35'),
-        value: '96',
-        unit: 'MB/s',
-        icon: <Network size={20} />,
-        change: 8.3,
-        changeLabel: i18n.t('monitor.monitor_metrics_page.k36'),
-        color: 'secondary',
-        trend: generateRandomData(12, 60, 120),
-      },
-      {
-        id: 'api-qps',
-        title: 'API QPS',
-        value: '2,856',
-        unit: '',
-        icon: <Zap size={20} />,
-        change: 15.6,
-        changeLabel: i18n.t('monitor.monitor_metrics_page.k37'),
-        color: 'success',
-        trend: generateRandomData(12, 2000, 3500),
+        trend: hasHistory ? netSeries.slice(-24) : undefined,
       },
     ],
-    []
+    [cpu, memory, disk, netThroughput, hasHistory, cpuSeries, memorySeries, diskSeries, netSeries]
   );
-  const cpuTrendData = useMemo(
-    () => generateMultiServiceTrendData(timeLabels, getServiceNames().slice(0, 4)),
-    [timeLabels]
-  );
-  const memoryTrendData = useMemo(
-    () => generateMultiServiceTrendData(timeLabels, getServiceNames().slice(0, 4)),
-    [timeLabels]
-  );
-  const diskIOData = useMemo(() => [] as Record<string, string | number>[], []);
-  const networkData = useMemo(() => [] as Record<string, string | number>[], []);
-  const apiRequestData = useMemo(() => [] as Record<string, string | number>[], []);
-  const responseTimeData = useMemo(() => [] as Record<string, string | number>[], []);
-  const charts: ChartCard[] = useMemo(
-    () => [
+
+  const charts: ChartCard[] = useMemo(() => {
+    const trend = (key: string, name: string, arr: number[], color: string) => ({
+      data: labels.map((label, i) => ({ name: label, [key]: arr[i] ?? 0 })),
+      yKeys: [{ key, name, color }],
+    });
+    const cpuTrend = trend('cpu', 'CPU %', cpuSeries, 'primary.main');
+    const memTrend = trend('memory', '内存 %', memorySeries, 'success.main');
+    const diskTrend = trend('disk', '磁盘 %', diskSeries, 'warning.main');
+    const netTrend = trend('net', '网络 MB/s', netSeries, 'secondary.main');
+    return [
       {
         id: 'cpu-trend',
         title: i18n.t('pages.monitor_metrics_page.cpu_1'),
         subtitle: i18n.t('monitor.monitor_metrics_page.cpu_38'),
         chart: (
-          <LazyChart
-            type='line'
-            data={cpuTrendData}
-            xKey='name'
-            yKeys={getServiceNames()
-              .slice(0, 4)
-              .map((name, i) => ({
-                key: name,
-                name,
-                color: ['primary.main', 'success.main', 'warning.main', 'error.main'][i],
-              }))}
-            height={280}
-          />
+          <LazyChart type='line' data={cpuTrend.data} xKey='name' yKeys={cpuTrend.yKeys} height={280} />
         ),
         height: 360,
         type: 'line',
-        onRefresh: handleRefresh,
+        onRefresh: refetchMetrics,
       },
       {
         id: 'memory-trend',
         title: i18n.t('monitor.monitor_metrics_page.k39'),
         subtitle: i18n.t('monitor.monitor_metrics_page.k40'),
         chart: (
-          <LazyChart
-            type='line'
-            data={memoryTrendData}
-            xKey='name'
-            yKeys={getServiceNames()
-              .slice(0, 4)
-              .map((name, i) => ({
-                key: name,
-                name,
-                color: [
-                  'secondary.main',
-                  theme.palette.cyan[500],
-                  theme.palette.pink[500],
-                  'success.main',
-                ][i],
-              }))}
-            height={280}
-          />
+          <LazyChart type='line' data={memTrend.data} xKey='name' yKeys={memTrend.yKeys} height={280} />
         ),
         height: 360,
         type: 'line',
-        onRefresh: handleRefresh,
+        onRefresh: refetchMetrics,
       },
       {
-        id: 'disk-io',
-        title: i18n.t('monitor.monitor_metrics_page.io_41'),
+        id: 'disk-trend',
+        title: i18n.t('monitor.monitor_metrics_page.k30'),
         subtitle: i18n.t('monitor.monitor_metrics_page.k42'),
         chart: (
-          <LazyChart
-            type='area'
-            data={diskIOData}
-            xKey='name'
-            yKeys={[
-              {
-                key: i18n.t('monitor.monitor_metrics_page.k43'),
-                name: i18n.t('monitor.monitor_metrics_page.k44'),
-                color: 'primary.main',
-              },
-              {
-                key: i18n.t('monitor.monitor_metrics_page.k45'),
-                name: i18n.t('monitor.monitor_metrics_page.k46'),
-                color: 'warning.700',
-              },
-            ]}
-            height={280}
-          />
+          <LazyChart type='area' data={diskTrend.data} xKey='name' yKeys={diskTrend.yKeys} height={280} />
         ),
         height: 360,
         type: 'area',
-        onRefresh: handleRefresh,
+        onRefresh: refetchMetrics,
       },
       {
         id: 'network-traffic',
         title: i18n.t('monitor.monitor_metrics_page.k47'),
         subtitle: i18n.t('monitor.monitor_metrics_page.k48'),
         chart: (
-          <LazyChart
-            type='area'
-            data={networkData}
-            xKey='name'
-            yKeys={[
-              {
-                key: i18n.t('monitor.monitor_metrics_page.k49'),
-                name: i18n.t('monitor.monitor_metrics_page.k50'),
-                color: 'success.700',
-              },
-              {
-                key: i18n.t('monitor.monitor_metrics_page.k51'),
-                name: i18n.t('monitor.monitor_metrics_page.k52'),
-                color: 'error.main',
-              },
-            ]}
-            height={280}
-          />
+          <LazyChart type='area' data={netTrend.data} xKey='name' yKeys={netTrend.yKeys} height={280} />
         ),
         height: 360,
         type: 'area',
-        onRefresh: handleRefresh,
+        onRefresh: refetchMetrics,
       },
-      {
-        id: 'api-requests',
-        title: i18n.t('pages.monitor_metrics_page.api_2'),
-        subtitle: i18n.t('monitor.monitor_metrics_page.api_53'),
-        chart: (
-          <LazyChart
-            type='bar'
-            data={apiRequestData}
-            xKey='name'
-            yKey={i18n.t('monitor.monitor_metrics_page.k54')}
-            barRadius={[4, 4, 0, 0]}
-            height={280}
-            cellColors={[
-              'primary.main',
-              'success.main',
-              'warning.main',
-              'error.main',
-              'secondary.main',
-              theme.palette.cyan[500],
-            ]}
-            tooltipFormatter={(value) =>
-              [
-                `${value}${i18n.t('pages.monitor_metrics_page.k3')}`,
-                i18n.t('monitor.monitor_metrics_page.k55'),
-              ] as [string, string]
-            }
-          />
-        ),
-        height: 360,
-        type: 'bar',
-        onRefresh: handleRefresh,
-      },
-      {
-        id: 'response-time',
-        title: i18n.t('monitor.monitor_metrics_page.k56'),
-        subtitle: i18n.t('pages.monitor_metrics_page.k4'),
-        chart: (
-          <LazyChart
-            type='bar'
-            data={responseTimeData}
-            xKey='name'
-            yKeys={[
-              { key: 'P50', name: 'P50', color: 'success.700' },
-              { key: 'P90', name: 'P90', color: 'warning.700' },
-              { key: 'P99', name: 'P99', color: 'error.main' },
-            ]}
-            height={280}
-          />
-        ),
-        height: 360,
-        type: 'bar',
-        onRefresh: handleRefresh,
-      },
-    ],
-    [
-      cpuTrendData,
-      memoryTrendData,
-      diskIOData,
-      networkData,
-      apiRequestData,
-      responseTimeData,
-      handleRefresh,
-    ]
-  );
+    ];
+  }, [cpuSeries, memorySeries, diskSeries, netSeries, labels, refetchMetrics]);
+
+  const currentTimeRangeLabel =
+    timeRangeOptions.find((o) => o.value === timeRange)?.label ?? timeRange;
+
   const headerContent = (
-    <Stack
-      direction='row'
-      spacing={2}
-      sx={{ alignItems: 'center', flexWrap: 'wrap' }}
-    >
+    <Stack direction='row' spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
       <Button
         size='small'
         variant='outlined'
         endIcon={<ChevronDown size={16} />}
-        onClick={handleTimeRangeClick}
+        onClick={(e) => setTimeRangeAnchorEl(e.currentTarget)}
         sx={{ textTransform: 'none' }}
       >
         {currentTimeRangeLabel}
@@ -471,37 +213,16 @@ export const MonitorMetricsPage: React.FC = () => {
       <Menu
         anchorEl={timeRangeAnchorEl}
         open={Boolean(timeRangeAnchorEl)}
-        onClose={handleTimeRangeClose}
+        onClose={() => setTimeRangeAnchorEl(null)}
       >
         {timeRangeOptions.map((option) => (
           <MenuItem
             key={option.value}
             selected={timeRange === option.value}
-            onClick={() => handleTimeRangeSelect(option.value)}
-          >
-            {option.label}
-          </MenuItem>
-        ))}
-      </Menu>
-      <Button
-        size='small'
-        variant='outlined'
-        endIcon={<ChevronDown size={16} />}
-        onClick={handleServiceClick}
-        sx={{ textTransform: 'none' }}
-      >
-        {currentServiceLabel}
-      </Button>
-      <Menu
-        anchorEl={serviceAnchorEl}
-        open={Boolean(serviceAnchorEl)}
-        onClose={handleServiceClose}
-      >
-        {serviceOptions.map((option) => (
-          <MenuItem
-            key={option.value}
-            selected={selectedService === option.value}
-            onClick={() => handleServiceSelect(option.value)}
+            onClick={() => {
+              setTimeRange(option.value);
+              setTimeRangeAnchorEl(null);
+            }}
           >
             {option.label}
           </MenuItem>
@@ -509,34 +230,7 @@ export const MonitorMetricsPage: React.FC = () => {
       </Menu>
     </Stack>
   );
-  const categoryTabs = (
-    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-      <Tabs
-        value={activeCategory}
-        onChange={handleCategoryChange}
-        variant='scrollable'
-        scrollButtons='auto'
-      >
-        {metricCategoryTabs.map((tab) => (
-          <Tab
-            key={tab.value}
-            value={tab.value}
-            label={
-              <Stack
-                direction='row'
-                spacing={1}
-                sx={{ alignItems: 'center' }}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </Stack>
-            }
-            sx={{ minHeight: 48 }}
-          />
-        ))}
-      </Tabs>
-    </Box>
-  );
+
   return (
     <PageContainer
       title={i18n.t('monitor.monitor_metrics_page.k57')}
@@ -553,7 +247,6 @@ export const MonitorMetricsPage: React.FC = () => {
       padding={false}
       maxWidth={false}
     >
-      {categoryTabs}
       <DashboardTemplate
         autoTitle={false}
         title=''
@@ -561,9 +254,10 @@ export const MonitorMetricsPage: React.FC = () => {
         loading={loading}
         stats={stats}
         charts={charts}
-        onRefresh={handleRefresh}
+        onRefresh={refetchMetrics}
       />
     </PageContainer>
   );
 };
+
 export default MonitorMetricsPage;
