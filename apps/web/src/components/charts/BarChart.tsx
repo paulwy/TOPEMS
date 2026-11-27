@@ -8,6 +8,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   Cell,
 } from './_vendors/recharts-cartesian';
@@ -24,6 +25,7 @@ interface BarChartProps {
   barRadius?: number | [number, number, number, number];
   animate?: boolean;
   cellColors?: string[];
+  showLegend?: boolean;
   tooltipFormatter?: (
     value: unknown,
     name: unknown,
@@ -41,6 +43,7 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
   height = 200,
   barRadius = [4, 4, 0, 0],
   cellColors,
+  showLegend = false,
   tooltipFormatter,
 }) => {
   const theme = useTheme();
@@ -78,6 +81,13 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
             }}
             {...(tooltipFormatter ? { formatter: tooltipFormatter as never } : {})}
           />
+          {showLegend && (
+            <Legend
+              verticalAlign='top'
+              align='right'
+              wrapperStyle={{ fontSize: 12, color: chartTheme.textColor }}
+            />
+          )}
           {series.map((item) => (
             <Bar
               key={item.key}

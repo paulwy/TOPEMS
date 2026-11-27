@@ -8,6 +8,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from './_vendors/recharts-cartesian';
 import type { ChartData } from './AreaChart';
@@ -20,6 +21,8 @@ interface LineChartProps {
   yKeys?: { key: string; name: string; color?: string }[];
   color?: string;
   height?: number;
+  /** 两条以上系列时显示图例（默认关闭，保持既有页面观感不变） */
+  showLegend?: boolean;
 }
 
 export const LineChartComponent: React.FC<LineChartProps> = ({
@@ -30,6 +33,7 @@ export const LineChartComponent: React.FC<LineChartProps> = ({
   yKeys,
   color,
   height = 200,
+  showLegend = false,
 }) => {
   const theme = useTheme();
   const chartTheme = useChartTheme();
@@ -65,6 +69,13 @@ export const LineChartComponent: React.FC<LineChartProps> = ({
               padding: 12,
             }}
           />
+          {showLegend && (
+            <Legend
+              verticalAlign='top'
+              align='right'
+              wrapperStyle={{ fontSize: 12, color: chartTheme.textColor }}
+            />
+          )}
           {series.map((item) => {
             const strokeColor = item.color || resolvedColor;
             return (

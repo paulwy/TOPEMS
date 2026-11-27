@@ -15,6 +15,7 @@ export interface BarChartProps extends BaseChartProps {
   xKey?: string;
   yKey?: string;
   yKeys?: { key: string; name: string; color?: string }[];
+  showLegend?: boolean;
   color?: string;
   barRadius?: number | [number, number, number, number];
   animate?: boolean;
@@ -27,6 +28,7 @@ export interface LineChartProps extends BaseChartProps {
   xKey?: string;
   yKey?: string;
   yKeys?: { key: string; name: string; color?: string }[];
+  showLegend?: boolean;
   color?: string;
 }
 

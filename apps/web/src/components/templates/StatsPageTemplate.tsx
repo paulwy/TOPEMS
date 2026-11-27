@@ -236,6 +236,7 @@ const StatsChart: React.FC<StatsChartProps> = ({ chart }) => {
         yKey={prepared.yKeys[0].key}
         yKeys={prepared.yKeys}
         height={height}
+        showLegend={chart.showLegend}
       />
     );
   }
@@ -248,6 +249,7 @@ const StatsChart: React.FC<StatsChartProps> = ({ chart }) => {
       yKey={prepared.yKeys[0].key}
       yKeys={prepared.yKeys}
       height={height}
+      showLegend={chart.showLegend}
     />
   );
 };

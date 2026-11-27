@@ -162,9 +162,10 @@ const CRMSalesForecastPage: React.FC = () => {
 
   const charts = useMemo<ChartConfig[]>(() => {
     // 后端 analytics/forecast 无 target/weighted 第三系列：仅画 predicted vs actual（诚实两线）。
+    // type 直接写本地化系列名：模板把扁平多元组拆成多条系列，图例/悬浮都跟语言走
     const comparisonData = displayForecasts.flatMap((f) => [
-      { name: f.period, value: f.predicted_amount, type: 'predicted' },
-      { name: f.period, value: f.actual_amount || 0, type: 'actual' },
+      { name: f.period, value: f.predicted_amount, type: t('crm.salesForecast.col_predicted') },
+      { name: f.period, value: f.actual_amount || 0, type: t('crm.salesForecast.col_actual') },
     ]);
 
     const confidenceData = displayForecasts.map((f) => ({
@@ -180,6 +181,10 @@ const CRMSalesForecastPage: React.FC = () => {
         dataKey: 'value',
         nameKey: 'name',
         data: comparisonData,
+        // 两条线分色：预测=主色、实际=成功色，避免同色两条线分不清
+        colors: [theme.palette.primary.main, theme.palette.success.main],
+        // 两条系列必须给图例，否则只能靠颜色猜
+        showLegend: true,
         height: 288,
       },
       {
