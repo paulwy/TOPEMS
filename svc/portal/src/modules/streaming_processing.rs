@@ -276,6 +276,8 @@ pub struct BackpressureStats {
     pub total_processed: u64,
     pub avg_queue_depth: f64,
     pub max_queue_depth: u32,
+    /// 快照时刻的实时队列深度（此前算出来后被 `let _ = current_depth;` 丢弃）
+    pub current_queue_depth: u32,
     pub current_utilization: f64,
     pub overflow_events: u64,
 }
@@ -1018,11 +1020,10 @@ impl BackpressureController {
                     total_processed: *total_processed,
                     avg_queue_depth: avg_depth,
                     max_queue_depth: *max_depth,
+                    current_queue_depth: current_depth,
                     current_utilization: current_util,
                     overflow_events: *overflow_events,
                 });
-
-                let _ = current_depth;
             }
         }
 
@@ -1891,6 +1892,7 @@ mod tests {
             total_processed: 10000,
             avg_queue_depth: 250.0,
             max_queue_depth: 8000,
+            current_queue_depth: 320,
             current_utilization: 0.05,
             overflow_events: 2,
         };

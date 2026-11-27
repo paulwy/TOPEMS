@@ -73,6 +73,10 @@ pub async fn create_retirement_plan(
         confirmed_by: None,
         confirmed_at: None,
         executed_at: None,
+        executed_by: None,
+        rolled_back_by: None,
+        rollback_reason: None,
+        rolled_back_at: None,
         rollback_window_days: req.rollback_window_days.unwrap_or(14),
         post_retirement_review_at: None,
     };
@@ -335,18 +339,31 @@ pub async fn execute_retirement_plan(
     ensure_initialized().await;
     let store = get_lifecycle_store();
 
-    let (master_data_id, planned_rollback_window) = {
+    let master_data_id = {
         let mut plans = store.retirement_plans.lock().await;
         let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
             return ApiResponse::not_found("未找到退役计划");
         };
 
+        if !matches!(
+            plan.status,
+            RetirementStatus::Confirmed | RetirementStatus::Executing
+        ) {
+            return ApiResponse::bad_request("当前状态不支持执行退役");
+        }
+
+        let now = chrono::Utc::now();
         plan.status = RetirementStatus::Completed;
-        plan.executed_at = Some(chrono::Utc::now());
+        plan.executed_at = Some(now);
+        // 审计：执行人必须落库，否则退役审计轨迹缺失（此前 req.executed_by 被丢弃）
+        plan.executed_by = Some(
+            req.executed_by
+                .clone()
+                .unwrap_or_else(|| "unknown".to_string()),
+        );
         plan.post_retirement_review_at =
-            Some(chrono::Utc::now() + chrono::Duration::days(plan.rollback_window_days as i64));
-        let _ = req;
-        (plan.master_data_id.clone(), plan.rollback_window_days)
+            Some(now + chrono::Duration::days(plan.rollback_window_days as i64));
+        plan.master_data_id.clone()
     };
 
     // 同步推进实体生命周期阶段到 Sunset
@@ -359,7 +376,6 @@ pub async fn execute_retirement_plan(
 
     let plans = store.retirement_plans.lock().await;
     let p = plans.iter().find(|x| x.id == plan_id).cloned();
-    let _ = planned_rollback_window;
     match p {
         Some(plan) => ApiResponse::success(plan, "退役已执行"),
         None => ApiResponse::server_error("执行失败"),
@@ -397,8 +413,11 @@ pub async fn rollback_retirement_plan(
             return ApiResponse::bad_request("当前状态不支持回滚");
         }
 
+        // 审计：回滚人 / 原因 / 时间必须落库（此前 req.reason、req.rollback_by 被丢弃）
         plan.status = RetirementStatus::RolledBack;
-        let _ = req;
+        plan.rolled_back_by = Some(req.rollback_by.clone());
+        plan.rollback_reason = Some(req.reason.clone());
+        plan.rolled_back_at = Some(chrono::Utc::now());
         plan.master_data_id.clone()
     };
 
@@ -482,10 +501,11 @@ pub async fn cancel_retirement_plan_verb(
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
 
-    let Some(plan) = (match params.plan_id.or(params.id) {
-        Some(id) => plans.iter_mut().find(|p| p.id == id),
-        None => plans.first_mut(),
-    }) else {
+    // 缺 id 时此前会取消计划列表里第一条（任意）计划：GET 预取即可误删计划，必须显式指定
+    let Some(target_id) = params.plan_id.or(params.id) else {
+        return ApiResponse::bad_request("缺少 plan_id，拒绝按默认计划取消退役");
+    };
+    let Some(plan) = plans.iter_mut().find(|p| p.id == target_id) else {
         return ApiResponse::not_found("未找到退役计划");
     };
 
@@ -517,12 +537,19 @@ pub async fn rollback_retirement_plan_verb(
         .or(params.plan_id)
         .or(params.id);
 
+    // 审计：verb 别名同样要记录回滚人 / 原因，不能只改状态
+    let rollback_by = payload_first_str(&payload, &["rollback_by", "rollbackBy", "operator"]);
+    let rollback_reason =
+        payload_first_str(&payload, &["reason", "rollback_reason", "rollbackReason"]);
+
+    // 缺 id 时此前会回滚计划列表里第一条（任意）计划，必须显式指定目标
+    let Some(target_id) = id else {
+        return ApiResponse::bad_request("缺少 plan_id，拒绝按默认计划回滚退役");
+    };
+
     let (plan_id, master_data_id) = {
         let mut plans = store.retirement_plans.lock().await;
-        let Some(plan) = (match id {
-            Some(id) => plans.iter_mut().find(|p| p.id == id),
-            None => plans.first_mut(),
-        }) else {
+        let Some(plan) = plans.iter_mut().find(|p| p.id == target_id) else {
             return ApiResponse::not_found("未找到退役计划");
         };
 
@@ -534,6 +561,13 @@ pub async fn rollback_retirement_plan_verb(
         }
 
         plan.status = RetirementStatus::RolledBack;
+        plan.rolled_back_by = Some(rollback_by.clone().unwrap_or_else(|| "unknown".to_string()));
+        plan.rollback_reason = Some(
+            rollback_reason
+                .clone()
+                .unwrap_or_else(|| "未填写原因".to_string()),
+        );
+        plan.rolled_back_at = Some(chrono::Utc::now());
         (plan.id.clone(), plan.master_data_id.clone())
     };
 

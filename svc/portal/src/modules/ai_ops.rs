@@ -549,6 +549,8 @@ impl RecoveryPlan {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthSummary {
     pub total_checks: u64,
+    /// 参与统计的去重服务数（此前 total_services 算完即被丢弃，汇总里看不到分母）
+    pub total_services: u64,
     pub healthy_services: u64,
     pub degraded_services: u64,
     pub unhealthy_services: u64,
@@ -1224,10 +1226,9 @@ impl SelfHealingEngine {
             .filter(|p| p.status == RecoveryStatus::InProgress)
             .count() as u64;
 
-        let _ = total_services;
-
         HealthSummary {
             total_checks,
+            total_services,
             healthy_services: healthy,
             degraded_services: degraded,
             unhealthy_services: unhealthy,
@@ -2187,6 +2188,7 @@ mod tests {
     fn health_summary_roundtrip() {
         let s = HealthSummary {
             total_checks: 10,
+            total_services: 10,
             healthy_services: 8,
             degraded_services: 1,
             unhealthy_services: 1,

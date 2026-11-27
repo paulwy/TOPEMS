@@ -565,7 +565,7 @@ pub fn record_discovered_query(
                     query.auto_approved = true;
                     query.reviewed_at = Some(now);
                     add_to_whitelist(query_hash.to_string());
-                    let _ = query;
+                    // 借用在此结束，直接释放锁即可（此前用 `let _ = query;` 占位）
                     drop(queries);
                     tracing::info!(
                         "[graphql-ops] 查询自动审批通过: hash={}, name={}",
