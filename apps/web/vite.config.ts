@@ -600,6 +600,15 @@ function topemsRechartsSplitPlugin(): Plugin {
         { test: /[\\/]node_modules[\\/]lucide-react[\\/]/, name: 'lucide-vendor' },
       ];
 
+      // V85-202611: 路由配置表合并。
+      // 登录后 getAllRoutes 要遍历 37 个模块，每个模块单独一个 config-*.js：
+      // 37 个小 chunk（合计 568KB raw / ~150KB gz）经 CF 隧道逐跳 500ms，
+      // 是首屏十几秒的主要来源之一。合并成单个 route-configs chunk 后，
+      // 一次请求拿到全部路由表；体积仍远低于 1500KB 告警线。
+      const appGroups = [
+        { test: /[\\/]src[\\/]module-configs[\\/]/, name: 'route-configs' },
+      ];
+
       const rechartsGroups = [
         { test: /recharts[^/]*[\\/]es6[\\/]polar[\\/]/, name: 'recharts-polar' },
         { test: /recharts[^/]*[\\/]es6[\\/]cartesian[\\/]/, name: 'recharts-cartesian' },
@@ -632,7 +641,7 @@ function topemsRechartsSplitPlugin(): Plugin {
       // i18n JSON 已通过 lazy import.meta.glob 自动按语言拆分为独立 chunk，无需手动分组
       result.codeSplitting = {
         ...(opts?.codeSplitting || {}),
-        groups: [...existingGroups, ...vendorGroups, ...rechartsGroups],
+        groups: [...existingGroups, ...appGroups, ...vendorGroups, ...rechartsGroups],
       };
       // 防御性清理：任何残留 advancedChunks 均移除（Vite 8.1.5 报 invalid key）
       if ('advancedChunks' in result) delete result.advancedChunks;

@@ -162,6 +162,37 @@ export async function loadModuleConfig(moduleCode: string): Promise<RouteModuleC
   return promise;
 }
 
+/**
+ * 并发受限地批量加载模块配置。
+ *
+ * 历史实现是「for + await」，37 个模块 × 6 个 i18n 命名空间串成一条长链：
+ * 每个模块要等自己的命名空间 + config chunk 落地才轮到下一个，经 CF 隧道
+ * 每跳约 500ms，整条链十几秒（实测 /crm/sales-funnel 首屏 15.9s，其中业务
+ * API 只占 1–3s）。改成有限并发：默认 6 路，既能压平串行等待，又不会把
+ * 上百个 chunk 一次性打满出口带宽。
+ */
+async function loadModuleConfigsInParallel(
+  moduleCodes: string[],
+  concurrency = 6
+): Promise<Array<{ code: string; config?: RouteModuleConfig; error?: unknown }>> {
+  const results: Array<{ code: string; config?: RouteModuleConfig; error?: unknown }> = [];
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(concurrency, moduleCodes.length) }, async () => {
+    while (cursor < moduleCodes.length) {
+      const index = cursor++;
+      const code = moduleCodes[index];
+      try {
+        const config = await loadModuleConfig(code);
+        results[index] = { code, config };
+      } catch (error) {
+        results[index] = { code, error };
+      }
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 export async function getAllRoutes(): Promise<RouteConfigV2[]> {
   const allRoutes: RouteConfigV2[] = [];
 
@@ -169,24 +200,27 @@ export async function getAllRoutes(): Promise<RouteConfigV2[]> {
     await pluginManager.initialize();
     const activePlugins = pluginManager.getActivePlugins();
 
-    for (const plugin of activePlugins) {
-      try {
-        const moduleConfig = await loadModuleConfig(plugin.code);
-        allRoutes.push(...flattenRoutes(moduleConfig.routes));
-      } catch (e) {
-        apiLogger.warn(`Failed to load routes for active plugin: ${plugin.code}`, e);
+    // 并行加载：原串行 for-await 是首屏十几秒的主因（每模块 ~2 次往返叠加）
+    const loaded = await loadModuleConfigsInParallel(
+      activePlugins.map((plugin) => plugin.code)
+    );
+    for (const item of loaded) {
+      if (item.error) {
+        apiLogger.warn(`Failed to load routes for active plugin: ${item.code}`, item.error);
+        continue;
       }
+      if (item.config) allRoutes.push(...flattenRoutes(item.config.routes));
     }
   } catch (e) {
     apiLogger.warn('PluginManager not initialized, falling back to loading all modules', e);
 
-    for (const moduleCode of Object.keys(moduleImports)) {
-      try {
-        const moduleConfig = await loadModuleConfig(moduleCode);
-        allRoutes.push(...flattenRoutes(moduleConfig.routes));
-      } catch (e) {
-        apiLogger.error(`Failed to load module routes: ${moduleCode}`, e);
+    const loaded = await loadModuleConfigsInParallel(Object.keys(moduleImports));
+    for (const item of loaded) {
+      if (item.error) {
+        apiLogger.error(`Failed to load module routes: ${item.code}`, item.error);
+        continue;
       }
+      if (item.config) allRoutes.push(...flattenRoutes(item.config.routes));
     }
   }
 
@@ -214,13 +248,15 @@ export async function getActiveModuleConfigs(): Promise<RouteModuleConfig[]> {
     await pluginManager.initialize();
     const activePlugins = pluginManager.getActivePlugins();
 
-    for (const plugin of activePlugins) {
-      try {
-        const moduleConfig = await loadModuleConfig(plugin.code);
-        configs.push(moduleConfig);
-      } catch (e) {
-        apiLogger.warn(`Failed to load config for active plugin: ${plugin.code}`, e);
+    const loaded = await loadModuleConfigsInParallel(
+      activePlugins.map((plugin) => plugin.code)
+    );
+    for (const item of loaded) {
+      if (item.error) {
+        apiLogger.warn(`Failed to load config for active plugin: ${item.code}`, item.error);
+        continue;
       }
+      if (item.config) configs.push(item.config);
     }
   } catch (e) {
     apiLogger.warn('Failed to get active module configs', e);
