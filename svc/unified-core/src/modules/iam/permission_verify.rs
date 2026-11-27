@@ -235,6 +235,13 @@ pub struct CheckResourcePermissionRequest {
     pub action: String,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/permissions/check-resource",
+    tag = "Core-IAM",
+    responses((status = 200, description = "Core permissions/check-resource POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn check_resource_permission(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

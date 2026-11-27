@@ -180,6 +180,13 @@ pub async fn get_group(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/menu/groups",
+    tag = "Core-Menu",
+    responses((status = 200, description = "Core menu/groups POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_group(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -239,6 +246,16 @@ pub async fn create_group(
     api_success(group)
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/menu/groups/{id}",
+    tag = "Core-Menu",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core menu/groups/{id} PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_group(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -358,6 +375,16 @@ pub async fn update_group(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/menu/groups/{id}",
+    tag = "Core-Menu",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core menu/groups/{id} DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_group(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -563,6 +590,13 @@ pub async fn get_menu(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/menu/menus",
+    tag = "Core-Menu",
+    responses((status = 200, description = "Core menu/menus POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_menu(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -626,6 +660,16 @@ pub async fn create_menu(
     api_success(menu)
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/menu/menus/{id}",
+    tag = "Core-Menu",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core menu/menus/{id} PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_menu(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -753,6 +797,16 @@ pub async fn update_menu(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/menu/menus/{id}",
+    tag = "Core-Menu",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core menu/menus/{id} DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_menu(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -933,6 +987,13 @@ fn menu_etag(payload: &[u8]) -> String {
     format!("W/\"{:016x}\"", hasher.finish())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/menus",
+    tag = "Core-Menu",
+    responses((status = 200, description = "当前用户菜单树"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn my_menu_tree(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

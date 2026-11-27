@@ -215,6 +215,13 @@ pub struct RunLogQueryParams {
 
 // ─── Rules handlers ───────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/rules GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_rules(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -287,6 +294,16 @@ pub async fn list_rules(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules/{id}",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/rules/{id} GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -323,6 +340,16 @@ pub async fn get_rule(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules/by-code/{code}",
+    tag = "Core-Automation",
+    params(
+        ("code" = String, Path, description = "code"),
+    ),
+    responses((status = 200, description = "Core automation/rules/by-code/{code} GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_rule_by_code(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -359,6 +386,13 @@ pub async fn get_rule_by_code(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/rules POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -417,6 +451,16 @@ pub async fn create_rule(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules/{id}",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/rules/{id} PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -487,6 +531,16 @@ pub async fn update_rule(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules/{id}",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/rules/{id} DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -536,6 +590,16 @@ pub async fn delete_rule(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules/{id}/enable",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/rules/{id}/enable POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn enable_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -544,6 +608,16 @@ pub async fn enable_rule(
     set_rule_status(state, txn_arc, id, "enabled", "启用成功", "启用规则失败").await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules/{id}/disable",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/rules/{id}/disable POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn disable_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -607,6 +681,16 @@ async fn set_rule_status(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules/{id}/duplicate",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/rules/{id}/duplicate POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn duplicate_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -661,6 +745,16 @@ pub async fn duplicate_rule(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/rules/{id}/trigger",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/rules/{id}/trigger POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn trigger_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -734,6 +828,13 @@ pub async fn trigger_rule(
 
 // ─── Runs handlers ────────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/runs",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/runs GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_runs(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -809,6 +910,16 @@ pub async fn list_runs(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/runs/{id}",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/runs/{id} GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_run(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -847,6 +958,16 @@ pub async fn get_run(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/runs/{id}/retry",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/runs/{id}/retry POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn retry_run(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -907,6 +1028,16 @@ pub async fn retry_run(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/runs/{id}/cancel",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/runs/{id}/cancel POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn cancel_run(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -961,6 +1092,16 @@ pub async fn cancel_run(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/runs/{id}/steps",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/runs/{id}/steps GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_run_steps(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -998,6 +1139,16 @@ pub async fn get_run_steps(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/runs/{id}/logs",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core automation/runs/{id}/logs GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_run_logs(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1048,6 +1199,17 @@ pub async fn get_run_logs(
 /// 双段日志路径兼容：/automation/runs/{id}/logs/{log_id}。
 /// 运行日志为整段文本、当前无独立"日志条目"维度，log_id 暂忽略，复用 get_run_logs 按 run_id
 /// 返回（待上游支持按 log_id 取条目）。避免该路径落到 BFF catch-all 裸 404。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/runs/{id}/logs/{log_id}",
+    tag = "Core-Automation",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("log_id" = String, Path, description = "log_id"),
+    ),
+    responses((status = 200, description = "Core automation/runs/{id}/logs/{log_id} GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_run_log_by_id(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1063,6 +1225,13 @@ pub async fn get_run_log_by_id(
     .await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/runs/purge",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/runs/purge POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn purge_runs(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1105,6 +1274,13 @@ pub async fn purge_runs(
 
 // ─── Variables handlers ───────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/variables",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/variables GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_variables(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1188,6 +1364,16 @@ pub async fn list_variables(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/variables/{key}",
+    tag = "Core-Automation",
+    params(
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "Core automation/variables/{key} GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1230,6 +1416,13 @@ pub async fn get_variable(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/variables",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/variables POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1292,6 +1485,16 @@ pub async fn create_variable(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/automation/variables/{key}",
+    tag = "Core-Automation",
+    params(
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "Core automation/variables/{key} PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1359,6 +1562,16 @@ pub async fn update_variable(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/automation/variables/{key}",
+    tag = "Core-Automation",
+    params(
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "Core automation/variables/{key} DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1412,6 +1625,16 @@ pub async fn delete_variable(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/variables/{key}/reveal",
+    tag = "Core-Automation",
+    params(
+        ("key" = String, Path, description = "key"),
+    ),
+    responses((status = 200, description = "Core automation/variables/{key}/reveal GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn reveal_variable(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1451,6 +1674,13 @@ pub async fn reveal_variable(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/variables/bulk-import",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/variables/bulk-import POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn bulk_import_variables(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1516,6 +1746,13 @@ pub async fn bulk_import_variables(
 // ─── Dashboard handlers ───────────────────────────────────────────────────────
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/dashboard",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/dashboard GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_dashboard_stats(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1623,12 +1860,26 @@ pub async fn get_dashboard_stats(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/health",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/health GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn health_check() -> ApiResponse<String> {
     ApiResponse::success("ok".to_string(), "服务正常")
 }
 
 // ─── Designer handlers ────────────────────────────────────────────────────────
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/designer/schema",
+    tag = "Core-Automation",
+    responses((status = 200, description = "Core automation/designer/schema GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_designer_resources() -> ApiResponse<DesignerResources> {
     let triggers = vec![
         ResourceItem {
@@ -1699,6 +1950,16 @@ pub async fn get_designer_resources() -> ApiResponse<DesignerResources> {
     ApiResponse::success(DesignerResources { triggers, actions }, "查询成功")
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/automation/designer/canvas/{rule_id}",
+    tag = "Core-Automation",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "Core automation/designer/canvas/{rule_id} GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_designer_canvas(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1741,6 +2002,16 @@ pub async fn get_designer_canvas(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/automation/designer/canvas/{rule_id}",
+    tag = "Core-Automation",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "Core automation/designer/canvas/{rule_id} PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn save_designer_canvas(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1795,6 +2066,16 @@ pub async fn save_designer_canvas(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/designer/canvas/{rule_id}/validate",
+    tag = "Core-Automation",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "Core automation/designer/canvas/{rule_id}/validate POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn validate_canvas(
     State(_state): State<AppState>,
     Path(_rule_id): Path<String>,
@@ -1803,6 +2084,16 @@ pub async fn validate_canvas(
     ApiResponse::success(serde_json::json!({"valid": true, "errors": []}), "校验通过")
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/designer/canvas/{rule_id}/sync-to-rule",
+    tag = "Core-Automation",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "Core automation/designer/canvas/{rule_id}/sync-to-rule POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn sync_to_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1858,6 +2149,16 @@ pub async fn sync_to_rule(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/automation/designer/canvas/{rule_id}/sync-from-rule",
+    tag = "Core-Automation",
+    params(
+        ("rule_id" = String, Path, description = "rule_id"),
+    ),
+    responses((status = 200, description = "Core automation/designer/canvas/{rule_id}/sync-from-rule POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn sync_from_rule(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

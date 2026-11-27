@@ -24,6 +24,13 @@ pub struct CheckUsernameQuery {
 }
 
 /// GET /users/check-email?email=xxx — 检查邮箱可用性
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/check-email",
+    tag = "Core-IAM",
+    responses((status = 200, description = "Core users/check-email GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn check_email_availability(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -120,6 +127,13 @@ pub async fn check_email_availability(
 }
 
 /// GET /users/check-username?username=xxx — 检查用户名可用性
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/check-username",
+    tag = "Core-IAM",
+    responses((status = 200, description = "Core users/check-username GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn check_username_availability(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

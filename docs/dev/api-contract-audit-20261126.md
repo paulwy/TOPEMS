@@ -319,3 +319,49 @@ DB_TOTAL_CONNECTION_BUDGET=186
 | core 命中 | 56 | **135** |
 
 tenant 簇从 77 → **0**（POST export 也已补齐）。core 剩余 101 条的分布：`/api/core/*` 29（前端模板串无法静态解析）、system 23、iam 12、automation 8、menu 6、comments/favorites/file/flow 各 4、audit 3 等。
+
+---
+
+## 第十七轮（2026-11-27）：automation 零注解模块 + IAM 细分 + menu 写操作
+
+### automation：又一个"有路由、零注解"模块
+
+`routes/automation.rs` 有 35 条路由、`modules/automation/mod.rs` 有 33 个 handler，`modules/openapi.rs` 零登记 → spec 里 `/api/core/automation` 一条都没有。做法与 tenant 轮一致：按路由表反推，给 33 个 handler 补 `#[utoipa::path]`（tag `Core-Automation`），登记进 `paths(...)`。
+
+同轮补齐 IAM 细分 16 条（check-email / check-username / positions / user-permissions / check-resource / permissions/metadata 等）与 menu 6 条写操作 + `my_menu_tree`。
+
+### 踩坑：注解路径必须写"真实挂载路径"
+
+首版 iam 注解照 `routes/iam.rs` 的相对路径写成 `/positions`、`/users/check-email`，生成的 spec 落在 `/api/core/positions`、`/api/core/users/check-email`。curl 实测：
+
+| 路径 | 状态 |
+| --- | --- |
+| `/api/core/positions` | **404** |
+| `/api/core/iam/positions` | 200 |
+| `/api/core/users/check-email` | 404 |
+| `/api/core/iam/users/check-email` | 200 |
+
+`iam_routes(state)` 虽然 merge 在 core 根，但路由内部挂在 `/iam` 下（唯一例外是 `/iam/permissions/metadata` 由 `routes/mod.rs` 直接挂）。修正为统一 `/iam` 前缀后重新干跑，错误路径消失。
+
+### 踩坑：干跑 diff 只能"路径级"，同路径新方法会漏
+
+第一次合并只取了 `set(gen) - set(base)` 的**新路径**，结果 menu 写操作（`POST /api/core/menu/groups`、`PUT/DELETE /api/core/menu/groups/{id}`、menus 同构）虽然已在 gen 里，但路径本身早已存在（只有 GET），被我整条跳过。改为**按 path × method 取并集**，补进 7 个方法。
+
+### 别名路径
+
+`get_dashboard_stats` 同时挂 `/automation/dashboard` 与 `/automation/dashboard/stats`，`get_designer_resources` 同时挂 `/automation/designer/schema` 与 `/automation/designer/resources`；一个 handler 只能有一个 `#[utoipa::path]`，第二条路径用克隆同 operationId 的 path item 补进 spec（共 2 条）。
+
+同时删掉 8 条已被后端改名/下线的陈旧路径（实测 404）：`occupational-health/exam-plans|exam-records`（4 条，已改名 `check-plans|check-records`）、`communication/notification/channels`（2 条，已改名 `push-config/channels`）、`communication/notify/list`（1 条，已改名 `notification/notify/list`）、`/api/core/users`（1 条，真实为 `/api/core/iam/users`）。
+
+### 数字
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2578 | **2620** |
+| 契约匹配 | 2722 | **2784** |
+| core 缺口 | 101 | **84** |
+| core 命中 | 135 | **152** |
+
+新增端点实测（全部 200）：`/api/core/automation/dashboard/stats`、`/health`、`/rules`、`/designer/resources`、`/api/core/iam/positions`、`/iam/users/check-email`、`/iam/user-permissions/me`、`/api/core/menus`。
+
+core 剩余 84 条：`/api/core/*` 模板串 27（前端拼串，静态无法解析）、system 20（其中 10 条是已 `X-Stub` 显形的桩，刻意不进 spec）、comments/favorites 9、menu 6（本轮方法已并入，待重编译生效）、file 4、automation 3（前端 POST vs 后端仅 GET）、iam 3、mdm 3、flow 3 等。

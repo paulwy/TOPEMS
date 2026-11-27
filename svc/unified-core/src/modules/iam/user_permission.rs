@@ -29,6 +29,16 @@ struct UserPermissionResponse {
     category: String,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/user-permissions/{user_id}",
+    tag = "Core-IAM",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+    ),
+    responses((status = 200, description = "Core user-permissions/{user_id} GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_user_permissions(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -172,6 +182,16 @@ pub async fn get_user_permissions(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/iam/user-permissions/{user_id}",
+    tag = "Core-IAM",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+    ),
+    responses((status = 200, description = "Core user-permissions/{user_id} PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_user_permissions(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -93,6 +93,13 @@ pub async fn list_positions(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/positions",
+    tag = "Core-IAM",
+    responses((status = 200, description = "Core positions POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_position(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -191,6 +198,16 @@ pub async fn create_position(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/positions/{id}",
+    tag = "Core-IAM",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core positions/{id} GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_position(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -290,6 +307,16 @@ pub async fn get_position(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/iam/positions/{id}",
+    tag = "Core-IAM",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core positions/{id} PUT"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn update_position(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -462,6 +489,16 @@ pub async fn update_position(
     get_position(State(state), Extension(txn_arc), Path(id)).await
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/iam/positions/{id}",
+    tag = "Core-IAM",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "Core positions/{id} DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn delete_position(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -22,6 +22,13 @@ pub struct PermissionMetadataItem {
     pub service: String,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/permissions/metadata",
+    tag = "Core-IAM",
+    responses((status = 200, description = "Core iam/permissions/metadata GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_permission_metadata(
     State(state): State<AppState>,
 ) -> Json<PermissionMetadataResponse> {

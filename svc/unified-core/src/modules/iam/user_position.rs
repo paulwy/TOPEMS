@@ -38,6 +38,16 @@ fn user_positions_response(rows: Vec<sqlx::postgres::PgRow>) -> Json<serde_json:
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{user_id}/positions",
+    tag = "Core-IAM",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+    ),
+    responses((status = 200, description = "Core users/{user_id}/positions GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_user_positions(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -88,6 +98,16 @@ pub async fn get_user_positions(
     user_positions_response(rows)
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{user_id}/positions",
+    tag = "Core-IAM",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+    ),
+    responses((status = 200, description = "Core users/{user_id}/positions POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn assign_position(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -164,6 +184,13 @@ pub async fn assign_position(
     user_positions_response(rows)
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/batch-positions",
+    tag = "Core-IAM",
+    responses((status = 200, description = "Core users/batch-positions POST"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn batch_assign_positions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -222,6 +249,17 @@ pub async fn batch_assign_positions(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/iam/users/{user_id}/positions/{position_id}",
+    tag = "Core-IAM",
+    params(
+        ("user_id" = String, Path, description = "user_id"),
+        ("position_id" = String, Path, description = "position_id"),
+    ),
+    responses((status = 200, description = "Core users/{user_id}/positions/{position_id} DELETE"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn unassign_position(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -279,6 +317,16 @@ pub async fn unassign_position(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/iam/positions/{position_id}/users",
+    tag = "Core-IAM",
+    params(
+        ("position_id" = String, Path, description = "position_id"),
+    ),
+    responses((status = 200, description = "Core positions/{position_id}/users GET"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_position_users(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
