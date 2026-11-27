@@ -21128,6 +21128,21 @@ ALTER TABLE ONLY mobile.mobile_tasks FORCE ROW LEVEL SECURITY;
 -- Name: mobile_users; Type: TABLE; Schema: mobile; Owner: -
 --
 
+CREATE TABLE mobile.user_settings (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL,
+    user_id uuid NOT NULL,
+    language character varying(20) DEFAULT 'zh-CN'::character varying NOT NULL,
+    theme character varying(20) DEFAULT 'light'::character varying NOT NULL,
+    notification_enabled boolean DEFAULT true NOT NULL,
+    sound_enabled boolean DEFAULT true NOT NULL,
+    auto_sync boolean DEFAULT true NOT NULL,
+    sync_interval integer DEFAULT 15 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
 CREATE TABLE mobile.mobile_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     deleted_at timestamp with time zone,
