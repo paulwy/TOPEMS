@@ -107,6 +107,31 @@ const notificationDetailRoute: RouteConfigV2<NotificationDetailPageProps> = {
   action: 'read',
 };
 
+/**
+ * 消息模板页（2026-11-27 修复路由碰撞）。
+ *
+ * 此前只摘了菜单入口，路由也没注册，导致 `/notification/templates` 被
+ * `/notification/:id` 动态段当作通知 id="templates" 吞掉，进而
+ * GET /api/communication/notification/notifications/templates → 后端按 UUID 解析失败返回 400。
+ * 静态路径必须排在动态段之前注册；后端 /notification-templates 早已实现（200），页面可直接用。
+ * 侧栏入口继续保持关闭（属配置类能力，避免主菜单膨胀）。
+ */
+const notificationTemplatesRoute: RouteConfigV2 = {
+  path: NOTIFICATION_PATHS.templates,
+  element: lazyWithRetry(
+    () => import('@/components/notification/NotificationTemplatesPage'),
+    'NotificationTemplatesPage'
+  ),
+  module: 'notification',
+  code: 'notification-templates',
+  title: i18n.t('notification.nav.notification-templates'),
+  titleKey: 'notification.nav.notification-templates',
+  template: 'list',
+  group: 'setting',
+  requiredPermissions: ['notification:dashboard:read'],
+  action: 'read',
+};
+
 const notificationCenterRoute: RouteConfigV2<NotificationCenterPageProps> = {
   path: NOTIFICATION_PATHS.center,
   element: lazyWithRetry(
@@ -139,7 +164,8 @@ const notificationStatsRoute: RouteConfigV2<NotificationStatsPageProps> = {
   action: 'read',
 };
 
-// 未启用：notification-templates / notification-settings。
+// 未启用：notification-settings。
+// （notification-templates 已于 2026-11-27 恢复路由，见 notificationTemplatesRoute）
 // 这两页的数据源（模板 CRUD、通道/偏好/订阅/Webhook 等）在后端没有实现，
 // 页面会以空表或错误态呈现，先摘掉入口止血，缺口清单见
 // docs/frontend/notification-contract-gap-20261126.md。
@@ -161,6 +187,8 @@ export const notificationModuleConfig: RouteModuleConfig = {
     notificationDashboardRoute,
     notificationListRoute,
     notificationArchiveRoute,
+    // 静态段先于 /notification/:id，避免 "templates" 被当作通知 id
+    notificationTemplatesRoute,
     notificationDetailRoute,
     notificationCenterRoute,
     notificationStatsRoute,

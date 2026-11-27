@@ -12,8 +12,6 @@ pub struct CreatePositionRequest {
     pub name: String,
     pub department_id: Option<Uuid>,
     pub description: Option<String>,
-    pub permissions: Vec<String>,
-    pub role_ids: Vec<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -21,8 +19,6 @@ pub struct UpdatePositionRequest {
     pub name: Option<String>,
     pub department_id: Option<Uuid>,
     pub description: Option<String>,
-    pub permissions: Option<Vec<String>>,
-    pub role_ids: Option<Vec<Uuid>>,
 }
 
 #[utoipa::path(
@@ -147,42 +143,6 @@ pub async fn create_position(
         return Json(topems_shared_core::response::error_value(500, "创建岗位失败"));
     }
 
-    for perm in &req.permissions {
-        if let Err(e) = sqlx::query(
-            r#"INSERT INTO iam.position_permissions (position_id, permission, tenant_id) VALUES ($1, $2, $3)"#,
-        )
-        .bind(position_id)
-        .bind(perm)
-        .bind(tenant_id)
-        .execute(&mut scope)
-        .await
-        {
-            tracing::error!("写入岗位权限失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "创建岗位权限失败",
-            ));
-        }
-    }
-
-    for role_id in &req.role_ids {
-        if let Err(e) = sqlx::query(
-            r#"INSERT INTO iam.position_roles (position_id, role_id, tenant_id) VALUES ($1, $2, $3)"#,
-        )
-        .bind(position_id)
-        .bind(role_id)
-        .bind(tenant_id)
-        .execute(&mut scope)
-        .await
-        {
-            tracing::error!("写入岗位角色失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "创建岗位角色失败",
-            ));
-        }
-    }
-
     Json(serde_json::json!({
         "success": true,
         "data": {
@@ -191,8 +151,6 @@ pub async fn create_position(
             "name": req.name,
             "department_id": req.department_id,
             "description": req.description,
-            "permissions": req.permissions,
-            "roles": req.role_ids,
         },
         "code": 201,
     }))
@@ -253,45 +211,6 @@ pub async fn get_position(
         None => return Json(topems_shared_core::response::error_value(404, "岗位不存在")),
     };
 
-    let permissions = match sqlx::query(
-        r#"SELECT permission FROM iam.position_permissions WHERE position_id = $1"#,
-    )
-    .bind(id)
-    .fetch_all(&mut scope)
-    .await
-    {
-        Ok(r) => r
-            .into_iter()
-            .map(|r| r.get::<String, _>("permission"))
-            .collect::<Vec<String>>(),
-        Err(e) => {
-            tracing::error!("查询岗位权限失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "查询岗位权限失败",
-            ));
-        }
-    };
-
-    let roles =
-        match sqlx::query(r#"SELECT role_id FROM iam.position_roles WHERE position_id = $1"#)
-            .bind(id)
-            .fetch_all(&mut scope)
-            .await
-        {
-            Ok(r) => r
-                .into_iter()
-                .map(|r| r.get::<uuid::Uuid, _>("role_id"))
-                .collect::<Vec<Uuid>>(),
-            Err(e) => {
-                tracing::error!("查询岗位角色失败: {}", e);
-                return Json(topems_shared_core::response::error_value(
-                    500,
-                    "查询岗位角色失败",
-                ));
-            }
-        };
-
     Json(serde_json::json!({
         "success": true,
         "data": {
@@ -300,8 +219,6 @@ pub async fn get_position(
             "name": p.get::<String, _>("name"),
             "department_id": p.get::<Option<uuid::Uuid>, _>("department_id"),
             "description": p.get::<Option<String>, _>("description"),
-            "permissions": permissions,
-            "roles": roles,
         },
         "code": 200,
     }))
@@ -319,17 +236,11 @@ pub async fn get_position(
 )]
 pub async fn update_position(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePositionRequest>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil);
-
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return Json(topems_shared_core::response::error_value(
@@ -410,76 +321,6 @@ pub async fn update_position(
                 500,
                 "更新岗位失败",
             ));
-        }
-    }
-
-    if let Some(permissions) = &req.permissions {
-        if let Err(e) = sqlx::query(
-            r#"DELETE FROM iam.position_permissions WHERE position_id = $1 AND tenant_id = $2"#,
-        )
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&mut scope)
-        .await
-        {
-            tracing::error!("清理岗位权限失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "更新岗位权限失败",
-            ));
-        }
-
-        for perm in permissions {
-            if let Err(e) = sqlx::query(
-                r#"INSERT INTO iam.position_permissions (position_id, permission, tenant_id) VALUES ($1, $2, $3)"#,
-            )
-            .bind(id)
-            .bind(perm)
-            .bind(tenant_id)
-            .execute(&mut scope)
-            .await
-            {
-                tracing::error!("写入岗位权限失败: {}", e);
-                return Json(topems_shared_core::response::error_value(
-                    500,
-                    "更新岗位权限失败",
-                ));
-            }
-        }
-    }
-
-    if let Some(role_ids) = &req.role_ids {
-        if let Err(e) = sqlx::query(
-            r#"DELETE FROM iam.position_roles WHERE position_id = $1 AND tenant_id = $2"#,
-        )
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&mut scope)
-        .await
-        {
-            tracing::error!("清理岗位角色失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "更新岗位角色失败",
-            ));
-        }
-
-        for role_id in role_ids {
-            if let Err(e) = sqlx::query(
-                r#"INSERT INTO iam.position_roles (position_id, role_id, tenant_id) VALUES ($1, $2, $3)"#,
-            )
-            .bind(id)
-            .bind(role_id)
-            .bind(tenant_id)
-            .execute(&mut scope)
-            .await
-            {
-                tracing::error!("写入岗位角色失败: {}", e);
-                return Json(topems_shared_core::response::error_value(
-                    500,
-                    "更新岗位角色失败",
-                ));
-            }
         }
     }
 
@@ -572,29 +413,23 @@ mod tests {
             "code": "ENGINEER",
             "name": "工程师",
             "department_id": "550e8400-e29b-41d4-a716-446655440000",
-            "description": "负责软件开发",
-            "permissions": ["crm:customers_read", "crm:customers_write"],
-            "role_ids": ["660e8400-e29b-41d4-a716-446655440001"]
+            "description": "负责软件开发"
         }"#;
         let req: CreatePositionRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.code, "ENGINEER");
         assert_eq!(req.name, "工程师");
         assert!(req.department_id.is_some());
         assert_eq!(req.description.as_deref(), Some("负责软件开发"));
-        assert_eq!(req.permissions.len(), 2);
-        assert_eq!(req.role_ids.len(), 1);
     }
 
     #[test]
     fn test_create_position_request_minimal() {
-        let json = r#"{"code": "MANAGER", "name": "经理", "permissions": [], "role_ids": []}"#;
+        let json = r#"{"code": "MANAGER", "name": "经理"}"#;
         let req: CreatePositionRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.code, "MANAGER");
         assert_eq!(req.name, "经理");
         assert!(req.department_id.is_none());
         assert!(req.description.is_none());
-        assert!(req.permissions.is_empty());
-        assert!(req.role_ids.is_empty());
     }
 
     #[test]
@@ -602,14 +437,12 @@ mod tests {
         let json = r#"{
             "name": "高级工程师",
             "department_id": "550e8400-e29b-41d4-a716-446655440000",
-            "description": "负责高级软件开发",
-            "permissions": ["crm:customers_read"],
-            "role_ids": []
+            "description": "负责高级软件开发"
         }"#;
         let req: UpdatePositionRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.name.as_deref(), Some("高级工程师"));
         assert!(req.department_id.is_some());
-        assert_eq!(req.permissions.unwrap().len(), 1);
+        assert!(req.description.is_some());
     }
 
     #[test]
@@ -619,8 +452,6 @@ mod tests {
         assert!(req.name.is_none());
         assert!(req.department_id.is_none());
         assert!(req.description.is_none());
-        assert!(req.permissions.is_none());
-        assert!(req.role_ids.is_none());
     }
 
     #[test]
@@ -630,13 +461,11 @@ mod tests {
             name: "测试岗位".to_string(),
             department_id: None,
             description: Some("测试描述".to_string()),
-            permissions: vec!["perm1".to_string(), "perm2".to_string()],
-            role_ids: vec![],
         };
         let json = serde_json::to_value(&req).unwrap();
         assert_eq!(json["code"], "TEST");
         assert_eq!(json["name"], "测试岗位");
-        assert_eq!(json["permissions"][0], "perm1");
-        assert!(json["role_ids"].is_array());
+        assert!(json.get("permissions").is_none());
+        assert!(json.get("role_ids").is_none());
     }
 }

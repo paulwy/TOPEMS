@@ -1299,40 +1299,6 @@ ALTER TABLE ONLY iam.permissions FORCE ROW LEVEL SECURITY;
 
 
 --
--- Name: position_permissions; Type: TABLE; Schema: iam; Owner: -
---
-
-CREATE TABLE IF NOT EXISTS iam.position_permissions (
-    id bigint NOT NULL,
-    position_id uuid NOT NULL,
-    permission character varying(255),
-    tenant_id uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT position_permissions_pkey PRIMARY KEY (id)
-);
-
-ALTER TABLE ONLY iam.position_permissions FORCE ROW LEVEL SECURITY;
-
-
---
--- Name: position_roles; Type: TABLE; Schema: iam; Owner: -
---
-
-CREATE TABLE IF NOT EXISTS iam.position_roles (
-    id bigint NOT NULL,
-    position_id uuid NOT NULL,
-    role_id uuid NOT NULL,
-    tenant_id uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT position_roles_pkey PRIMARY KEY (id)
-);
-
-ALTER TABLE ONLY iam.position_roles FORCE ROW LEVEL SECURITY;
-
-
---
 -- Name: positions; Type: TABLE; Schema: iam; Owner: -
 --
 
@@ -2237,38 +2203,6 @@ ALTER TABLE ONLY iam.permissions
 
 
 --
--- Name: position_permissions position_permissions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.position_permissions
-    ADD CONSTRAINT position_permissions_pkey PRIMARY KEY (id);
-
-
---
--- Name: position_permissions position_permissions_position_id_permission_key; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.position_permissions
-    ADD CONSTRAINT position_permissions_position_id_permission_key UNIQUE (position_id, permission);
-
-
---
--- Name: position_roles position_roles_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.position_roles
-    ADD CONSTRAINT position_roles_pkey PRIMARY KEY (id);
-
-
---
--- Name: position_roles position_roles_position_id_role_id_key; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.position_roles
-    ADD CONSTRAINT position_roles_position_id_role_id_key UNIQUE (position_id, role_id);
-
-
---
 -- Name: positions positions_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
 --
 
@@ -2483,27 +2417,6 @@ CREATE INDEX IF NOT EXISTS idx_permission_audit_logs_user_id ON iam.permission_a
 --
 
 CREATE INDEX IF NOT EXISTS idx_permission_templates_name ON iam.permission_templates USING btree (name);
-
-
---
--- Name: idx_position_permissions_position_id; Type: INDEX; Schema: iam; Owner: -
---
-
-CREATE INDEX IF NOT EXISTS idx_position_permissions_position_id ON iam.position_permissions USING btree (position_id);
-
-
---
--- Name: idx_position_roles_position_id; Type: INDEX; Schema: iam; Owner: -
---
-
-CREATE INDEX IF NOT EXISTS idx_position_roles_position_id ON iam.position_roles USING btree (position_id);
-
-
---
--- Name: idx_position_roles_role_id; Type: INDEX; Schema: iam; Owner: -
---
-
-CREATE INDEX IF NOT EXISTS idx_position_roles_role_id ON iam.position_roles USING btree (role_id);
 
 
 --
@@ -2781,30 +2694,6 @@ ALTER TABLE ONLY iam.dynamic_data
 
 ALTER TABLE ONLY iam.permission_audit_logs
     ADD CONSTRAINT permission_audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES iam.users(id) ON DELETE CASCADE;
-
-
---
--- Name: position_permissions position_permissions_position_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.position_permissions
-    ADD CONSTRAINT position_permissions_position_id_fkey FOREIGN KEY (position_id) REFERENCES iam.positions(id) ON DELETE CASCADE;
-
-
---
--- Name: position_roles position_roles_position_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.position_roles
-    ADD CONSTRAINT position_roles_position_id_fkey FOREIGN KEY (position_id) REFERENCES iam.positions(id) ON DELETE CASCADE;
-
-
---
--- Name: position_roles position_roles_role_id_fkey; Type: FK CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.position_roles
-    ADD CONSTRAINT position_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES iam.roles(id) ON DELETE CASCADE;
 
 
 --
@@ -3155,18 +3044,6 @@ ALTER TABLE iam.permission_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE iam.permissions ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: position_permissions; Type: ROW SECURITY; Schema: iam; Owner: -
---
-
-ALTER TABLE iam.position_permissions ENABLE ROW LEVEL SECURITY;
-
---
--- Name: position_roles; Type: ROW SECURITY; Schema: iam; Owner: -
---
-
-ALTER TABLE iam.position_roles ENABLE ROW LEVEL SECURITY;
-
---
 -- Name: positions; Type: ROW SECURITY; Schema: iam; Owner: -
 --
 
@@ -3239,20 +3116,6 @@ CREATE POLICY rls_tenant_isolation ON iam.lims_dashboard_snapshots USING (((curr
 --
 
 CREATE POLICY rls_tenant_isolation ON iam.pdm_dashboard_snapshots USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
-
-
---
--- Name: position_permissions rls_tenant_isolation; Type: POLICY; Schema: iam; Owner: -
---
-
-CREATE POLICY rls_tenant_isolation ON iam.position_permissions USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
-
-
---
--- Name: position_roles rls_tenant_isolation; Type: POLICY; Schema: iam; Owner: -
---
-
-CREATE POLICY rls_tenant_isolation ON iam.position_roles USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -3553,20 +3416,6 @@ CREATE POLICY tenant_isolation_permission_audit_logs ON iam.permission_audit_log
 --
 
 CREATE POLICY tenant_isolation_permission_templates ON iam.permission_templates USING ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL) OR (NULLIF(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
-
-
---
--- Name: position_permissions tenant_isolation_position_permissions; Type: POLICY; Schema: iam; Owner: -
---
-
-CREATE POLICY tenant_isolation_position_permissions ON iam.position_permissions USING ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text), ''::text)) OR (tenant_id IS NULL)));
-
-
---
--- Name: position_roles tenant_isolation_position_roles; Type: POLICY; Schema: iam; Owner: -
---
-
-CREATE POLICY tenant_isolation_position_roles ON iam.position_roles USING ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text), ''::text)) OR (tenant_id IS NULL)));
 
 
 --

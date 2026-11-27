@@ -3342,3 +3342,9 @@ pending_forward_patches:
     effect: "mes.work_stations / mes.production_orders 的 tenant_id 收紧为 NOT NULL；production_orders 中 5 行 tenant_id 为 NULL 的 MO-TEST 冒烟工单回填默认租户 00000000-0000-0000-0000-000000000001；收尾断言两表 NOT NULL 且 0 行 NULL"
     destructive_scan: "UPDATE ×2（均带 WHERE tenant_id IS NULL、逐条紧邻豁免标记 max-rows=5/0 + backup）；ALTER COLUMN SET NOT NULL（information_schema 守卫，已 NOT NULL 则跳过）；无 DELETE/TRUNCATE/DROP"
     note: "20261127170000 的复合外键在 tenant_id 可空时被 MATCH SIMPLE 整条跳过，且 RLS 策略 OR tenant_id IS NULL 对所有租户放行 → 本次收紧让复合外键对任何行都生效；运行期唯一写入路径 svc/mes/src/event_handlers.rs:124 已显式绑定 tenant_id，work_stations 无运行期 INSERT"
+  - version: "20261127210000"
+    file: "database/migrations/20261127210000_drop_iam_position_template_tables.sql"
+    status: to_apply
+    effect: "下线未投产的岗位模板默认授权预留表 iam.position_roles / iam.position_permissions；授权权威链为 core_user_roles→core_role_permissions→core_permissions，两表不参与令牌聚合；iam.positions 主表与 iam.user_positions 用户-岗位归属线独立保留"
+    destructive_scan: "DROP TABLE IF EXISTS ×2（to_regclass 守卫 + IF EXISTS；每条 DROP 前独立 destructive 标记 gate=allow、kind=DROP TABLE、owner=iam、ticket=IAM-LEGACY-20261126、rows-at-review=0；无 CASCADE；末尾 DO 断言两表 to_regclass 为空）"
+    note: "L6 路径 B（2026-11-27 拍板）：两表双库 0 行，后端仅 unified-core/iam/position.rs 半截 CRUD 已随本专项清除，前端岗位页无角色/权限字段；删除前空表头快照至 backups/db-iam-position-template-tables/（gitignore）；待独立 replay 窗口破坏性放行投放，本轮不写 prod 账本"
