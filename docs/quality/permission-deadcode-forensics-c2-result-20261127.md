@@ -103,6 +103,15 @@
 - 取证账号：`DELETE FROM iam.users WHERE username LIKE 'c2_%'`；清理 `/tmp/topems-c2/`。
 - 本结论文档与台账条目入库；`artifacts/audit/` 下取证产物保持 gitignore，不入库。
 
+### 8.1 回退执行记录（#115，2026-11-28；已完成）
+
+> 静态取证收口后按拍板执行完整回退 + DROP 隔离库；prod 实例（PID 17676 / 8099 / `topems_prod`）全程未停未切。
+
+- **进程**：隔离实例 PID 30132（8199）已停（SIGTERM 未退出后 SIGKILL）；前端反代 node 73446 / 父 bash 73444（4173）已停，8199、4173 端口均释放。
+- **隔离库清理**（单事务）：`c2_%` 用户 7、临时角色 6、角色权限关联 2436、用户-角色绑定 6、租户成员 7、会话 40、刷新令牌 40、登录日志 44、审计日志 509 全部删除；复扫各 `user_id` 活动表与角色权限关联残留为 0。库 `topems_replay_verify` 已 `DROP DATABASE`。
+- **源码与产物**：复核 `lib/shared-auth/src/` 无埋点痕迹（备份 `.bak` 系陈旧快照、非埋点残留，已删）；`artifacts/audit/guard-trace.jsonl`、`inline-trace.jsonl` 已删；`/tmp/topems-c2/` 已清（并行会话补丁快照另存 `/tmp/topems-parallel-backup/`，未代删）。
+- **遗留待评估（不自主）**：`bin/topems-server` 与 `target/release/topems-server` 同源拷贝；strings 未检出 trace/埋点字面量。源码当前已干净，下次 prod 部署重编干净二进制替换即可；当前在跑二进制若含埋点，仅为额外本地写 trace、不改鉴权/令牌签发逻辑，无越权风险。替换需走 prod 部署窗口拍板。
+
 ## 9. v2 增量：内联鉴权收口补埋复扫（#96，2026-11-27）
 
 > 本节为 v1 首版之后的第二轮取证，针对盲区①（handler 内联 `claims.has_permission` 未埋）补埋收口后复扫；口径仍为隔离库单次只读冒烟，**不据此对其余 553 码判死码**。
