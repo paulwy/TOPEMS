@@ -23,6 +23,8 @@ import {
   Tabs,
   Tab,
   Button,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { Search, RefreshCw, Download, Calendar } from 'lucide-react';
@@ -257,6 +259,8 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   statCardDirection = 'row',
   children,
 }) => {
+  const theme = useTheme();
+
   // 内部状态
   const [internalTabValue, setInternalTabValue] = useState<string>('');
 
@@ -286,6 +290,18 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       const ok = (v?: string) =>
         typeof v === 'string' && /^(#|rgb|hsl|var\(--|color-mix|oklch)/i.test(v.trim());
       return s && ok(s[0]) && ok(s[1]) ? `linear-gradient(135deg, ${s[0]}, ${s[1]})` : undefined;
+    };
+
+    // 图标瓦片：原来用「语义色 .light 实底 + 同色 .main 图标」，实测 1.1~1.8:1（橙压橙、紫压紫）。
+    // 改为 14% 透明语义底 + 亮色用 .dark、暗色用 .light，保证图标在两种模式下都可辨。
+    const resolvePaletteEntry = (key?: string) => {
+      const name = key || 'primary';
+      const entry = (
+        theme.palette as unknown as Record<string, { main: string; light: string; dark: string }>
+      )[name];
+      return entry && entry.main
+        ? entry
+        : (theme.palette.primary as { main: string; light: string; dark: string });
     };
 
     return (
@@ -332,10 +348,14 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      bgcolor: grad ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
+                      bgcolor: grad
+                        ? 'glass.topLight'
+                        : alpha(resolvePaletteEntry(stat.color).main, 0.14),
                       color: grad
                         ? 'var(--color-primary-foreground)'
-                        : `${stat.color || 'primary'}.main`,
+                        : theme.palette.mode === 'dark'
+                          ? resolvePaletteEntry(stat.color).light
+                          : resolvePaletteEntry(stat.color).dark,
                     }}
                   >
                     {stat.icon}

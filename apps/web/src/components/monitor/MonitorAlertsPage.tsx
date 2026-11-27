@@ -40,6 +40,7 @@ import { MONITOR_PATHS } from '@/module-configs/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { getAlertSchema, getSeverityLabels, getStatusLabels } from '@/schemas/monitor';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
@@ -116,11 +117,10 @@ const renderStatsCards = (rows: Record<string, unknown>[]): React.ReactNode => {
                   width: 40,
                   height: 40,
                   borderRadius: 1,
-                  bgcolor: `${item.color}.light`,
+                  ...semanticTileSx(item.color),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: `${item.color}.main`,
                 }}
               >
                 {item.icon}

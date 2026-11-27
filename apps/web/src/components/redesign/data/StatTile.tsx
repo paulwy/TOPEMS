@@ -36,9 +36,11 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
     ref
   ) => {
     const { t } = useTranslation();
+    // 强调色当装饰条可以饱和，但当图标/文字时必须用文字档（--*-text），
+    // 否则亮色下琥珀/青绿压白底只有 2.1~2.3:1。
     const accentColors: Record<string, string> = {
-      amber: 'var(--accent-primary)',
-      cyan: 'var(--accent-secondary)',
+      amber: 'var(--accent-primary-text)',
+      cyan: 'var(--accent-secondary-text)',
       success: 'var(--success-text)',
       warning: 'var(--warning-text)',
       error: 'var(--error-text)',
@@ -94,7 +96,8 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
                 display: 'inline-flex',
                 padding: 'var(--space-2)',
                 color: accentColors[accent],
-                backgroundColor: `${accentColors[accent]}1A`,
+                // 旧写法 `${color}1A` 对 CSS 变量拼不出合法色值，整条背景会被丢弃（图标直接压白底）
+                backgroundColor: `color-mix(in srgb, ${accentColors[accent]} 12%, transparent)`,
                 borderRadius: 'var(--radius-sm)',
               }}
             >

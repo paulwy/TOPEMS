@@ -30,6 +30,7 @@ import { MONITOR_PATHS } from '@/module-configs/monitor/config';
 import { monitorApi, type Alert, type AlertQueryParams } from '@/api/monitor';
 import { alertHistorySchema } from '@/schemas/monitor';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 const CRUD_QUERY_KEY = ['monitor_alert_history'];
 const METRIC_FILTER_OPTIONS = [
@@ -129,11 +130,10 @@ const renderStatsCards = (rows: Record<string, unknown>[], total: number): React
                   width: 40,
                   height: 40,
                   borderRadius: 1,
-                  bgcolor: `${item.color}.light`,
+                  ...semanticTileSx(item.color),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: `${item.color}.main`,
                 }}
               >
                 {item.icon}

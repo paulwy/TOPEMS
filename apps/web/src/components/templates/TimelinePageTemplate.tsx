@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { getChipStatusColor } from '@/utils/status';
+import { semanticTileSx } from '@/theme/semanticTile';
 import {
   Calendar,
   Filter,
@@ -363,8 +364,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: `${node.color || 'primary'}.light`,
-                  color: node.color || 'primary.main',
+                  ...semanticTileSx(node.color || 'primary'),
                 }}
               >
                 {node.icon || getTypeIcon(node.type)}

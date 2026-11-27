@@ -25,6 +25,7 @@ import {
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 import {
   Search,
   RefreshCw,
@@ -495,8 +496,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
               {stat.icon && (
                 <Avatar
                   sx={{
-                    bgcolor: `${stat.color || 'primary'}.light`,
-                    color: `${stat.color || 'primary'}.main`,
+                    ...semanticTileSx(stat.color || 'primary'),
                     width: 40,
                     height: 40,
                   }}

@@ -21,6 +21,7 @@ import { INTEGRATION_PATHS } from '@/module-configs/integration/config';
 import { integrationEventSchema } from '@/schemas/integration';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 interface IntegrationEvent {
   id: string;
@@ -91,11 +92,10 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
               width: 44,
               height: 44,
               borderRadius: 2,
-              bgcolor: `${s.color}.light`,
+              ...semanticTileSx(s.color),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: `${s.color}.main`,
             }}
           >
             {s.icon}

@@ -9,6 +9,30 @@
 @import './theme/generated-tokens.css';
 @import './theme/interactions.css';
 
+/* ============================================================
+   图表（recharts）暗色适配
+   recharts 的默认轴/网格线是硬编码深灰（#666/#ccc），在 #09090b 上几乎不可见，
+   且不读 MUI 主题。这里仅在暗色模式下把轴/网格/刻度文字统一到中性令牌，
+   亮色保持原样（部分页面有意使用彩色轴）。
+   ============================================================ */
+[data-theme='dark'] .recharts-cartesian-axis-line,
+[data-theme='dark'] .recharts-cartesian-axis-tick-line,
+[data-theme='dark'] .recharts-polar-grid-angle line {
+  stroke: var(--text-tertiary);
+}
+
+[data-theme='dark'] .recharts-cartesian-grid line {
+  stroke: var(--border-active);
+}
+
+[data-theme='dark'] .recharts-cartesian-axis-tick-value,
+[data-theme='dark'] .recharts-label,
+[data-theme='dark'] .recharts-legend-item-text,
+[data-theme='dark'] .recharts-text {
+  fill: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
 html {
   font-size: 16px;
   scroll-behavior: smooth;

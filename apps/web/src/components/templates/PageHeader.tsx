@@ -138,6 +138,26 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
 
+  // 页面图标底色/前景：gradient 里出现 undefined（令牌路径不存在）时整条 background 会被浏览器丢弃，
+  // 只剩 color:white 压在卡片白底上（1:1 不可见）。这里做可用性判定 + 按底色取对比文字色。
+  const resolveColorToken = (token?: string): string | undefined => {
+    if (!token) return undefined;
+    const resolved = token
+      .split('.')
+      .reduce<unknown>(
+        (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
+        theme.palette
+      );
+    return typeof resolved === 'string' ? resolved : undefined;
+  };
+  const gradientUsable = Boolean(
+    pageGradient && !/undefined|NaN/.test(pageGradient) && /#|rgb|var\(/.test(pageGradient)
+  );
+  const iconBgColor = resolveColorToken(pageColor) ?? theme.palette.primary.main;
+  const iconForeground = gradientUsable
+    ? theme.palette.common.white
+    : theme.palette.getContrastText(iconBgColor);
+
   // G1: pathTabs 仅接受显式传入，不再从路由自动派生（层级导航统一由 AppShell 面包屑渲染）
   const resolvedPathTabs: PathTabItem[] | undefined = React.useMemo(() => {
     if (manualPathTabs && manualPathTabs.length > 0) {
@@ -444,9 +464,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: pageColor || 'primary.main',
-                    ...(pageGradient && { bgcolor: undefined, background: pageGradient }),
-                    color: 'common.white',
+                    ...(gradientUsable
+                      ? { background: pageGradient }
+                      : { bgcolor: pageColor || 'primary.main' }),
+                    color: iconForeground,
                   }}
                 >
                   {pageIcon}

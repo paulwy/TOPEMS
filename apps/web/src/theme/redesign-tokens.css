@@ -117,6 +117,22 @@
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
   --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.55);
 
+  /* 层级阴影（暗色）*/
+  --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --elevation-card-hover: 0 4px 12px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.5);
+  --elevation-dialog: 0 12px 32px rgba(0, 0, 0, 0.55), 0 24px 64px rgba(0, 0, 0, 0.6);
+
+  /* 旧版令牌桥接：generated-tokens.css 的 --color-* 是亮色静态值，统一映射到模式感知令牌 */
+  --color-background: var(--bg-primary);
+  --color-background-paper: var(--bg-elevated);
+  --color-background-elevated: var(--bg-elevated);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-tertiary);
+  --color-text-disabled: var(--text-disabled);
+  --color-border: var(--border-default);
+  --color-border-light: var(--border-hover);
+
   /* ============================================================
      2. 字体系统
      ============================================================ */
@@ -247,6 +263,11 @@
 
   --glow-amber: 0 0 20px rgba(245, 158, 11, 0.18);
   --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.18);
+
+  /* 层级阴影（亮色）*/
+  --elevation-card: 0 1px 2px rgba(2, 6, 23, 0.06), 0 4px 12px rgba(2, 6, 23, 0.05);
+  --elevation-card-hover: 0 4px 12px rgba(2, 6, 23, 0.1), 0 12px 32px rgba(2, 6, 23, 0.08);
+  --elevation-dialog: 0 12px 32px rgba(2, 6, 23, 0.14), 0 24px 64px rgba(2, 6, 23, 0.12);
 }
 
 /* 兜底：html 上没有 data-theme 时（首屏脚本未执行、微前端内嵌、单测环境），
@@ -282,5 +303,9 @@
     --warning-text: #b45309;
     --error-text: #b91c1c;
     --info-text: #1d4ed8;
+    /* 层级阴影（亮色）*/
+    --elevation-card: 0 1px 2px rgba(2, 6, 23, 0.06), 0 4px 12px rgba(2, 6, 23, 0.05);
+    --elevation-card-hover: 0 4px 12px rgba(2, 6, 23, 0.1), 0 12px 32px rgba(2, 6, 23, 0.08);
+    --elevation-dialog: 0 12px 32px rgba(2, 6, 23, 0.14), 0 24px 64px rgba(2, 6, 23, 0.12);
   }
 }

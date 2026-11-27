@@ -29,6 +29,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { mappingApi } from '@/api/integration/mapping';
+import { semanticTileSx } from '@/theme/semanticTile';
 import type {
   ErpMapping,
   CreateErpMappingRequest,
@@ -169,11 +170,10 @@ const renderStatsCards = (rows: Record<string, unknown>[]) => {
               width: 44,
               height: 44,
               borderRadius: 2,
-              bgcolor: `${s.color}.light`,
+              ...semanticTileSx(s.color),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: `${s.color}.main`,
             }}
           >
             {s.icon}

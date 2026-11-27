@@ -11,6 +11,7 @@ import { AlertCircle, AlertTriangle, Info, Clock, Server } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema-dsl';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 
 const ct = designTokens.colors;
 
@@ -70,8 +71,7 @@ const getAlertFields = (): SchemaField[] => [
             sx={{
               width: 36,
               height: 36,
-              bgcolor: `${SEVERITY_COLORS[severity]}.light`,
-              color: `${SEVERITY_COLORS[severity]}.main`,
+              ...semanticTileSx(SEVERITY_COLORS[severity]),
             }}
           >
             {getSeverityIcon(severity)}

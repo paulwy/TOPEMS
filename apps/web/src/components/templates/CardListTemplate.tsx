@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 import { Search, RefreshCw, Filter, Plus, ChevronDown, ChevronUp, Grid, List } from 'lucide-react';
 import { EmptyState } from '@topems/shared-components';
 
@@ -309,10 +310,9 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    bgcolor: stat.gradient ? 'glass.topLight' : `${stat.color || 'primary'}.light`,
-                    color: stat.gradient
-                      ? 'var(--color-primary-foreground)'
-                      : `${stat.color || 'primary'}.main`,
+                    ...(stat.gradient
+                      ? { bgcolor: 'glass.topLight', color: 'var(--color-primary-foreground)' }
+                      : semanticTileSx(stat.color || 'primary')),
                   }}
                 >
                   {stat.icon}
@@ -610,8 +610,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                     size='small'
                     label={statusLabel}
                     sx={{
-                      bgcolor: `${statusColor}.light`,
-                      color: `${statusColor}.main`,
+                      ...semanticTileSx(statusColor),
                       fontWeight: 500,
                       height: 22,
                     }}

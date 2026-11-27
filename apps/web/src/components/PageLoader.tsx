@@ -12,12 +12,12 @@ const PageLoader: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'var(--color-background)',
+        bgcolor: 'var(--bg-primary)',
       }}
     >
       <Box sx={{ textAlign: 'center' }}>
         <LoadingSpinner size='lg' />
-        <Typography sx={{ mt: 2, color: 'var(--color-text-secondary)' }}>
+        <Typography sx={{ mt: 2, color: 'var(--text-secondary)' }}>
           {t('common.loading')}
         </Typography>
       </Box>

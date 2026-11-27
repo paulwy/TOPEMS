@@ -25,6 +25,7 @@ import {
   Chip,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { semanticTileSx } from '@/theme/semanticTile';
 import {
   Save,
   RotateCcw,
@@ -473,8 +474,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: section.color ? `${section.color}.light` : 'primary.light',
-                color: section.color ? `${section.color}.main` : 'primary.main',
+                ...semanticTileSx(section.color),
               }}
             >
               {getSectionIcon(section.icon)}

@@ -439,12 +439,12 @@ export const createCustomTheme = (): Theme => {
             // 边框必须跟随当前色彩方案的 divider：静态 #e2e8f0 在暗色下是近白线圈
             root: ({ theme }) => ({
               borderRadius: semanticTokens.radius.card,
-              boxShadow: semanticTokens.elevation.card,
+              boxShadow: 'var(--elevation-card)',
               border: `1px solid ${theme.palette.divider}`,
               transition: `transform ${designTokens.motion.transition.base}, box-shadow ${designTokens.motion.transition.base}, border-color ${designTokens.motion.transition.base}`,
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: semanticTokens.elevation.cardHover,
+                boxShadow: 'var(--elevation-card-hover)',
               },
               '&:active': {
                 transform: 'translateY(0) scale(0.99)',
@@ -474,7 +474,7 @@ export const createCustomTheme = (): Theme => {
           styleOverrides: {
             paper: {
               borderRadius: semanticTokens.radius.dialog,
-              boxShadow: semanticTokens.elevation.dialog,
+              boxShadow: 'var(--elevation-dialog)',
             },
           },
         },

@@ -4,7 +4,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { ledgerSchema } from '@/schemas/finance';
 import { accountApi } from '@/api/finance';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
+import { Box, Card, CardContent, Typography, alpha, useTheme } from '@mui/material';
 import { FileText, Calculator, Wallet, TrendingUp, TrendingDown } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import type { Account } from '@/types/finance';
@@ -121,6 +121,20 @@ const LedgerStats: React.FC = () => {
     },
   ];
 
+  // 语义色解析：卡片里既可能写调色板路径（'info.dark'），也可能写实色（purple[500]）；
+  // 一律解析成合法色值，避免 'slate.900'/'secondary.light' 这类路径落空后图标与瓦片同色。
+  const resolveColor = (token?: string, fallback = theme.palette.text.primary): string => {
+    if (!token) return fallback;
+    if (/^(#|rgb|hsl|color\(|var\()/i.test(token.trim())) return token;
+    const value = token
+      .split('.')
+      .reduce<unknown>(
+        (acc, key) => (acc == null ? acc : (acc as Record<string, unknown>)[key]),
+        theme.palette
+      );
+    return typeof value === 'string' ? value : fallback;
+  };
+
   return (
     <Box
       sx={{
@@ -138,14 +152,14 @@ const LedgerStats: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: card.bgColor,
+                  bgcolor: alpha(resolveColor(card.color), 0.14),
                   borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                {React.cloneElement(card.icon, { style: { color: card.color } })}
+                {React.cloneElement(card.icon, { style: { color: resolveColor(card.color) } })}
               </Box>
               <Box>
                 <Typography
@@ -159,7 +173,7 @@ const LedgerStats: React.FC = () => {
                 </Typography>
                 <Typography
                   variant='h5'
-                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                  sx={{ fontWeight: 700, color: 'text.primary' }}
                 >
                   {card.value}
                 </Typography>
