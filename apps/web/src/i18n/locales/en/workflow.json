@@ -727,5 +727,8 @@
   "workflow.demo.wf_dept_production": "Production Dept",
   "workflow.workflow_approvals_page.error_load": "Failed to load approval tasks, please retry",
   "workflow.workflow_approvals_page.toast.approve_failed": "Failed to approve, please retry",
-  "workflow.workflow_approvals_page.toast.reject_failed": "Failed to reject, please retry"
+  "workflow.workflow_approvals_page.toast.reject_failed": "Failed to reject, please retry",
+  "workflow.workflow_dashboard_page.pending_approvals": "Pending approvals",
+  "workflow.workflow_dashboard_page.completed_instances": "Completed instances",
+  "workflow.workflow_dashboard_page.rejected_instances": "Rejected instances"
 }

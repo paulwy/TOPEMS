@@ -409,5 +409,8 @@
   "workflow.demo.wf_dept_production": "生产部",
   "workflow.workflow_approvals_page.error_load": "审批任务加载失败，请重试",
   "workflow.workflow_approvals_page.toast.approve_failed": "审批通过失败，请重试",
-  "workflow.workflow_approvals_page.toast.reject_failed": "驳回失败，请重试"
+  "workflow.workflow_approvals_page.toast.reject_failed": "驳回失败，请重试",
+  "workflow.workflow_dashboard_page.pending_approvals": "待审批",
+  "workflow.workflow_dashboard_page.completed_instances": "已完成实例",
+  "workflow.workflow_dashboard_page.rejected_instances": "驳回实例"
 }

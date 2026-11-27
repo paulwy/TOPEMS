@@ -1,109 +1,122 @@
 /**
- * 工作流仪表盘页面 - V4.0 标准化改造
+ * 工作流仪表盘
  *
- * @module pages/workflow
- * @path /workflow/dashboard
+ * 数据全部来自 GET /api/core/flow/statistics（真实 COUNT）与 /api/core/flow/instances：
+ *  - 卡片：运行中/待审批/已完成/驳回
+ *  - 图表：月度趋势（monthly_data）、流程分布（workflow_stats）
+ *  - 最近流程：instances 列表前 5 条
+ * 原先写死的 24/8/156/3 与各自环比、图标占位图表、5 条示例流程已删除。
  */
 import React, { useMemo, useEffect } from 'react';
-import {
-  PlaySquare,
-  CheckSquare,
-  Clock,
-  AlertTriangle,
-  FileCode,
-  BarChart3,
-  Zap,
-} from 'lucide-react';
+import { PlaySquare, CheckSquare, Clock, AlertTriangle, FileCode, Zap } from 'lucide-react';
 import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/module-configs/workflow/config';
-import { DashboardTemplate, type StatCard, type QuickAction } from '@/components/templates';
+import {
+  DashboardTemplate,
+  type StatCard,
+  type ChartCard,
+  type QuickAction,
+  type RecentItem,
+} from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
-import type { StatisticsResponse } from '@/api/workflow';
+import type { StatisticsResponse, WorkflowInstance } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export const WorkflowDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const dashboardQuery = useQuery<StatisticsResponse | null>({
+
+  const statisticsQuery = useQuery<StatisticsResponse | null>({
     queryKey: QUERY_KEYS.AD_HOC.WORKFLOW_DASHBOARD_BASE,
     queryFn: async () => {
       const res = await workflowApi.getStatistics();
-      if (res.success && res.data) {
-        return res.data;
-      }
-      return null;
+      return res.success && res.data ? res.data : null;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
-  const loading = dashboardQuery.isLoading;
+
+  const instancesQuery = useQuery({
+    queryKey: [...QUERY_KEYS.AD_HOC.WORKFLOW_DASHBOARD_BASE, 'instances'],
+    queryFn: async () => {
+      const res = await workflowApi.listInstances({ page: 1, page_size: 5 });
+      const data = res?.data as { items?: WorkflowInstance[] } | undefined;
+      return data?.items ?? [];
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const loading = statisticsQuery.isLoading || instancesQuery.isLoading;
+
   useEffect(() => {
-    if (dashboardQuery.isError) {
-      apiLogger.error('Failed to load workflow dashboard:', dashboardQuery.error);
+    if (statisticsQuery.isError) {
+      apiLogger.error('Failed to load workflow dashboard:', statisticsQuery.error);
     }
-  }, [dashboardQuery.isError, dashboardQuery.error]);
+  }, [statisticsQuery.isError, statisticsQuery.error]);
+
+  const s = statisticsQuery.data;
+
   const stats: StatCard[] = useMemo(
     () => [
       {
         id: 'running',
         title: i18n.t('workflow.workflow_dashboard_page.k0'),
-        value: '24',
+        value: s?.running_instances ?? 0,
         icon: <PlaySquare size={20} />,
-        change: 5,
-        changeLabel: i18n.t('workflow.workflow_dashboard_page.k1'),
         color: 'primary',
       },
       {
         id: 'pending',
-        title: i18n.t('workflow.workflow_dashboard_page.k2'),
-        value: '8',
+        title: i18n.t('workflow.workflow_dashboard_page.pending_approvals'),
+        value: s?.pending_approvals ?? 0,
         icon: <CheckSquare size={20} />,
-        change: -2,
-        changeLabel: i18n.t('workflow.workflow_dashboard_page.k3'),
         color: 'warning',
       },
       {
         id: 'completed',
-        title: i18n.t('workflow.workflow_dashboard_page.k4'),
-        value: '156',
+        title: i18n.t('workflow.workflow_dashboard_page.completed_instances'),
+        value: s?.completed_instances ?? 0,
         icon: <Clock size={20} />,
-        change: 18,
-        changeLabel: i18n.t('workflow.workflow_dashboard_page.k5'),
         color: 'success',
       },
       {
-        id: 'overdue',
-        title: i18n.t('workflow.workflow_dashboard_page.k6'),
-        value: '3',
+        id: 'rejected',
+        title: i18n.t('workflow.workflow_dashboard_page.rejected_instances'),
+        value: s?.rejected_instances ?? 0,
         icon: <AlertTriangle size={20} />,
-        change: 1,
-        changeLabel: i18n.t('workflow.workflow_dashboard_page.k7'),
         color: 'error',
       },
     ],
-    []
+    [s]
   );
-  const charts = useMemo(
+
+  const charts: ChartCard[] = useMemo(
     () => [
       {
         id: 'trend',
         title: i18n.t('workflow.workflow_dashboard_page.k8'),
-        chart: <BarChart3 size={18} />,
-        type: 'line' as const,
-        span: 2,
+        type: 'line',
+        // monthly_data 由后端按自然月返回发起数；无数据时如实空态
+        data: (s?.monthly_data ?? []).map((m) => ({
+          label: m.month,
+          value: Number(m.instances_started ?? 0),
+        })),
       },
       {
         id: 'distribution',
         title: i18n.t('workflow.workflow_dashboard_page.k9'),
-        chart: <PieChart size={18} />,
-        type: 'pie' as const,
-        span: 1,
+        type: 'pie',
+        data: (s?.workflow_stats ?? []).map((w) => ({
+          label: w.workflow_name,
+          value: Number(w.instance_count ?? 0),
+        })),
       },
     ],
-    []
+    [s]
   );
+
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
@@ -137,51 +150,31 @@ export const WorkflowDashboardPage: React.FC = () => {
     ],
     [navigate]
   );
-  const recentItems = useMemo(
-    () => [
-      {
-        id: '1',
-        title: i18n.t('workflow.workflow_dashboard_page.po20240115_14'),
-        subtitle: i18n.t('workflow.workflow_dashboard_page.2_15'),
-        status: 'info' as const,
-        statusColor: 'primary',
-        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '1')),
-      },
-      {
-        id: '2',
-        title: i18n.t('workflow.workflow_dashboard_page.5_16'),
-        subtitle: i18n.t('workflow.workflow_dashboard_page.4_17'),
-        status: 'success' as const,
-        statusColor: 'success',
-        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '2')),
-      },
-      {
-        id: '3',
-        title: i18n.t('workflow.workflow_dashboard_page.2380_18'),
-        subtitle: i18n.t('workflow.workflow_dashboard_page.k19'),
-        status: 'warning' as const,
-        statusColor: 'warning',
-        onClick: () => navigate(WORKFLOW_PATHS.approvalDetail.replace(':id', '3')),
-      },
-      {
-        id: '4',
-        title: i18n.t('workflow.workflow_dashboard_page.k20'),
-        subtitle: i18n.t('workflow.workflow_dashboard_page.k21'),
-        status: 'error' as const,
-        statusColor: 'error',
-        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '4')),
-      },
-      {
-        id: '5',
-        title: i18n.t('workflow.workflow_dashboard_page.k22'),
-        subtitle: i18n.t('workflow.workflow_dashboard_page.2_23'),
-        status: 'success' as const,
-        statusColor: 'success',
-        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '5')),
-      },
-    ],
-    [navigate]
+
+  const recentItems: RecentItem[] = useMemo(
+    () =>
+      (instancesQuery.data ?? []).map((inst) => ({
+        id: inst.id,
+        title: inst.name || inst.workflow_name || inst.id,
+        description: inst.currentnode
+          ? `${inst.currentnode}`
+          : (inst.start_user_name ?? ''),
+        time: inst.started_at
+          ? new Date(inst.started_at).toLocaleString('zh-CN', { hour12: false })
+          : '',
+        status:
+          inst.status === 'completed'
+            ? ('success' as const)
+            : inst.status === 'rejected'
+              ? ('error' as const)
+              : inst.status === 'running'
+                ? ('info' as const)
+                : ('warning' as const),
+        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', inst.id)),
+      })),
+    [instancesQuery.data, navigate]
   );
+
   return (
     <PageContainer
       headerProps={{
@@ -199,11 +192,12 @@ export const WorkflowDashboardPage: React.FC = () => {
         recentItems={recentItems}
         recentTitle={i18n.t('workflow.workflow_dashboard_page.k24')}
         onRefresh={() => {
-          dashboardQuery.refetch();
+          void statisticsQuery.refetch();
+          void instancesQuery.refetch();
         }}
       />
     </PageContainer>
   );
 };
-const PieChart = (props: { size?: number }) => <BarChart3 {...props} />;
+
 export default WorkflowDashboardPage;
