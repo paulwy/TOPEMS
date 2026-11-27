@@ -356,10 +356,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
   );
 
   return (
-    <PageContainer
-      title={t('integration.integration_erp_overview_page.m2')}
-      subtitle={t('integration.integration_erp_overview_page.erp_41')}
-    >
+    <PageContainer>
       <DashboardTemplate
         title={t('integration.integration_erp_overview_page.m2')}
         stats={stats}
@@ -406,67 +403,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Connection Status */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-        <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
-          <Card variant='outlined'>
-            <CardContent>
-              <Typography
-                variant='subtitle2'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                {t('integration.integration_erp_overview_page.e1')}
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Database size={16} />
-                    <Typography variant='body2'>
-                      {t('integration.integration_erp_overview_page.k44')}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    size='small'
-                    label={t('integration.integration_erp_overview_page.k45')}
-                    color='success'
-                  />
-                </Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <GitMerge size={16} />
-                    <Typography variant='body2'>
-                      {t('integration.integration_erp_overview_page.k46')}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    size='small'
-                    label={t('integration.integration_erp_overview_page.k47')}
-                    color='success'
-                  />
-                </Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Bell size={16} />
-                    <Typography variant='body2'>
-                      {t('integration.integration_erp_overview_page.k48')}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    size='small'
-                    label={t('integration.integration_erp_overview_page.k49')}
-                    color='success'
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
+      {/* Sync summary */}
         <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
           <Card variant='outlined'>
             <CardContent>
@@ -531,7 +468,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                       variant='h5'
                       sx={{ fontWeight: 600, color: 'info.700' }}
                     >
-                      15
+                      {stats.find((st) => st.id === 'errors')?.value ?? '0'}
                     </Typography>
                     <Typography
                       variant='caption'
@@ -545,7 +482,6 @@ export const IntegrationErpOverviewPage: React.FC = () => {
             </CardContent>
           </Card>
         </Box>
-      </Box>
     </PageContainer>
   );
 };
