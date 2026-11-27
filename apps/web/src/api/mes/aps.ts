@@ -61,9 +61,11 @@ interface MaterialConstraint {
   material_code: string;
   material_name: string;
   required_quantity: number;
-  available_quantity: number;
-  shortfall: number;
-  status: 'passed' | 'warning' | 'failed';
+  /** 真实可用库存；null 表示后端没有可信库存数据源（MES 不管库存账） */
+  available_quantity: number | null;
+  /** 缺口数量；null 与 available_quantity 同步为未知 */
+  shortfall: number | null;
+  status: 'passed' | 'warning' | 'failed' | 'unknown';
 }
 
 interface EquipmentConstraint {
@@ -72,7 +74,7 @@ interface EquipmentConstraint {
   required_capability: string;
   available: boolean;
   next_available_time?: string;
-  status: 'passed' | 'warning' | 'failed';
+  status: 'passed' | 'warning' | 'failed' | 'unknown';
 }
 
 interface PersonnelConstraint {
@@ -81,7 +83,7 @@ interface PersonnelConstraint {
   required_skill: string;
   available_members: number;
   required_members: number;
-  status: 'passed' | 'warning' | 'failed';
+  status: 'passed' | 'warning' | 'failed' | 'unknown';
 }
 
 interface ConstraintCheckResult {

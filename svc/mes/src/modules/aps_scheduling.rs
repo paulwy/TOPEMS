@@ -179,13 +179,19 @@ pub struct ConstraintCheckResult {
     pub suggested_start_time: Option<DateTime<Utc>>,
 }
 
+/// 一个班组至少要有的在岗人数（工时/技能维度的真实判定需要班组排班数据，
+/// 当前只做人数下限比较，避免出现「2」这种散落在业务逻辑里的魔法值）
+const DEFAULT_REQUIRED_MEMBERS: i32 = 2;
+
 #[derive(Debug, Clone, Serialize)]
 pub struct MaterialConstraint {
     pub material_code: String,
     pub material_name: String,
     pub required_quantity: f64,
-    pub available_quantity: f64,
-    pub shortfall: f64,
+    /// 真实可用库存。None 表示本服务没有可信库存数据源（不做猜测）
+    pub available_quantity: Option<f64>,
+    /// 缺口数量。None 与 available_quantity 同步为未知
+    pub shortfall: Option<f64>,
     pub status: ConstraintStatus,
 }
 
@@ -215,6 +221,8 @@ pub enum ConstraintStatus {
     Passed,
     Warning,
     Failed,
+    /// 数据不足以判断（例如缺库存源、BOM 未维护）。不得当作通过
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1223,27 +1231,52 @@ pub async fn check_schedule_constraints(
             .fetch_all(&mut scope)
             .await;
 
-            if let Ok(items) = bom_items {
-                for item in items {
-                    let material_code: String = item.try_get("material_code").unwrap_or_default();
-                    let material_name: String = item.try_get("material_name").unwrap_or_default();
-                    let bom_quantity = big_decimal_to_f64(
-                        item.try_get::<Option<BigDecimal>, _>("quantity")
-                            .ok()
-                            .flatten(),
-                    );
-                    let required = bom_quantity * quantity;
-
-                    // 简化：假设库存充足
-                    material_constraints.push(MaterialConstraint {
-                        material_code,
-                        material_name,
-                        required_quantity: required,
-                        available_quantity: required * 1.2, // 模拟充足
-                        shortfall: 0.0,
-                        status: ConstraintStatus::Passed,
-                    });
+            let items = match bom_items {
+                Ok(rows) => rows,
+                Err(e) => {
+                    tracing::error!("查询订单 {} 的 BOM 失败: {}", order_id, e);
+                    return ApiResponse::from(TopemsError::internal(
+                        "约束检查失败：BOM 查询出错",
+                        e.to_string(),
+                    ));
                 }
+            };
+
+            if items.is_empty() {
+                // 没有 BOM 就无从判断齐套性；显式记 Unknown，不能当成通过
+                material_constraints.push(MaterialConstraint {
+                    material_code: String::new(),
+                    material_name: "BOM 未维护".to_string(),
+                    required_quantity: quantity,
+                    available_quantity: None,
+                    shortfall: None,
+                    status: ConstraintStatus::Unknown,
+                });
+                all_passed = false;
+            }
+
+            for item in items {
+                let material_code: String = item.try_get("material_code").unwrap_or_default();
+                let material_name: String = item.try_get("material_name").unwrap_or_default();
+                let bom_quantity = big_decimal_to_f64(
+                    item.try_get::<Option<BigDecimal>, _>("quantity")
+                        .ok()
+                        .flatten(),
+                );
+                let required = bom_quantity * quantity;
+
+                // MES 内没有库存账（库存归 wms），因此可用量与缺口一律留 None。
+                // 这里刻意不写 required * 系数 之类的猜测值：把未知当充足会把不齐套的订单
+                // 判成 Passed，下游排程据此放行，属于假通过。
+                material_constraints.push(MaterialConstraint {
+                    material_code,
+                    material_name,
+                    required_quantity: required,
+                    available_quantity: None,
+                    shortfall: None,
+                    status: ConstraintStatus::Unknown,
+                });
+                all_passed = false;
             }
         }
 
@@ -1253,41 +1286,72 @@ pub async fn check_schedule_constraints(
                 r#"
                 SELECT id, equipment_name, status, next_maintenance_date
                 FROM mes.equipment
-                WHERE status = 'normal'
+                ORDER BY equipment_code
                 LIMIT 5
                 "#,
             )
             .fetch_all(&mut scope)
             .await;
 
-            if let Ok(equips) = equipment {
-                for eq in equips {
-                    let id = eq.try_get::<Uuid, _>("id").unwrap_or_default();
-                    let name: String = eq.try_get("name").unwrap_or_default();
-                    let status: String = eq
-                        .try_get::<Option<String>, _>("status")
-                        .ok()
-                        .flatten()
-                        .unwrap_or_else(|| "normal".to_string());
-
-                    let available = status == "normal";
-                    if !available {
-                        all_passed = false;
-                    }
-
-                    equipment_constraints.push(EquipmentConstraint {
-                        equipment_id: id,
-                        equipment_name: name,
-                        required_capability: "加工".to_string(),
-                        available,
-                        next_available_time: Some(Utc::now() + Duration::hours(2)),
-                        status: if available {
-                            ConstraintStatus::Passed
-                        } else {
-                            ConstraintStatus::Failed
-                        },
-                    });
+            let equips = match equipment {
+                Ok(rows) => rows,
+                Err(e) => {
+                    tracing::error!("查询订单 {} 的设备池失败: {}", order_id, e);
+                    return ApiResponse::from(TopemsError::internal(
+                        "约束检查失败：设备查询出错",
+                        e.to_string(),
+                    ));
                 }
+            };
+
+            if equips.is_empty() {
+                equipment_constraints.push(EquipmentConstraint {
+                    equipment_id: Uuid::nil(),
+                    equipment_name: "设备台账为空".to_string(),
+                    required_capability: "加工".to_string(),
+                    available: false,
+                    next_available_time: None,
+                    status: ConstraintStatus::Unknown,
+                });
+                all_passed = false;
+            }
+
+            // 说明：订单与设备之间没有绑定关系（mes.production_schedules 才有工位分配），
+            // 这里检查的是「租户设备池有没有可用设备」，不是「该订单已分配到某台设备」。
+            for eq in equips {
+                let id = eq.try_get::<Uuid, _>("id").unwrap_or_default();
+                let name: String = eq.try_get("equipment_name").unwrap_or_default();
+                let status: String = eq
+                    .try_get::<Option<String>, _>("status")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "unknown".to_string());
+                // 下次可用时间取真实保养计划日期；没有计划就留 None，不再编造 now+2h
+                let next_maintenance: Option<DateTime<Utc>> =
+                    eq.try_get("next_maintenance_date").ok().flatten();
+
+                let available = status == "normal";
+                if !available {
+                    all_passed = false;
+                }
+
+                let status_enum = if !available {
+                    ConstraintStatus::Failed
+                } else if next_maintenance.is_some_and(|d| d <= Utc::now()) {
+                    // 保养已过期：可用但要警告
+                    ConstraintStatus::Warning
+                } else {
+                    ConstraintStatus::Passed
+                };
+
+                equipment_constraints.push(EquipmentConstraint {
+                    equipment_id: id,
+                    equipment_name: name,
+                    required_capability: "加工".to_string(),
+                    available,
+                    next_available_time: if available { None } else { next_maintenance },
+                    status: status_enum,
+                });
             }
         }
 
@@ -1304,7 +1368,18 @@ pub async fn check_schedule_constraints(
             .fetch_all(&mut scope)
             .await;
 
-            if let Ok(team_list) = teams {
+            let team_list = match teams {
+                Ok(rows) => rows,
+                Err(e) => {
+                    tracing::error!("查询订单 {} 的班组失败: {}", order_id, e);
+                    return ApiResponse::from(TopemsError::internal(
+                        "约束检查失败：班组查询出错",
+                        e.to_string(),
+                    ));
+                }
+            };
+
+            {
                 for team in team_list {
                     let id = team.try_get::<Uuid, _>("id").unwrap_or_default();
                     let name: String = team.try_get("team_name").unwrap_or_default();
@@ -1319,8 +1394,8 @@ pub async fn check_schedule_constraints(
                         team_name: name,
                         required_skill: "生产操作".to_string(),
                         available_members: member_count,
-                        required_members: 2,
-                        status: if member_count >= 2 {
+                        required_members: DEFAULT_REQUIRED_MEMBERS,
+                        status: if member_count >= DEFAULT_REQUIRED_MEMBERS {
                             ConstraintStatus::Passed
                         } else {
                             ConstraintStatus::Warning
@@ -1404,25 +1479,23 @@ pub async fn get_optimization_report(
             .await
             .unwrap_or(0);
 
-    let scheduled_orders: i64 = sqlx::query_scalar(
+    let scheduled_orders: i64 = match sqlx::query_scalar(
         "SELECT COUNT(DISTINCT order_id) FROM mes.production_schedules WHERE status <> $2 AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
     .bind(ProductionScheduleStatus::Cancelled.as_db_str())
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
-
-    let completed_orders: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed' AND tenant_id = $1::uuid",
-    )
-    .bind(tenant_id)
-    .fetch_one(&mut scope)
-    .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计已排程订单失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取优化报告失败", e.to_string()));
+        }
+    };
 
     // 计算平均交付周期
-    let avg_lead_time: Option<f64> = sqlx::query_scalar(
+    let avg_lead_time: Option<f64> = match sqlx::query_scalar(
         r#"
         SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(actual_end_date, NOW()) - created_at)) / 3600)
         FROM mes.production_orders
@@ -1433,11 +1506,61 @@ pub async fn get_optimization_report(
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
-    .ok()
-    .flatten();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计平均交付周期失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取优化报告失败", e.to_string()));
+        }
+    };
 
-    let on_time_rate = if total_orders > 0 {
-        (completed_orders as f64 / total_orders as f64 * 100.0).min(100.0)
+    // 准时率：完工订单里「实际完工不晚于计划完工」的占比。
+    // 之前用 completed_orders / total_orders，那是完成率不是准时率，口径错误。
+    let on_time_count: i64 = match sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*)
+        FROM mes.production_orders
+        WHERE status = 'completed'
+          AND actual_end_date IS NOT NULL
+          AND planned_end_date IS NOT NULL
+          AND actual_end_date <= planned_end_date
+          AND tenant_id = $1::uuid
+        "#,
+    )
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计准时完工订单失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取优化报告失败", e.to_string()));
+        }
+    };
+
+    let judged_orders: i64 = match sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*)
+        FROM mes.production_orders
+        WHERE status = 'completed'
+          AND actual_end_date IS NOT NULL
+          AND planned_end_date IS NOT NULL
+          AND tenant_id = $1::uuid
+        "#,
+    )
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计可判定准时性的订单失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取优化报告失败", e.to_string()));
+        }
+    };
+
+    let on_time_rate = if judged_orders > 0 {
+        (on_time_count as f64 / judged_orders as f64 * 100.0).clamp(0.0, 100.0)
     } else {
         0.0
     };
@@ -1466,65 +1589,124 @@ pub async fn get_optimization_report(
     .fetch_all(&mut scope)
     .await;
 
-    if let Ok(loads) = station_loads {
-        for (idx, load) in loads.iter().enumerate() {
-            let name: String = load.try_get("name").unwrap_or_default();
-            let task_count: i64 = load.try_get("task_count").unwrap_or(0);
-            let total_hours: Option<f64> = load.try_get("total_hours").ok();
-
-            let impact = if idx < 3 { 0.9 } else { 0.6 };
-            let utilization = total_hours.unwrap_or(0.0).min(100.0);
-
-            bottleneck_resources.push(BottleneckResource {
-                resource_id: name.clone(),
-                resource_name: name,
-                resource_type: "workstation".to_string(),
-                utilization_rate: utilization,
-                queue_length: task_count as i32,
-                impact_score: impact,
-            });
+    let loads = match station_loads {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("按工位统计负载失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取优化报告失败", e.to_string()));
         }
+    };
+
+    // 排程窗口（决定「负载率」的分母）。没有窗口就算不出利用率，宁可给 0 也不编造。
+    let schedule_window_hours: f64 = match sqlx::query_scalar(
+        r#"
+        SELECT COALESCE(
+                 EXTRACT(EPOCH FROM (MAX(planned_end_time) - MIN(planned_start_time))) / 3600,
+                 0
+               )
+        FROM mes.production_schedules
+        WHERE status = ANY($2::text[])
+          AND tenant_id = $1::uuid
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(ProductionScheduleStatus::active_from())
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计排程窗口失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取优化报告失败", e.to_string()));
+        }
+    };
+
+    for load in loads.iter() {
+        let name: String = load.try_get("station_name").unwrap_or_default();
+        let task_count: i64 = load.try_get("task_count").unwrap_or(0);
+        let total_hours: Option<f64> = load.try_get("total_hours").ok().flatten();
+
+        // 负载率 = 该工位计划工时 / 排程窗口时长。原来直接把「小时数」当百分比，
+        // 量纲是错的（48 小时会被读成 48%）；impact_score 原来按数组下标取 0.9/0.6，
+        // 与数据无关，这里统一由负载率派生。
+        let utilization = match total_hours {
+            Some(hours) if schedule_window_hours > 0.0 => {
+                (hours / schedule_window_hours * 100.0).clamp(0.0, 100.0)
+            }
+            _ => 0.0,
+        };
+        let impact = (utilization / 100.0).clamp(0.0, 1.0);
+
+        bottleneck_resources.push(BottleneckResource {
+            resource_id: name.clone(),
+            resource_name: name,
+            resource_type: "workstation".to_string(),
+            utilization_rate: utilization,
+            queue_length: task_count as i32,
+            impact_score: impact,
+        });
     }
 
     let mut improvement_suggestions = Vec::new();
 
-    if bottleneck_resources.len() >= 3 {
-        improvement_suggestions.push(ImprovementSuggestion {
-            category: "产能".to_string(),
-            title: "增加瓶颈工位产能".to_string(),
-            description: format!(
-                "{} 等工位负载过高，建议增加设备或延长工作班次",
-                bottleneck_resources[0].resource_name
-            ),
-            estimated_impact: "提升产能 15-20%".to_string(),
-            priority: 1,
-        });
+    // 建议只陈述实测数据，不再给「提升 15-20%」这类无依据的收益承诺
+    if let Some(top) = bottleneck_resources.first() {
+        if top.utilization_rate >= 80.0 {
+            improvement_suggestions.push(ImprovementSuggestion {
+                category: "产能".to_string(),
+                title: "缓解瓶颈工位负载".to_string(),
+                description: format!(
+                    "{} 的排程负载率已达 {:.1}%（队列 {} 个任务），建议增加设备或延长工作班次",
+                    top.resource_name, top.utilization_rate, top.queue_length
+                ),
+                estimated_impact: format!(
+                    "可释放约 {:.1}% 的工位负载",
+                    top.utilization_rate - 70.0
+                ),
+                priority: 1,
+            });
+        }
     }
 
-    if on_time_rate < 80.0 {
+    if judged_orders > 0 && on_time_rate < 80.0 {
         improvement_suggestions.push(ImprovementSuggestion {
             category: "交付".to_string(),
             title: "优化排程策略".to_string(),
-            description: "当前准时交付率较低，建议采用双向排程策略并增加安全库存".to_string(),
-            estimated_impact: "提升准时交付率至 90%+".to_string(),
+            description: format!(
+                "近 {} 个可判定订单中准时完工率 {:.1}%，建议采用双向排程策略并增加安全库存",
+                judged_orders, on_time_rate
+            ),
+            estimated_impact: "以历史准时率与计划交期的差距为参照，具体收益需在模拟排程中验证"
+                .to_string(),
             priority: 2,
         });
     }
 
-    improvement_suggestions.push(ImprovementSuggestion {
-        category: "流程".to_string(),
-        title: "实施 APS 自动排程".to_string(),
-        description: "当前排程依赖人工，建议启用 APS 自动排程减少人为错误".to_string(),
-        estimated_impact: "减少排程时间 80%".to_string(),
-        priority: 3,
-    });
+    let unscheduled_orders = total_orders.saturating_sub(scheduled_orders);
+    let coverage = if total_orders > 0 {
+        (scheduled_orders as f64 / total_orders as f64 * 100.0).clamp(0.0, 100.0)
+    } else {
+        0.0
+    };
+    if unscheduled_orders > 0 {
+        improvement_suggestions.push(ImprovementSuggestion {
+            category: "流程".to_string(),
+            title: "补齐未排程订单".to_string(),
+            description: format!(
+                "当前有 {} 个订单尚未生成排程（共 {} 个订单），排程仍依赖人工触发",
+                unscheduled_orders, total_orders
+            ),
+            estimated_impact: format!("排程覆盖率 {:.1}%，补齐前人工排程等待无法消除", coverage),
+            priority: 3,
+        });
+    }
 
     ApiResponse::success(
         OptimizationReport {
             generated_at: Utc::now(),
             total_orders,
             scheduled_orders,
-            unscheduled_orders: total_orders - scheduled_orders,
+            unscheduled_orders,
             average_lead_time_hours: avg_lead_time.unwrap_or(0.0),
             on_time_rate,
             bottleneck_resources,
@@ -1587,38 +1769,63 @@ pub async fn get_bottleneck_analysis(
         }
     };
 
-    let total_orders: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE tenant_id = $1::uuid")
-            .bind(tenant_id)
-            .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+    let total_orders: i64 = match sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE tenant_id = $1::uuid",
+    )
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计订单总数失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取瓶颈分析失败", e.to_string()));
+        }
+    };
 
-    let completed: i64 = sqlx::query_scalar(
+    let completed: i64 = match sqlx::query_scalar(
         "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed' AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计完工订单失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取瓶颈分析失败", e.to_string()));
+        }
+    };
 
-    let in_progress: i64 = sqlx::query_scalar(
+    let in_progress: i64 = match sqlx::query_scalar(
         "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'in_progress' AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计在制订单失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取瓶颈分析失败", e.to_string()));
+        }
+    };
 
-    let pending: i64 = sqlx::query_scalar(
+    let pending: i64 = match sqlx::query_scalar(
         "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'pending' AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计待生产订单失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取瓶颈分析失败", e.to_string()));
+        }
+    };
 
-    let avg_cycle: Option<f64> = sqlx::query_scalar(
+    let avg_cycle: Option<f64> = match sqlx::query_scalar(
         r#"
         SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(actual_end_date, NOW()) - actual_start_date)) / 3600)
         FROM mes.production_orders
@@ -1629,11 +1836,16 @@ pub async fn get_bottleneck_analysis(
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
-    .ok()
-    .flatten();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计平均生产周期失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取瓶颈分析失败", e.to_string()));
+        }
+    };
 
     // 产能 vs 需求
-    let total_capacity = sqlx::query_scalar::<_, f64>(
+    let total_capacity = match sqlx::query_scalar::<_, f64>(
         r#"
         SELECT COUNT(*) * 8.0 * 5.0 as capacity_hours
         FROM mes.work_stations
@@ -1644,9 +1856,15 @@ pub async fn get_bottleneck_analysis(
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0.0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计设备产能失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取瓶颈分析失败", e.to_string()));
+        }
+    };
 
-    let total_demand = sqlx::query_scalar::<_, f64>(
+    let total_demand = match sqlx::query_scalar::<_, f64>(
         r#"
         SELECT COALESCE(SUM(quantity * 0.1), 0) as demand_hours
         FROM mes.production_orders
@@ -1657,7 +1875,13 @@ pub async fn get_bottleneck_analysis(
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
-    .unwrap_or(0.0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计在手需求失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取瓶颈分析失败", e.to_string()));
+        }
+    };
 
     let utilization = if total_capacity > 0.0 {
         (total_demand / total_capacity * 100.0).min(100.0)
@@ -1688,25 +1912,40 @@ pub async fn get_bottleneck_analysis(
     .fetch_all(&mut scope)
     .await;
 
-    if let Ok(stats) = station_stats {
-        for stat in stats.iter() {
-            let name: String = stat.try_get("name").unwrap_or_default();
-            let tasks: i64 = stat.try_get("scheduled_tasks").unwrap_or(0);
-            let orders: i64 = stat.try_get("unique_orders").unwrap_or(0);
-
-            bottleneck_resources.push(BottleneckResource {
-                resource_id: name.clone(),
-                resource_name: name,
-                resource_type: "workstation".to_string(),
-                utilization_rate: if total_capacity > 0.0 {
-                    (tasks as f64 * 2.0 / total_capacity * 100.0).min(100.0)
-                } else {
-                    0.0
-                },
-                queue_length: tasks as i32,
-                impact_score: if orders > 0 { 0.85 } else { 0.3 },
-            });
+    let stats = match station_stats {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("按工位统计排程任务失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("获取瓶颈分析失败", e.to_string()));
         }
+    };
+
+    let total_scheduled_tasks: i64 = stats
+        .iter()
+        .map(|stat| stat.try_get::<i64, _>("scheduled_tasks").unwrap_or(0))
+        .sum();
+
+    for stat in stats.iter() {
+        // SQL 里选的是 station_name，之前按 name 取值导致工位名恒为空串
+        let name: String = stat.try_get("station_name").unwrap_or_default();
+        let tasks: i64 = stat.try_get("scheduled_tasks").unwrap_or(0);
+
+        // 负载率按「该工位任务数 / 全部在排任务数」的真实占比计算；
+        // 影响分与负载率同源，不再用 orders>0 ? 0.85 : 0.3 这种写死的档位。
+        let load_share = if total_scheduled_tasks > 0 {
+            (tasks as f64 / total_scheduled_tasks as f64 * 100.0).clamp(0.0, 100.0)
+        } else {
+            0.0
+        };
+
+        bottleneck_resources.push(BottleneckResource {
+            resource_id: name.clone(),
+            resource_name: name,
+            resource_type: "workstation".to_string(),
+            utilization_rate: load_share,
+            queue_length: tasks as i32,
+            impact_score: (load_share / 100.0).clamp(0.0, 1.0),
+        });
     }
 
     ApiResponse::success(
