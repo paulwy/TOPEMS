@@ -13,6 +13,7 @@ import { apiClient } from '../client';
 import { performanceMark, performanceMeasure, parseQueryName } from '@/utils/graphqlPerformance';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
+import { EDGE_TOLERANT_TIMEOUT_MS } from '@/config/edgeTimeout';
 
 const perfLogger = logger.child({ prefix: 'BFF-GraphQL' });
 
@@ -175,7 +176,9 @@ async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
     }
     // 未匹配到 mock 规则：先尝试真正的请求（portal 已启动时正常使用），失败再回落空结构
     try {
-      const json = await portal.post<never, GraphQLResponse<T>>('/graphql', body);
+      const json = await portal.post<never, GraphQLResponse<T>>('/graphql', body, {
+        timeout: EDGE_TOLERANT_TIMEOUT_MS,
+      });
       if (!json.errors?.length) return json.data as T;
     } catch {
       // fall-through to warn + empty
@@ -186,7 +189,9 @@ async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
     return null as unknown as T;
   }
 
-  const json = await portal.post<never, GraphQLResponse<T>>('/graphql', body);
+  const json = await portal.post<never, GraphQLResponse<T>>('/graphql', body, {
+        timeout: EDGE_TOLERANT_TIMEOUT_MS,
+      });
 
   if (json.errors?.length) {
     throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);

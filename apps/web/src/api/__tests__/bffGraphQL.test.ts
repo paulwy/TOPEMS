@@ -9,6 +9,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { apiClient } from '@/api/client';
 import { bffGraphQL } from '@/api/bff';
+import { EDGE_TOLERANT_TIMEOUT_MS } from '@/config/edgeTimeout';
 
 // mock 依赖：仅保留 bffGraphQL 用到的能力
 vi.mock('@/api/client', () => ({
@@ -67,7 +68,9 @@ describe('bffGraphQL（FE-17-3 后续收口）', () => {
       extensions: { persistedQuery: { version: 1, sha256Hash: expect.any(String) } },
     });
     // 无手动 headers：由统一 axios 拦截器注入 token / x-tenant-id / trace / CSRF
-    expect(config).toBeUndefined();
+    // 只允许放宽超时（CF 隧道链路抖动，见 config/edgeTimeout.ts）
+    expect(config).toEqual({ timeout: EDGE_TOLERANT_TIMEOUT_MS });
+    expect((config as { headers?: unknown } | undefined)?.headers).toBeUndefined();
   });
 
   it('APQ 回退：PersistedQueryNotFound 时二次发送完整 query + hash', async () => {

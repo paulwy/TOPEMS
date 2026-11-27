@@ -45,6 +45,7 @@ import type { DateRange, StatusLightState } from '@/components/redesign';
 import { getDashboard } from '@/api/bff';
 import { mesAnalyticsApi } from '@/api/mes/analytics';
 import apiClient from '@/api/client';
+import { EDGE_TOLERANT_TIMEOUT_MS } from '@/config/edgeTimeout';
 import i18n from '@/i18n';
 
 import '@/theme/redesign-tokens.css';
@@ -235,6 +236,7 @@ const DashboardPage: React.FC = () => {
     queryKey: [...QUERY_KEY, 'infra-health'],
     queryFn: async () => {
       // 走统一 axios 拦截器：token / x-tenant-id / 401 / trace 统一处理
+      // 该端点走 CF 隧道聚合链路，实测 p50≈1s、尾部可达 6s+，用宽松超时避免误报为故障
       const res = await apiClient.monitor.get<
         Array<{
           component: string;
@@ -242,7 +244,7 @@ const DashboardPage: React.FC = () => {
           value: string;
           detail: string;
         }>
-      >('/infrastructure');
+      >('/infrastructure', { timeout: EDGE_TOLERANT_TIMEOUT_MS });
       return res.data ?? [];
     },
     staleTime: 60 * 1000,
