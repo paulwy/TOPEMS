@@ -1797,6 +1797,13 @@ pub async fn get_sync_status_handler(
 // ==================== V31.0 质量看板 Handlers ====================
 
 /// 主数据质量报告
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/quality/report",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/quality/report get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn get_quality_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1830,6 +1837,13 @@ pub async fn get_quality_report_handler(
 }
 
 /// 重复编码列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/quality/duplicates",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/quality/duplicates get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_duplicates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1858,6 +1872,13 @@ pub async fn list_duplicates_handler(
 }
 
 /// 过期数据列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/quality/stale",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/quality/stale get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_stale_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1890,6 +1911,13 @@ pub async fn list_stale_handler(
 // ==================== V31.0 数据对账 Handlers ====================
 
 /// 执行对账
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/mdm/reconciliation/run",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/reconciliation/run post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn run_reconciliation_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1918,6 +1946,13 @@ pub async fn run_reconciliation_handler(
 }
 
 /// 对账日志列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/reconciliation/logs",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/reconciliation/logs get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_reconciliation_logs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1952,6 +1987,16 @@ pub async fn list_reconciliation_logs_handler(
 }
 
 /// 解决对账问题
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/mdm/reconciliation/logs/{issue_id}/resolve",
+    tag = "Core-MDM",
+    params(
+        ("issue_id" = String, Path, description = "issue_id"),
+    ),
+    responses((status = 200, description = "/mdm/reconciliation/logs/{issue_id}/resolve post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn resolve_reconciliation_issue_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2016,6 +2061,13 @@ pub struct ReconciliationLogQuery {
 // ==================== V31.0 变更审批 Handlers ====================
 
 /// 创建变更审批
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/mdm/approvals",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/approvals post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn create_approval_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2059,6 +2111,16 @@ pub async fn create_approval_handler(
 }
 
 /// 审批处理
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/mdm/approvals/{approval_id}/review",
+    tag = "Core-MDM",
+    params(
+        ("approval_id" = String, Path, description = "approval_id"),
+    ),
+    responses((status = 200, description = "/mdm/approvals/{approval_id}/review post"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn review_approval_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2112,6 +2174,13 @@ pub async fn review_approval_handler(
 }
 
 /// 待审批列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/approvals/pending",
+    tag = "Core-MDM",
+    responses((status = 200, description = "/mdm/approvals/pending get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_pending_approvals_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -2143,6 +2212,16 @@ pub async fn list_pending_approvals_handler(
 }
 
 /// 审批历史
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/mdm/approvals/history/{master_data_id}",
+    tag = "Core-MDM",
+    params(
+        ("master_data_id" = String, Path, description = "master_data_id"),
+    ),
+    responses((status = 200, description = "/mdm/approvals/history/{master_data_id} get"), (status = 500, description = "服务内部错误")),
+)]
 pub async fn list_approval_history_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

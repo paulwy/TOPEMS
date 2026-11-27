@@ -1,0 +1,97 @@
+{
+  "note": "后端已显形为 X-Stub 的桩接口（硬编码返回，501/示例数据），刻意不进 OpenAPI；对账时单列，不算可修缺口",
+  "knownStubs": [
+    {
+      "method": "GET",
+      "path": "/api/core/system/v1/config"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/system/v1/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/v1/cache/config"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/system/v1/cache/config"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/system/v1/cache/clear"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/v1/cache/stats"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/v1/log/config"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/system/v1/log/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/v1/params"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/system/v1/params"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/config"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/system/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/cache/config"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/system/cache/config"
+    },
+    {
+      "method": "POST",
+      "path": "/api/core/system/cache/clear"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/cache/stats"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/log/config"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/system/log/config"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/system/params"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/core/system/params"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/file/attachments"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-definitions"
+    },
+    {
+      "method": "GET",
+      "path": "/api/core/flow/form-instances"
+    }
+  ]
+}

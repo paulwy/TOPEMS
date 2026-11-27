@@ -77,13 +77,29 @@ function walk(dir, out = []) {
   return out;
 }
 
-/** 把调用路径归一：去 query、`${...}` → `*` */
-function normCall(p) {
+/** 抽出文件内的字符串常量（`const API_BASE = '/tenant'` 这类），供模板占位符回填 */
+function fileConsts(src) {
+  const map = {};
+  const re = /const\s+([A-Za-z_$][\w$]*)\s*(?::\s*string\s*)?=\s*(`[^`]*`|'[^']*'|"[^"]*")/g;
+  let m;
+  while ((m = re.exec(src))) {
+    const v = m[2].slice(1, -1);
+    if (!v.includes('${')) map[m[1]] = v;
+  }
+  return map;
+}
+
+/** 把调用路径归一：去 query、`${...}` → `*`；能查到文件内常量的先回填 */
+function normCall(p, consts = {}) {
   let s = p.split('?')[0].split('#')[0];
+  s = s.replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (all, name) => (name in consts ? consts[name] : all));
   s = s.replace(/`\s*\+/g, '').replace(/\$\{[^}]*\}/g, '*');
   // 模板没闭合（如 `${queryString`）时按变量处理
   s = s.replace(/\$\{[^`]*$/g, '*');
   s = s.replace(/\+/g, '');
+  // 尾部 `*` 只有"黏在文字后面"时才是 query/后缀拼串占位（如 /audit/operations${qs}）；
+  // `/*` 结尾是真变量段（等价 spec 的 `{id}`），必须保留
+  if (s.endsWith('*') && !s.endsWith('/*')) s = s.replace(/\*+$/g, '');
   if (!s.startsWith('/')) s = '/' + s;
   return s.replace(/\/+/g, '/').replace(/(.)\/$/, '$1');
 }
@@ -127,6 +143,7 @@ async function main() {
   for (const f of files) {
     const rel = path.relative(WEB, f);
     const src = fs.readFileSync(f, 'utf8');
+    const consts = fileConsts(src);
     let m;
     CALL_RE.lastIndex = 0;
     while ((m = CALL_RE.exec(src))) {
@@ -134,7 +151,7 @@ async function main() {
       const method = m[2].toUpperCase();
       const raw = m[3].slice(1, -1);
       // 只处理纯路径（含模板变量），跳过明显拼接了变量的非路径表达式
-      const norm = normCall(raw);
+      const norm = normCall(raw, consts);
       const prefix = bases[ns];
       if (!prefix) continue;
       const full = norm.startsWith(prefix) ? norm : `${prefix}${norm}`.replace(/\/+/g, '/');
@@ -143,11 +160,22 @@ async function main() {
     }
   }
 
+  // 已知桩：后端显形为 X-Stub、刻意不进 spec 的接口，单列不进缺口
+  let knownStubs = [];
+  try {
+    const p = path.join(path.dirname(new URL(import.meta.url).pathname), 'openapi-known-stubs.json');
+    knownStubs = JSON.parse(fs.readFileSync(p, 'utf8')).knownStubs || [];
+  } catch { knownStubs = []; }
+  const stubKey = (m, p) => `${m.toUpperCase()} ${p.replace(/\{[^}]*\}/g, '*')}`;
+  const stubSet = new Set(knownStubs.map((x) => stubKey(x.method, x.path)));
+
   const missing = [];
+  const stubbed = [];
   const ok = [];
   for (const c of calls) {
     const hit = match(specPaths, c.method, c.full);
-    if (hit) ok.push({ ...c, spec: hit });
+    if (hit) { ok.push({ ...c, spec: hit }); continue; }
+    if (stubSet.has(stubKey(c.method, c.full))) stubbed.push(c);
     else missing.push(c);
   }
 
@@ -165,7 +193,7 @@ async function main() {
 
   console.log(`契约对账  spec=${SPEC_SRC}`);
   console.log(`扫描 ${files.length} 个前端 api 文件，抓到 ${calls.length} 条静态可解析调用`);
-  console.log(`匹配 ${ok.length}，未匹配 ${missing.length}\n`);
+  console.log(`匹配 ${ok.length}，未匹配 ${missing.length}，已知桩豁免 ${stubbed.length}\n`);
 
   console.log('命名空间        调用  匹配  缺口');
   for (const ns of nsList.sort((a, b) => byNs[b].missing - byNs[a].missing)) {

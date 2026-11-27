@@ -402,3 +402,55 @@ core 剩余 84 条：`/api/core/*` 模板串 27（前端拼串，静态无法解
 冒烟 `961 条 OK=899 SOFT=62 FAIL=0 SKIP=0 DEGRADED=0`。
 
 core 剩余 56 条：`/api/core/*` 模板串 27（前端拼串）、system 20（10 条 `X-Stub` 桩刻意不入）、flow 3、audit 3、governance 2、comments/favorites 残余（`PUT|DELETE /comments/*` 等模板化路径）少量。
+
+---
+
+## 第十九轮（2026-11-27）：core 缺口清零 —— 先修"尺子"，再补接口
+
+### 对账工具两处失真
+
+`core` 缺口卡在 56 条时，先看剩下的都是什么：27 条 `/api/core/*` 模板串、20 条 system 桩、若干桩接口。模板串按旧口径是"静态无法解析"，但事实不是——前端用的是文件内常量：
+
+```ts
+const API_BASE = '/tenant';           // apps/web/src/api/tenant/index.ts
+apiClient.core.get(`${API_BASE}/list`)
+```
+
+旧 `normCall` 把 `${API_BASE}` 直接归一成 `*`，于是 27 条全部对不上。给 `api-contract.mjs` 加**文件内字符串常量回填**：先用 `const NAME = '...'` 的值替换 `${NAME}`，剩下的才当变量。core 缺口 56 → 35，全局匹配 2812 → 2945。
+
+顺带修了"尾部星号"的误判：`/audit/operations${qs}` 归一后是 `/audit/operations*`（星号黏在文字后，是 query 占位，要剥掉）；而 `/conversations/${id}` 归一后是 `/conversations/*`（星号自成一段，等价 spec 的 `{id}`，必须保留）。第一版一刀切剥掉所有尾部星号，全局匹配反而掉到 2541 —— 已按"星号前是否是 `/`"区分。这条值得记：**归一化规则改错，缺口数字会假性暴涨/暴跌**。
+
+### 桩接口从缺口里分离
+
+`system` 的 20 条 config/cache/log/params 与 `file/attachments`、`flow/form-definitions|instances` 都是已显形的 `X-Stub` 桩，刻意不进 spec。新增 `scripts/ci/openapi-known-stubs.json` 白名单，对账输出改成 `匹配 / 未匹配 / 已知桩豁免` 三个数，桩不再污染缺口。
+
+### MDM 治理端点
+
+`/mdm/approvals/*`、`/mdm/quality/*`、`/mdm/reconciliation/*` 共 10 个 handler 补注解（tag `Core-MDM`）。实测 `/mdm/approvals/pending`、`/mdm/quality/report`、`/duplicates`、`/stale`、`/mdm/reconciliation/logs` 全部 200。
+
+### 顺手修正 main 里的 9 条漂移路径
+
+上一轮为不回归而还原的 9 条 main 文档路径，实测本机 **404**；查 main 代码发现文档写的路径少了 `/iam`：
+
+| 文档写的 | 真实路由 | 实测 |
+| --- | --- | --- |
+| `/api/core/v1/audit/logs` | `/api/core/iam/v1/audit/logs` | 404 → **200** |
+| `/api/core/v1/audit/logs/stats` | `/api/core/iam/v1/audit/logs/stats` | 404 → **200** |
+| `/api/core/v1/audit/sources` | `/api/core/iam/v1/audit/sources` | 404 → **200** |
+| `/api/core/auth/refresh|logout|forgot-password|reset-password` | `/api/core/iam/auth/...` | 404 → 405(POST-only)/正常 |
+| `/api/communication/notify/list` | `/api/communication/notification/notify/list` | 重复项，删除 |
+
+`notify/list` 是重复路径（同模块另一条已存在），直接删。
+
+### 数字（core 清零）
+
+| 指标 | 轮前 | 轮后 |
+| --- | --- | --- |
+| spec paths | 2639 | **2657** |
+| 契约匹配 | 2812 | **2959** |
+| core 缺口 | 56 | **0** |
+| 已知桩豁免 | — | 26 |
+
+冒烟 `970 条 OK=908 SOFT=62 FAIL=0 SKIP=0 DEGRADED=0`。
+
+`core` 由 236 条前端调用、211 条命中、0 条缺口收口；剩余 26 条桩单独计数。
