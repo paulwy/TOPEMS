@@ -3274,3 +3274,17 @@ pending_forward_patches:
     effect: "每个 (role_id, permission_id) 分组保留最早 created_at/并列物理首行（ctid）一行，删除其余重复授权行；distinct 授权对一条不丢；prod 无重复，幂等空跑"
     destructive_scan: "DELETE USING 窗口函数去重（to_regclass 守卫、destructive 标记 max-rows=0 + backup）；无 DDL、不新建角色、不新增或撤销授权；锚点用系统列 ctid，不依赖业务 id 列（prod/链终态为复合主键无 id 列）"
     note: "dev 种子重放残留去重（本机 superadmin 冗余 3071、admin 冗余 703；prod 0 重复）；根治（种子 INSERT 幂等守卫 / (role_id,permission_id) 唯一约束）另议；checksum 17391cf41adcf4d5b3da7f082b040e329f7142851779d4d5c240ec4817832271"
+
+  # ===== 2026-11-27：mes 基础资料租户业务键唯一（来源重建） =====
+  - version: "20261127090000"
+    file: "(无文件：应用后在工作区被撤回，origin 与 checksums/manifest 均无登记)"
+    status: superseded
+    effect: "曾于 2026-11-27 在本机 dev 库建下 mes 基础资料租户业务键唯一索引（5 条）；文件未提交即撤回，_sqlx_migrations 残留 success 行（description=mes basics tenant scoped keys）"
+    destructive_scan: "无文件可扫描"
+    note: "orphan（有结构、无来源）：dev 库 5 条索引仍在位，但任何新库/drill/prod 都无法重建；效果已由 20261127110000 以幂等 CREATE UNIQUE INDEX IF NOT EXISTS 承接"
+  - version: "20261127110000"
+    file: "database/migrations/20261127110000_mes_basics_tenant_scoped_keys.sql"
+    status: applied
+    effect: "幂等重建 5 条租户业务键唯一索引：mes.workshops workshops_tenant_code_key(tenant_id,code) / workshops_id_tenant_key(id,tenant_id)；mes.production_lines production_lines_tenant_code_key；mes.shifts shifts_tenant_code_key；mes.work_calendars work_calendars_tenant_code_key；末尾按 pg_indexes 逐条断言在位"
+    destructive_scan: "CREATE UNIQUE INDEX IF NOT EXISTS ×5 + to_regclass 守卫 + 断言；无 DELETE/UPDATE/TRUNCATE/DROP COLUMN/DROP TABLE"
+    note: "承接被撤回的 20261127090000；本机 2026-11-27 应用（索引已存在 → 空跑 + 断言通过，账本 success=t）；生产待投放（mes 四表 0 行，建索引零风险）。回滚 database/rollback/20261127110000_mes_basics_tenant_scoped_keys.rollback.sql"
