@@ -120,6 +120,7 @@ pub async fn get_subscription(
         FROM bi.report_subscriptions s
         LEFT JOIN bi.report_templates t ON s.template_id = t.id
         WHERE s.id = $1
+          AND s.deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -179,12 +180,22 @@ pub async fn list_subscriptions(
         r#"
         SELECT s.id, s.template_id, s.user_id::text AS user_id, s.email, s.frequency, s.enabled, s.created_at
         FROM bi.report_subscriptions s
+        WHERE s.deleted_at IS NULL
         ORDER BY s.created_at DESC
         "#,
     )
     .fetch_all(&mut *tx)
-    .await
-    .unwrap_or_default();
+    .await;
+
+    let subscriptions = match subscriptions {
+        Ok(rows) => rows,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list subscriptions: {}", e),
+            ))
+        }
+    };
 
     let result: Vec<serde_json::Value> = subscriptions
         .into_iter()
@@ -240,13 +251,23 @@ pub async fn get_user_subscriptions(
         FROM bi.report_subscriptions s
         LEFT JOIN bi.report_templates t ON s.template_id = t.id
         WHERE s.user_id = $1
+          AND s.deleted_at IS NULL
         ORDER BY s.created_at DESC
         "#,
     )
     .bind(user_id)
     .fetch_all(&mut *tx)
-    .await
-    .unwrap_or_default();
+    .await;
+
+    let subscriptions = match subscriptions {
+        Ok(rows) => rows,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list user subscriptions: {}", e),
+            ))
+        }
+    };
 
     let result: Vec<serde_json::Value> = subscriptions
         .into_iter()
@@ -366,6 +387,7 @@ pub async fn update_subscription(
             frequency = COALESCE($2, frequency),
             enabled = COALESCE($3, enabled)
         WHERE id = $4
+          AND deleted_at IS NULL
         "#,
         req.email,
         req.frequency.map(|f| f.to_string()),
@@ -376,6 +398,10 @@ pub async fn update_subscription(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
+            404,
+            "Subscription not found or already deleted",
+        )),
         Ok(_) => match tx.commit().await {
             Ok(()) => Json(serde_json::json!({
                 "success": true,
@@ -422,6 +448,7 @@ pub async fn delete_subscription(
         r#"
         UPDATE bi.report_subscriptions SET deleted_at = NOW()
         WHERE id = $1
+          AND deleted_at IS NULL
         "#,
         id,
     )
@@ -429,6 +456,10 @@ pub async fn delete_subscription(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
+            404,
+            "Subscription not found or already deleted",
+        )),
         Ok(_) => match tx.commit().await {
             Ok(()) => Json(serde_json::json!({
                 "success": true,
@@ -476,6 +507,7 @@ pub async fn toggle_subscription(
         UPDATE bi.report_subscriptions
         SET enabled = NOT enabled
         WHERE id = $1
+          AND deleted_at IS NULL
         RETURNING id, enabled
         "#,
         id,

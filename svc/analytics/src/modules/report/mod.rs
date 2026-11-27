@@ -9,6 +9,9 @@ pub mod template;
 
 pub use scheduler::ReportScheduler;
 
+#[cfg(test)]
+mod soft_delete_ratchet;
+
 use axum::routing::{get, post, put};
 use axum::Router;
 use sqlx::PgPool;

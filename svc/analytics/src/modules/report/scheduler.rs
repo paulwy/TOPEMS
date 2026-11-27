@@ -96,6 +96,7 @@ impl ReportScheduler {
             SELECT id, name, schedule_type, schedule_expression, tenant_id
             FROM bi.report_schedules
             WHERE status = 'active'
+              AND deleted_at IS NULL
             "#,
         )
         .fetch_all(&mut *tx)
@@ -236,6 +237,7 @@ async fn check_and_execute_schedules(pool: &PgPool) -> Result<(), TopemsError> {
         SELECT id, name, tenant_id
         FROM bi.report_schedules
         WHERE status = 'active'
+          AND deleted_at IS NULL
           AND (next_run_at IS NULL OR next_run_at <= $1)
         "#,
     )
@@ -311,6 +313,7 @@ pub async fn execute_schedule_job(
                 UPDATE bi.report_schedules
                 SET last_run_at = $1, run_count = run_count + 1, error_message = NULL
                 WHERE id = $2
+                  AND deleted_at IS NULL
                 "#,
             )
             .bind(Utc::now())
@@ -340,6 +343,7 @@ pub async fn execute_schedule_job(
                 UPDATE bi.report_schedules
                 SET last_run_at = $1, error_message = $2
                 WHERE id = $3
+                  AND deleted_at IS NULL
                 "#,
             )
             .bind(Utc::now())
@@ -364,6 +368,7 @@ async fn run_report(conn: &mut PgConnection, schedule_id: Uuid) -> Result<String
         SELECT template_id, parameters
         FROM bi.report_schedules
         WHERE id = $1
+          AND deleted_at IS NULL
         "#,
         schedule_id,
     )
@@ -401,6 +406,7 @@ async fn notify_subscribers(conn: &mut PgConnection, schedule_id: Uuid) -> Resul
         SELECT template_id, recipients
         FROM bi.report_schedules
         WHERE id = $1
+          AND deleted_at IS NULL
         "#,
         schedule_id,
     )
@@ -411,7 +417,7 @@ async fn notify_subscribers(conn: &mut PgConnection, schedule_id: Uuid) -> Resul
         r#"
         SELECT user_id, email, frequency, enabled
         FROM bi.report_subscriptions
-        WHERE template_id = $1 AND enabled = true
+        WHERE template_id = $1 AND enabled = true AND deleted_at IS NULL
         "#,
         schedule.template_id,
     )
