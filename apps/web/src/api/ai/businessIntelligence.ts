@@ -217,30 +217,6 @@ export interface DocumentParseResult {
 }
 
 /** 文档生成请求 */
-export interface DocumentGenerationRequest {
-  document_type: DocumentType;
-  title: string;
-  template?: string;
-  content: {
-    sections: Array<{
-      title: string;
-      level: number;
-      paragraphs: string[];
-      tables?: Array<{
-        headers: string[];
-        rows: string[][];
-      }>;
-      images?: string[];
-    }>;
-  };
-  style?: {
-    font_family?: string;
-    font_size?: number;
-    line_spacing?: number;
-    theme_color?: string;
-  };
-}
-
 // ============================================================================
 // 智能表单 API
 // ============================================================================
@@ -310,15 +286,6 @@ export async function uploadDocument(
  */
 export async function getDocument(document_id: string): Promise<ApiResponse<DocumentInfo>> {
   return apiClient.ai.get(`/documents/${document_id}`);
-}
-
-/**
- * 生成文档
- */
-export async function generateDocument(
-  request: DocumentGenerationRequest
-): Promise<ApiResponse<DocumentInfo>> {
-  return apiClient.ai.post(`/documents/generate`, request);
 }
 
 /**

@@ -850,3 +850,19 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 - **`GET /api/crm/recommendations` 500（panic）**：`crm.customer_recommendations.confidence` 是 `numeric(8,2)`，代码按 `f64` 用 `Row::get(6)` 解码，sqlx 类型不匹配直接 panic（`customer_recommendation.rs:145`）。三处 SELECT/RETURNING 统一 `confidence::float8 AS confidence` 并改 `try_get("confidence")`，实测 200。三个写接口（创建/单条查询）靠同一 SELECT 修复。
 - **`GET /api/monitor/metrics/history` 404**：该 path 只存在于 spec（注解路径与真实挂载不符），真实路由是 `GET /api/monitor/metrics`（实测 200）。从 spec 删除并入 `spec-prune-allowlist.json`（20 条），超集检查打印 WAIVED、判定 OK。
 - 收尾数据：spec 3481，live 3481（同一次 release 重编译）；全量冒烟 **1243 条 OK=1160 SOFT=82 SKIP=1 FAIL=0**；全量契约 **4758 / 3752 / 767**（较上一轮 849 缺口再降，bi **149/149/0**）。
+
+## 第 32 轮 · ai（74 → 0）
+
+**基线**：ai 200 调用 / 126 匹配 / 74 缺口。
+
+**做法**
+1. 删前端 v74 占位绑定 `apps/web/src/api/ai/{readOps,writeOps}.ts`（零引用、`{id}` 字面量），缺口先降到 66。
+2. 路由真源是 `svc/ai/src/routes.rs`（180 条 `.route(...)`）+ `modules/chat_conversations.rs` 内嵌 `create_routes()`（7 条，routes.rs 用 `merge` 挂载，单文件扫描扫不到）；`register_routes_with_legacy_alias` 把 protected 同时挂在 `/api/ai` 与 `/api/core/ai/v1`。
+3. 56 个 handler 无注解（`case::document::get` 这类 `crate::modules::…` 限定名、以及同名 `classify/history/generate/feedback` 分散在 analysis/qa/document/code_assistant/embedding/recommendation）→ 按"handler 所属模块目录"打分定位文件后插最小注解；`register_annotated_handlers.py --crate-root svc/ai/src --crate-prefix crate` 补登记 61 条。
+4. 三个幻影归位（不写进 spec）：
+   - `/api/ai/mcp`、`/api/ai/mcp/sse`：MCP 路由 merge 在进程根路径（`/mcp`、`/mcp/sse` 实测 200），注解写裸 `/mcp` 会被规范化成 `/api/ai/mcp`。
+   - `/api/ai/health/detailed`：属 `public_routes`，单体 `ai_real_module` 下未挂载（实测 404；`/api/ai/health` 200 是 server `registry.rs` 的通用模块探活 `/api/{svc}/health` 兜底，不是 ai 自己的 handler）。
+5. 修尺子：`api-contract.mjs` 的 `normCall` 对相邻模板 `` `/${id}${qs}` `` 会折叠成 `**` 再被"尾部星号=查询串"规则整段吃掉，误报 `DELETE /api/ai/dify/conversations`；加 `\*{2,}` → `*` 归一。
+6. 三个前端函数无后端路由且全仓库零引用 → 删函数（`businessCopilot.getSessionMessages`、`businessIntelligence.generateDocument`、`governanceDashboard.recordSecurityEvent`），不留给"契约匹配"当假象。
+
+**结果**：ai **180/180/0**；ai spec 内 54 条无参 GET 实测 0 404；spec 3481 → 3522；全量冒烟 **1260 条 OK=1177 SOFT=82 SKIP=1 FAIL=0**。

@@ -49,6 +49,12 @@ impl Default for SmartFormsAppState {
 }
 
 /// 表单模板列表
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/smart-forms/templates",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_templates() -> impl IntoResponse {
     let templates = builtin_templates::all_templates();
     Json(templates)
@@ -110,6 +116,12 @@ pub async fn ai_fill(
 }
 
 /// 表单校验
+#[utoipa::path(
+    post,
+    path = "/api/ai/dsh/smart-forms/validate",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn validate(
     State(state): State<SmartFormsAppState>,
     Json(req): Json<ValidationRequest>,

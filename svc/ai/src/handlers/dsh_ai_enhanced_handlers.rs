@@ -169,6 +169,12 @@ pub async fn get_entity(
 }
 
 /// 删除实体
+#[utoipa::path(
+    delete,
+    path = "/api/ai/dsh/kg/entities/{entity_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_entity(
     State(state): State<AppState>,
     Path(entity_id): Path<String>,
@@ -188,6 +194,12 @@ pub async fn delete_entity(
 }
 
 /// 列出所有实体
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/kg/entities",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_entities(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<crate::dsh::knowledge_graph::Entity>>> {
@@ -258,6 +270,12 @@ pub async fn add_relation(
 }
 
 /// 列出所有关系
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/kg/relations",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_relations(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<crate::dsh::knowledge_graph::Relation>>> {
@@ -394,6 +412,12 @@ pub async fn get_graph_stats(
 }
 
 /// 从文本中提取实体和关系
+#[utoipa::path(
+    post,
+    path = "/api/ai/dsh/kg/extract",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn extract_entities(
     State(state): State<AppState>,
     Json(req): Json<ExtractEntitiesRequest>,

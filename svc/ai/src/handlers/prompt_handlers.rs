@@ -423,6 +423,12 @@ pub async fn get_prompt_template(
 }
 
 /// POST /prompts/templates
+#[utoipa::path(
+    post,
+    path = "/api/ai/prompts/templates",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn create_prompt_template(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -472,6 +478,12 @@ pub async fn create_prompt_template(
 }
 
 /// PUT /prompts/templates/{id}
+#[utoipa::path(
+    put,
+    path = "/api/ai/prompts/templates/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn update_prompt_template(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -525,6 +537,12 @@ pub async fn update_prompt_template(
 }
 
 /// DELETE /prompts/templates/{id}
+#[utoipa::path(
+    delete,
+    path = "/api/ai/prompts/templates/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_prompt_template(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

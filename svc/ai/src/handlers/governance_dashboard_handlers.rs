@@ -211,6 +211,12 @@ pub async fn get_cost_analysis(
 }
 
 /// 获取性能指标
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/governance/performance",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_performance_metrics(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -227,6 +233,12 @@ pub async fn get_performance_metrics(
 ///
 /// 前端契约（2026-10-06）：getKeyMetrics。与 get_performance_metrics 同款逻辑
 /// （parse_time_range + generator.generate_dashboard 聚合），返回同源 dashboard.key_metrics。
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/governance/metrics",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_governance_metrics(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -247,6 +259,12 @@ pub async fn get_governance_metrics(
 /// - format=pdf/excel（默认 pdf）→ 无真实 PDF/Excel 渲染上游，轻量兜底仍返回
 ///   JSON 内容附件（governance-report.json，Content-Disposition attachment），
 ///   真实渲染待后续轮次接入（冒烟仅判 200/非 4xx）。
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/governance/export",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn export_governance_report(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,

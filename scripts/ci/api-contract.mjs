@@ -97,6 +97,8 @@ function normCall(p, consts = {}) {
   // 模板没闭合（如 `${queryString`）时按变量处理
   s = s.replace(/\$\{[^`]*$/g, '*');
   s = s.replace(/\+/g, '');
+  // 多模板相邻（`/${id}${qs}`）折叠成 `**`，先归一成一个 `*` 再判尾部
+  s = s.replace(/\*{2,}/g, '*');
   // 尾部 `*` 只有"黏在文字后面"时才是 query/后缀拼串占位（如 /audit/operations${qs}）；
   // `/*` 结尾是真变量段（等价 spec 的 `{id}`），必须保留
   if (s.endsWith('*') && !s.endsWith('/*')) s = s.replace(/\*+$/g, '');

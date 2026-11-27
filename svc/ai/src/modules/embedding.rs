@@ -40,6 +40,12 @@ fn generate_embedding(text: &str, dimension: usize) -> Vec<f32> {
 }
 
 /// POST /api/embedding/generate - 生成文本向量
+#[utoipa::path(
+    post,
+    path = "/api/ai/embedding/generate",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn generate(
     State(_state): State<AppState>,
     Json(req): Json<EmbeddingRequest>,

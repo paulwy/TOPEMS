@@ -43,6 +43,12 @@ impl From<&sqlx::postgres::PgRow> for ConversationDto {
 }
 
 /// GET /api/ai/conversations
+#[utoipa::path(
+    get,
+    path = "/api/ai/conversations",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_conversations(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -91,6 +97,12 @@ pub async fn list_conversations(
 }
 
 /// GET /api/ai/conversations/{id}
+#[utoipa::path(
+    get,
+    path = "/api/ai/conversations/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_conversation(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -146,6 +158,12 @@ pub struct CreateConversationRequest {
 }
 
 /// POST /api/ai/conversations
+#[utoipa::path(
+    post,
+    path = "/api/ai/conversations",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn create_conversation(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -198,6 +216,12 @@ pub async fn create_conversation(
 }
 
 /// DELETE /api/ai/conversations/{id}
+#[utoipa::path(
+    delete,
+    path = "/api/ai/conversations/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_conversation(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -271,6 +295,12 @@ pub fn create_routes() -> axum::Router<AppState> {
 }
 
 /// GET /api/ai/conversations/{id}/messages - 会话消息列表（待上游支持，返回空）
+#[utoipa::path(
+    get,
+    path = "/api/ai/conversations/{id}/messages",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_messages(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -310,6 +340,12 @@ pub async fn list_messages(
 }
 
 /// POST /api/ai/conversations/{id}/messages/{message_id}/regenerate - 重新生成（待上游支持）
+#[utoipa::path(
+    post,
+    path = "/api/ai/conversations/{id}/messages/{message_id}/regenerate",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn regenerate_message(
     State(_state): State<AppState>,
     _claims: axum::Extension<Claims>,

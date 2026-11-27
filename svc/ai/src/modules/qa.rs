@@ -659,6 +659,12 @@ pub async fn ask_conversation(
 }
 
 /// POST /api/qa/classify - 分类问题类型
+#[utoipa::path(
+    post,
+    path = "/api/ai/qa/classify",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn classify(
     State(state): State<AppState>,
     Json(req): Json<ClassifyRequest>,
@@ -678,6 +684,12 @@ pub async fn classify(
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// GET /api/qa/history - 获取问答历史（支持分页和搜索）
+#[utoipa::path(
+    get,
+    path = "/api/ai/qa/history",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn history(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -818,6 +830,12 @@ pub async fn batch_delete_history(
 }
 
 /// POST /api/qa/feedback - 提交答案反馈
+#[utoipa::path(
+    post,
+    path = "/api/ai/qa/feedback",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn feedback(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

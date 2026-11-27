@@ -369,6 +369,12 @@ mod tests {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ai/code/generate",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn generate(
     Extension(_claims): Extension<Claims>,
     Json(req): Json<CodeGenerateRequest>,

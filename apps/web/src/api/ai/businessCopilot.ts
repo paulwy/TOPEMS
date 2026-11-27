@@ -265,15 +265,6 @@ export async function searchFAQ(
 }
 
 /**
- * 获取会话历史消息
- */
-export async function getSessionMessages(
-  session_id: string
-): Promise<ApiResponse<ConversationMessage[]>> {
-  return apiClient.ai.get(`/dsh/copilot/sessions/${session_id}/messages`);
-}
-
-/**
  * 更新选中记录
  */
 export async function updateSelectedRecords(

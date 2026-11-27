@@ -574,6 +574,12 @@ pub async fn get_model_config(
 }
 
 /// PUT /models/{id}/config
+#[utoipa::path(
+    put,
+    path = "/api/ai/models/{id}/config",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn update_model_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

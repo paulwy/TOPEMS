@@ -317,6 +317,12 @@ pub async fn process(
 }
 
 /// GET /api/documents/{id} - 获取文档信息
+#[utoipa::path(
+    get,
+    path = "/api/ai/documents/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -345,6 +351,12 @@ pub async fn get(
 /// 并把路径记入 document 记录（file_path）。此处取记录 → 读本地文件 →
 /// application/octet-stream + Content-Disposition attachment 附件响应。
 /// 记录不存在 → 内层 404；记录存在但本地文件缺失 → 404「文件不存在」。
+#[utoipa::path(
+    get,
+    path = "/api/ai/documents/{id}/download",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn download(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -405,6 +417,12 @@ pub async fn download(
 }
 
 /// DELETE /api/documents/{id} - 删除文档
+#[utoipa::path(
+    delete,
+    path = "/api/ai/documents/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -471,6 +489,12 @@ pub async fn delete(
 }
 
 /// GET /api/documents - 获取文档列表
+#[utoipa::path(
+    get,
+    path = "/api/ai/documents",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -490,6 +514,12 @@ pub async fn list(
 }
 
 /// POST /api/documents - 创建文档（JSON 元数据）
+#[utoipa::path(
+    post,
+    path = "/api/ai/documents",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn create(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -500,6 +530,12 @@ pub async fn create(
 }
 
 /// PUT /api/documents/{id} - 更新文档元数据
+#[utoipa::path(
+    put,
+    path = "/api/ai/documents/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn update(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -736,6 +772,12 @@ pub async fn vectorize_from_file(
 }
 
 /// POST /api/documents/{id}/summarize - 生成文档摘要
+#[utoipa::path(
+    post,
+    path = "/api/ai/documents/{id}/summarize",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn summarize(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -892,6 +934,12 @@ macro_rules! doc_not_found_or_ok {
 }
 
 /// POST /api/documents/{id}/translate - 文档翻译（待上游支持）
+#[utoipa::path(
+    post,
+    path = "/api/ai/documents/{id}/translate",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn translate(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -914,6 +962,12 @@ pub async fn translate(
 }
 
 /// POST /api/documents/{id}/ocr - 文档 OCR（待上游支持）
+#[utoipa::path(
+    post,
+    path = "/api/ai/documents/{id}/ocr",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn ocr(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -935,6 +989,12 @@ pub async fn ocr(
 }
 
 /// POST /api/documents/{id}/classify - 文档分类（待上游支持）
+#[utoipa::path(
+    post,
+    path = "/api/ai/documents/{id}/classify",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn classify(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -956,6 +1016,12 @@ pub async fn classify(
 }
 
 /// POST /api/documents/{id}/entities - 文档实体抽取（待上游支持）
+#[utoipa::path(
+    post,
+    path = "/api/ai/documents/{id}/entities",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn entities(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

@@ -127,6 +127,12 @@ pub async fn sentiment(
 }
 
 /// POST /api/analysis/classify - 文本分类
+#[utoipa::path(
+    post,
+    path = "/api/ai/analysis/classify",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn classify(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -181,6 +187,12 @@ pub async fn classify(
 }
 
 /// POST /api/analysis/entities - 实体提取
+#[utoipa::path(
+    post,
+    path = "/api/ai/analysis/entities",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn extract_entities(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -236,6 +248,12 @@ pub async fn extract_keywords(
     clippy::cast_possible_wrap
 )]
 /// GET /api/analysis/history - 获取分析历史
+#[utoipa::path(
+    post,
+    path = "/api/ai/analysis/history",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn history(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,

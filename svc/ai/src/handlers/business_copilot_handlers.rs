@@ -316,6 +316,12 @@ pub async fn create_session(
 }
 
 /// 获取会话信息
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/copilot/sessions/{session_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_session(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
@@ -400,6 +406,12 @@ pub async fn get_session(
 }
 
 /// 删除会话
+#[utoipa::path(
+    delete,
+    path = "/api/ai/dsh/copilot/sessions/{session_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_session(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
@@ -510,6 +522,12 @@ pub async fn send_message(
 /// 前端契约：PUT /dsh/copilot/sessions/{session_id}/records。
 /// 复用 CopilotSessionManager.update_selected_records 真实写入内存会话上下文；
 /// 会话不存在时按 get_session 的 404 分支返回。
+#[utoipa::path(
+    put,
+    path = "/api/ai/dsh/copilot/sessions/{session_id}/records",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn update_selected_records(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
@@ -572,6 +590,12 @@ pub async fn update_selected_records(
 /// 前端契约：PUT /dsh/copilot/sessions/{session_id}/context。
 /// 复用 CopilotSessionManager.set_context_data 真实写入内存会话上下文；
 /// 会话不存在时按 get_session 的 404 分支返回。
+#[utoipa::path(
+    put,
+    path = "/api/ai/dsh/copilot/sessions/{session_id}/context",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn set_context_data(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,
@@ -633,6 +657,12 @@ pub async fn set_context_data(
 }
 
 /// 获取活跃会话列表
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/copilot/sessions",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_active_sessions(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<CopilotAppState>,

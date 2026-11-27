@@ -368,15 +368,6 @@ export async function getRecommendations(
 }
 
 /**
- * 记录安全事件
- */
-export async function recordSecurityEvent(
-  event: Omit<SecurityEventSummary, 'event_id' | 'occurred_at'>
-): Promise<ApiResponse<SecurityEventSummary>> {
-  return apiClient.ai.post(`/dsh/governance/security-events`, event);
-}
-
-/**
  * 刷新仪表盘缓存
  */
 export async function refreshDashboardCache(): Promise<ApiResponse<void>> {

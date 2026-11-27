@@ -64,6 +64,12 @@ impl<T: Serialize> ApiResponse<T> {
 /// 获取性能指标
 ///
 /// GET /dsh/agent/performance/metrics
+#[utoipa::path(
+    get,
+    path = "/api/ai/dsh/agent/performance/metrics",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get_performance_metrics(State(state): State<AppState>) -> impl IntoResponse {
     info!("获取 DSH Agent 性能指标");
 

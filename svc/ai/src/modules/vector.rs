@@ -147,6 +147,12 @@ pub async fn search(
 }
 
 /// GET /api/vectors/{id} - 获取向量信息
+#[utoipa::path(
+    get,
+    path = "/api/ai/vectors/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn get(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -400,6 +406,12 @@ pub async fn hybrid_search(
 }
 
 /// GET /api/vectors/stats - 获取向量统计信息
+#[utoipa::path(
+    get,
+    path = "/api/ai/vectors/stats",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
@@ -454,6 +466,12 @@ pub async fn clear_all(
 // （空集合列表 / 成功回执），待上游接入 collection 存储。
 
 /// GET /api/ai/vector/collections - 向量集合列表（待上游支持，返回空）
+#[utoipa::path(
+    get,
+    path = "/api/ai/vector/collections",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn list_collections(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -465,6 +483,12 @@ pub async fn list_collections(
 }
 
 /// POST /api/ai/vector/collections - 创建向量集合（待上游支持，回显 name）
+#[utoipa::path(
+    post,
+    path = "/api/ai/vector/collections",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn create_collection(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -483,6 +507,12 @@ pub async fn create_collection(
 }
 
 /// DELETE /api/ai/vector/collections/{id} - 删除向量集合（待上游支持）
+#[utoipa::path(
+    delete,
+    path = "/api/ai/vector/collections/{id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn delete_collection(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -495,6 +525,12 @@ pub async fn delete_collection(
 }
 
 /// POST /api/ai/vector/index/{document_id} - 重建文档索引（待上游支持）
+#[utoipa::path(
+    post,
+    path = "/api/ai/vector/index/{document_id}",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn index_document(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,

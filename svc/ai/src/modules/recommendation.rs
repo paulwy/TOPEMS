@@ -234,6 +234,12 @@ pub async fn recommend_knowledge(
 // 与此契约路径不同。这里按契约补轻量占位（空推荐列表 / 成功回执），待上游接入。
 
 /// POST /api/ai/recommendations - 通用推荐（待上游支持，返回空列表）
+#[utoipa::path(
+    post,
+    path = "/api/ai/recommendations",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn recommendations(
     State(_state): State<AppState>,
     Extension(_claims): Extension<topems_shared_auth::auth::Claims>,
@@ -246,6 +252,12 @@ pub async fn recommendations(
 }
 
 /// GET /api/ai/recommendations/personalized - 个性化推荐（待上游支持，返回空 items）
+#[utoipa::path(
+    get,
+    path = "/api/ai/recommendations/personalized",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn personalized(
     State(_state): State<AppState>,
     Extension(_claims): Extension<topems_shared_auth::auth::Claims>,
@@ -257,6 +269,12 @@ pub async fn personalized(
 }
 
 /// POST /api/ai/recommendations/feedback - 推荐反馈回执（待上游支持）
+#[utoipa::path(
+    post,
+    path = "/api/ai/recommendations/feedback",
+    tag = "Filled",
+    responses((status = 200, description = "ok")),
+)]
 pub async fn feedback(
     State(_state): State<AppState>,
     Extension(_claims): Extension<topems_shared_auth::auth::Claims>,
