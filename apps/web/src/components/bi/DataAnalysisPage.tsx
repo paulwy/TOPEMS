@@ -21,7 +21,6 @@ import {
   Grid,
   useTheme,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
 import { DashboardTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ChartComponent } from '@/components/bi/ChartLibrary';
 
@@ -57,14 +56,8 @@ const DataAnalysisPage = () => {
     const totalAmount = rows.reduce((s2, o) => s2 + (Number(o.total_amount) || 0), 0);
     const orderCount = rows.length;
     const customerCount = new Set(rows.map((o) => o.customer_name).filter(Boolean)).size;
-    return {
-      totalAmount,
-      orderCount,
-      customerCount,
-      avgOrderAmount: orderCount ? totalAmount / orderCount : 0,
-    };
+    return { totalAmount, orderCount, customerCount, avgOrderAmount: orderCount ? totalAmount / orderCount : 0 };
   }, [ordersData]);
-
   const { totalAmount, orderCount, customerCount, avgOrderAmount } = totals;
 
   const salesTrend = useMemo(() => {
@@ -129,20 +122,7 @@ const DataAnalysisPage = () => {
 
   const [activeTab, setActiveTab] = useState(0);
   const [chartType, setChartType] = useState<'bar' | 'line' | 'area' | 'pie'>('bar');
-  const [drillLevel, setDrillLevel] = useState(0);
 
-
-  const handleDrillDown = () => {
-    if (drillLevel < 2) {
-      setDrillLevel(drillLevel + 1);
-    }
-  };
-
-  const handleDrillUp = () => {
-    if (drillLevel > 0) {
-      setDrillLevel(drillLevel - 1);
-    }
-  };
 
   const renderChartAnalysis = () => (
     <Box>
@@ -177,36 +157,6 @@ const DataAnalysisPage = () => {
           ))}
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            size='small'
-            variant='outlined'
-            startIcon={<TrendingUp size={16} />}
-            onClick={handleDrillDown}
-            disabled={drillLevel >= 2}
-          >
-            {t('bi.data_analysis_page.k36')}
-          </Button>
-          <Button
-            size='small'
-            variant='outlined'
-            startIcon={
-              <TrendingUp
-                size={16}
-                className={styles.il1}
-              />
-            }
-            onClick={handleDrillUp}
-            disabled={drillLevel <= 0}
-          >
-            {t('bi.data_analysis_page.k37')}
-          </Button>
-          <Button
-            size='small'
-            variant='outlined'
-            startIcon={<Download size={16} />}
-          >
-            {t('bi.data_analysis_page.k38')}
-          </Button>
         </Box>
       </Box>
 
@@ -222,18 +172,6 @@ const DataAnalysisPage = () => {
             >
               {t('bi.data_analysis_page.k41')}
             </Typography>
-            <Chip
-              label={
-                drillLevel === 0
-                  ? t('bi.data_analysis_page.region_nationwide')
-                  : drillLevel === 1
-                    ? t('bi.data_analysis_page.region_label')
-                    : t('bi.data_analysis_page.product_2')
-              }
-              size='small'
-              color='primary'
-              variant='outlined'
-            />
           </Box>
           {chartType === 'pie' ? (
             <ChartComponent
@@ -312,22 +250,12 @@ const DataAnalysisPage = () => {
                   {
                     label: t('bi.data_analysis_page.k32'),
                     value: `¥${Math.round(totalAmount).toLocaleString('zh-CN')}`,
-                    color: 'var(--success-text)',
                   },
-                  {
-                    label: t('bi.data_analysis_page.k33'),
-                    value: String(orderCount),
-                    color: 'var(--accent-primary-text)',
-                  },
-                  {
-                    label: t('bi.data_analysis_page.k34'),
-                    value: String(customerCount),
-                    color: 'var(--accent-secondary-text)',
-                  },
+                  { label: t('bi.data_analysis_page.k33'), value: String(orderCount) },
+                  { label: t('bi.data_analysis_page.k34'), value: String(customerCount) },
                   {
                     label: t('bi.data_analysis_page.sales_amount_axis'),
                     value: `¥${Math.round(avgOrderAmount).toLocaleString('zh-CN')}`,
-                    color: 'var(--warning-text)',
                   },
                 ].map((metric, idx) => (
                   <Box
@@ -570,20 +498,9 @@ const DataAnalysisPage = () => {
   };
 
   return (
-    <PageContainer
+    <DashboardTemplate
       title={t('bi.data_analysis_page.page_title')}
       subtitle={t('bi.data_analysis_page.page_subtitle')}
-      headerProps={{
-        pageIcon: <BarChart3 className={styles.il2} />,
-        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary[400]} 100%)`,
-      }}
-      padding={false}
-      maxWidth={false}
-    >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
         breadcrumbs={[
           { label: t('bi.data_analysis_page.home'), href: '/dashboard' },
           { label: 'BI' },
@@ -597,6 +514,7 @@ const DataAnalysisPage = () => {
           >
             {t('bi.data_analysis_page.k46')}
           </Typography>
+
 
           <Card
             elevation={0}
@@ -630,8 +548,7 @@ const DataAnalysisPage = () => {
           {activeTab === 1 && renderPivotTable()}
           {activeTab === 2 && renderDataTable()}
         </Box>
-      </DashboardTemplate>
-    </PageContainer>
+    </DashboardTemplate>
   );
 };
 
