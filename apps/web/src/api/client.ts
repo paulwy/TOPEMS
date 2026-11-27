@@ -7,6 +7,7 @@ import type {
 import i18n from '@/i18n';
 import axios from 'axios';
 import config, { isProduction, isDevelopment } from '../config/runtime';
+import { EDGE_TOLERANT_TIMEOUT_MS, isNavigationEndpoint } from '../config/edgeTimeout';
 import { deploymentConfig } from '../config/deployment';
 import { createLogger, apiLogger } from '../utils/logger';
 import { API_TIMEOUT } from '@topems/tokens';
@@ -401,6 +402,12 @@ const createAxiosClient = ({
               : requestConfig.data
             : undefined,
         });
+      }
+
+      // 导航类端点（/menus、/tenant/*/modules 等）走边缘链路尾部可达 5s+，
+      // 沿用全局 5s 会把整页打成 `加载中`，这里统一放宽到 15s。
+      if (isNavigationEndpoint(url)) {
+        requestConfig.timeout = EDGE_TOLERANT_TIMEOUT_MS;
       }
 
       if (effectiveToken && !requestConfig.headers['Authorization'] && !isPublicPath(url)) {

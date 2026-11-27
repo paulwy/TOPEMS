@@ -17,3 +17,22 @@ export const EDGE_TOLERANT_TIMEOUT_MS = 15_000;
 
 /** 走边缘链路、需要宽松超时的聚合型端点清单（用于文档与测试对齐） */
 export const EDGE_TOLERANT_ENDPOINTS = ['/infrastructure', '/graphql'] as const;
+
+/**
+ * 导航类端点（2026-11-27 追加）
+ *
+ * `/menus` 与 `/tenant/{id}/modules` 是每次进页都会打的导航查询，页面并发时
+ * 一次抖动就会把整页卡在「加载中」；实测它们在 CF+隧道下尾部可达 5s 以上。
+ * 统一放宽到 15s，并为它们加上路径判定，避免只改到某一个调用点。
+ */
+export const NAVIGATION_ENDPOINT_PATTERNS: readonly RegExp[] = [
+  /^\/menus(?:[/?]|$)/,
+  /^\/tenant\/.+\/modules(?:[/?]|$)/,
+  /^\/navigation-config(?:[/?]|$)/,
+];
+
+/** 是否为需要宽松超时的导航类端点 */
+export const isNavigationEndpoint = (url: string): boolean => {
+  const path = (url || '').split('?')[0];
+  return NAVIGATION_ENDPOINT_PATTERNS.some((re) => re.test(path));
+};

@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { EDGE_TOLERANT_TIMEOUT_MS, EDGE_TOLERANT_ENDPOINTS } from '@/config/edgeTimeout';
+import {
+  EDGE_TOLERANT_TIMEOUT_MS,
+  EDGE_TOLERANT_ENDPOINTS,
+  isNavigationEndpoint,
+} from '@/config/edgeTimeout';
 
 /**
  * 边缘链路容错超时护栏（2026-11-27）
@@ -36,5 +40,24 @@ describe('调用点确实带上了宽松超时', () => {
       src.match(/'\/graphql', body, \{\s*timeout: EDGE_TOLERANT_TIMEOUT_MS/g) ?? [];
     expect(posts.length).toBe(2);
     expect(withTimeout.length).toBe(posts.length);
+  });
+});
+
+describe('导航类端点放宽到 15s（2026-11-27）', () => {
+  it('识别 /menus 与 /tenant/{id}/modules，且不误伤普通业务路径', () => {
+    expect(isNavigationEndpoint('/menus')).toBe(true);
+    expect(isNavigationEndpoint('/menus?x=1')).toBe(true);
+    expect(isNavigationEndpoint('/tenant/00000000-0000-0000-0000-000000000001/modules')).toBe(true);
+    expect(isNavigationEndpoint('/tenant/abc/modules?page=1')).toBe(true);
+    expect(isNavigationEndpoint('/tenant/tenants/00000000-0000-0000-0000-000000000001/modules')).toBe(true);
+    expect(isNavigationEndpoint('/navigation-config')).toBe(true);
+    expect(isNavigationEndpoint('/menus-extra')).toBe(false);
+    expect(isNavigationEndpoint('/tenant/abc/users')).toBe(false);
+    expect(isNavigationEndpoint('/flow/approvals')).toBe(false);
+  });
+
+  it('请求拦截器对导航端点覆盖为 EDGE_TOLERANT_TIMEOUT_MS', () => {
+    const src = readFileSync(join(root, 'api/client.ts'), 'utf-8');
+    expect(src).toMatch(/isNavigationEndpoint\(url\)[\s\S]{0,120}timeout = EDGE_TOLERANT_TIMEOUT_MS/);
   });
 });
