@@ -65,7 +65,8 @@ export const priceComparisonSchema: EntitySchema = {
       type: 'text',
       hideInForm: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>, _index: number) => (row.result_supplier_name as string) || '-',
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        (row.result_supplier_name as string) || '-',
     },
     {
       name: 'result_price',

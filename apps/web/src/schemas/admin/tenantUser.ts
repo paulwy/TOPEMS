@@ -165,7 +165,8 @@ export const tenantUserSchema: EntitySchema = {
       readonly: true,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'created_at'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        renderDateCell(row, 'created_at'),
     },
     {
       name: 'last_login',
@@ -173,7 +174,8 @@ export const tenantUserSchema: EntitySchema = {
       type: 'datetime',
       readonly: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'last_login'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        renderDateCell(row, 'last_login'),
     },
   ],
 

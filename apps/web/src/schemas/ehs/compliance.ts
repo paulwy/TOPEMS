@@ -84,7 +84,8 @@ export const regulationSchema: EntitySchema = {
       label: i18n.t('ehs.compliance.k16'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => (row.issue_date ? String(row.issue_date) : '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        row.issue_date ? String(row.issue_date) : '-',
     },
     {
       name: 'effective_date',
@@ -242,7 +243,8 @@ export const assessmentSchema: EntitySchema = {
       label: i18n.t('ehs.compliance.k54'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => (row.assessor ? String(row.assessor) : '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        row.assessor ? String(row.assessor) : '-',
     },
     {
       name: 'assessment_date',
@@ -411,7 +413,8 @@ export const permitSchema: EntitySchema = {
       label: i18n.t('ehs.compliance.k90'),
       type: 'text',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => (row.holder ? String(row.holder) : '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        row.holder ? String(row.holder) : '-',
       validation: [{ type: 'maxLength', value: 256 }],
     },
     {

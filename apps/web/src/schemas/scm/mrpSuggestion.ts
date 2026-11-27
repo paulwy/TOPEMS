@@ -45,7 +45,8 @@ export const mrpMaterialSummarySchema: EntitySchema = {
       label: i18n.t('scm.mrp_suggestion.k4'),
       type: 'text',
       listWidth: 80,
-      renderCell: (row: Record<string, unknown>, _index: number) => (row.unit ? String(row.unit) : '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        row.unit ? String(row.unit) : '-',
     },
     {
       name: 'total_required',

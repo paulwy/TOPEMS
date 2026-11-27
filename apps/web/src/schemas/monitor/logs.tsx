@@ -138,7 +138,8 @@ const getLogFields = (): SchemaField[] => [
     label: i18n.t('shared.logs.k17'),
     type: 'select',
     listWidth: 100,
-    renderCell: (row: Record<string, unknown>, _index: number) => getLevelChip(row.level as LogLevel),
+    renderCell: (row: Record<string, unknown>, _index: number) =>
+      getLevelChip(row.level as LogLevel),
   },
   {
     name: 'service',

@@ -54,7 +54,8 @@ export const inspectionTaskSchema: EntitySchema = {
       type: 'text',
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>, _index: number) => String(row.task_no || row.id || '-'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        String(row.task_no || row.id || '-'),
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {

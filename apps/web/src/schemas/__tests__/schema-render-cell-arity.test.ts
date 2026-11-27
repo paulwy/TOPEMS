@@ -77,7 +77,9 @@ describe('schema renderCell 参数个数', () => {
           // 值渲染器写作 (value ...)，不在本规则约束内
           if (/^row\b/.test(first) && paramCount(params) < 2) {
             const line = src.slice(0, idx).split('\n').length;
-            violations.push(`${file.split(/[/\\]/).slice(-2).join('/')}:${line} → (${params.trim()})`);
+            violations.push(
+              `${file.split(/[/\\]/).slice(-2).join('/')}:${line} → (${params.trim()})`
+            );
           }
         }
         idx = src.indexOf('renderCell:', idx + 1);

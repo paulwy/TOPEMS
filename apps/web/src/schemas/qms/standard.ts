@@ -120,7 +120,8 @@ export const qualityStandardSchema: EntitySchema = {
       label: i18n.t('qms.standard.k17'),
       type: 'date',
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'effective_date'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        renderDateCell(row, 'effective_date'),
     },
     {
       name: 'created_at',
@@ -130,7 +131,8 @@ export const qualityStandardSchema: EntitySchema = {
       sortable: true,
       listWidth: 120,
       showInList: true,
-      renderCell: (row: Record<string, unknown>, _index: number) => renderDateCell(row, 'created_at'),
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        renderDateCell(row, 'created_at'),
     },
     {
       name: 'description',

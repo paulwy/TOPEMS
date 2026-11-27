@@ -131,7 +131,8 @@ export const pdmProjectSchema: EntitySchema = {
       label: i18n.t('pdm.project.k29'),
       type: 'number',
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>, _index: number) => `${(row.progress as number) || 0}%`,
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        `${(row.progress as number) || 0}%`,
     },
     {
       name: 'member_count',
