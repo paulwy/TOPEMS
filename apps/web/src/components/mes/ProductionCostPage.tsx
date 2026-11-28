@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -17,7 +18,7 @@ import {
 } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import i18n from '@/i18n';
-import { TrendingUp, TrendingDown, Minus, DollarSign, BarChart3, PieChart } from 'lucide-react';
+import { TrendingUp, DollarSign, BarChart3, PieChart } from 'lucide-react';
 import { productionCostApi, type WorkOrderCostResult } from '@/api/mes/productionCost';
 import { useNotificationStore } from '@/store/notificationStore';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
@@ -27,7 +28,6 @@ import type {
   DataTable,
   StatCard,
   TabItem,
-  TimeRangeOption,
 } from '@/components/templates/StatsPageTemplate';
 
 type TabValue = 'period' | 'trend' | 'forecast' | 'work-order';
@@ -35,7 +35,7 @@ type TabValue = 'period' | 'trend' | 'forecast' | 'work-order';
 const ProductionCostPage: React.FC = () => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState<TabValue>('period');
-  const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year'>('month');
+  const [periodType] = useState<'month' | 'quarter' | 'year'>('month');
   const [workOrderId, setWorkOrderId] = useState('');
   const [workOrderCost, setWorkOrderCost] = useState<WorkOrderCostResult | null>(null);
   const [loadingWorkOrder, setLoadingWorkOrder] = useState(false);
@@ -54,12 +54,6 @@ const ProductionCostPage: React.FC = () => {
   const costTrend = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.COSTTREND_BASE,
     queryFn: () => productionCostApi.getCostTrend({ period_type: 'month' }),
-    staleTime: CACHE_DURATIONS.MEDIUM,
-  });
-
-  const costForecast = useQuery({
-    queryKey: QUERY_KEYS.AD_HOC.COSTFORECAST_BASE,
-    queryFn: () => productionCostApi.getCostForecast({ months: 3 }),
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
@@ -92,32 +86,6 @@ const ProductionCostPage: React.FC = () => {
     }
   };
 
-  const getTrendIcon = (direction: 'up' | 'down' | 'stable') => {
-    switch (direction) {
-      case 'up':
-        return (
-          <TrendingUp
-            color={theme.palette.error.main}
-            size={20}
-          />
-        );
-      case 'down':
-        return (
-          <TrendingDown
-            color={theme.palette.success.main}
-            size={20}
-          />
-        );
-      default:
-        return (
-          <Minus
-            color={theme.palette.text.secondary}
-            size={20}
-          />
-        );
-    }
-  };
-
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('zh-CN', {
       style: 'currency',
@@ -125,6 +93,10 @@ const ProductionCostPage: React.FC = () => {
       minimumFractionDigits: 2,
     }).format(value);
   };
+
+  // total=0 时占比没有定义，显示 0.00% 而不是 NaN%
+  const costShare = (amount: number, total: number) =>
+    total > 0 ? ((amount / total) * 100).toFixed(2) : '0.00';
 
   const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({
@@ -146,7 +118,27 @@ const ProductionCostPage: React.FC = () => {
 
   const reportData = periodCostReport.data?.data;
   const trendData = costTrend.data?.data;
-  const forecastData = costForecast.data?.data;
+  // 后端 CostTrendData 是并列数组（labels / total_cost / ...），按 index 合成表格与图表行
+  const trendPoints = useMemo(() => {
+    if (!trendData) return [];
+    return trendData.labels.map((label, index) => ({
+      period: label,
+      total_cost: trendData.total_cost[index] ?? 0,
+      material_cost: trendData.material_cost[index] ?? 0,
+      labor_cost: trendData.labor_cost[index] ?? 0,
+      overhead_cost: trendData.overhead_cost[index] ?? 0,
+      avg_unit_cost: trendData.avg_unit_cost[index] ?? 0,
+    }));
+  }, [trendData]);
+  const trendTotal = useMemo(
+    () => trendPoints.reduce((sum, point) => sum + point.total_cost, 0),
+    [trendPoints]
+  );
+  const trendAvgUnitCost = useMemo(() => {
+    const valued = trendPoints.filter((point) => point.avg_unit_cost > 0);
+    if (valued.length === 0) return 0;
+    return valued.reduce((sum, point) => sum + point.avg_unit_cost, 0) / valued.length;
+  }, [trendPoints]);
 
   const tabs: TabItem[] = useMemo(
     () => [
@@ -196,72 +188,34 @@ const ProductionCostPage: React.FC = () => {
         ];
 
       case 'trend':
-        if (!trendData) return [];
+        // 后端只给真实分桶金额，不给「总体趋势/变化率」这类需要模型口径的判断
+        if (trendPoints.length === 0) return [];
         return [
           {
-            id: 'overall-trend',
-            title: i18n.t('pages.production_cost_page.k0'),
-            value:
-              trendData.overall_trend === 'up'
-                ? i18n.t('mes.production_cost_page.k24')
-                : trendData.overall_trend === 'down'
-                  ? i18n.t('mes.production_cost_page.k23')
-                  : i18n.t('mes.production_cost_page.k22'),
-            icon: getTrendIcon(trendData.overall_trend),
-            color:
-              trendData.overall_trend === 'up'
-                ? 'error'
-                : trendData.overall_trend === 'down'
-                  ? 'success'
-                  : undefined,
+            id: 'trend-total',
+            title: i18n.t('mes.production_cost_page.b374_total'),
+            value: formatCurrency(trendTotal),
+            icon: (
+              <DollarSign
+                size={20}
+                color={theme.palette.teal.main}
+              />
+            ),
+            color: 'primary',
           },
           {
-            id: 'avg-change-rate',
-            title: i18n.t('mes.production_cost_page.k28'),
-            value: `${trendData.avg_change_rate}%`,
+            id: 'trend-avg-unit-cost',
+            title: i18n.t('mes.production_cost_page.b374_avg_unit'),
+            value: formatCurrency(trendAvgUnitCost),
           },
         ];
 
       case 'forecast':
-        if (!forecastData) return [];
-        return [
-          {
-            id: 'forecast-total',
-            title: i18n.t('pages.production_cost_page.k2'),
-            value: formatCurrency(forecastData.forecast_total),
-            icon: (
-              <DollarSign
-                size={20}
-                color={theme.palette.warning.main}
-              />
-            ),
-            color: 'warning',
-          },
-          {
-            id: 'forecast-material',
-            title: i18n.t('pages.production_cost_page.k3'),
-            value: formatCurrency(forecastData.forecast_material),
-            color: 'info',
-          },
-          {
-            id: 'forecast-labor',
-            title: i18n.t('pages.production_cost_page.k4'),
-            value: formatCurrency(forecastData.forecast_labor),
-            color: 'success',
-          },
-          {
-            id: 'forecast-overhead',
-            title: i18n.t('pages.production_cost_page.k5'),
-            value: formatCurrency(forecastData.forecast_overhead),
-            color: 'secondary',
-          },
-        ];
-
       case 'work-order':
       default:
         return [];
     }
-  }, [activeTab, reportData, trendData, forecastData]);
+  }, [activeTab, reportData, trendPoints, trendTotal, trendAvgUnitCost]);
 
   const charts = useMemo<ChartConfig[]>(() => {
     switch (activeTab) {
@@ -293,7 +247,7 @@ const ProductionCostPage: React.FC = () => {
         ];
 
       case 'trend':
-        if (!trendData) return [];
+        if (trendPoints.length === 0) return [];
         return [
           {
             id: 'cost-trend',
@@ -301,43 +255,30 @@ const ProductionCostPage: React.FC = () => {
             type: 'line',
             dataKey: 'total_cost',
             nameKey: 'period',
-            data: trendData.trend_data.map((item) => ({
-              name: item.period,
-              value: item.total_cost,
+            data: trendPoints.map((point) => ({
+              name: point.period,
+              value: point.total_cost,
+            })),
+          },
+          {
+            id: 'cost-trend-unit',
+            title: i18n.t('mes.production_cost_page.b374_avg_unit'),
+            type: 'line',
+            dataKey: 'avg_unit_cost',
+            nameKey: 'period',
+            data: trendPoints.map((point) => ({
+              name: point.period,
+              value: point.avg_unit_cost,
             })),
           },
         ];
 
+      // 预测/对比：后端显式 503（没有真实口径），这里不出任何图，改为未接入提示
       case 'forecast':
-        if (!forecastData) return [];
-        return [
-          {
-            id: 'forecast-breakdown',
-            title: i18n.t('mes.production_cost_page.k32'),
-            type: 'bar',
-            dataKey: 'value',
-            nameKey: 'name',
-            data: [
-              {
-                name: i18n.t('pages.production_cost_page.k3'),
-                value: forecastData.forecast_material,
-              },
-              {
-                name: i18n.t('pages.production_cost_page.k4'),
-                value: forecastData.forecast_labor,
-              },
-              {
-                name: i18n.t('pages.production_cost_page.k5'),
-                value: forecastData.forecast_overhead,
-              },
-            ],
-          },
-        ];
-
       default:
         return [];
     }
-  }, [activeTab, reportData, trendData, forecastData]);
+  }, [activeTab, reportData, trendPoints]);
 
   const tables = useMemo<DataTable[]>(() => {
     switch (activeTab) {
@@ -418,7 +359,8 @@ const ProductionCostPage: React.FC = () => {
         ];
 
       case 'trend':
-        if (!trendData) return [];
+        // 后端不再返回 trend_direction / change_rate（那需要模型口径）；只列真实分桶金额
+        if (trendPoints.length === 0) return [];
         return [
           {
             id: 'trend-table',
@@ -454,76 +396,22 @@ const ProductionCostPage: React.FC = () => {
                 render: (value) => formatCurrency(value as number),
               },
               {
-                id: 'trend_direction',
-                label: i18n.t('mes.production_cost_page.k30'),
-                field: 'trend_direction',
-                align: 'center',
-                render: (value) => getTrendIcon(value as 'up' | 'down' | 'stable'),
-              },
-              {
-                id: 'change_rate',
-                label: i18n.t('mes.production_cost_page.k31'),
-                field: 'change_rate',
-                align: 'center',
-                render: (value) => {
-                  const rate = value as number;
-                  return (
-                    <Chip
-                      label={`${rate}%`}
-                      size='small'
-                      color={rate > 0 ? 'error' : rate < 0 ? 'success' : undefined}
-                    />
-                  );
-                },
+                id: 'avg_unit_cost',
+                label: i18n.t('mes.production_cost_page.b374_avg_unit'),
+                field: 'avg_unit_cost',
+                render: (value) => formatCurrency(value as number),
               },
             ],
-            data: trendData.trend_data as unknown as Record<string, unknown>[],
+            data: trendPoints as unknown as Record<string, unknown>[],
           },
         ];
 
+      // 预测/对比：后端 503，无表可出
       case 'forecast':
-        if (!forecastData) return [];
-        return [
-          {
-            id: 'forecast-info-table',
-            title: i18n.t('mes.production_cost_page.k32'),
-            columns: [
-              {
-                id: 'label',
-                label: i18n.t('mes.production_cost_page.k25'),
-                field: 'label',
-              },
-              {
-                id: 'value',
-                label: i18n.t('mes.production_cost_page.k26'),
-                field: 'value',
-              },
-            ],
-            data: [
-              {
-                label: i18n.t('pages.production_cost_page.k6'),
-                value: forecastData.forecast_period,
-              },
-              {
-                label: i18n.t('pages.production_cost_page.k7'),
-                value: `${formatCurrency(forecastData.confidence_interval[0])} - ${formatCurrency(forecastData.confidence_interval[1])}`,
-              },
-              {
-                label: i18n.t('pages.production_cost_page.k0'),
-                value: forecastData.trend_factor,
-              },
-              {
-                label: i18n.t('pages.production_cost_page.k8'),
-                value: forecastData.seasonality_factor,
-              },
-            ],
-          },
-        ];
-
       default:
         return [];
     }
-  }, [activeTab, reportData, trendData, forecastData]);
+  }, [activeTab, reportData, trendPoints]);
 
   const loading = useMemo(() => {
     switch (activeTab) {
@@ -532,19 +420,13 @@ const ProductionCostPage: React.FC = () => {
       case 'trend':
         return costTrend.isPending;
       case 'forecast':
-        return costForecast.isPending;
+        return false;
       case 'work-order':
         return loadingWorkOrder;
       default:
         return false;
     }
-  }, [
-    activeTab,
-    periodCostReport.isPending,
-    costTrend.isPending,
-    costForecast.isPending,
-    loadingWorkOrder,
-  ]);
+  }, [activeTab, periodCostReport.isPending, costTrend.isPending, loadingWorkOrder]);
 
   return (
     <StatsPageTemplate
@@ -561,6 +443,11 @@ const ProductionCostPage: React.FC = () => {
       showSearch={false}
       showExport={false}
     >
+      {activeTab === 'forecast' && (
+        <Alert severity='info'>
+          {i18n.t('mes.production_cost_page.b374_forecast_unavailable')}
+        </Alert>
+      )}
       {activeTab === 'work-order' && (
         <Card>
           <CardHeader title={i18n.t('mes.production_cost_page.k33')} />
@@ -636,7 +523,7 @@ const ProductionCostPage: React.FC = () => {
                         >
                           {i18n.t('pages.production_cost_page.k12')}
                         </Typography>
-                        <Typography variant='h6'>{workOrderCost.produced_qty}</Typography>
+                        <Typography variant='h6'>{workOrderCost.quantity}</Typography>
                       </CardContent>
                     </Card>
                   </Box>
@@ -656,6 +543,26 @@ const ProductionCostPage: React.FC = () => {
                     </Card>
                   </Box>
                 </Box>
+                {workOrderCost.data_gaps && workOrderCost.data_gaps.length > 0 && (
+                  <Alert
+                    severity='warning'
+                    sx={{ mt: 3 }}
+                  >
+                    <Typography variant='body2'>
+                      {i18n.t('mes.production_cost_page.b374_gaps_title')}
+                    </Typography>
+                    <Box
+                      component='ul'
+                      sx={{ m: 0, mt: 1, pl: 3 }}
+                    >
+                      {workOrderCost.data_gaps.map((gap) => (
+                        <li key={gap}>
+                          <Typography variant='body2'>{gap}</Typography>
+                        </li>
+                      ))}
+                    </Box>
+                  </Alert>
+                )}
                 <Card sx={{ mt: 3 }}>
                   <CardHeader title={i18n.t('mes.production_cost_page.k35')} />
                   <CardContent>
@@ -672,32 +579,21 @@ const ProductionCostPage: React.FC = () => {
                           <TableCell>{i18n.t('mes.production_cost_page.k39')}</TableCell>
                           <TableCell>{formatCurrency(workOrderCost.material_cost)}</TableCell>
                           <TableCell>
-                            {(
-                              (workOrderCost.material_cost / workOrderCost.total_cost) *
-                              100
-                            ).toFixed(2)}
-                            %
+                            {costShare(workOrderCost.material_cost, workOrderCost.total_cost)}%
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell>{i18n.t('mes.production_cost_page.k40')}</TableCell>
                           <TableCell>{formatCurrency(workOrderCost.labor_cost)}</TableCell>
                           <TableCell>
-                            {((workOrderCost.labor_cost / workOrderCost.total_cost) * 100).toFixed(
-                              2
-                            )}
-                            %
+                            {costShare(workOrderCost.labor_cost, workOrderCost.total_cost)}%
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell>{i18n.t('mes.production_cost_page.k41')}</TableCell>
                           <TableCell>{formatCurrency(workOrderCost.overhead_cost)}</TableCell>
                           <TableCell>
-                            {(
-                              (workOrderCost.overhead_cost / workOrderCost.total_cost) *
-                              100
-                            ).toFixed(2)}
-                            %
+                            {costShare(workOrderCost.overhead_cost, workOrderCost.total_cost)}%
                           </TableCell>
                         </TableRow>
                         <TableRow>
@@ -723,16 +619,36 @@ const ProductionCostPage: React.FC = () => {
                         <TableHead>
                           <TableRow>
                             <TableCell>{i18n.t('mes.production_cost_page.k44')}</TableCell>
-                            <TableCell>{i18n.t('mes.production_cost_page.k45')}</TableCell>
-                            <TableCell>{i18n.t('mes.production_cost_page.k46')}</TableCell>
+                            <TableCell>{i18n.t('mes.production_cost_page.b374_sub')}</TableCell>
+                            <TableCell>{i18n.t('mes.production_cost_page.b374_desc')}</TableCell>
+                            <TableCell align='right'>
+                              {i18n.t('mes.production_cost_page.b374_qty')}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {i18n.t('mes.production_cost_page.b374_price')}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {i18n.t('mes.production_cost_page.k45')}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {i18n.t('mes.production_cost_page.k46')}
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {workOrderCost.cost_breakdown.map((item, index) => (
-                            <TableRow key={index}>
+                            <TableRow key={`${item.category}-${item.sub_category}-${index}`}>
                               <TableCell>{item.category}</TableCell>
-                              <TableCell>{formatCurrency(item.amount)}</TableCell>
-                              <TableCell>{item.percentage}%</TableCell>
+                              <TableCell>{item.sub_category}</TableCell>
+                              <TableCell>{item.description}</TableCell>
+                              <TableCell align='right'>
+                                {item.quantity} {item.unit}
+                              </TableCell>
+                              <TableCell align='right'>
+                                {item.unit_price > 0 ? formatCurrency(item.unit_price) : '-'}
+                              </TableCell>
+                              <TableCell align='right'>{formatCurrency(item.amount)}</TableCell>
+                              <TableCell align='right'>{item.percentage}%</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
