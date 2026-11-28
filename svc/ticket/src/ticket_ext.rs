@@ -167,7 +167,9 @@ pub async fn get_workflows(State(_db): State<Db>) -> ApiResponse<serde_json::Val
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn create_workflow(Json(body): Json<serde_json::Value>) -> ApiResponse<serde_json::Value> {
+pub async fn create_workflow(
+    Json(body): Json<serde_json::Value>,
+) -> ApiResponse<serde_json::Value> {
     let name = body
         .get("name")
         .and_then(|v| v.as_str())

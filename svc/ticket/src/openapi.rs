@@ -5,10 +5,10 @@ use crate::models::{
     AddCommentRequest, AutomationRule, CreateAutomationRuleRequest, CreateKnowledgeArticleRequest,
     CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, SeverityCount,
     SlaBreachTrendItem, SlaEscalationEvent, SlaSeverityStat, SlaTypeStat, SourceCount, Ticket,
-    TicketExportRequest, TicketExportResult,
-    TicketActivity, TicketComment, TicketListResponse, TicketQuery, TicketSlaInfo, TicketSlaPolicy,
-    TicketSlaStats, TicketStats, TypeCount, UpdateAutomationRuleRequest,
-    UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest, UpdateTicketRequest,
+    TicketActivity, TicketComment, TicketExportRequest, TicketExportResult, TicketListResponse,
+    TicketQuery, TicketSlaInfo, TicketSlaPolicy, TicketSlaStats, TicketStats, TypeCount,
+    UpdateAutomationRuleRequest, UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest,
+    UpdateTicketRequest,
 };
 
 #[derive(OpenApi)]

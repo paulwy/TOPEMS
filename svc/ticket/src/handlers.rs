@@ -21,9 +21,9 @@ use crate::models::{
     CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, KnowledgeArticleRef,
     SeverityCount, SlaEscalationEvent, SourceCount, Ticket, TicketActivity, TicketComment,
     TicketExportRequest, TicketExportResult, TicketListResponse, TicketQuery, TicketSlaInfo,
-    TicketSlaPolicy, TicketSlaStats, TicketStats,
-    TicketStatus, TicketType, TypeCount, UpdateAutomationRuleRequest,
-    UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest, UpdateTicketRequest,
+    TicketSlaPolicy, TicketSlaStats, TicketStats, TicketStatus, TicketType, TypeCount,
+    UpdateAutomationRuleRequest, UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest,
+    UpdateTicketRequest,
 };
 use crate::sla_service::TicketSlaService;
 
@@ -2834,7 +2834,8 @@ pub async fn export_tickets_handler(
         page += 1;
     }
 
-    let mut csv = String::from("ticket_no,title,status,severity,ticket_type,assignee_id,created_at\n");
+    let mut csv =
+        String::from("ticket_no,title,status,severity,ticket_type,assignee_id,created_at\n");
     for t in &rows {
         csv.push_str(&format!(
             "{},{},{},{},{},{},{}\n",
@@ -3030,7 +3031,13 @@ pub fn ticket_routes() -> Router<Db> {
         .route("/tickets/my", get(my_tickets_handler))
         .route("/tickets/search", get(search_tickets_handler))
         .route("/tickets/export", post(export_tickets_handler))
-        .route("/tickets/dashboard/by-severity", get(dashboard_by_severity_handler))
+        .route(
+            "/tickets/dashboard/by-severity",
+            get(dashboard_by_severity_handler),
+        )
         .route("/tickets/dashboard/by-type", get(dashboard_by_type_handler))
-        .route("/tickets/dashboard/by-source", get(dashboard_by_source_handler))
+        .route(
+            "/tickets/dashboard/by-source",
+            get(dashboard_by_source_handler),
+        )
 }
