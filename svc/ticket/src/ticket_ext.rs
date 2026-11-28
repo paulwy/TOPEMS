@@ -717,7 +717,7 @@ pub async fn apply_transition(
 // ==================== 标签 ====================
 
 #[derive(Deserialize, utoipa::ToSchema)]
-struct TagRequest {
+pub(crate) struct TagRequest {
     tag: String,
 }
 
@@ -1432,7 +1432,7 @@ pub async fn batch_escalate_tickets(
 // ==================== 附件 ====================
 
 #[derive(Deserialize, utoipa::ToSchema)]
-struct UploadAttachmentRequest {
+pub(crate) struct UploadAttachmentRequest {
     file_name: String,
     #[serde(default)]
     mime_type: Option<String>,
