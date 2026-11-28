@@ -1,7 +1,5 @@
 -- WMS 出库拣货顺序策略：设置页 /wms/setting/fifo-policy 的真实数据源，
 -- 由 svc/wms 出库发货分配批次时消费（expiry_first / fifo / lifo）。
-BEGIN;
-
 CREATE TABLE IF NOT EXISTS wms.picking_policy (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
@@ -40,5 +38,3 @@ CREATE POLICY rls_tenant_isolation ON wms.picking_policy FOR ALL TO PUBLIC
     );
 
 COMMENT ON TABLE wms.picking_policy IS '出库拣货批次顺序策略（有效期优先/先入先出/后入先出）';
-
-COMMIT;

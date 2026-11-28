@@ -232,6 +232,18 @@
       ],
       "evidence": "CI run 45932445455 Migration job 在 20261127200000 行数预演处报 relation \"public.configurations\" does not exist（FOR over SELECT rows, line 5），该版本未应用；空库复现 33 张均 skip。修正仅加 to_regclass 守卫，DROP 目标/顺序/断言不变；validate.sh 同步 checksum 后复跑静态与预演。",
       "approved": true
+    },
+    {
+      "id": "B20261128-strip-tx-block-two-forward",
+      "date": "2026-11-28",
+      "committer": "topmap163",
+      "reason": "20261128130000 mobile.app_settings、20261128140000 wms.picking_policy 为当日新增、三环境账本均未应用的前向迁移。两条文件内自带 BEGIN/COMMIT，与 apply-forward.sh 的 psql --single-transaction 原子契约冲突：文件内 COMMIT 会提前结束事务，使 _sqlx_migrations INSERT 落到事务外，一旦守卫拒绝即留下 DDL 已提交、账本无记录的半应用态。删除两条的 BEGIN/COMMIT（相邻空行随收），事务交外层 --single-transaction 接管；DDL 对象、RLS 策略、表注释均不变；新迁移不进入 legacy 事务豁免清单。属未应用迁移的输入修正，不改版本号、不改已执行历史。",
+      "files": [
+        "20261128130000_mobile_app_settings.sql",
+        "20261128140000_wms_picking_policy.sql"
+      ],
+      "evidence": "三环境只读账本核验（2026-11-28，default_transaction_read_only=on，socket /tmp user=xingzhai）：topems_prod 825 行/max 20261127240000、topems 735/max 20261124150000、topems_test 855/max 20261128120000，均无 version=20261128130000 / 20261128140000。删事务行后 validate.sh Explicit transaction blocks=0、Checksum errors=0、Errors=0；gen-manifest.sh --check registered=312、unregistered_pending=0、checksum_missing=0；两条新 checksum 已同步 checksums.txt。",
+      "approved": true
     }
   ]
 }

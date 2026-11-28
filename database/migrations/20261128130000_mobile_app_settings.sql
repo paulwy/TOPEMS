@@ -1,6 +1,4 @@
 -- 移动应用（App 包）配置：真实持久化（原 /mobile/settings-app 只写 localStorage）
-BEGIN;
-
 CREATE TABLE IF NOT EXISTS mobile.app_settings (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
@@ -42,5 +40,3 @@ CREATE POLICY rls_tenant_isolation ON mobile.app_settings FOR ALL TO PUBLIC
     );
 
 COMMENT ON TABLE mobile.app_settings IS '移动应用包配置（强制更新/自动更新/最低版本/AppKey）';
-
-COMMIT;
