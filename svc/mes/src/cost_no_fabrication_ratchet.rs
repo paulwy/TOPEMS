@@ -80,3 +80,31 @@ fn period_report_never_swallows_failures() {
     require(SOURCE, "LEFT JOIN mes.work_stations ws");
     require(SOURCE, "station_names");
 }
+
+// ===== B373：单价 / 时薪 / 工时 / 制造费用的编造痕迹 =====
+
+#[test]
+fn cost_detail_never_invents_unit_price_or_hourly_rate() {
+    // 单价按物料编码长度算命（10 + len*2）、时薪固定 50、无工时就默认 8 小时
+    forbid(SOURCE, "10.0 + (mat_code.len() as f64) * 2.0");
+    forbid(SOURCE, "let hourly_rate = 50.0;");
+    forbid(SOURCE, "duration_hours = 8.0");
+    // 制造费用按人工成本 1.5 倍编分摊系数
+    forbid(SOURCE, "labor_cost * 1.5");
+}
+
+#[test]
+fn cost_detail_reads_real_sources_and_reports_gaps() {
+    // 真实单价来源（共享层库存单价）
+    require(SOURCE, "FROM public.inventory");
+    require(SOURCE, "MAX(NULLIF(unit_price, 0))");
+    // 真实工时列（work_orders 只有 actual_start_date / actual_end_date）
+    require(SOURCE, "actual_start_date");
+    require(SOURCE, "actual_end_date");
+    forbid(SOURCE, "actual_start_time");
+    // 有量无价 / 无费率必须进 data_gaps，而不是静默算成 0
+    require(SOURCE, "pub data_gaps: Vec<String>");
+    require(SOURCE, "无有效单价");
+    require(SOURCE, "人工费率无权威来源");
+    require(SOURCE, "制造费用无分摊依据");
+}
