@@ -85,20 +85,20 @@ ssh -N -L 8099:127.0.0.1:8099 -L 5432:127.0.0.1:5432 air@192.168.110.96
 
 > v2 纠正：air 组件全部在位，**阶段 3 不再是「拉起/安装栈」**。下列三项偏差先拍板再动；在决策前，air 维持现状运行。
 
-### 4.1 Rust 工具链（偏差：stable 1.95 vs 仓库 nightly-2026-07-01）
+### 4.1 Rust 工具链（已对齐 nightly-2026-07-01，2026-11-28）
 
-- 现状：air 用 Homebrew stable 1.95 在构建；`target/` 占 **103 GiB** 产物；未装 rustup。
-- 风险：一旦装 rustup，`rust-toolchain.toml` 会强制切 nightly，stable 产物大概率大面积失效并触发长时间全量重编。
-- **决策口径**：暂不切。确遇 nightly-only 特性再切；切之前先备份/清 `target`，并确认可接受重编成本。可给 rustup 指定独立目录，避免抢占默认 cargo。
+- 实测：rustup 1.29.0 已装 `nightly-2026-07-01-aarch64`（clippy/rustfmt/rust-std 齐全）；仓库目录按 `rust-toolchain.toml` 自动选 nightly，cargo/rustc 1.98.0-nightly、rustfmt 1.9.0-nightly、clippy 0.1.98，与 xingzhai 基线一致。
+- 已收口：`.zshrc` 前置 `~/.cargo/bin`，rustup shim 优先于 Homebrew cargo；备份 `/tmp/zshrc.bak.20261128`。
+- 备注：`target/` 约 108 GiB 为旧 stable 产物，nightly 增量重编即可，不必先清；磁盘可用约 154 GiB。全量 `cargo check/clippy/fmt` 待在途代码落盘后验证。
 
-### 4.2 Node 大版本（偏差：node@20 vs engines `^22`）
+### 4.2 Node 大版本（已项目内对齐 node 22，2026-11-28）
 
-- 现状：默认 `node` 指 node@20.20.2；依赖已装、release 包可产出，暂未暴露故障。
-- **决策口径**：暂不全局改装。确需前端构建一致性校验时，`brew install node@22`，**只在项目内切版本，不改全局软链**。
+- 实测：fnm 已装 v22.22.3（default），`.nvmrc=22.22.3`，`.zshrc` 含 `fnm env --use-on-cd`，pnpm 9.15.9（corepack 0.34.6）；全局 brew node@20 保留未动，仅项目内经 fnm 切 22。
+- 备注：`apps/web` 当前 `node_modules` 为旧部分安装、无 `pnpm-lock.yaml`；落盘后在 node22 下补 `pnpm install` 与构建验证。
 
 ### 4.3 仓库与现有库：禁止照抄「切分支 / 重建库」动作
 
-air 仓库当前在 `fix/web-follow-light-contrast` 分支（跟踪同名远端），工作区 **668 条未提交改动**；相对 `origin/main`：**behind 302 / ahead 22**。
+air 仓库当前在 `fix/web-follow-light-contrast` 分支（跟踪同名远端），工作区 **679 条未提交改动**（618 改 / 32 删 / 26 未跟踪）；相对 `origin/main`：**behind 304 / ahead 22**。
 
 - **禁止** `git checkout main && git pull --ff-only`：工作区有大量未提交改动，切分支会直接破坏进行中的工作。切分支前必须先 `git status --porcelain` 确认为空，或先把在途改动落盘/暂存。
 - **禁止** 在未确认现有数据保留需求前执行 `bash scripts/db/provision-env.sh --env dev`：该脚本属**重建**动作，会覆盖现有 `topems` 库（188 张表）。
@@ -148,9 +148,9 @@ cd ~/TOPEMS
 
 ## 7. 待决策 / 未决项
 
-1. **Rust nightly 切换**：是否在 air 装 rustup 并对齐 `nightly-2026-07-01`；需先评估 103 GiB `target` 重编成本（§4.1）。
-2. **Node 22 对齐**：是否项目内引入 node@22，不改全局软链（§4.2）。
-3. **air 在途分支处置**：`fix/web-follow-light-contrast` 的 668 条改动如何落盘（提交 / 暂存 / 另开分支），由该线负责人确认后再决定是否回 main。
+1. **Rust nightly（已就位，2026-11-28）**：rustup 1.29.0 已装 `nightly-2026-07-01`（clippy/rustfmt 齐全）；仓库目录按 `rust-toolchain.toml` 自动选 nightly，cargo/rustc 1.98.0-nightly。已在 `.zshrc` 前置 `~/.cargo/bin` 让 rustup shim 优先于 brew cargo（备份 `/tmp/zshrc.bak.20261128`）。全量 `cargo check/clippy/fmt` 留待在途代码落盘后验证。
+2. **Node 22（已就位，2026-11-28）**：fnm 已装 v22.22.3（default），`.nvmrc=22.22.3`，`.zshrc` 含 `fnm env --use-on-cd`，pnpm 9.15.9（corepack）；未改全局 brew node@20。`pnpm install`/构建验证留待落盘后在 node22 下跑。
+3. **air 在途分支处置**：`fix/web-follow-light-contrast`（behind main 304/ahead 22，工作区 618 改/32 删/26 未跟踪）。改动已双份备份：air 本机 `~/topems-air-wip-backup-20261128/`、xingzhai `/tmp/topems-air-wip-20261128/`。**不在 air 旧基线直接提交**；基于最新 main 在 xingzhai 侧重建分支，按模块甄别移植有效改动（重复迁移/回滚、`node_modules`、对 main 在用文件的误删均排除），编译/测试通过后再回 main。详见 #130。
 4. **历史库与快照清理**：48 个残留库 + `20261115-step2` 快照纳入专门清理批次（#125），走只读盘点 → 备份 → 断言 → 回收流程。
 5. **角色边界确认**：复核 air 上无 `*_prod` 库、无生产常驻 launchd 单元、无生产 DSN 实例；后续出包/交付只走 `release-pipeline.md` 到 xingzhai。
 6. 远端旧机 `.115`（`xingzhai@192.168.110.115`）已按角色定案**退役**，不再作为生产/部署/清理目标；其历史数据待物理确认后另作下线处置，与 air 恢复无关。
