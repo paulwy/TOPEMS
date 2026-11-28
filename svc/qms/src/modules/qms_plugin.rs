@@ -244,7 +244,6 @@ mod tests {
     }
 }
 
-
 /// QMS 模块健康探测（单体 /api/qms/health）
 #[utoipa::path(
     get,

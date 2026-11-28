@@ -179,9 +179,27 @@ pub async fn list_anomaly_alerts(
     };
 
     // 并行检测各类异常
-    let equipment_alerts = detect_equipment_anomalies(&mut scope, tenant_id).await;
-    let quality_alerts = detect_quality_anomalies(&mut scope, tenant_id).await;
-    let production_alerts = detect_production_anomalies(&mut scope, tenant_id).await;
+    let equipment_alerts = match detect_equipment_anomalies(&mut scope, tenant_id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("设备异常检测失败: {e}");
+            return ApiResponse::server_error(&format!("设备异常检测失败: {e}"));
+        }
+    };
+    let quality_alerts = match detect_quality_anomalies(&mut scope, tenant_id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("质量异常检测失败: {e}");
+            return ApiResponse::server_error(&format!("质量异常检测失败: {e}"));
+        }
+    };
+    let production_alerts = match detect_production_anomalies(&mut scope, tenant_id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("生产异常检测失败: {e}");
+            return ApiResponse::server_error(&format!("生产异常检测失败: {e}"));
+        }
+    };
 
     alerts.extend(equipment_alerts);
     alerts.extend(quality_alerts);
@@ -260,7 +278,13 @@ pub async fn get_anomaly_summary(
         }
     };
 
-    let all_alerts = collect_all_alerts(&mut scope, tenant_id).await;
+    let all_alerts = match collect_all_alerts(&mut scope, tenant_id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("异常检测失败: {e}");
+            return ApiResponse::server_error(&format!("异常检测失败: {e}"));
+        }
+    };
 
     let mut by_type: HashMap<String, usize> = HashMap::new();
     let mut equipment_map: HashMap<String, (String, usize, String)> = HashMap::new();
@@ -294,7 +318,10 @@ pub async fn get_anomaly_summary(
         })
         .collect();
 
-    let recent_trend = get_recent_anomaly_trend(&mut scope, tenant_id).await;
+    let recent_trend = match get_recent_anomaly_trend(&mut scope, tenant_id).await {
+        Ok(v) => v,
+        Err(e) => return ApiResponse::server_error(&format!("异常趋势获取失败: {e}")),
+    };
 
     let summary = AnomalySummary {
         critical_count: all_alerts
@@ -349,7 +376,13 @@ pub async fn get_equipment_anomalies(
         }
     };
 
-    let all_alerts = collect_all_alerts(&mut scope, get_tenant_id(&claims)).await;
+    let all_alerts = match collect_all_alerts(&mut scope, get_tenant_id(&claims)).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("异常检测失败: {e}");
+            return ApiResponse::server_error(&format!("异常检测失败: {e}"));
+        }
+    };
     let filtered: Vec<AnomalyAlert> = all_alerts
         .into_iter()
         .filter(|a| a.source_id == equipment_id)
@@ -472,9 +505,27 @@ pub async fn trigger_anomaly_scan(
         }
     };
 
-    let equipment_alerts = detect_equipment_anomalies(&mut scope, tenant_id).await;
-    let quality_alerts = detect_quality_anomalies(&mut scope, tenant_id).await;
-    let production_alerts = detect_production_anomalies(&mut scope, tenant_id).await;
+    let equipment_alerts = match detect_equipment_anomalies(&mut scope, tenant_id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("设备异常检测失败: {e}");
+            return ApiResponse::server_error(&format!("设备异常检测失败: {e}"));
+        }
+    };
+    let quality_alerts = match detect_quality_anomalies(&mut scope, tenant_id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("质量异常检测失败: {e}");
+            return ApiResponse::server_error(&format!("质量异常检测失败: {e}"));
+        }
+    };
+    let production_alerts = match detect_production_anomalies(&mut scope, tenant_id).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("生产异常检测失败: {e}");
+            return ApiResponse::server_error(&format!("生产异常检测失败: {e}"));
+        }
+    };
 
     let total = equipment_alerts.len() + quality_alerts.len() + production_alerts.len();
 
@@ -545,18 +596,25 @@ pub async fn get_anomaly_trend(
     };
 
     let trend =
-        get_recent_anomaly_trend_days(&mut scope, get_tenant_id(&claims), days.min(90)).await;
+        match get_recent_anomaly_trend_days(&mut scope, get_tenant_id(&claims), days.min(90)).await
+        {
+            Ok(v) => v,
+            Err(e) => return ApiResponse::server_error(&format!("异常趋势获取失败: {e}")),
+        };
     ApiResponse::success(trend, "异常趋势获取成功")
 }
 
 // ==================== Detection Logic ====================
 
-async fn collect_all_alerts(scope: &mut ScopedTxn<'_>, tenant_id: uuid::Uuid) -> Vec<AnomalyAlert> {
+async fn collect_all_alerts(
+    scope: &mut ScopedTxn<'_>,
+    tenant_id: uuid::Uuid,
+) -> Result<Vec<AnomalyAlert>, String> {
     let mut alerts = Vec::new();
-    alerts.extend(detect_equipment_anomalies(scope, tenant_id).await);
-    alerts.extend(detect_quality_anomalies(scope, tenant_id).await);
-    alerts.extend(detect_production_anomalies(scope, tenant_id).await);
-    alerts
+    alerts.extend(detect_equipment_anomalies(scope, tenant_id).await?);
+    alerts.extend(detect_quality_anomalies(scope, tenant_id).await?);
+    alerts.extend(detect_production_anomalies(scope, tenant_id).await?);
+    Ok(alerts)
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -565,11 +623,12 @@ async fn collect_all_alerts(scope: &mut ScopedTxn<'_>, tenant_id: uuid::Uuid) ->
 async fn detect_equipment_anomalies(
     scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
-) -> Vec<AnomalyAlert> {
+) -> Result<Vec<AnomalyAlert>, String> {
     let mut alerts = Vec::new();
+    let mut failures: Vec<String> = Vec::new();
 
     // 1. 基于设备巡检数据检测温度/振动/噪音异常
-    if let Ok(rows) = sqlx::query(
+    let rows = match sqlx::query(
         r#"
         SELECT e.id, e.equipment_code AS equipment_no, e.equipment_name AS name,
                ei.temperature::float8, ei.vibration::float8, ei.noiselevel::float8, ei.inspection_date,
@@ -584,179 +643,183 @@ async fn detect_equipment_anomalies(
     )
     .bind(tenant_id)
     .fetch_all(&mut *scope)
-    .await
-    {
-        let mut equipment_metrics: HashMap<String, Vec<(f64, f64, f64)>> = HashMap::new();
+    .await {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("设备巡检读数查询失败: {e}");
+            failures.push(format!("设备巡检读数查询失败: {e}"));
+            Vec::new()
+        }
+    };
+    let mut equipment_metrics: HashMap<String, Vec<(f64, f64, f64)>> = HashMap::new();
 
-        for row in rows {
-            let eq_id: uuid::Uuid = row.get("id");
-            let eq_no: String = row.get("equipment_no");
-            let eq_name: String = row.get("name");
-            let temp: Option<f64> = row.get("temperature");
-            let vibration: Option<f64> = row.get("vibration");
-            let noise: Option<f64> = row.get("noiselevel");
-            let status: String = row.get("status");
+    for row in rows {
+        let eq_id: uuid::Uuid = row.get("id");
+        let eq_no: String = row.get("equipment_no");
+        let eq_name: String = row.get("name");
+        let temp: Option<f64> = row.get("temperature");
+        let vibration: Option<f64> = row.get("vibration");
+        let noise: Option<f64> = row.get("noiselevel");
+        let status: String = row.get("status");
 
-            let temp_v = temp.unwrap_or(0.0);
-            let vib_v = vibration.unwrap_or(0.0);
-            let noise_v = noise.unwrap_or(0.0);
+        // 缺失读数不能当 0：NaN 让阈值判断自然为假，趋势样本只收三值齐全的记录
+        let temp_v = temp.unwrap_or(f64::NAN);
+        let vib_v = vibration.unwrap_or(f64::NAN);
+        let noise_v = noise.unwrap_or(f64::NAN);
 
-            // 即时阈值检测
-            if temp_v > 80.0 {
-                let severity = if temp_v > 95.0 { "critical" } else { "warning" };
-                alerts.push(AnomalyAlert {
-                    id: format!("equip_overheat_{}_{}", eq_id, Utc::now().timestamp()),
-                    anomaly_type: "equipment_overheat".to_string(),
-                    severity: severity.to_string(),
-                    title: format!("设备 {} 温度异常", eq_name),
-                    description: format!(
-                        "设备 {} 当前温度 {:.1}°C，超出安全阈值 80°C",
-                        eq_name, temp_v
-                    ),
-                    source_id: eq_id.to_string(),
-                    source_name: eq_name.clone(),
-                    metric_name: "temperature".to_string(),
-                    metric_value: temp_v,
-                    threshold_value: 80.0,
-                    trend: "rising".to_string(),
-                    detected_at: Utc::now(),
-                    status: if status == "abnormal" {
-                        "confirmed"
-                    } else {
-                        "detected"
-                    }
-                    .to_string(),
-                    recommendation: "检查冷却系统，必要时停机检修".to_string(),
-                });
-            }
-
-            if vib_v > 7.0 {
-                let severity = if vib_v > 10.0 { "critical" } else { "warning" };
-                alerts.push(AnomalyAlert {
-                    id: format!("equip_vibration_{}_{}", eq_id, Utc::now().timestamp()),
-                    anomaly_type: "equipment_vibration".to_string(),
-                    severity: severity.to_string(),
-                    title: format!("设备 {} 振动异常", eq_name),
-                    description: format!(
-                        "设备 {} 振动值 {:.2}mm/s，超出安全阈值 7.0mm/s",
-                        eq_name, vib_v
-                    ),
-                    source_id: eq_id.to_string(),
-                    source_name: eq_name.clone(),
-                    metric_name: "vibration".to_string(),
-                    metric_value: vib_v,
-                    threshold_value: 7.0,
-                    trend: "rising".to_string(),
-                    detected_at: Utc::now(),
-                    status: "detected".to_string(),
-                    recommendation: "检查轴承和传动部件，安排振动诊断".to_string(),
-                });
-            }
-
-            if noise_v > 85.0 {
-                let severity = if noise_v > 95.0 {
-                    "critical"
+        // 即时阈值检测
+        if temp_v > 80.0 {
+            let severity = if temp_v > 95.0 { "critical" } else { "warning" };
+            alerts.push(AnomalyAlert {
+                id: format!("equip_overheat_{}_{}", eq_id, Utc::now().timestamp()),
+                anomaly_type: "equipment_overheat".to_string(),
+                severity: severity.to_string(),
+                title: format!("设备 {} 温度异常", eq_name),
+                description: format!(
+                    "设备 {} 当前温度 {:.1}°C，超出安全阈值 80°C",
+                    eq_name, temp_v
+                ),
+                source_id: eq_id.to_string(),
+                source_name: eq_name.clone(),
+                metric_name: "temperature".to_string(),
+                metric_value: temp_v,
+                threshold_value: 80.0,
+                trend: "rising".to_string(),
+                detected_at: Utc::now(),
+                status: if status == "abnormal" {
+                    "confirmed"
                 } else {
-                    "warning"
-                };
-                alerts.push(AnomalyAlert {
-                    id: format!("equip_noise_{}_{}", eq_id, Utc::now().timestamp()),
-                    anomaly_type: "equipment_noise".to_string(),
-                    severity: severity.to_string(),
-                    title: format!("设备 {} 噪音异常", eq_name),
-                    description: format!(
-                        "设备 {} 噪音值 {:.1}dB，超出安全阈值 85dB",
-                        eq_name, noise_v
-                    ),
-                    source_id: eq_id.to_string(),
-                    source_name: eq_name.clone(),
-                    metric_name: "noise_level".to_string(),
-                    metric_value: noise_v,
-                    threshold_value: 85.0,
-                    trend: "stable".to_string(),
-                    detected_at: Utc::now(),
-                    status: "detected".to_string(),
-                    recommendation: "检查设备紧固件和运动部件磨损情况".to_string(),
-                });
-            }
-
-            // 收集用于趋势分析的指标
-            let key = format!("{}|{}|{}", eq_id, eq_no, eq_name);
-            equipment_metrics
-                .entry(key)
-                .or_default()
-                .push((temp_v, vib_v, noise_v));
+                    "detected"
+                }
+                .to_string(),
+                recommendation: "检查冷却系统，必要时停机检修".to_string(),
+            });
         }
 
-        // 趋势分析：检测连续上升趋势
-        for (key, metrics) in &equipment_metrics {
-            if metrics.len() >= 3 {
-                let parts: Vec<&str> = key.split('|').collect();
-                if parts.len() == 3 {
-                    let eq_id = parts[0];
-                    let eq_name = parts[2];
+        if vib_v > 7.0 {
+            let severity = if vib_v > 10.0 { "critical" } else { "warning" };
+            alerts.push(AnomalyAlert {
+                id: format!("equip_vibration_{}_{}", eq_id, Utc::now().timestamp()),
+                anomaly_type: "equipment_vibration".to_string(),
+                severity: severity.to_string(),
+                title: format!("设备 {} 振动异常", eq_name),
+                description: format!(
+                    "设备 {} 振动值 {:.2}mm/s，超出安全阈值 7.0mm/s",
+                    eq_name, vib_v
+                ),
+                source_id: eq_id.to_string(),
+                source_name: eq_name.clone(),
+                metric_name: "vibration".to_string(),
+                metric_value: vib_v,
+                threshold_value: 7.0,
+                trend: "rising".to_string(),
+                detected_at: Utc::now(),
+                status: "detected".to_string(),
+                recommendation: "检查轴承和传动部件，安排振动诊断".to_string(),
+            });
+        }
 
-                    // 温度趋势分析
-                    let temps: Vec<f64> = metrics.iter().map(|m| m.0).collect();
-                    if is_increasing_trend(&temps) && temps.last().unwrap_or(&0.0) > &60.0 {
-                        let avg_temp = temps.iter().sum::<f64>() / temps.len() as f64;
-                        alerts.push(AnomalyAlert {
-                            id: format!("equip_temp_trend_{}_{}", eq_id, Utc::now().timestamp()),
-                            anomaly_type: "equipment_overheat".to_string(),
-                            severity: "warning".to_string(),
-                            title: format!("设备 {} 温度持续上升", eq_name),
-                            description: format!(
-                                "设备 {} 近 {} 次巡检温度呈持续上升趋势，平均 {:.1}°C",
-                                eq_name,
-                                metrics.len(),
-                                avg_temp
-                            ),
-                            source_id: eq_id.to_string(),
-                            source_name: eq_name.to_string(),
-                            metric_name: "temperature_trend".to_string(),
-                            metric_value: *temps.last().unwrap_or(&0.0),
-                            threshold_value: 60.0,
-                            trend: "rising".to_string(),
-                            detected_at: Utc::now(),
-                            status: "detected".to_string(),
-                            recommendation: "密切关注温度变化，提前安排预防性维护".to_string(),
-                        });
-                    }
+        if noise_v > 85.0 {
+            let severity = if noise_v > 95.0 {
+                "critical"
+            } else {
+                "warning"
+            };
+            alerts.push(AnomalyAlert {
+                id: format!("equip_noise_{}_{}", eq_id, Utc::now().timestamp()),
+                anomaly_type: "equipment_noise".to_string(),
+                severity: severity.to_string(),
+                title: format!("设备 {} 噪音异常", eq_name),
+                description: format!(
+                    "设备 {} 噪音值 {:.1}dB，超出安全阈值 85dB",
+                    eq_name, noise_v
+                ),
+                source_id: eq_id.to_string(),
+                source_name: eq_name.clone(),
+                metric_name: "noise_level".to_string(),
+                metric_value: noise_v,
+                threshold_value: 85.0,
+                trend: "stable".to_string(),
+                detected_at: Utc::now(),
+                status: "detected".to_string(),
+                recommendation: "检查设备紧固件和运动部件磨损情况".to_string(),
+            });
+        }
 
-                    // 振动趋势分析
-                    let vibrations: Vec<f64> = metrics.iter().map(|m| m.1).collect();
-                    if is_increasing_trend(&vibrations) && vibrations.last().unwrap_or(&0.0) > &5.0
-                    {
-                        let avg_vib = vibrations.iter().sum::<f64>() / vibrations.len() as f64;
-                        alerts.push(AnomalyAlert {
-                            id: format!("equip_vib_trend_{}_{}", eq_id, Utc::now().timestamp()),
-                            anomaly_type: "equipment_vibration".to_string(),
-                            severity: "warning".to_string(),
-                            title: format!("设备 {} 振动持续增大", eq_name),
-                            description: format!(
-                                "设备 {} 近 {} 次巡检振动呈上升趋势，平均 {:.2}mm/s",
-                                eq_name,
-                                metrics.len(),
-                                avg_vib
-                            ),
-                            source_id: eq_id.to_string(),
-                            source_name: eq_name.to_string(),
-                            metric_name: "vibration_trend".to_string(),
-                            metric_value: *vibrations.last().unwrap_or(&0.0),
-                            threshold_value: 5.0,
-                            trend: "rising".to_string(),
-                            detected_at: Utc::now(),
-                            status: "detected".to_string(),
-                            recommendation: "安排振动频谱分析，检查轴承磨损".to_string(),
-                        });
-                    }
+        // 收集用于趋势分析的指标
+        let key = format!("{}|{}|{}", eq_id, eq_no, eq_name);
+        if let (Some(t), Some(v), Some(n)) = (temp, vibration, noise) {
+            equipment_metrics.entry(key).or_default().push((t, v, n));
+        }
+    }
+
+    // 趋势分析：检测连续上升趋势
+    for (key, metrics) in &equipment_metrics {
+        if metrics.len() >= 3 {
+            let parts: Vec<&str> = key.split('|').collect();
+            if parts.len() == 3 {
+                let eq_id = parts[0];
+                let eq_name = parts[2];
+
+                // 温度趋势分析
+                let temps: Vec<f64> = metrics.iter().map(|m| m.0).collect();
+                if is_increasing_trend(&temps) && temps.last().unwrap_or(&0.0) > &60.0 {
+                    let avg_temp = temps.iter().sum::<f64>() / temps.len() as f64;
+                    alerts.push(AnomalyAlert {
+                        id: format!("equip_temp_trend_{}_{}", eq_id, Utc::now().timestamp()),
+                        anomaly_type: "equipment_overheat".to_string(),
+                        severity: "warning".to_string(),
+                        title: format!("设备 {} 温度持续上升", eq_name),
+                        description: format!(
+                            "设备 {} 近 {} 次巡检温度呈持续上升趋势，平均 {:.1}°C",
+                            eq_name,
+                            metrics.len(),
+                            avg_temp
+                        ),
+                        source_id: eq_id.to_string(),
+                        source_name: eq_name.to_string(),
+                        metric_name: "temperature_trend".to_string(),
+                        metric_value: *temps.last().unwrap_or(&0.0),
+                        threshold_value: 60.0,
+                        trend: "rising".to_string(),
+                        detected_at: Utc::now(),
+                        status: "detected".to_string(),
+                        recommendation: "密切关注温度变化，提前安排预防性维护".to_string(),
+                    });
+                }
+
+                // 振动趋势分析
+                let vibrations: Vec<f64> = metrics.iter().map(|m| m.1).collect();
+                if is_increasing_trend(&vibrations) && vibrations.last().unwrap_or(&0.0) > &5.0 {
+                    let avg_vib = vibrations.iter().sum::<f64>() / vibrations.len() as f64;
+                    alerts.push(AnomalyAlert {
+                        id: format!("equip_vib_trend_{}_{}", eq_id, Utc::now().timestamp()),
+                        anomaly_type: "equipment_vibration".to_string(),
+                        severity: "warning".to_string(),
+                        title: format!("设备 {} 振动持续增大", eq_name),
+                        description: format!(
+                            "设备 {} 近 {} 次巡检振动呈上升趋势，平均 {:.2}mm/s",
+                            eq_name,
+                            metrics.len(),
+                            avg_vib
+                        ),
+                        source_id: eq_id.to_string(),
+                        source_name: eq_name.to_string(),
+                        metric_name: "vibration_trend".to_string(),
+                        metric_value: *vibrations.last().unwrap_or(&0.0),
+                        threshold_value: 5.0,
+                        trend: "rising".to_string(),
+                        detected_at: Utc::now(),
+                        status: "detected".to_string(),
+                        recommendation: "安排振动频谱分析，检查轴承磨损".to_string(),
+                    });
                 }
             }
         }
     }
 
     // 2. 基于设备 OEE 下降检测
-    if let Ok(rows) = sqlx::query(
+    let rows = match sqlx::query(
         r#"
         SELECT e.id, e.equipment_code AS equipment_no, e.equipment_name AS name,
                AVG(eo.oee)::numeric as avg_oee,
@@ -775,47 +838,53 @@ async fn detect_equipment_anomalies(
     .fetch_all(&mut *scope)
     .await
     {
-        for row in rows {
-            let eq_id: uuid::Uuid = row.get("id");
-            let eq_name: String = row.get("name");
-            let avg_oee: f64 = row
-                .get::<sqlx::types::BigDecimal, _>("avg_oee")
-                .to_string()
-                .parse()
-                .unwrap_or(0.0);
-            let record_count: i64 = row.get("record_count");
-
-            let severity = if avg_oee < 0.40 {
-                "critical"
-            } else {
-                "warning"
-            };
-            alerts.push(AnomalyAlert {
-                id: format!("equip_oee_drop_{}_{}", eq_id, Utc::now().timestamp()),
-                anomaly_type: "equipment_oee_drop".to_string(),
-                severity: severity.to_string(),
-                title: format!("设备 {} OEE 偏低", eq_name),
-                description: format!(
-                    "设备 {} 近 30 天平均 OEE 为 {:.1}%，低于 60% 警戒线（共 {} 条记录）",
-                    eq_name,
-                    avg_oee * 100.0,
-                    record_count
-                ),
-                source_id: eq_id.to_string(),
-                source_name: eq_name,
-                metric_name: "oee".to_string(),
-                metric_value: avg_oee,
-                threshold_value: 0.60,
-                trend: "stable".to_string(),
-                detected_at: Utc::now(),
-                status: "detected".to_string(),
-                recommendation: "分析可用率、性能、质量率瓶颈，制定 OEE 提升方案".to_string(),
-            });
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("设备 OEE 查询失败: {e}");
+            failures.push(format!("设备 OEE 查询失败: {e}"));
+            Vec::new()
         }
+    };
+    for row in rows {
+        let eq_id: uuid::Uuid = row.get("id");
+        let eq_name: String = row.get("name");
+        let avg_oee: f64 = row
+            .get::<sqlx::types::BigDecimal, _>("avg_oee")
+            .to_string()
+            .parse()
+            .map_err(|e| format!("数值解析失败: {e}"))?;
+        let record_count: i64 = row.get("record_count");
+
+        let severity = if avg_oee < 0.40 {
+            "critical"
+        } else {
+            "warning"
+        };
+        alerts.push(AnomalyAlert {
+            id: format!("equip_oee_drop_{}_{}", eq_id, Utc::now().timestamp()),
+            anomaly_type: "equipment_oee_drop".to_string(),
+            severity: severity.to_string(),
+            title: format!("设备 {} OEE 偏低", eq_name),
+            description: format!(
+                "设备 {} 近 30 天平均 OEE 为 {:.1}%，低于 60% 警戒线（共 {} 条记录）",
+                eq_name,
+                avg_oee * 100.0,
+                record_count
+            ),
+            source_id: eq_id.to_string(),
+            source_name: eq_name,
+            metric_name: "oee".to_string(),
+            metric_value: avg_oee,
+            threshold_value: 0.60,
+            trend: "stable".to_string(),
+            detected_at: Utc::now(),
+            status: "detected".to_string(),
+            recommendation: "分析可用率、性能、质量率瓶颈，制定 OEE 提升方案".to_string(),
+        });
     }
 
     // 3. 基于维护周期过期检测
-    if let Ok(rows) = sqlx::query(
+    let rows = match sqlx::query(
         r#"
         SELECT id, equipment_code AS equipment_no, equipment_name AS name, maintenance_frequency_days AS maintenance_cycle,
                last_maintenance_date, next_maintenance_date
@@ -828,54 +897,70 @@ async fn detect_equipment_anomalies(
     )
     .bind(tenant_id)
     .fetch_all(&mut *scope)
-    .await
-    {
-        for row in rows {
-            let eq_id: uuid::Uuid = row.get("id");
-            let eq_name: String = row.get("name");
-            let next_maint: Option<chrono::NaiveDate> = row.get("next_maintenance_date");
-
-            let days_overdue = if let Some(nm) = next_maint {
-                Utc::now().signed_duration_since(nm.and_hms_opt(0, 0, 0).unwrap().and_utc()).num_days()
-            } else {
-                90
-            };
-
-            let severity = if days_overdue > 30 { "critical" } else { "warning" };
-            alerts.push(AnomalyAlert {
-                id: format!("equip_maint_overdue_{}_{}", eq_id, Utc::now().timestamp()),
-                anomaly_type: "equipment_maintenance_overdue".to_string(),
-                severity: severity.to_string(),
-                title: format!("设备 {} 维护已逾期", eq_name),
-                description: format!(
-                    "设备 {} 维护已逾期 {} 天，请尽快安排维护",
-                    eq_name, days_overdue
-                ),
-                source_id: eq_id.to_string(),
-                source_name: eq_name,
-                metric_name: "maintenance_overdue_days".to_string(),
-                metric_value: days_overdue as f64,
-                threshold_value: 0.0,
-                trend: "stable".to_string(),
-                detected_at: Utc::now(),
-                status: "detected".to_string(),
-                recommendation: "立即安排预防性维护，避免设备故障".to_string(),
-            });
+    .await {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("设备维护计划查询失败: {e}");
+            failures.push(format!("设备维护计划查询失败: {e}"));
+            Vec::new()
         }
+    };
+    for row in rows {
+        let eq_id: uuid::Uuid = row.get("id");
+        let eq_name: String = row.get("name");
+        let next_maint: Option<chrono::NaiveDate> = row.get("next_maintenance_date");
+
+        let days_overdue = if let Some(nm) = next_maint {
+            Utc::now()
+                .signed_duration_since(nm.and_hms_opt(0, 0, 0).unwrap().and_utc())
+                .num_days()
+        } else {
+            90
+        };
+
+        let severity = if days_overdue > 30 {
+            "critical"
+        } else {
+            "warning"
+        };
+        alerts.push(AnomalyAlert {
+            id: format!("equip_maint_overdue_{}_{}", eq_id, Utc::now().timestamp()),
+            anomaly_type: "equipment_maintenance_overdue".to_string(),
+            severity: severity.to_string(),
+            title: format!("设备 {} 维护已逾期", eq_name),
+            description: format!(
+                "设备 {} 维护已逾期 {} 天，请尽快安排维护",
+                eq_name, days_overdue
+            ),
+            source_id: eq_id.to_string(),
+            source_name: eq_name,
+            metric_name: "maintenance_overdue_days".to_string(),
+            metric_value: days_overdue as f64,
+            threshold_value: 0.0,
+            trend: "stable".to_string(),
+            detected_at: Utc::now(),
+            status: "detected".to_string(),
+            recommendation: "立即安排预防性维护，避免设备故障".to_string(),
+        });
     }
 
-    alerts
+    if failures.is_empty() {
+        Ok(alerts)
+    } else {
+        Err(failures.join("；"))
+    }
 }
 
 /// 质量异常检测
 async fn detect_quality_anomalies(
     scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
-) -> Vec<AnomalyAlert> {
+) -> Result<Vec<AnomalyAlert>, String> {
     let mut alerts = Vec::new();
+    let mut failures: Vec<String> = Vec::new();
 
     // 1. 基于质量记录检测缺陷率异常
-    if let Ok(rows) = sqlx::query(
+    let rows = match sqlx::query(
         r#"
         SELECT order_no, product_name,
                SUM(quantity) as total_qty,
@@ -895,66 +980,72 @@ async fn detect_quality_anomalies(
     .fetch_all(&mut *scope)
     .await
     {
-        for row in rows {
-            let order_no: Option<String> = row.get("order_no");
-            let product_name: Option<String> = row.get("product_name");
-            let total_qty: f64 = row
-                .get::<sqlx::types::BigDecimal, _>("total_qty")
-                .to_string()
-                .parse()
-                .unwrap_or(0.0);
-            let total_defective: f64 = row
-                .get::<sqlx::types::BigDecimal, _>("total_defective")
-                .to_string()
-                .parse()
-                .unwrap_or(0.0);
-            let record_count: i64 = row.get("record_count");
-
-            let defect_rate = if total_qty > 0.0 {
-                total_defective / total_qty
-            } else {
-                0.0
-            };
-
-            let severity = if defect_rate > 0.10 {
-                "critical"
-            } else {
-                "warning"
-            };
-            let source_name = product_name.unwrap_or_else(|| "未知产品".to_string());
-
-            alerts.push(AnomalyAlert {
-                id: format!(
-                    "quality_defect_{}_{}",
-                    order_no.as_deref().unwrap_or("unknown"),
-                    Utc::now().timestamp()
-                ),
-                anomaly_type: "quality_defect_rate".to_string(),
-                severity: severity.to_string(),
-                title: format!("产品 {} 缺陷率偏高", source_name),
-                description: format!(
-                    "产品 {} 近 7 天缺陷率 {:.1}%（{} 条记录，总检 {} 件，不良 {} 件）",
-                    source_name,
-                    defect_rate * 100.0,
-                    record_count,
-                    total_qty,
-                    total_defective
-                ),
-                source_id: order_no.unwrap_or_else(|| "unknown".to_string()),
-                source_name,
-                metric_name: "defect_rate".to_string(),
-                metric_value: defect_rate,
-                threshold_value: 0.05,
-                trend: "stable".to_string(),
-                detected_at: Utc::now(),
-                status: "detected".to_string(),
-                recommendation: "分析缺陷原因，检查工艺参数和原材料批次".to_string(),
-            });
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("质量缺陷率查询失败: {e}");
+            failures.push(format!("质量缺陷率查询失败: {e}"));
+            Vec::new()
         }
+    };
+    for row in rows {
+        let order_no: Option<String> = row.get("order_no");
+        let product_name: Option<String> = row.get("product_name");
+        let total_qty: f64 = row
+            .get::<sqlx::types::BigDecimal, _>("total_qty")
+            .to_string()
+            .parse()
+            .map_err(|e| format!("数值解析失败: {e}"))?;
+        let total_defective: f64 = row
+            .get::<sqlx::types::BigDecimal, _>("total_defective")
+            .to_string()
+            .parse()
+            .map_err(|e| format!("数值解析失败: {e}"))?;
+        let record_count: i64 = row.get("record_count");
+
+        let defect_rate = if total_qty > 0.0 {
+            total_defective / total_qty
+        } else {
+            0.0
+        };
+
+        let severity = if defect_rate > 0.10 {
+            "critical"
+        } else {
+            "warning"
+        };
+        let source_name = product_name.unwrap_or_else(|| "未知产品".to_string());
+
+        alerts.push(AnomalyAlert {
+            id: format!(
+                "quality_defect_{}_{}",
+                order_no.as_deref().unwrap_or("unknown"),
+                Utc::now().timestamp()
+            ),
+            anomaly_type: "quality_defect_rate".to_string(),
+            severity: severity.to_string(),
+            title: format!("产品 {} 缺陷率偏高", source_name),
+            description: format!(
+                "产品 {} 近 7 天缺陷率 {:.1}%（{} 条记录，总检 {} 件，不良 {} 件）",
+                source_name,
+                defect_rate * 100.0,
+                record_count,
+                total_qty,
+                total_defective
+            ),
+            source_id: order_no.unwrap_or_else(|| "unknown".to_string()),
+            source_name,
+            metric_name: "defect_rate".to_string(),
+            metric_value: defect_rate,
+            threshold_value: 0.05,
+            trend: "stable".to_string(),
+            detected_at: Utc::now(),
+            status: "detected".to_string(),
+            recommendation: "分析缺陷原因，检查工艺参数和原材料批次".to_string(),
+        });
     }
 
     // 2. 基于批量不合格检测
-    if let Ok(rows) = sqlx::query(
+    let rows = match sqlx::query(
         r#"
         SELECT order_no, product_name, batch_no,
                quantity, qualified_quantity, defective_quantity,
@@ -972,47 +1063,57 @@ async fn detect_quality_anomalies(
     .fetch_all(&mut *scope)
     .await
     {
-        for row in rows {
-            let product_name: Option<String> = row.get("product_name");
-            let batch_no: Option<String> = row.get("batch_no");
-            let quantity: f64 = row
-                .get::<sqlx::types::BigDecimal, _>("quantity")
-                .to_string()
-                .parse()
-                .unwrap_or(0.0);
-            let defect_reason: Option<String> = row.get("defect_reason");
-
-            let source_name = product_name.unwrap_or_else(|| "未知产品".to_string());
-            let batch = batch_no.unwrap_or_else(|| "未知批次".to_string());
-
-            alerts.push(AnomalyAlert {
-                id: format!("quality_batch_{}_{}", batch, Utc::now().timestamp()),
-                anomaly_type: "quality_batch_failure".to_string(),
-                severity: "critical".to_string(),
-                title: format!("批次 {} 整批不合格", batch),
-                description: format!(
-                    "产品 {} 批次 {} 被判为整批不合格（数量 {} 件）{}",
-                    source_name,
-                    batch,
-                    quantity,
-                    defect_reason
-                        .map(|r| format!("，原因：{}", r))
-                        .unwrap_or_default()
-                ),
-                source_id: batch.clone(),
-                source_name,
-                metric_name: "batch_quality".to_string(),
-                metric_value: 0.0,
-                threshold_value: 1.0,
-                trend: "stable".to_string(),
-                detected_at: Utc::now(),
-                status: "confirmed".to_string(),
-                recommendation: "立即隔离该批次，启动不合格品处理流程".to_string(),
-            });
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("批次不合格查询失败: {e}");
+            failures.push(format!("批次不合格查询失败: {e}"));
+            Vec::new()
         }
+    };
+    for row in rows {
+        let product_name: Option<String> = row.get("product_name");
+        let batch_no: Option<String> = row.get("batch_no");
+        let quantity: f64 = row
+            .get::<sqlx::types::BigDecimal, _>("quantity")
+            .to_string()
+            .parse()
+            .map_err(|e| format!("数值解析失败: {e}"))?;
+        let defect_reason: Option<String> = row.get("defect_reason");
+
+        let source_name = product_name.unwrap_or_else(|| "未知产品".to_string());
+        let batch = batch_no.unwrap_or_else(|| "未知批次".to_string());
+
+        alerts.push(AnomalyAlert {
+            id: format!("quality_batch_{}_{}", batch, Utc::now().timestamp()),
+            anomaly_type: "quality_batch_failure".to_string(),
+            severity: "critical".to_string(),
+            title: format!("批次 {} 整批不合格", batch),
+            description: format!(
+                "产品 {} 批次 {} 被判为整批不合格（数量 {} 件）{}",
+                source_name,
+                batch,
+                quantity,
+                defect_reason
+                    .map(|r| format!("，原因：{}", r))
+                    .unwrap_or_default()
+            ),
+            source_id: batch.clone(),
+            source_name,
+            metric_name: "batch_quality".to_string(),
+            metric_value: 0.0,
+            threshold_value: 1.0,
+            trend: "stable".to_string(),
+            detected_at: Utc::now(),
+            status: "confirmed".to_string(),
+            recommendation: "立即隔离该批次，启动不合格品处理流程".to_string(),
+        });
     }
 
-    alerts
+    if failures.is_empty() {
+        Ok(alerts)
+    } else {
+        Err(failures.join("；"))
+    }
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -1020,11 +1121,12 @@ async fn detect_quality_anomalies(
 async fn detect_production_anomalies(
     scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
-) -> Vec<AnomalyAlert> {
+) -> Result<Vec<AnomalyAlert>, String> {
     let mut alerts = Vec::new();
+    let mut failures: Vec<String> = Vec::new();
 
     // 1. 基于生产订单延期检测
-    if let Ok(rows) = sqlx::query(
+    let rows = match sqlx::query(
         r#"
         SELECT id, order_number AS order_no, product_name, status,
                planned_end_date, actual_end_date,
@@ -1040,64 +1142,70 @@ async fn detect_production_anomalies(
     .fetch_all(&mut *scope)
     .await
     {
-        for row in rows {
-            let order_id: uuid::Uuid = row.get("id");
-            let order_no: String = row.get("order_no");
-            let product_name: String = row.get("product_name");
-            let planned_end: Option<chrono::NaiveDate> = row.get("planned_end_date");
-            // quantity/completed_quantity 在 prod 均为 bigint，统一经 ::numeric 后按 BigDecimal 解码
-            let quantity: f64 = row
-                .try_get::<sqlx::types::BigDecimal, _>("quantity")
-                .map(|b| b.to_string().parse().unwrap_or(0.0))
-                .unwrap_or(0.0);
-            let completed: f64 = row
-                .try_get::<sqlx::types::BigDecimal, _>("completed_quantity")
-                .map(|b| b.to_string().parse().unwrap_or(0.0))
-                .unwrap_or(0.0);
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("生产订单延期查询失败: {e}");
+            failures.push(format!("生产订单延期查询失败: {e}"));
+            Vec::new()
+        }
+    };
+    for row in rows {
+        let order_id: uuid::Uuid = row.get("id");
+        let order_no: String = row.get("order_no");
+        let product_name: String = row.get("product_name");
+        let planned_end: Option<chrono::NaiveDate> = row.get("planned_end_date");
+        // quantity/completed_quantity 在 prod 均为 bigint，统一经 ::numeric 后按 BigDecimal 解码
+        let (quantity, completed) = match read_order_quantities(&row) {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("生产订单数量读取失败: {e}");
+                failures.push(format!("订单 {order_no} 数量读取失败: {e}"));
+                continue;
+            }
+        };
 
-            let days_delay = if let Some(pe) = planned_end {
-                Utc::now().date_naive().signed_duration_since(pe).num_days()
+        let days_delay = if let Some(pe) = planned_end {
+            Utc::now().date_naive().signed_duration_since(pe).num_days()
+        } else {
+            0
+        };
+
+        if days_delay > 0 {
+            let severity = if days_delay > 7 {
+                "critical"
             } else {
-                0
+                "warning"
+            };
+            let completion_rate = if quantity > 0.0 {
+                completed / quantity * 100.0
+            } else {
+                0.0
             };
 
-            if days_delay > 0 {
-                let severity = if days_delay > 7 {
-                    "critical"
-                } else {
-                    "warning"
-                };
-                let completion_rate = if quantity > 0.0 {
-                    completed / quantity * 100.0
-                } else {
-                    0.0
-                };
-
-                alerts.push(AnomalyAlert {
-                    id: format!("prod_delay_{}_{}", order_id, Utc::now().timestamp()),
-                    anomaly_type: "production_delay".to_string(),
-                    severity: severity.to_string(),
-                    title: format!("订单 {} 已延期 {} 天", order_no, days_delay),
-                    description: format!(
-                        "生产订单 {}（产品：{}）已超出计划完工日期 {} 天，当前完工率 {:.1}%",
-                        order_no, product_name, days_delay, completion_rate
-                    ),
-                    source_id: order_id.to_string(),
-                    source_name: format!("订单 {}", order_no),
-                    metric_name: "delay_days".to_string(),
-                    metric_value: days_delay as f64,
-                    threshold_value: 0.0,
-                    trend: "rising".to_string(),
-                    detected_at: Utc::now(),
-                    status: "detected".to_string(),
-                    recommendation: "排查延期原因，调整排产计划或增加资源投入".to_string(),
-                });
-            }
+            alerts.push(AnomalyAlert {
+                id: format!("prod_delay_{}_{}", order_id, Utc::now().timestamp()),
+                anomaly_type: "production_delay".to_string(),
+                severity: severity.to_string(),
+                title: format!("订单 {} 已延期 {} 天", order_no, days_delay),
+                description: format!(
+                    "生产订单 {}（产品：{}）已超出计划完工日期 {} 天，当前完工率 {:.1}%",
+                    order_no, product_name, days_delay, completion_rate
+                ),
+                source_id: order_id.to_string(),
+                source_name: format!("订单 {}", order_no),
+                metric_name: "delay_days".to_string(),
+                metric_value: days_delay as f64,
+                threshold_value: 0.0,
+                trend: "rising".to_string(),
+                detected_at: Utc::now(),
+                status: "detected".to_string(),
+                recommendation: "排查延期原因，调整排产计划或增加资源投入".to_string(),
+            });
         }
     }
 
     // 2. 基于 WIP 积压检测
-    if let Ok(rows) = sqlx::query(
+    let rows = match sqlx::query(
         r#"
         SELECT w.order_no, w.product_name, w.wip_no, w.status,
                w.quantity, w.start_time,
@@ -1117,54 +1225,64 @@ async fn detect_production_anomalies(
     .fetch_all(&mut *scope)
     .await
     {
-        for row in rows {
-            let wip_no: String = row.get("wip_no");
-            let product_name: String = row.get("product_name");
-            let order_no: Option<String> = row.get("order_no");
-            let start_time: Option<chrono::DateTime<Utc>> = row.get("start_time");
-            let station_name: Option<String> = row.get("station_name");
-
-            let hours_stuck = if let Some(st) = start_time {
-                Utc::now().signed_duration_since(st).num_hours()
-            } else {
-                0
-            };
-
-            let severity = if hours_stuck > 72 {
-                "critical"
-            } else {
-                "warning"
-            };
-
-            alerts.push(AnomalyAlert {
-                id: format!("wip_backlog_{}_{}", wip_no, Utc::now().timestamp()),
-                anomaly_type: "wip_backlog".to_string(),
-                severity: severity.to_string(),
-                title: format!("在制品 {} 积压 {} 小时", wip_no, hours_stuck),
-                description: format!(
-                    "在制品 {}（产品：{}）在工位 {} 已停留 {} 小时{}",
-                    wip_no,
-                    product_name,
-                    station_name.unwrap_or_else(|| "未知".to_string()),
-                    hours_stuck,
-                    order_no
-                        .map(|o| format!("，关联订单：{}", o))
-                        .unwrap_or_default()
-                ),
-                source_id: wip_no.clone(),
-                source_name: format!("WIP {}", wip_no),
-                metric_name: "stagnation_hours".to_string(),
-                metric_value: hours_stuck as f64,
-                threshold_value: 48.0,
-                trend: "stable".to_string(),
-                detected_at: Utc::now(),
-                status: "detected".to_string(),
-                recommendation: "检查工位瓶颈，调整工序平衡或增加人员支持".to_string(),
-            });
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("WIP 积压查询失败: {e}");
+            failures.push(format!("WIP 积压查询失败: {e}"));
+            Vec::new()
         }
+    };
+    for row in rows {
+        let wip_no: String = row.get("wip_no");
+        let product_name: String = row.get("product_name");
+        let order_no: Option<String> = row.get("order_no");
+        let start_time: Option<chrono::DateTime<Utc>> = row.get("start_time");
+        let station_name: Option<String> = row.get("station_name");
+
+        let hours_stuck = if let Some(st) = start_time {
+            Utc::now().signed_duration_since(st).num_hours()
+        } else {
+            0
+        };
+
+        let severity = if hours_stuck > 72 {
+            "critical"
+        } else {
+            "warning"
+        };
+
+        alerts.push(AnomalyAlert {
+            id: format!("wip_backlog_{}_{}", wip_no, Utc::now().timestamp()),
+            anomaly_type: "wip_backlog".to_string(),
+            severity: severity.to_string(),
+            title: format!("在制品 {} 积压 {} 小时", wip_no, hours_stuck),
+            description: format!(
+                "在制品 {}（产品：{}）在工位 {} 已停留 {} 小时{}",
+                wip_no,
+                product_name,
+                station_name.unwrap_or_else(|| "未知".to_string()),
+                hours_stuck,
+                order_no
+                    .map(|o| format!("，关联订单：{}", o))
+                    .unwrap_or_default()
+            ),
+            source_id: wip_no.clone(),
+            source_name: format!("WIP {}", wip_no),
+            metric_name: "stagnation_hours".to_string(),
+            metric_value: hours_stuck as f64,
+            threshold_value: 48.0,
+            trend: "stable".to_string(),
+            detected_at: Utc::now(),
+            status: "detected".to_string(),
+            recommendation: "检查工位瓶颈，调整工序平衡或增加人员支持".to_string(),
+        });
     }
 
-    alerts
+    if failures.is_empty() {
+        Ok(alerts)
+    } else {
+        Err(failures.join("；"))
+    }
 }
 
 // ==================== Helper Functions ====================
@@ -1186,11 +1304,31 @@ fn is_increasing_trend(data: &[f64]) -> bool {
     increasing_count as f64 / (data.len() - 1) as f64 > 0.6
 }
 
+/// 读取生产订单数量；任一字段缺失或无法解析都视为不可判定，绝不当 0
+fn read_order_quantities(row: &sqlx::postgres::PgRow) -> Result<(f64, f64), String> {
+    use sqlx::Row as _;
+    let quantity = row
+        .try_get::<sqlx::types::BigDecimal, _>("quantity")
+        .map_err(|e| format!("quantity 缺失: {e}"))?;
+    let completed = row
+        .try_get::<sqlx::types::BigDecimal, _>("completed_quantity")
+        .map_err(|e| format!("completed_quantity 缺失: {e}"))?;
+    let quantity = quantity
+        .to_string()
+        .parse::<f64>()
+        .map_err(|e| format!("quantity 解析失败: {e}"))?;
+    let completed = completed
+        .to_string()
+        .parse::<f64>()
+        .map_err(|e| format!("completed_quantity 解析失败: {e}"))?;
+    Ok((quantity, completed))
+}
+
 /// 获取最近 7 天的异常趋势
 async fn get_recent_anomaly_trend(
     scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
-) -> Vec<DailyAnomalyCount> {
+) -> Result<Vec<DailyAnomalyCount>, String> {
     get_recent_anomaly_trend_days(scope, tenant_id, 7).await
 }
 
@@ -1205,11 +1343,11 @@ async fn get_recent_anomaly_trend_days(
     scope: &mut ScopedTxn<'_>,
     tenant_id: uuid::Uuid,
     days: usize,
-) -> Vec<DailyAnomalyCount> {
+) -> Result<Vec<DailyAnomalyCount>, String> {
     let mut result = Vec::new();
 
     // 基于质量记录中的不良品统计趋势
-    if let Ok(rows) = sqlx::query(
+    let rows = match sqlx::query(
         r#"
         SELECT DATE(created_at) as date,
                COUNT(*) as count,
@@ -1230,16 +1368,21 @@ async fn get_recent_anomaly_trend_days(
     .fetch_all(&mut *scope)
     .await
     {
-        for row in rows {
-            let date: chrono::NaiveDate = row.get("date");
-            let count: i64 = row.get("count");
-            let critical: i64 = row.get("critical");
-            result.push(DailyAnomalyCount {
-                date: date.to_string(),
-                count: count as usize,
-                critical: critical as usize,
-            });
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("异常趋势查询失败: {e}");
+            return Err(format!("异常趋势查询失败: {e}"));
         }
+    };
+    for row in rows {
+        let date: chrono::NaiveDate = row.get("date");
+        let count: i64 = row.get("count");
+        let critical: i64 = row.get("critical");
+        result.push(DailyAnomalyCount {
+            date: date.to_string(),
+            count: count as usize,
+            critical: critical as usize,
+        });
     }
 
     // 如果没有历史数据，生成空趋势
@@ -1255,7 +1398,7 @@ async fn get_recent_anomaly_trend_days(
         result.reverse();
     }
 
-    result
+    Ok(result)
 }
 
 /// 默认预警规则

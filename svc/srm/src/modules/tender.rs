@@ -1258,6 +1258,13 @@ pub async fn get_tender_award(
         Err(_) => return ApiResponse::bad_request("invalid award id"),
     };
 
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
     let award = sqlx::query_as::<_, TenderAward>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by, created_at, updated_at
@@ -1265,7 +1272,7 @@ pub async fn get_tender_award(
         "#, "srm"),
     )
     .bind(award_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match award {
