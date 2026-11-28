@@ -277,6 +277,16 @@ pub async fn create_inquiry(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:inquiry:write"])),
+    path = "/inquiries/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/inquiry"
+)]
 pub async fn update_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
@@ -335,6 +345,16 @@ pub async fn update_inquiry(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:inquiry:write"])),
+    path = "/inquiries/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/inquiry"
+)]
 pub async fn delete_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,

@@ -148,6 +148,16 @@ pub async fn list_biddings(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:bidding:write"])),
+    path = "/biddings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn create_bidding(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
@@ -281,6 +291,16 @@ pub async fn get_bidding(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:bidding:write"])),
+    path = "/biddings/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn update_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -359,6 +379,16 @@ pub async fn update_bidding(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:bidding:write"])),
+    path = "/biddings/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn delete_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,

@@ -148,6 +148,16 @@ pub async fn list_purchase_orders(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:purchase_order:write"])),
+    path = "/purchase-orders",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/purchase_order"
+)]
 pub async fn create_purchase_order(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -314,6 +324,16 @@ pub async fn get_purchase_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:purchase_order:write"])),
+    path = "/purchase-orders/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/purchase_order"
+)]
 pub async fn update_purchase_order(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -430,6 +450,16 @@ pub async fn update_purchase_order(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:purchase_order:write"])),
+    path = "/purchase-orders/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/purchase_order"
+)]
 pub async fn delete_purchase_order(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

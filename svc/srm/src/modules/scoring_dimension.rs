@@ -196,6 +196,16 @@ pub async fn get_dimension(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:scoring_dimension:write"])),
+    path = "/scoring-dimensions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/scoring_dimension"
+)]
 pub async fn create_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -291,6 +301,16 @@ pub async fn create_dimension(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:scoring_dimension:write"])),
+    path = "/scoring-dimensions/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/scoring_dimension"
+)]
 pub async fn update_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -413,6 +433,16 @@ pub async fn update_dimension(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:scoring_dimension:write"])),
+    path = "/scoring-dimensions/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/scoring_dimension"
+)]
 pub async fn delete_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

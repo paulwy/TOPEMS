@@ -119,7 +119,7 @@ pub async fn list_evaluations(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("srm", r#"
-        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score::float8 AS overall_score, quality_score::float8 AS quality_score, delivery_score::float8 AS delivery_score, service_score::float8 AS service_score, price_score::float8 AS price_score, comments, status, created_by, created_at, updated_at
+        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM srm.supplier_evaluations
           WHERE ($1::text IS NULL OR evaluation_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -183,6 +183,16 @@ pub async fn list_evaluations(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:supplier_evaluation:write"])),
+    path = "/supplier-evaluations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn create_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -333,7 +343,7 @@ pub async fn create_evaluation(
         only_own_schema_query!("srm", r#"
         INSERT INTO srm.supplier_evaluations (id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        RETURNING id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score::float8 AS overall_score, quality_score::float8 AS quality_score, delivery_score::float8 AS delivery_score, service_score::float8 AS service_score, price_score::float8 AS price_score, comments, status, created_by, created_at, updated_at
+        RETURNING id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
@@ -404,7 +414,7 @@ pub async fn get_evaluation(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("srm", r#"
-        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score::float8 AS overall_score, quality_score::float8 AS quality_score, delivery_score::float8 AS delivery_score, service_score::float8 AS service_score, price_score::float8 AS price_score, comments, status, created_by, created_at, updated_at
+        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM srm.supplier_evaluations WHERE id = $1
         "#, "srm"),
     )
@@ -422,6 +432,16 @@ pub async fn get_evaluation(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:supplier_evaluation:write"])),
+    path = "/supplier-evaluations/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn update_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -446,7 +466,7 @@ pub async fn update_evaluation(
     };
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score::float8 AS overall_score, quality_score::float8 AS quality_score, delivery_score::float8 AS delivery_score, service_score::float8 AS service_score, price_score::float8 AS price_score, comments, status, created_by, created_at, updated_at FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM srm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1", "srm"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -533,7 +553,7 @@ pub async fn update_evaluation(
         UPDATE srm.supplier_evaluations SET
             supplier_id = $2, evaluation_no = $3, evaluator = $4, overall_score = $5, quality_score = $6, delivery_score = $7, service_score = $8, price_score = $9, comments = $10, status = $11, updated_at = $12
         WHERE id = $1 AND tenant_id = $13
-        RETURNING id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score::float8 AS overall_score, quality_score::float8 AS quality_score, delivery_score::float8 AS delivery_score, service_score::float8 AS service_score, price_score::float8 AS price_score, comments, status, created_by, created_at, updated_at
+        RETURNING id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
@@ -569,6 +589,16 @@ pub async fn update_evaluation(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:supplier_evaluation:write"])),
+    path = "/supplier-evaluations/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn delete_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -666,7 +696,7 @@ pub async fn get_evaluation_history(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("srm", r#"
-        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score::float8 AS overall_score, quality_score::float8 AS quality_score, delivery_score::float8 AS delivery_score, service_score::float8 AS service_score, price_score::float8 AS price_score, comments, status, created_by, created_at, updated_at
+        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM srm.supplier_evaluations WHERE supplier_id = $1
         ORDER BY evaluation_date DESC
         "#, "srm"),
@@ -684,6 +714,19 @@ pub async fn get_evaluation_history(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_evaluation:read"])),
+    path = "/suppliers/{id}/performance-summary",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn get_performance_summary(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

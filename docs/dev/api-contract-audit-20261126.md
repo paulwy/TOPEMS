@@ -1016,3 +1016,21 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 7. **通讯录 2 条如实兜底**：`POST /addressbook/batch/delete`、`POST /addressbook/import/execute` 后端走 `stub_pending_upstream`（200 空信封 `{"items":[],"total":0}` + “该功能待上游支持”），本轮补注解文档化，**未伪造业务实现**。
 
 **结果**：erp **438/438/0**；spec 3672 → **3724**；全量缺口 426 → **324**。
+
+---
+
+## 第 41 轮 · srm（39 → 0）+ 尺子修三
+
+**基线**：srm 104 调用 / 65 匹配 / 39 缺口。
+
+**尺子修三（`scripts/ci/api-contract.mjs`）**：`normCall` 里 `${...}` 用 `[^}]*` 正则截断，遇到 `${buildQuery({ ...params })}` 这种嵌套大括号就只吃到第一个 `}`，产出 `/supplier-categories*)}` 这类畸形路径（2 条假缺口）。改为新增 `stripInterpolations()` 按大括号配平扫描替换。修完全量调用 4829 不变、缺口 324 → 322。
+
+**处理**：
+1. **36 个 handler 补注解**（bid_price 6、supplier_evaluation 3、purchase_order 3、supplier_contract 3、scoring_dimension 3、inquiry 2、quotation 3、bidding 3、supplier_category 3、supplier_product 3、tender 4），并全部登记进 `svc/srm/src/modules/openapi.rs` 的 `paths(...)`（118 条，去重 `plugin_health_check`）。
+2. **3 处真实路由/处理器纠偏**（原来用同一个 handler 兜底多个语义，属"假通"）：
+   - `GET /performance/trend/{id}`：新增 `get_performance_trend_by_id`（`Path(id)` 覆盖 `supplier_id` 后复用趋势逻辑），路由从复用 `get_performance_trend` 改为指向新 handler；
+   - `GET /tender-awards/{id}`：新增 `get_tender_award`（按 id 查 `srm.tender_awards`，未命中 404），不再拿列表 handler 顶替；
+   - `GET /health`：srm 单体此前没有 `/api/srm/health`（只有独立部署的 shared health），新增 `statistics::srm_health` 挂 `/health`。
+3. **踩坑**：批量插注解时把前端归一化后的 `*` 直接写进了 `path =`，生成 14 条 `/api/srm/xxx/*` 字面星号路径，已全量改回 `{id}` 并从 spec 清掉。
+
+**结果**：srm **104/104/0**；spec 3724 → **3728**；全量缺口 322 → **283**。

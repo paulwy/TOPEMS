@@ -151,6 +151,16 @@ pub async fn list_products(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:supplier_product:write"])),
+    path = "/supplier-products",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_product"
+)]
 pub async fn create_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -326,6 +336,16 @@ pub async fn get_product(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:supplier_product:write"])),
+    path = "/supplier-products/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_product"
+)]
 pub async fn update_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -467,6 +487,16 @@ pub async fn update_product(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:supplier_product:write"])),
+    path = "/supplier-products/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_product"
+)]
 pub async fn delete_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

@@ -172,6 +172,16 @@ pub async fn list_contracts(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:supplier_contract:write"])),
+    path = "/supplier-contracts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_contract"
+)]
 pub async fn create_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -363,6 +373,16 @@ pub async fn get_contract(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:supplier_contract:write"])),
+    path = "/supplier-contracts/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_contract"
+)]
 pub async fn update_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -506,6 +526,16 @@ pub async fn update_contract(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:supplier_contract:write"])),
+    path = "/supplier-contracts/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_contract"
+)]
 pub async fn delete_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

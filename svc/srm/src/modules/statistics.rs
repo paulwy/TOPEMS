@@ -166,6 +166,7 @@ pub fn create_routes(db: Db) -> Router {
         .route("/statistics", get(get_statistics))
         .route("/statistics/detailed", get(get_detailed_statistics))
         .route("/suppliers-with-stats", get(get_suppliers_with_stats))
+        .route("/health", get(srm_health))
         .with_state(state)
 }
 
@@ -736,4 +737,20 @@ mod tests {
         let r = summary_stats(&[None, None]);
         assert_eq!(r, (2, 0, 0.0, 0.0, 0.0));
     }
+}
+
+
+/// SRM 模块健康探测（单体 /api/srm/health；独立部署的 /health 由 shared health routes 提供）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:read"])),
+    path = "/health",
+    responses((status = 200, description = "OK", body = serde_json::Value)),
+    tag = "SRM/statistics"
+)]
+pub async fn srm_health() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
+        serde_json::json!({ "module": "srm", "status": "ok" }),
+        "module health ok",
+    )
 }

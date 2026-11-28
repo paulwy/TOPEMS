@@ -54,9 +54,8 @@ pub async fn create_routes(db: Db) -> Result<Router> {
         .route("/performance/reports/{id}", get(get_performance_report))
         .route("/performance/compare", get(compare_supplier_performance))
         .route("/performance/trend", get(get_performance_trend))
-        // 兜底：前端契约探测把 `/performance/trend?query` 折叠为 `trend:x` 后误带路径段，
-        // 真实前端仅调用 `/performance/trend`（无路径参数）。此处复用 trend handler 忽略路径段，避免裸 404。待上游支持。
-        .route("/performance/trend/{id}", get(get_performance_trend))
+        // 前端 readOps2 以 /performance/trend/{supplier_id} 取单个供应商趋势，路径段即 supplier_id
+        .route("/performance/trend/{id}", get(get_performance_trend_by_id))
         .route("/performance/top-suppliers", get(get_top_suppliers))
         .route("/performance/export", get(export_performance_report))
         .route(
@@ -1378,4 +1377,30 @@ mod tests {
             "刚好差-2应判定stable边界"
         );
     }
+}
+
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/trend/{id}",
+    params(
+        ("id" = String, Path, description = "supplier id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
+pub async fn get_performance_trend_by_id(
+    state: State<Arc<AppState>>,
+    claims: Extension<Claims>,
+    Path(id): Path<String>,
+    Query(mut params): Query<TrendParams>,
+    headers: axum::http::HeaderMap,
+    txn: Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    params.supplier_id = Some(id);
+    get_performance_trend(state, claims, Query(params), headers, txn).await
 }

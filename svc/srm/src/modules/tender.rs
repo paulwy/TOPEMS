@@ -92,9 +92,7 @@ pub async fn create_routes(db: Db) -> Result<Router> {
         )
         .route("/tenders/{id}/award", post(award_tender))
         .route("/tender-awards", get(list_tender_awards))
-        // 兜底：前端契约探测把 `/tender-awards?status=` 折叠为 `tender-awards:x` 后误带路径段，
-        // 真实前端仅调用 `/tender-awards`（列表，无路径参数）。复用列表 handler 返回全量（空数据），避免裸 404。待上游支持。
-        .route("/tender-awards/{id}", get(list_tender_awards))
+        .route("/tender-awards/{id}", get(get_tender_award))
         .with_state(state);
 
     Ok(app)
@@ -167,6 +165,16 @@ pub async fn list_tenders(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:tender:write"])),
+    path = "/tenders",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn create_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -347,6 +355,16 @@ pub async fn get_tender(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:tender:write"])),
+    path = "/tenders/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn update_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -458,6 +476,16 @@ pub async fn update_tender(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:tender:write"])),
+    path = "/tenders/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn delete_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -595,6 +623,16 @@ pub async fn get_tender_bids(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:tender:write"])),
+    path = "/tenders/{id}/bids",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn create_tender_bid(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -1183,5 +1221,63 @@ mod tests {
     fn test_tender_award_status_active() {
         let award = sample_tender_award();
         assert_eq!(award.status, "active");
+    }
+}
+
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:tender:read"])),
+    path = "/tender-awards/{id}",
+    params(
+        ("id" = String, Path, description = "award id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 404, description = "award not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
+pub async fn get_tender_award(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
+        Ok(_) => {}
+        Err(e) => return e.0,
+    }
+    let award_id = match Uuid::parse_str(&id) {
+        Ok(v) => v,
+        Err(_) => return ApiResponse::bad_request("invalid award id"),
+    };
+
+    let award = sqlx::query_as::<_, TenderAward>(
+        only_own_schema_query!("srm", r#"
+        SELECT id, tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by, created_at, updated_at
+        FROM srm.tender_awards WHERE id = $1 AND status != 'deleted'
+        "#, "srm"),
+    )
+    .bind(award_id)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match award {
+        Ok(Some(row)) => ApiResponse::success(
+            serde_json::to_value(&row).unwrap_or(serde_json::Value::Null),
+            "获取中标结果成功",
+        ),
+        Ok(None) => ApiResponse::not_found("中标结果不存在"),
+        Err(e) => {
+            tracing::error!("获取中标结果失败: {}", e);
+            ApiResponse::error(500, "获取中标结果失败")
+        }
     }
 }

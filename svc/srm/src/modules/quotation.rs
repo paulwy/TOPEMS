@@ -108,6 +108,16 @@ pub async fn list_quotations(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:quotation:write"])),
+    path = "/quotations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/quotation"
+)]
 pub async fn create_quotation(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
@@ -271,6 +281,16 @@ pub async fn get_quotation(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:quotation:write"])),
+    path = "/quotations/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/quotation"
+)]
 pub async fn update_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,

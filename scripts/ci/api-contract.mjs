@@ -90,12 +90,42 @@ function fileConsts(src) {
 }
 
 /** 把调用路径归一：去 query、`${...}` → `*`；能查到文件内常量的先回填 */
+/** 把模板里的 ${...} 插值整体替换成 *（大括号配平，避免 ${buildQuery({...})} 被截断成 *)}） */
+function stripInterpolations(s) {
+  let out = '';
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === '$' && s[i + 1] === '{') {
+      let depth = 0;
+      let j = i + 1;
+      for (; j < s.length; j++) {
+        const ch = s[j];
+        if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) break;
+        }
+      }
+      if (depth !== 0) {
+        // 未闭合（跨模板/换行），剩余部分一律按占位处理
+        out += '*';
+        return out;
+      }
+      out += '*';
+      i = j + 1;
+      continue;
+    }
+    out += s[i];
+    i++;
+  }
+  return out;
+}
+
 function normCall(p, consts = {}) {
   let s = p.split('?')[0].split('#')[0];
   s = s.replace(/\$\{([A-Za-z_$][\w$]*)\}/g, (all, name) => (name in consts ? consts[name] : all));
-  s = s.replace(/`\s*\+/g, '').replace(/\$\{[^}]*\}/g, '*');
-  // 模板没闭合（如 `${queryString`）时按变量处理
-  s = s.replace(/\$\{[^`]*$/g, '*');
+  s = s.replace(/`\s*\+/g, '');
+  s = stripInterpolations(s);
   s = s.replace(/\+/g, '');
   // 多模板相邻（`/${id}${qs}`）会折叠成 `**`，先归一成一个 `*` 再判尾部
   s = s.replace(/\*{2,}/g, '*');

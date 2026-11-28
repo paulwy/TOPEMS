@@ -159,6 +159,16 @@ pub async fn list_categories(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:supplier_category:write"])),
+    path = "/supplier-categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_category"
+)]
 pub async fn create_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -319,6 +329,16 @@ pub async fn get_category(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:supplier_category:write"])),
+    path = "/supplier-categories/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_category"
+)]
 pub async fn update_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -438,6 +458,16 @@ pub async fn update_category(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["srm:supplier_category:write"])),
+    path = "/supplier-categories/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_category"
+)]
 pub async fn delete_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
