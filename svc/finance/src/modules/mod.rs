@@ -1993,7 +1993,7 @@ pub async fn write_off_payment_item_handler(
 // gate: admin-only
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:payment:admin"])),
+    security(("BearerAuth" = ["finance:admin"])),
     path = "/payments/export",
     tag = "Payment",
     request_body = ExportPaymentRequest,
@@ -5563,7 +5563,7 @@ pub async fn write_off_payment_record_handler(
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:payment:admin"])),
+    security(("BearerAuth" = ["finance:admin"])),
     path = "/payment-records/batch-write-off",
     responses(
         (status = 200, description = "成功"),
@@ -9682,16 +9682,50 @@ pub fn create_routes() -> Router<AppState> {
         )));
 
     // ===== 付款/付款记录 域 =====
-    let payment_routes = Router::new()
-        .route(
-            "/payments",
-            axum::routing::post(create_payment_handler).get(list_payments_handler),
-        )
+    // B376：此前整个付款域只挂 finance:payment:read，只读角色可建/改/删付款单、
+    // 提交/审批/驳回/执行付款、核销、批量核销。按动作拆子 Router，各挂字典里真实存在的
+    // finance:payment:{create,update,delete}；导出属批量取数，沿用既有 admin 意图
+    // （require_module_write("finance") = finance:admin）。
+    let payment_read_routes = Router::new()
+        .route("/payments", axum::routing::get(list_payments_handler))
         .route(
             "/payments/{payment_id}",
-            axum::routing::get(get_payment_handler)
-                .put(update_payment_handler)
-                .delete(delete_payment_handler),
+            axum::routing::get(get_payment_handler),
+        )
+        .route(
+            "/payment-records",
+            axum::routing::get(list_payment_records_handler),
+        )
+        .route(
+            "/ap/payments",
+            axum::routing::get(list_payment_records_handler),
+        )
+        .route(
+            "/payment-records/{payment_id}",
+            axum::routing::get(get_payment_record_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:payment:read",
+        )));
+
+    let payment_create_routes = Router::new()
+        .route("/payments", axum::routing::post(create_payment_handler))
+        .route(
+            "/payment-records",
+            axum::routing::post(create_payment_record_handler),
+        )
+        .route(
+            "/ap/payments",
+            axum::routing::post(create_payment_record_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:payment:create",
+        )));
+
+    let payment_update_routes = Router::new()
+        .route(
+            "/payments/{payment_id}",
+            axum::routing::put(update_payment_handler),
         )
         .route(
             "/payments/{payment_id}/submit",
@@ -9714,18 +9748,6 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(write_off_payment_item_handler),
         )
         .route(
-            "/payments/export",
-            axum::routing::post(export_payments_handler),
-        )
-        .route(
-            "/payment-records",
-            axum::routing::get(list_payment_records_handler).post(create_payment_record_handler),
-        )
-        .route(
-            "/ap/payments",
-            axum::routing::get(list_payment_records_handler).post(create_payment_record_handler),
-        )
-        .route(
             "/ap/payments/{payment_id}/approve",
             axum::routing::post(approve_payment_record_handler),
         )
@@ -9735,9 +9757,7 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/payment-records/{payment_id}",
-            axum::routing::get(get_payment_record_handler)
-                .put(update_payment_record_handler)
-                .delete(delete_payment_record_handler),
+            axum::routing::put(update_payment_record_handler),
         )
         .route(
             "/payment-records/write-off",
@@ -9748,8 +9768,37 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::post(batch_write_off_payments_handler),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "finance:payment:read",
+            "finance:payment:update",
         )));
+
+    let payment_delete_routes = Router::new()
+        .route(
+            "/payments/{payment_id}",
+            axum::routing::delete(delete_payment_handler),
+        )
+        .route(
+            "/payment-records/{payment_id}",
+            axum::routing::delete(delete_payment_record_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:payment:delete",
+        )));
+
+    let payment_admin_routes = Router::new()
+        .route(
+            "/payments/export",
+            axum::routing::post(export_payments_handler),
+        )
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_module_write("finance"),
+        ));
+
+    let payment_routes = Router::new()
+        .merge(payment_read_routes)
+        .merge(payment_create_routes)
+        .merge(payment_update_routes)
+        .merge(payment_delete_routes)
+        .merge(payment_admin_routes);
 
     // ===== 审批配置/费用审批 域 =====
     // B349：此前整个域只挂 finance:expense_approval:read，只读角色可建/改/删审批配置、
@@ -9870,44 +9919,26 @@ pub fn create_routes() -> Router<AppState> {
         .merge(expense_approval_write_routes);
 
     // ===== 应收/应付/收款/账龄 域 =====
-    let ar_ap_routes = Router::new()
+    // B376：应收/应付域同样只挂 finance:receivable:read，只读角色可建收款单、改/删收款单、
+    // 核销、批量核销、批量建应收/应付。收款单读写挂 finance:receivable:{create,update,delete}；
+    // 批量建应付无 finance:payable:* 字典条目，用 finance:receivable_payable:create。
+    let ar_ap_read_routes = Router::new()
         .route(
             "/receivables/aging",
             axum::routing::get(get_receivable_aging_handler),
         )
         .route(
-            "/receivables/batch",
-            axum::routing::post(batch_create_receivables_handler),
-        )
-        .route(
             "/payables/aging",
             axum::routing::get(get_payable_aging_handler),
         )
-        .route(
-            "/payables/batch",
-            axum::routing::post(batch_create_payables_handler),
-        )
-        .route(
-            "/collections",
-            axum::routing::get(list_collections_handler).post(create_collection_handler),
-        )
+        .route("/collections", axum::routing::get(list_collections_handler))
         .route(
             "/collections/{collection_id}",
-            axum::routing::get(get_collection_handler)
-                .put(update_collection_handler)
-                .delete(delete_collection_handler),
-        )
-        .route(
-            "/collections/write-off",
-            axum::routing::post(write_off_collection_handler),
-        )
-        .route(
-            "/collections/batch-write-off",
-            axum::routing::post(batch_write_off_collections_handler),
+            axum::routing::get(get_collection_handler),
         )
         .route(
             "/ar/collections",
-            axum::routing::get(list_collections_handler).post(create_collection_handler),
+            axum::routing::get(list_collections_handler),
         )
         .route("/ar/aging", axum::routing::get(get_ar_aging))
         .route("/ap/aging", axum::routing::get(get_ap_aging))
@@ -9931,6 +9962,65 @@ pub fn create_routes() -> Router<AppState> {
         .layer(axum::middleware::from_fn(require_permission(
             "finance:receivable:read",
         )));
+
+    let ar_ap_create_routes = Router::new()
+        .route(
+            "/collections",
+            axum::routing::post(create_collection_handler),
+        )
+        .route(
+            "/ar/collections",
+            axum::routing::post(create_collection_handler),
+        )
+        .route(
+            "/receivables/batch",
+            axum::routing::post(batch_create_receivables_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable:create",
+        )));
+
+    let ar_ap_batch_payable_routes = Router::new()
+        .route(
+            "/payables/batch",
+            axum::routing::post(batch_create_payables_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable_payable:create",
+        )));
+
+    let ar_ap_update_routes = Router::new()
+        .route(
+            "/collections/{collection_id}",
+            axum::routing::put(update_collection_handler),
+        )
+        .route(
+            "/collections/write-off",
+            axum::routing::post(write_off_collection_handler),
+        )
+        .route(
+            "/collections/batch-write-off",
+            axum::routing::post(batch_write_off_collections_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable:update",
+        )));
+
+    let ar_ap_delete_routes = Router::new()
+        .route(
+            "/collections/{collection_id}",
+            axum::routing::delete(delete_collection_handler),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:receivable:delete",
+        )));
+
+    let ar_ap_routes = Router::new()
+        .merge(ar_ap_read_routes)
+        .merge(ar_ap_create_routes)
+        .merge(ar_ap_batch_payable_routes)
+        .merge(ar_ap_update_routes)
+        .merge(ar_ap_delete_routes);
 
     Router::new()
         .merge(submodules)
