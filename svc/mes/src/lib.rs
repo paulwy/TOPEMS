@@ -9,3 +9,6 @@ pub mod shared;
 
 pub use modules::openapi::MesApiDoc as ApiDoc;
 pub use shared::AppState;
+
+#[cfg(test)]
+pub mod aps_no_fabrication_ratchet;
