@@ -112,8 +112,7 @@ use crate::modules::device::{
 };
 use crate::modules::document::{
     create_document, delete_document, get_document, get_document_categories, get_document_stats,
-    list_documents,
-    update_document,
+    list_documents, update_document,
 };
 use crate::modules::inventory::{
     create_inventory_item, create_stocktake_record, delete_inventory_item, get_inventory_item,
@@ -447,8 +446,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         )
         .route(
             "/mobile-tasks/{id}/status",
-            axum::routing::post(update_task_status)
-                .put(update_task_status),
+            axum::routing::post(update_task_status).put(update_task_status),
         )
         // Attendance Routes
         .route(
@@ -834,10 +832,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::get(get_document_categories),
         )
         // 静态段必须显式成路由，否则会被 /documents/{id} 的 UUID 解析吞掉（前端 document.ts 的 stats）
-        .route(
-            "/documents/stats",
-            axum::routing::get(get_document_stats),
-        )
+        .route("/documents/stats", axum::routing::get(get_document_stats))
         .route(
             "/documents/{id}",
             axum::routing::get(get_document)

@@ -248,3 +248,99 @@ fn collection_and_payment_write_paths_are_not_in_read_blocks() {
         );
     }
 }
+
+/// B377: 科目/期初域读块只放 GET，写动作各挂字典真实细码。
+#[test]
+fn account_and_opening_balance_routes_are_split_by_action() {
+    let src = include_str!("modules/mod.rs");
+    let read = block(
+        src,
+        "let account_read_routes = Router::new()",
+        "let account_create_routes = Router::new()",
+    );
+    assert_no_write_verb(read, "account_read_routes");
+    assert!(
+        read.contains("\"finance:account:read\""),
+        "科目读块必须挂 finance:account:read"
+    );
+    for (start, end, code) in [
+        (
+            "let account_create_routes = Router::new()",
+            "let account_update_routes = Router::new()",
+            "finance:account:create",
+        ),
+        (
+            "let account_update_routes = Router::new()",
+            "let account_delete_routes = Router::new()",
+            "finance:account:update",
+        ),
+        (
+            "let account_delete_routes = Router::new()",
+            "let opening_balance_read_routes = Router::new()",
+            "finance:account:delete",
+        ),
+        (
+            "let opening_balance_create_routes = Router::new()",
+            "let opening_balance_update_routes = Router::new()",
+            "finance:opening_balance:create",
+        ),
+        (
+            "let opening_balance_update_routes = Router::new()",
+            "let opening_balance_delete_routes = Router::new()",
+            "finance:opening_balance:update",
+        ),
+        (
+            "let opening_balance_delete_routes = Router::new()",
+            "let account_routes = Router::new()",
+            "finance:opening_balance:delete",
+        ),
+    ] {
+        let w = block(src, start, end);
+        assert!(w.contains(&format!("\"{code}\"")), "科目写块必须挂 {code}");
+    }
+}
+
+/// B377: 报表域读块只放 GET，年结/开账期/关账期/结转损益挂 finance:period:write。
+#[test]
+fn period_write_routes_require_period_write() {
+    let src = include_str!("modules/mod.rs");
+    let read = block(
+        src,
+        "let report_read_routes = Router::new()",
+        "let period_write_routes = Router::new()",
+    );
+    assert_no_write_verb(read, "report_read_routes");
+    let write = block(
+        src,
+        "let period_write_routes = Router::new()",
+        "let report_routes = Router::new()",
+    );
+    assert!(
+        write.contains("\"finance:period:write\""),
+        "期间写块必须挂 finance:period:write"
+    );
+    for path in [
+        "\"/year-end-close\"",
+        "\"/periods/open\"",
+        "\"/periods/close\"",
+        "\"/periods/close-income\"",
+        "\"/periods/year-end-close\"",
+    ] {
+        assert!(!read.contains(path), "报表读块不应包含期间写路由 {path}");
+    }
+}
+
+/// B377: 注解里不得再出现权限字典不存在的码（曾整段复制 finance:invoice:write）。
+#[test]
+fn annotations_do_not_reference_nonexistent_finance_codes() {
+    let src = include_str!("modules/mod.rs");
+    for dead in [
+        "finance:invoice:write",
+        "\"finance:write\"",
+        "finance:mod:write",
+        "finance:mod:read",
+        "finance:payment:admin",
+    ] {
+        assert!(!src.contains(dead), "注解引用了权限字典不存在的码 {dead}");
+    }
+}

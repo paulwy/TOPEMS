@@ -249,7 +249,8 @@ pub async fn get_document_stats(
     };
 
     let mut by_status: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
-    let mut by_category: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+    let mut by_category: std::collections::BTreeMap<String, i64> =
+        std::collections::BTreeMap::new();
     for (status, category) in &rows {
         *by_status.entry(status.clone()).or_insert(0) += 1;
         *by_category.entry(category.clone()).or_insert(0) += 1;
