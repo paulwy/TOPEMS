@@ -1121,3 +1121,15 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 - 文件上传：`POST /im/files/upload` 后端未实现（附件当前走 `file_url` 字段外链）。
 
 **结果**：im **27/27/0**（调用基数 47 → 27）；spec 不变 **3768**；全量缺口 143 → **124**。
+
+---
+
+## 第 48 轮 · tms（15 → 0）
+
+**基线**：tms 52 调用 / 37 匹配 / 15 缺口。
+
+**根因**：15 条业务动作端点（承运商/司机/车辆/运单的提交-审核三连、调度计划、路线优化、运费试算）**注解全都已经写好且 path 与真实路由一致**，但没有一条登记进 `svc/tms/src/modules/openapi.rs` 的 `paths(...)`——属纯登记缺口。
+
+**处理**：按模块补登记 15 条：carrier 3（`/{id}/submit-qualification|approve|reject`）、driver 3、vehicle 3、shipment 3、optimization 3（`/assignments/plan`、`/routes/optimize`、`/freight/quote`）。
+
+**结果**：tms **52/52/0**；spec 3768 → **3783**；全量缺口 124 → **109**。
