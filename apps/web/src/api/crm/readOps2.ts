@@ -7,6 +7,4 @@ export const crmReadOps2 = {
     apiClient.crm.get('/sales-funnel/trend'),
   getSalesTrend: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.crm.get('/sales-forecast/trend'),
-  getFunnelTrend2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.crm.get('/sales-funnel/trend/{tail}'),
 };

@@ -336,7 +336,20 @@ pub async fn get_contact(
     }
 }
 
-async fn update_contact(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["crm:contact:write"])),
+    path = "/contacts/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/contact"
+)]
+pub(crate) async fn update_contact(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -488,7 +501,20 @@ async fn update_contact(
     response
 }
 
-async fn delete_contact(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:contact:write"])),
+    path = "/contacts/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/contact"
+)]
+pub(crate) async fn delete_contact(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,

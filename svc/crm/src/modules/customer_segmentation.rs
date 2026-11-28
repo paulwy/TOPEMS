@@ -213,7 +213,17 @@ pub async fn get_segment(
     }
 }
 
-async fn create_segment(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:customer_segmentation:write"])),
+    path = "/segments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/customer_segmentation"
+)]
+pub(crate) async fn create_segment(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,

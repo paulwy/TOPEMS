@@ -276,3 +276,19 @@ mod tests {
         roundtrip(&info);
     }
 }
+
+
+/// CRM 模块健康探测（单体 /api/crm/health）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:read"])),
+    path = "/health",
+    responses((status = 200, description = "OK", body = serde_json::Value)),
+    tag = "CRM/crm_plugin"
+)]
+pub async fn crm_health() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
+        serde_json::json!({ "module": "crm", "status": "ok" }),
+        "module health ok",
+    )
+}

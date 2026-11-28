@@ -229,7 +229,17 @@ pub async fn get_recommendation(
     }
 }
 
-async fn create_recommendation(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:customer_recommendation:write"])),
+    path = "/recommendations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/customer_recommendation"
+)]
+pub(crate) async fn create_recommendation(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,

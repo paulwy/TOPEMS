@@ -128,7 +128,17 @@ pub async fn list_tags(
     }
 }
 
-async fn create_tag(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:tag:write"])),
+    path = "/tags",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/tag"
+)]
+pub(crate) async fn create_tag(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -287,7 +297,20 @@ pub async fn get_tag(
     }
 }
 
-async fn update_tag(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["crm:tag:write"])),
+    path = "/tags/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/tag"
+)]
+pub(crate) async fn update_tag(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -408,7 +431,20 @@ async fn update_tag(
     response
 }
 
-async fn delete_tag(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:tag:write"])),
+    path = "/tags/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/tag"
+)]
+pub(crate) async fn delete_tag(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -544,7 +580,20 @@ pub async fn get_customer_tags(
     }
 }
 
-async fn add_tag_to_customer(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:tag:write"])),
+    path = "/customers/{id}/tags",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/tag"
+)]
+pub(crate) async fn add_tag_to_customer(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,

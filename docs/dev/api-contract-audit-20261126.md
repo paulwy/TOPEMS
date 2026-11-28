@@ -1034,3 +1034,16 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 3. **踩坑**：批量插注解时把前端归一化后的 `*` 直接写进了 `path =`，生成 14 条 `/api/srm/xxx/*` 字面星号路径，已全量改回 `{id}` 并从 spec 清掉。
 
 **结果**：srm **104/104/0**；spec 3724 → **3728**；全量缺口 322 → **283**。
+
+---
+
+## 第 42 轮 · crm（33 → 0）
+
+**基线**：crm 121 调用 / 88 匹配 / 33 缺口。
+
+**处理**：
+1. **27 个 handler 补注解 + 提可见性**（billing 3、contact 2、tag 4、sales_forecast 4、interaction 3、opportunity 2、aftersales 4、customer_scoring 3、segmentation 1、recommendation 1），原大多是 `async fn`（私有），改 `pub(crate)` 后登记进 `svc/crm/src/modules/openapi.rs`。
+2. **新增 `GET /health`**：crm 单体此前没有 `/api/crm/health`，新增 `crm_plugin::crm_health` 并在 `mod.rs::create_routes` 挂 `/health`。
+3. **删掉 2 条死声明**：`apps/web/src/api/crm/readOps2.ts` 的 `getFunnelTrend2` 与整个 `readOps3.ts`（`/sales-funnel/trend/{tail}`、`/sales-funnel/conversion/{tail}` 把 `{tail}` 字面写进 URL，无任何调用方、无参数可传，属不可执行的脚手架），crm 调用基数 121 → 119。
+
+**结果**：crm **119/119/0**；spec 3728 → **3730**；全量缺口 283 → **250**。

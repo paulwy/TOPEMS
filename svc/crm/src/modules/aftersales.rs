@@ -262,7 +262,17 @@ pub async fn list_returns(
     }
 }
 
-async fn create_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/aftersales"
+)]
+pub(crate) async fn create_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -432,7 +442,20 @@ pub async fn get_return(
     }
 }
 
-async fn update_return(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/aftersales"
+)]
+pub(crate) async fn update_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -582,7 +605,20 @@ async fn update_return(
     response
 }
 
-async fn delete_return(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/aftersales"
+)]
+pub(crate) async fn delete_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -1449,7 +1485,20 @@ pub async fn list_return_items(
     }
 }
 
-async fn add_return_item(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/items",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/aftersales"
+)]
+pub(crate) async fn add_return_item(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,

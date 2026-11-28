@@ -201,7 +201,17 @@ pub async fn get_interaction(
     }
 }
 
-async fn create_interaction(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:interaction:write"])),
+    path = "/interactions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/interaction"
+)]
+pub(crate) async fn create_interaction(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -272,7 +282,20 @@ async fn create_interaction(
     }
 }
 
-async fn update_interaction(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["crm:interaction:write"])),
+    path = "/interactions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/interaction"
+)]
+pub(crate) async fn update_interaction(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -367,7 +390,20 @@ async fn update_interaction(
     }
 }
 
-async fn delete_interaction(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:interaction:write"])),
+    path = "/interactions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/interaction"
+)]
+pub(crate) async fn delete_interaction(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,

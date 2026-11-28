@@ -134,7 +134,20 @@ pub async fn list_sales_forecasts(
     }
 }
 
-async fn get_sales_forecast(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_forecast:read"])),
+    path = "/sales-forecast/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/sales_forecast"
+)]
+pub(crate) async fn get_sales_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -171,7 +184,17 @@ async fn get_sales_forecast(
     }
 }
 
-async fn create_sales_forecast(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:sales_forecast:write"])),
+    path = "/sales-forecast",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/sales_forecast"
+)]
+pub(crate) async fn create_sales_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -374,7 +397,20 @@ pub async fn generate_forecast(
     }
 }
 
-async fn update_sales_forecast(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["crm:sales_forecast:write"])),
+    path = "/sales-forecast/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/sales_forecast"
+)]
+pub(crate) async fn update_sales_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -534,7 +570,20 @@ async fn update_sales_forecast(
     response
 }
 
-async fn delete_sales_forecast(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:sales_forecast:write"])),
+    path = "/sales-forecast/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/sales_forecast"
+)]
+pub(crate) async fn delete_sales_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,

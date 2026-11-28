@@ -125,6 +125,10 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(customer_recommendation::create_routes())
         .merge(sales_forecast::create_routes())
         .merge(sales_funnel::create_routes())
+        .route(
+            "/health",
+            axum::routing::get(crm_plugin::crm_health),
+        )
 }
 
 #[cfg(test)]

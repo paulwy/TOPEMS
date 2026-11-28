@@ -591,7 +591,20 @@ pub async fn get_opportunity(
     }
 }
 
-async fn update_opportunity(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["crm:opportunity:write"])),
+    path = "/opportunities/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/opportunity"
+)]
+pub(crate) async fn update_opportunity(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -746,7 +759,20 @@ async fn update_opportunity(
     response
 }
 
-async fn delete_opportunity(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:opportunity:write"])),
+    path = "/opportunities/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "CRM/opportunity"
+)]
+pub(crate) async fn delete_opportunity(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
