@@ -20,7 +20,8 @@ use crate::models::{
     AddCommentRequest, AutomationRule, CreateAutomationRuleRequest, CreateKnowledgeArticleRequest,
     CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, KnowledgeArticleRef,
     SeverityCount, SlaEscalationEvent, SourceCount, Ticket, TicketActivity, TicketComment,
-    TicketListResponse, TicketQuery, TicketSlaInfo, TicketSlaPolicy, TicketSlaStats, TicketStats,
+    TicketExportRequest, TicketExportResult, TicketListResponse, TicketQuery, TicketSlaInfo,
+    TicketSlaPolicy, TicketSlaStats, TicketStats,
     TicketStatus, TicketType, TypeCount, UpdateAutomationRuleRequest,
     UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest, UpdateTicketRequest,
 };
@@ -234,8 +235,10 @@ impl TicketService {
               AND ($6::text IS NULL OR source_service = $6)
               AND ($7::text IS NULL OR source_business_id = $7)
               AND ($8::bool IS NULL OR (sla_due_at IS NOT NULL AND sla_due_at < NOW() AND status NOT IN ('resolved', 'closed', 'cancelled')) = $8)
+              AND ($9::text IS NULL OR ticket_no ILIKE '%' || $9 || '%' OR title ILIKE '%' || $9 || '%'
+                   OR description ILIKE '%' || $9 || '%')
             ORDER BY created_at DESC
-            LIMIT $9 OFFSET $10
+            LIMIT $10 OFFSET $11
             "#,
         )
         .bind(&query.status)
@@ -246,6 +249,7 @@ impl TicketService {
         .bind(&query.source_service)
         .bind(&query.source_business_id)
         .bind(query.sla_breached)
+        .bind(&query.q)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&mut scope)
@@ -263,6 +267,8 @@ impl TicketService {
               AND ($6::uuid IS NULL OR reporter_id = $6)
               AND ($7::text IS NULL OR source_service = $7)
               AND ($8::text IS NULL OR source_business_id = $8)
+              AND ($9::text IS NULL OR ticket_no ILIKE '%' || $9 || '%' OR title ILIKE '%' || $9 || '%'
+                   OR description ILIKE '%' || $9 || '%')
             "#,
         )
         .bind(tenant_id)
@@ -273,6 +279,7 @@ impl TicketService {
         .bind(query.reporter_id)
         .bind(&query.source_service)
         .bind(&query.source_business_id)
+        .bind(&query.q)
         .fetch_one(&mut scope)
         .await?;
 
@@ -696,6 +703,19 @@ impl TicketService {
 
 // ==================== HTTP Handlers ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets",
+    tag = "tickets",
+    request_body = CreateTicketRequest,
+    responses(
+        (status = 200, description = "OK", body = Ticket),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_ticket_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -720,6 +740,18 @@ pub async fn create_ticket_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = TicketListResponse),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_tickets_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -736,6 +768,19 @@ pub async fn list_tickets_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/{id}",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Ticket),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_ticket_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -755,6 +800,20 @@ pub async fn get_ticket_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}",
+    tag = "tickets",
+    request_body = UpdateTicketRequest,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Ticket),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_ticket_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -782,6 +841,19 @@ pub async fn update_ticket_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_ticket_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -805,6 +877,20 @@ pub async fn delete_ticket_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}/comments",
+    tag = "tickets",
+    request_body = AddCommentRequest,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = TicketComment),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn add_comment_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -832,6 +918,19 @@ pub async fn add_comment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/{id}/comments",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Vec<TicketComment>),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_comments_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -848,6 +947,19 @@ pub async fn list_comments_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/{id}/activities",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Vec<TicketActivity>),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_activities_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -864,6 +976,18 @@ pub async fn list_activities_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/stats",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = TicketStats),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_stats_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -881,6 +1005,19 @@ pub async fn get_stats_handler(
 
 // ==================== SLA Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/{id}/sla",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = TicketSlaInfo),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_ticket_sla_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -908,6 +1045,19 @@ pub async fn get_ticket_sla_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}/sla",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Vec<SlaEscalationEvent>),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn trigger_sla_escalation_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -937,6 +1087,18 @@ pub async fn trigger_sla_escalation_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/sla-stats",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = TicketSlaStats),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_sla_stats_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -1764,7 +1926,7 @@ pub async fn delete_knowledge_article_handler(
 
 // ==================== 评论/活动 by-id（web 契约收口） ====================
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, utoipa::ToSchema)]
 pub struct UpdateCommentRequest {
     content: Option<String>,
     is_internal: Option<bool>,
@@ -1783,6 +1945,20 @@ fn require_tenant_id<T>(claims: &Claims) -> Result<Uuid, ApiResponse<T>> {
 }
 
 /// PUT /tickets/{id}/comments/{comment_id} —— 更新评论内容
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}/comments/{comment_id}",
+    tag = "tickets",
+    request_body = UpdateCommentRequest,
+    params(("id" = Uuid, Path, description = ""), ("comment_id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = TicketComment),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_comment_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -1850,6 +2026,19 @@ pub async fn update_comment_handler(
 }
 
 /// DELETE /tickets/{id}/comments/{comment_id} —— 删除评论
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}/comments/{comment_id}",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = ""), ("comment_id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_comment_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -1899,6 +2088,19 @@ pub async fn delete_comment_handler(
 }
 
 /// GET /tickets/{id}/activities/{activity_id} —— 单条活动
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/{id}/activities/{activity_id}",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = ""), ("activity_id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = TicketActivity),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_activity_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -1942,6 +2144,19 @@ pub async fn get_activity_handler(
 }
 
 /// GET /tickets/{id}/activities/timeline —— 活动时间线（复用活动列表查询）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/{id}/activities/timeline",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Vec<TicketActivity>),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_activities_timeline_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -1965,6 +2180,20 @@ pub async fn list_activities_timeline_handler(
 // ==================== 工单动作（web 契约收口） ====================
 
 /// POST /tickets/{id}/assign —— 指派处理人
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}/assign",
+    tag = "tickets",
+    request_body = serde_json::Value,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Ticket),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn assign_ticket_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -2024,6 +2253,20 @@ pub async fn assign_ticket_handler(
 }
 
 /// POST /tickets/{id}/resolve —— 标记解决
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}/resolve",
+    tag = "tickets",
+    request_body = serde_json::Value,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Ticket),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn resolve_ticket_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -2078,6 +2321,20 @@ pub async fn resolve_ticket_handler(
 }
 
 /// POST /tickets/{id}/close —— 关闭工单
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}/close",
+    tag = "tickets",
+    request_body = serde_json::Value,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Ticket),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn close_ticket_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -2134,6 +2391,19 @@ pub async fn close_ticket_handler(
 // ==================== 工单 SLA 子路径（web 契约收口） ====================
 
 /// GET /tickets/{id}/sla/escalations —— SLA 升级历史
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/{id}/sla/escalations",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = Vec<SlaEscalationEvent>),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_sla_escalations_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -2162,6 +2432,19 @@ pub async fn list_sla_escalations_handler(
 }
 
 /// POST /tickets/{id}/sla/calculate —— 重算工单 SLA
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:write"])),
+    path = "/tickets/{id}/sla/calculate",
+    tag = "tickets",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = TicketSlaInfo),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn calculate_ticket_sla_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -2188,6 +2471,18 @@ pub async fn calculate_ticket_sla_handler(
 // ==================== 仪表盘（web 契约收口） ====================
 
 /// GET /tickets/dashboard/summary —— 汇总（按状态实时聚合 core_tickets）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/dashboard/summary",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn dashboard_summary_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -2254,6 +2549,18 @@ pub async fn dashboard_summary_handler(
 ///
 /// 诚实降级：data.items 为空数组（无虚构数据），同时显式返回
 /// `degraded: true` 与 `degraded_reason`，前端可据此展示「待 analytics 聚合」提示。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/dashboard/trend",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn dashboard_trend_handler() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(
         json!({
@@ -2269,6 +2576,18 @@ pub async fn dashboard_trend_handler() -> ApiResponse<serde_json::Value> {
 ///
 /// 诚实降级：各统计字段保持零值（不虚构 SLA 数据），新增可选 `degraded` /
 /// `degraded_reason` 字段向后兼容（前端忽略未知字段即可）。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/dashboard/sla-overview",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn dashboard_sla_overview_handler() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(
         json!({
@@ -2285,6 +2604,18 @@ pub async fn dashboard_sla_overview_handler() -> ApiResponse<serde_json::Value> 
 ///
 /// 诚实降级：data.items 为空数组（无虚构负载数据），同时显式返回
 /// `degraded: true` 与 `degraded_reason`，前端可据此展示「待 analytics 聚合」提示。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/dashboard/assignee-load",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn dashboard_assignee_load_handler() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(
         json!({
@@ -2297,6 +2628,18 @@ pub async fn dashboard_assignee_load_handler() -> ApiResponse<serde_json::Value>
 }
 
 /// GET /tickets/dashboard/my —— 我的工单概览（实时聚合 core_tickets）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/dashboard/my",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn dashboard_my_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -2354,6 +2697,239 @@ pub async fn dashboard_my_handler(
         }),
         "我的看板",
     )
+}
+
+// ==================== 我的工单 / 检索 / 导出 / 分组看板（web 契约收口）====================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/my",
+    tag = "tickets",
+    params(("page" = Option<i64>, Query, description = "页码"), ("page_size" = Option<i64>, Query, description = "每页条数")),
+    responses(
+        (status = 200, description = "OK", body = TicketListResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn my_tickets_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
+    Query(mut query): Query<TicketQuery>,
+) -> ApiResponse<TicketListResponse> {
+    let service = TicketService::new(db);
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let Ok(user_id) = Uuid::parse_str(&claims.sub) else {
+        return ApiResponse::unauthorized("Invalid user id");
+    };
+    // “我的工单”= 指派给我 + 我提的，后者用 reporter 覆盖时会漏掉指派件，这里以指派为准
+    query.assignee_id = Some(user_id);
+    match service.list_tickets(tenant_id, query, &txn_arc).await {
+        Ok(list) => ApiResponse::success(list, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询我的工单失败", e)),
+    }
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/search",
+    tag = "tickets",
+    params(("q" = String, Query, description = "关键词：工单号/标题/描述")),
+    responses(
+        (status = 200, description = "OK", body = TicketListResponse),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn search_tickets_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<TicketQuery>,
+) -> ApiResponse<TicketListResponse> {
+    let service = TicketService::new(db);
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    if query.q.as_deref().unwrap_or("").trim().is_empty() {
+        return ApiResponse::bad_request("q 不能为空");
+    }
+    match service.list_tickets(tenant_id, query, &txn_arc).await {
+        Ok(list) => ApiResponse::success(list, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("搜索工单失败", e)),
+    }
+}
+
+/// RFC3986 百分号编码（data URI 用，避免为导出临时引依赖）
+fn percent_encode(input: &str) -> String {
+    let mut out = String::with_capacity(input.len() * 2);
+    for b in input.as_bytes() {
+        let c = *b as char;
+        if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | '~') {
+            out.push(c);
+        } else {
+            out.push('%');
+            out.push_str(&format!("{b:02X}"));
+        }
+    }
+    out
+}
+
+fn csv_field(v: &str) -> String {
+    if v.contains(',') || v.contains('"') || v.contains('\n') {
+        format!("\"{}\"", v.replace('"', "\"\""))
+    } else {
+        v.to_string()
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/export",
+    tag = "tickets",
+    request_body = TicketExportRequest,
+    responses(
+        (status = 200, description = "OK", body = TicketExportResult),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn export_tickets_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<TicketExportRequest>,
+) -> ApiResponse<TicketExportResult> {
+    let service = TicketService::new(db);
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let mut query = req.params.unwrap_or_default();
+    let format = req.format.unwrap_or_else(|| "csv".to_string());
+
+    // 上限 5000 行（100/页 × 50 页），避免一次性拉爆内存
+    const PAGE: i64 = 100;
+    const MAX_PAGES: i64 = 50;
+    let mut rows: Vec<Ticket> = Vec::new();
+    let mut page = 1;
+    let mut total = 0i64;
+    while page <= MAX_PAGES {
+        query.page = Some(page);
+        query.page_size = Some(PAGE);
+        match service
+            .list_tickets(tenant_id, query.clone(), &txn_arc)
+            .await
+        {
+            Ok(list) => {
+                total = list.total;
+                let got = list.items.len() as i64;
+                rows.extend(list.items);
+                if got < PAGE || rows.len() as i64 >= total {
+                    break;
+                }
+            }
+            Err(e) => return ApiResponse::from(TopemsError::internal("导出工单失败", e)),
+        }
+        page += 1;
+    }
+
+    let mut csv = String::from("ticket_no,title,status,severity,ticket_type,assignee_id,created_at\n");
+    for t in &rows {
+        csv.push_str(&format!(
+            "{},{},{},{},{},{},{}\n",
+            csv_field(&t.ticket_no),
+            csv_field(&t.title),
+            csv_field(t.status.as_str()),
+            csv_field(t.severity.as_str()),
+            csv_field(t.ticket_type.as_str()),
+            t.assignee_id.map(|v| v.to_string()).unwrap_or_default(),
+            t.created_at.to_rfc3339(),
+        ));
+    }
+    let filename = format!("tickets-{}.csv", Utc::now().format("%Y%m%d%H%M%S"));
+    let url = format!("data:text/csv;charset=utf-8,{}", percent_encode(&csv));
+    ApiResponse::success(
+        TicketExportResult {
+            format,
+            filename,
+            total: rows.len() as i64,
+            url,
+        },
+        "导出完成",
+    )
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/dashboard/by-severity",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = Vec<SeverityCount>),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn dashboard_by_severity_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
+) -> ApiResponse<Vec<SeverityCount>> {
+    let service = TicketService::new(db);
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    match service.get_stats(tenant_id, &txn_arc).await {
+        Ok(stats) => ApiResponse::success(stats.by_severity, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("按严重度统计失败", e)),
+    }
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/dashboard/by-type",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = Vec<TypeCount>),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn dashboard_by_type_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
+) -> ApiResponse<Vec<TypeCount>> {
+    let service = TicketService::new(db);
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    match service.get_stats(tenant_id, &txn_arc).await {
+        Ok(stats) => ApiResponse::success(stats.by_type, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("按类型统计失败", e)),
+    }
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:read"])),
+    path = "/tickets/dashboard/by-source",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "OK", body = Vec<SourceCount>),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn dashboard_by_source_handler(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
+) -> ApiResponse<Vec<SourceCount>> {
+    let service = TicketService::new(db);
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    match service.get_stats(tenant_id, &txn_arc).await {
+        Ok(stats) => ApiResponse::success(stats.by_source, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("按来源统计失败", e)),
+    }
 }
 
 // ==================== Routes ====================
@@ -2450,4 +3026,11 @@ pub fn ticket_routes() -> Router<Db> {
             get(dashboard_assignee_load_handler),
         )
         .route("/tickets/dashboard/my", get(dashboard_my_handler))
+        // ---- 我的工单 / 检索 / 导出 / 分组看板（web 契约收口）----
+        .route("/tickets/my", get(my_tickets_handler))
+        .route("/tickets/search", get(search_tickets_handler))
+        .route("/tickets/export", post(export_tickets_handler))
+        .route("/tickets/dashboard/by-severity", get(dashboard_by_severity_handler))
+        .route("/tickets/dashboard/by-type", get(dashboard_by_type_handler))
+        .route("/tickets/dashboard/by-source", get(dashboard_by_source_handler))
 }

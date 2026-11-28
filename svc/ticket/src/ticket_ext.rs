@@ -48,7 +48,7 @@ fn user_of(claims: &Claims) -> Option<Uuid> {
 pub fn ticket_ext_routes() -> Router<Db> {
     Router::new()
         // ---- 工作流（静态状态机）----
-        .route("/workflows", get(get_workflows))
+        .route("/workflows", get(get_workflows).post(create_workflow))
         .route("/workflows/match", get(get_workflow_for_ticket_type))
         .route(
             "/workflows/automation-rules",
@@ -151,6 +151,44 @@ pub async fn get_workflows(State(_db): State<Db>) -> ApiResponse<serde_json::Val
         "transitions": transitions,
     });
     ApiResponse::success(data, "工作流配置")
+}
+
+/// 创建工作流：工单状态机是代码内白名单（`is_valid_ticket_transition`），不落库。
+/// 这里如实回声并标记 `persisted=false`，避免前端拿到“创建成功”却以为已持久化。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/workflows",
+    tag = "TicketExt",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn create_workflow(Json(body): Json<serde_json::Value>) -> ApiResponse<serde_json::Value> {
+    let name = body
+        .get("name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("ticket_default_workflow")
+        .to_string();
+    let id = body
+        .get("id")
+        .and_then(|v| v.as_str())
+        .map(str::to_string)
+        .unwrap_or_else(|| format!("wf-{}", uuid::Uuid::new_v4()));
+    ApiResponse::success(
+        json!({
+            "id": id,
+            "name": name,
+            "statuses": ALL_STATUSES,
+            "definition": body,
+            "persisted": false,
+            "note": "静态状态机：工单流转由内置白名单约束，自定义工作流暂未持久化",
+        }),
+        "工作流已受理（静态状态机）",
+    )
 }
 
 // ==================== 工作流匹配与自动化规则（前端 workflow.ts 调用）====================
@@ -358,6 +396,19 @@ fn build_static_workflow(id: Uuid) -> serde_json::Value {
 }
 
 /// GET /workflows/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/workflows/{id}",
+    tag = "TicketExt",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_workflow_by_id(
     State(_db): State<Db>,
     Path(id): Path<Uuid>,
@@ -366,6 +417,20 @@ pub async fn get_workflow_by_id(
 }
 
 /// PUT /workflows/{id} —— 静态状态机暂不落库更新（待上游支持）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/workflows/{id}",
+    tag = "TicketExt",
+    request_body = serde_json::Value,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_workflow(
     State(_db): State<Db>,
     Path(id): Path<Uuid>,
@@ -375,6 +440,19 @@ pub async fn update_workflow(
 }
 
 /// DELETE /workflows/{id} —— 默认静态工作流不可删除，契约上回显成功（待上游支持）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/workflows/{id}",
+    tag = "TicketExt",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_workflow(
     State(_db): State<Db>,
     Path(id): Path<Uuid>,
@@ -383,6 +461,19 @@ pub async fn delete_workflow(
 }
 
 /// GET /workflows/{id}/transitions
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/workflows/{id}/transitions",
+    tag = "TicketExt",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_workflow_transitions(
     State(_db): State<Db>,
     Path(id): Path<Uuid>,
@@ -392,6 +483,19 @@ pub async fn list_workflow_transitions(
 }
 
 /// POST /workflows/{id}/transitions —— 追加流转不落库，回显契约结构（待上游支持）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/workflows/{id}/transitions",
+    tag = "TicketExt",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn add_workflow_transition(
     State(_db): State<Db>,
     Path(id): Path<Uuid>,
@@ -610,7 +714,7 @@ pub async fn apply_transition(
 
 // ==================== 标签 ====================
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 struct TagRequest {
     tag: String,
 }
@@ -666,7 +770,21 @@ pub async fn get_ticket_tags(
     ApiResponse::success(json!({"tags": tags.unwrap_or_default()}), "工单标签")
 }
 
-async fn add_ticket_tag(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/tickets/{id}/tags",
+    tag = "TicketExt",
+    request_body = TagRequest,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub(crate) async fn add_ticket_tag(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
@@ -864,7 +982,19 @@ pub async fn list_tag_directory(
 }
 
 // 标签目录为聚合派生，无独立存储；写操作返回成功占位（幂等无状态）
-async fn create_tag_stub() -> ApiResponse<serde_json::Value> {
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/ticket-tags",
+    tag = "TicketExt",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub(crate) async fn create_tag_stub() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(json!({"ok": true}), "标签目录为隐式聚合，无需创建")
 }
 
@@ -916,11 +1046,37 @@ pub async fn get_tag_stub(
     ApiResponse::success(json!({"name": tag, "count": count}), "标签")
 }
 
-async fn update_tag_stub() -> ApiResponse<serde_json::Value> {
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/ticket-tags/{tag}",
+    tag = "TicketExt",
+    params(("tag" = String, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub(crate) async fn update_tag_stub() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(json!({"ok": true}), "标签目录为隐式聚合")
 }
 
-async fn delete_tag_stub() -> ApiResponse<serde_json::Value> {
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/ticket-tags/{tag}",
+    tag = "TicketExt",
+    params(("tag" = String, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub(crate) async fn delete_tag_stub() -> ApiResponse<serde_json::Value> {
     ApiResponse::success(json!({"ok": true}), "标签为工单内联属性，无全局删除语义")
 }
 
@@ -1273,7 +1429,7 @@ pub async fn batch_escalate_tickets(
 
 // ==================== 附件 ====================
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 struct UploadAttachmentRequest {
     file_name: String,
     #[serde(default)]
@@ -1365,7 +1521,21 @@ pub async fn list_attachments(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-async fn upload_attachment(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/tickets/{id}/attachments",
+    tag = "TicketExt",
+    request_body = UploadAttachmentRequest,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub(crate) async fn upload_attachment(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
@@ -1494,7 +1664,21 @@ pub async fn get_attachment(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-async fn update_attachment(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/tickets/{id}/attachments/{attachment_id}",
+    tag = "TicketExt",
+    request_body = UploadAttachmentRequest,
+    params(("id" = Uuid, Path, description = ""), ("attachment_id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub(crate) async fn update_attachment(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,
@@ -1553,7 +1737,20 @@ async fn update_attachment(
     ApiResponse::success(json!({"id": attachment_id}), "附件已更新")
 }
 
-async fn delete_attachment(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/tickets/{id}/attachments/{attachment_id}",
+    tag = "TicketExt",
+    params(("id" = Uuid, Path, description = ""), ("attachment_id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub(crate) async fn delete_attachment(
     axum::Extension(txn_arc): axum::Extension<RlsTxnCell>,
     State(db): State<Db>,
     claims: axum::Extension<Claims>,

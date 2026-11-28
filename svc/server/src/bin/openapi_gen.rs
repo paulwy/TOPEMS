@@ -18,12 +18,13 @@ fn normalize_path(path: &str, domain: &str) -> String {
         return path.to_string();
     }
     // 域前缀匹配：/finance/vouchers → /api/finance/vouchers；/finance-v59/alerts → /api/finance-v59/alerts
-    if let Some(rest) = path.strip_prefix(&format!("/{domain}")) {
-        if rest.is_empty() {
-            format!("/api/{domain}")
-        } else {
-            format!("/api/{domain}{rest}")
-        }
+    // 注意：必须按“路径段”判断前缀，不能用裸 strip_prefix——`/tickets` 会被 `/ticket` 剥成 `s`，
+    // 生成出 `/api/tickets` 这种与实际挂载点（`/api/ticket`）不符的幻影路径。
+    let seg_prefix = format!("/{domain}");
+    if path == seg_prefix {
+        format!("/api/{domain}")
+    } else if let Some(rest) = path.strip_prefix(&format!("{seg_prefix}/")) {
+        format!("/api/{domain}/{rest}")
     } else {
         // 相对路径：/projects/... → /api/pm/projects/...
         format!("/api/{domain}{path}")

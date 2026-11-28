@@ -263,7 +263,52 @@ function resolveFactoryCalls(files) {
   return { genericKeys, synth };
 }
 
-const CALL_RE = /apiClient\.([\w]+)\.(get|post|put|patch|delete|head)\s*(?:<[^>]*>)?\s*\(\s*(`[^`]*`|'[^']*'|"[^"]*")/g;
+// 手写扫描器：JS 正则处理不了 `get<Array<{ a: number }>>(` 这种嵌套泛型（`[^>]*` 会停在第一个 `>` 上，
+// 导致 by-severity 一类调用被静默漏掉）。这里对尖括号做配平跳过，再取第一个字面量/模板实参。
+const CALL_HEAD_RE = /apiClient\.([\w]+)\.(get|post|put|patch|delete|head)/g;
+
+function skipTypeArgs(src, i) {
+  // 注意：类型实参里合法出现 `;`（对象字面量字段）和换行，不能当终止条件；只按尖括号配平。
+  let depth = 0;
+  const limit = Math.min(src.length, i + 4000);
+  for (let j = i; j < limit; j++) {
+    const ch = src[j];
+    if (ch === '<') depth++;
+    else if (ch === '>') {
+      depth--;
+      if (depth === 0) return j + 1;
+    }
+  }
+  return -1;
+}
+
+function scanCalls(src) {
+  const out = [];
+  CALL_HEAD_RE.lastIndex = 0;
+  let m;
+  while ((m = CALL_HEAD_RE.exec(src))) {
+    let i = m.index + m[0].length;
+    while (i < src.length && /\s/.test(src[i])) i++;
+    if (src[i] === '<') {
+      const end = skipTypeArgs(src, i);
+      if (end < 0) continue;
+      i = end;
+      while (i < src.length && /\s/.test(src[i])) i++;
+    }
+    if (src[i] !== '(') continue;
+    i++;
+    while (i < src.length && /\s/.test(src[i])) i++;
+    const quote = src[i];
+    if (quote !== '`' && quote !== "'" && quote !== '"') continue;
+    let j = i + 1;
+    while (j < src.length && src[j] !== quote) {
+      if (src[j] === '\\') j++;
+      j++;
+    }
+    out.push({ ns: m[1], method: m[2].toUpperCase(), raw: src.slice(i + 1, j), index: m.index });
+  }
+  return out;
+}
 
 async function main() {
   const bases = loadBases();
@@ -278,19 +323,15 @@ async function main() {
     const rel = path.relative(WEB, f);
     const src = fs.readFileSync(f, 'utf8');
     const consts = fileConsts(src);
-    let m;
-    CALL_RE.lastIndex = 0;
-    while ((m = CALL_RE.exec(src))) {
-      const ns = m[1];
-      const method = m[2].toUpperCase();
-      const raw = m[3].slice(1, -1);
+    for (const call of scanCalls(src)) {
+      const { ns, method, raw } = call;
       // 只处理纯路径（含模板变量），跳过明显拼接了变量的非路径表达式
       const norm = normCall(raw, consts);
       const prefix = bases[ns];
       if (!prefix) continue;
       if (genericKeys.has(`${ns}|${method}|${raw}`)) continue; // 泛型工厂内部模板，契约在调用点展开
       const full = norm.startsWith(prefix) ? norm : `${prefix}${norm}`.replace(/\/+/g, '/');
-      const line = src.slice(0, m.index).split('\n').length;
+      const line = src.slice(0, call.index).split('\n').length;
       calls.push({ ns, method, raw, full, file: rel, line });
     }
   }

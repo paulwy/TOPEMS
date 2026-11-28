@@ -793,8 +793,10 @@ pub struct UpdateTicketRequest {
     pub metadata: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct TicketQuery {
+    /// 关键词（工单号 / 标题 / 描述模糊匹配）
+    pub q: Option<String>,
     pub status: Option<String>,
     pub severity: Option<String>,
     pub ticket_type: Option<String>,
@@ -805,6 +807,23 @@ pub struct TicketQuery {
     pub sla_breached: Option<bool>,
     pub page: Option<i64>,
     pub page_size: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TicketExportRequest {
+    #[serde(default)]
+    pub params: Option<TicketQuery>,
+    /// csv（默认）/ xlsx（当前按 csv 输出）
+    pub format: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct TicketExportResult {
+    pub format: String,
+    pub filename: String,
+    pub total: i64,
+    /// 可直接下载的 data URI（无对象存储时避免引入临时文件）
+    pub url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

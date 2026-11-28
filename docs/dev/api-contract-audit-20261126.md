@@ -969,3 +969,27 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 
 **结果**：lims **144/144/0**；spec 3622 → **3644**。
 **全量**：4690 条静态调用 / 匹配 4054 / 缺口 386（**新尺子下**；旧尺子同期 486，差额来自假缺口剔除 + 工厂调用点展开，后者多出的都是真缺口）。
+
+## 第 39 轮 · ticket（49 → 0）＋ 尺子再修：嵌套泛型 / 生成器前缀误剥
+
+**基线（新尺子）**：ticket 98 调用 / 49 匹配 / 49 缺口。
+
+**尺子问题一：嵌套泛型的调用被静默漏掉**
+`CALL_RE` 用 `(?:<[^>]*>)?` 跳过泛型实参，遇到 `get<Array<{ severity: string; count: number }>>(` 时 `[^>]*` 停在第一个 `>` 上，整条调用既不进统计也不进缺口——`/tickets/dashboard/by-severity|by-type|by-source` 三条真缺口就这么被藏住了。改成手写扫描器（`scanCalls` + `skipTypeArgs`）：对尖括号做配平（类型实参里的 `;` 和换行都是合法的，不能当终止符），再取第一个字面量/模板实参。
+> 影响面：全量调用 4689 → **4829**，缺口 386 → **426**。新暴露的缺口分布在 erp / crm / qms / gis / hrm / srm 等域，属真实缺口，不是统计噪声。
+
+**尺子问题二：生成器把 `/tickets` 剥成 `/api/tickets`**
+`openapi_gen::normalize_path` 用裸 `strip_prefix("/ticket")`，`/tickets` 被剥成 `s`，生成出 `/api/tickets/*`——与实际挂载点 `/api/ticket` 不符的幻影路径（本次差点把 33 条幻影写进 spec）。改成按路径段判断：`path == "/{domain}"` 或 `path.starts_with("/{domain}/")` 才算命中，且拼回时补回被剥掉的斜杠。修完 gen 输出 `/api/ticket/tickets`，无 `/api/tickets` 残留。
+
+**做法**
+1. `svc/ticket/src/handlers.rs`：41 条路由里有 26 个 handler 没有注解，全部补齐（含核心 CRUD `/tickets`、`/tickets/{id}`、评论、活动、SLA 子路径、dashboard）。
+2. `svc/ticket/src/ticket_ext.rs`：11 个 handler 补注解；其中 7 个原是私有 `async fn`（标签目录、附件写操作），提为 `pub(crate)` 才能被 ApiDoc 引用；`TagRequest` / `UploadAttachmentRequest` / `UpdateCommentRequest` 补 `ToSchema`。
+3. **真实现 6 个缺失接口**：
+   - `GET /tickets/my`（按当前 claims.sub 覆盖 assignee_id 复用列表查询）
+   - `GET /tickets/search?q=`（`TicketQuery` 新增 `q`，列表 SQL 加 `ticket_no/title/description ILIKE`，计数同条件）
+   - `POST /tickets/export`（分页拉满 5000 行 → CSV → `data:text/csv` URI 返回，不引临时存储；`persisted` 语义清晰）
+   - `GET /tickets/dashboard/by-severity|by-type|by-source`（复用 `get_stats` 的三个分组结果）
+4. `POST /workflows`：工单状态机是代码内白名单（`is_valid_ticket_transition`），不落库。接口如实回声并返回 `persisted=false` + 说明，避免前端误当已持久化。
+5. 登记 81 个 handler 进 `svc/ticket/src/openapi.rs`；`TicketExportRequest` / `TicketExportResult` 补进 components。
+
+**结果**：ticket **98/98/0**；spec 3644 → **3672**。
