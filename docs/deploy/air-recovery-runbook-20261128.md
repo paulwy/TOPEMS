@@ -1,8 +1,8 @@
-# air（MacBook Air）开发/构建机接入与盘点指引（v2 实测修订）
+# air（MacBook Air）开发/部署机接入与盘点指引（v2 实测修订）
 
 > 编制：2026-11-28 ｜ 目标主机：`air的MacBook Air`，LAN `192.168.110.96`（mDNS `airdeAir.lan`，MAC `c0:c7:db:d1:2:50`，arm64，macOS 26.6.2）
 > 对接主机：`星斋的Mac mini`（xingzhai 开发机，LAN `.61` / `.147`）
-> 定位：air 作为 **第二台开发 / release 构建机**（产出 arm64 交付包），不在其上承载生产数据。
+> 定位（2026-11-28 角色拍板）：**air = 开发 + 部署机**——第二台开发机 + release 交付包构建/交付。生产机与生产库宿主为 **xingzhai（Mac mini）**；air **不跑生产实例、不存生产库与生产数据、不挂生产常驻服务**。出包经 `release-pipeline.md` 交付 xingzhai 安装。
 >
 > **v2 修订依据**：air 本机回传报告 `air-recovery-report-20261128.md` + xingzhai 侧 SSH 实测复核（2026-11-28）。
 > **前提纠正**：air 不是「仅 macOS 基础在线的空白机」，而是**正在运行中的完整开发机**——PG18 + Redis 已起、`topems-server` 在 `127.0.0.1:8099` 跑（health 200）、仓库完整且 GitHub SSH 已通。22 不通的根因是 **Remote Login 未开启 + 应用服务只绑 `127.0.0.1`**，**不是 TOPEMS 栈未启动**。
@@ -104,18 +104,20 @@ air 仓库当前在 `fix/web-follow-light-contrast` 分支（跟踪同名远端�
 - **禁止** 在未确认现有数据保留需求前执行 `bash scripts/db/provision-env.sh --env dev`：该脚本属**重建**动作，会覆盖现有 `topems` 库（188 张表）。
 - air 上无 `topems_prod` 库（符合开发机定位）；主库 `topems` 的去留/导出先盘点再定。
 
-### 4.4 构建机职责（release 交付包，决策后再跑）
+### 4.4 部署机职责：构建 release 交付包并交付 xingzhai（决策后再跑）
+
+air 的部署职责是**出包 + 交付**，不在本机安装/运行生产实例：
 
 ```bash
 cd ~/TOPEMS
 ./scripts/release/build-release.sh   # 产物 topems-server-<version>-<ts>.tar.gz + .sha256 + VERSION
 ```
 
-流程口径见 `docs/deploy/release-pipeline.md`。
+包经 rsync/scp 交付 xingzhai，由 xingzhai 侧按 `release-pipeline.md` 校验、备份、替换与重启；air 不直接向生产库写数据、不触发生产迁移。流程口径见 `docs/deploy/release-pipeline.md`。
 
 ## 5. 禁区与注意事项
 
-- **air 是开发/构建机，不是生产机**：不承载真实业务数据；生产库口径以 xingzhai / 远端 `.115` 为准。
+- **air 是开发/部署机，不是生产机**：不承载真实业务数据；生产库、生产实例、生产常驻服务只存在于 xingzhai。air 上禁止出现 `*_prod` 库、生产 launchd 单元或指向生产 DSN 的实例。
 - 服务保持 `127.0.0.1` 绑定；跨机访问只走 §3.3 SSH 隧道，不把 PG/Redis/后端暴露到 LAN。
 - 凭据（DSN、口令、令牌、SSH 私钥）不写明文进仓库 / 脚本 / 日志；远端凭据走 SSH 密钥或本机钥匙串。
 - 不在 air 上 `sqlx migrate run` 直推生产 DDL；迁移走仓库既有双轨治理与门禁。
@@ -149,5 +151,6 @@ cd ~/TOPEMS
 1. **Rust nightly 切换**：是否在 air 装 rustup 并对齐 `nightly-2026-07-01`；需先评估 103 GiB `target` 重编成本（§4.1）。
 2. **Node 22 对齐**：是否项目内引入 node@22，不改全局软链（§4.2）。
 3. **air 在途分支处置**：`fix/web-follow-light-contrast` 的 668 条改动如何落盘（提交 / 暂存 / 另开分支），由该线负责人确认后再决定是否回 main。
-4. **历史库与快照清理**：48 个残留库 + `20261115-step2` 快照纳入专门清理批次，走只读盘点 → 备份 → 断言 → 回收流程。
-5. 远端生产机 `.115`（`xingzhai@192.168.110.115`）当前二层不可达，与本机恢复无关，待网络/主机恢复后另走部署通道。
+4. **历史库与快照清理**：48 个残留库 + `20261115-step2` 快照纳入专门清理批次（#125），走只读盘点 → 备份 → 断言 → 回收流程。
+5. **角色边界确认**：复核 air 上无 `*_prod` 库、无生产常驻 launchd 单元、无生产 DSN 实例；后续出包/交付只走 `release-pipeline.md` 到 xingzhai。
+6. 远端旧机 `.115`（`xingzhai@192.168.110.115`）已按角色定案**退役**，不再作为生产/部署/清理目标；其历史数据待物理确认后另作下线处置，与 air 恢复无关。

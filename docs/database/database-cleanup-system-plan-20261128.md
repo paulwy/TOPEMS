@@ -19,15 +19,19 @@
 
 ## 2. 现状实测盘点（2026-11-28 本机快照）
 
-### 2.0 环境拓扑（开发机 / 生产机 / 待复核远端 / CI）
+### 2.0 环境拓扑与主机角色（2026-11-28 拍板收敛口径）
 
-| 端 | 主机 / 地址 | 端口 / 库 | 连接角色与凭据 | 当前可达性 | 说明 |
+> **角色定案（一步到位、按当前角色、通用收敛）**：现役仅两台机器分工——
+> - **`xingzhai`（Mac mini）= 开发 + 生产机**：既跑日常开发栈，也承载生产实例 / 生产库 / 生产常驻服务。
+> - **`air`（MacBook Air）= 开发 + 部署机**：第二开发机 + release 交付包构建与交付；**不跑生产实例、不存生产库与生产数据、不挂生产常驻服务**。
+> - **`.115` 远端旧机 = 退役 / 待处置**：不再承担现役生产、部署或清理目标；历史脚本里指向它的远程段一并退役（见 §7.1、§9）。
+
+| 端 | 主机 / 地址 | 端口 / 库 | 连接角色与凭据 | 当前可达性 | 角色与说明 |
 | --- | --- | --- | --- | --- | --- |
-| **本机开发机** `xingzhai` | `xingzhaideMini.lan`（LAN .61 / .147），仓库 `/Users/xingzhai/TOPEMS` | 5432 brew postgres；dev 库 `topems` | 本机 socket / `topems_app`（运行）、`topems_owner`（迁移）；`.env` 的 `DATABASE_URL`/`MIGRATE_URL` | 5432 监听中 | 日常开发、单测、RLS/租户隔离验证；清理后由 `start-local.sh`/`deploy.sh` 本地起服恢复 |
-| **本机 production 副本实例** | 同上本机，launchd `com.topems.server`，端口 8099，二进制 `/Users/xingzhai/topems/bin/topems-server` | 5432 库 `topems_prod` | `DATABASE_URL=topems_app@localhost:5432/topems_prod`、`MIGRATE_URL=topems_owner@localhost:5432/topems_prod`；DSN 经 macOS 钥匙串注入（`TOPEMS_KEYCHAIN_KEYS=DATABASE_URL`），不写明文 plist/.env | 8099 监听中（PID 44977） | **连本机副本库，不是远端 .115**；清理该库前须先停 8099 实例，清完重放基线/种子后再起服验证 |
-| **远端生产机** | `xingzhai@192.168.110.115`（独立 macOS，目录与本机同名 `/Users/xingzhai/TOPEMS`、`/Users/xingzhai/topems/bin`） | 库 `topems_prod`，DB 用户 `topems_prod` | SSH 免密通道；`deploy-prod.sh` 远程 `psql` 清库/灌种子、`scp` SQL、`rsync` 前端 dist | **2026-11-28 探活不可达**：同网段 ping 100% 丢包、22 超时，ARP 条目 `incomplete`（二层解析不出 MAC），mDNS 无记录；指向主机关机/睡眠/断网或 IP 已变更，**非凭据或 SSH 服务问题**；known_hosts 有历史成功记录 | 先在物理/网络侧确认开机、睡眠、网线/WiFi 与当前 IP；恢复在线后再经 SSH 执行清理/备份/回滚；凭据走现有 SSH 密钥，不入仓库 |
+| **开发 + 生产机** `xingzhai` | `xingzhaideMini.lan`（LAN .61 / .147），仓库 `/Users/xingzhai/TOPEMS` | 5432 brew postgres；dev 库 `topems`；生产库 `topems_prod`；生产实例 8099 | 本机 socket / `topems_app`（运行）、`topems_owner`（迁移）；`.env` 的 `DATABASE_URL`/`MIGRATE_URL`；生产 DSN 经钥匙串注入 | 5432 / 8099 监听中（8099 PID 99082，`com.topems.server`）；nginx `com.topems.nginx`、cloudflared、backup / 日志轮转 launchd 常驻 | **一身二任**：日常开发、单测、RLS/租户隔离验证；同时是唯一生产宿主——生产实例、生产库、外网隧道、备份/轮转均在本机。清生产库前须先停 8099，清完重放基线/种子后再起服验证 |
+| **开发 + 部署机** `air` | `airdeAir.lan`，LAN `.96`，MAC `c0:c7:db:d1:2:50`，arm64，macOS 26.6.2 | 5432 PG18 / 6379 Redis；dev 实例 `127.0.0.1:8099`（开发态）；主库 `topems`（188 表）；**无 `topems_prod` 库** | SSH 免密 `air@192.168.110.96`（xingzhai 公钥已入 authorized_keys）；本机 socket | 22 已开通免密；服务只绑 `127.0.0.1`，跨机访问走 SSH 隧道 | **第二开发机 + 出包/交付机**：在途分支开发编译；按 `release-pipeline.md` 构建 arm64 release 包并交付 xingzhai 安装。**禁区**：不起生产实例、不连/不存生产库、不挂生产常驻服务；其历史残留库与快照另案清理（#125） |
+| **退役远端 `.115`** | `xingzhai@192.168.110.115`（历史独立 macOS） | 历史库 `topems_prod`，DB 用户 `topems_prod` | 历史 SSH 密钥（现不再使用） | **2026-11-28 探活不可达**：同网段 ping 100% 丢包、22 超时、ARP `incomplete`，mDNS 无记录；主机关机/睡眠/断网或 IP 漂移，非凭据/服务问题 | **已退出现役拓扑**：不再是生产机，也不再是部署/清理目标。其上历史数据不纳入本轮任何动作；待物理确认后按退役机处置（下线 / 导出留档 / 回收）。历史脚本中 `.115` 远程段待清理（§9 #7） |
 | **CI / 验证实例** | 本机 5433（brew PG@18_5433 空库重放/双库账本核对/RLS 回归）；15432（IT 库 `topems_test`，`TOPEMS_IT_DATABASE_URL`） | 5433 / 15432 | 本机超级用户 `xingzhai` socket | 5433 未起、15432 未监听（按需拉起） | 验证/CI 库随测试栈重建，不纳入生产清理口径 |
-| **待复核远端 `air`** | 旧开发机，mDNS `airdeair.lan`，LAN `.96`（ARP 名 `airdeair.lan`，MAC `c0:c7:db:d1:2:50`） | 探测 22/5432/8099/6379/3000/80 全关 | 本机 `topems`/`topems_prod` 两库 `pg_roles` 无 air 角色、对象属主 0（#78 归一彻底）；仓库残留：`apps/web/scripts/fix-a11y-labels.js`、`apps/web/src/i18n/transform_i18n_v3.py` 硬编码 `/Users/air/...` 绝对路径（本机跑会失效跳过），`scripts/release/build-release.sh` 仅历史角色文案 | **2026-11-28 ping 通（在线），但 SSH/DB/服务端口全关**；当前不暴露 TOPEMS 服务，暂不作为部署/清理目标；是否退役待结合物理机用途复核 | 历史迁移 SQL、baseline ledger、exemptions 中 `/Users/air/...` 路径署名属不可变账本，保留只读；两个 dev 脚本硬编码路径建议后续改为相对脚本位置定位 |
 
 > 部署物（不在数据库清理范围，但清库后需衔接恢复）：后端二进制 `/Users/xingzhai/topems/bin`、前端 `dist/`（rsync 到远端）、launchd 单元 `com.topems.server`、nginx 与 `cloudflared` 隧道、Redis（`localhost:6379`，会话/缓存随库清理一并失效）。
 
@@ -36,10 +40,11 @@
 | 库 | 账本行数 | max(version) | 语义 | 处置口径 |
 | --- | --- | --- | --- | --- |
 | `topems` | 735 | 20261124150000 | 本机 dev（账本滞后） | 路径 A 重建对齐链尾，或路径 B 清数据后补前向迁移 |
-| `topems_prod` | 825 | 20261127240000 | prod 副本（被 8099 在线实例使用） | 上线前可路径 B 清演示/残留；不可当真实 prod |
+| `topems_prod` | 825 | 20261127240000 | 生产库（被本机 8099 在线实例使用） | 上线前可路径 B 清演示/残留；不可当真实 prod |
 | `topems_gate` | 787 | 20261122160000 | 门禁库 | 路径 A 重建 |
 | `topems_web_smoke` | 824 | 202611250120000 | Web 冒烟库 | 路径 A 重建 |
 | `topems_status_baseline_verify` | 836 | 20261126180000 | 状态基线核验库 | 核验后可弃 |
+| `topems_test` | 855 | 20261128120000 | mobile/IT 隔离测试库（15432/本机 socket） | 测试栈随用随建，路径 A 供给 |
 | `topems_test_runner` | 0 | — | 测试运行器空库 | 路径 A 供给 |
 | `topems_drill_template` | 无账本 | — | 演练模板 | 演练专用，不纳入生产口径 |
 
@@ -166,31 +171,37 @@ SRM/SCM：`suppliers` 各 3；PM：`projects` 3；HRM：`employees` 3、`job_ope
 
 | 环境 / 端 | 连接通道 | 路径 | L1 基线 | L2 身份 | L3 业务 | L4 演示/测试 | 账本/结构 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 本机 dev `topems`（5432） | 本机 socket | A 重建（优先） | 基线重放 | 清后重建 admin | 清 | 按需 demo | 对齐链尾 |
-| 本机 prod 副本 `topems_prod`（5432，8099 实例） | 本机 socket；清库前先停 8099 | B 就地（上线前） | 保留 | 清非 admin | 清演示残留 | 禁播 | 不动 |
+| xingzhai dev `topems`（5432，开发面） | 本机 socket | A 重建（优先） | 基线重放 | 清后重建 admin | 清 | 按需 demo | 对齐链尾 |
+| xingzhai 生产库 `topems_prod`（5432，8099 实例，生产面） | 本机 socket；清库前先停 8099 | B 就地（上线前） | 保留 | 清非 admin | 清演示残留 | 禁播 | 不动 |
 | 本机验证库 5433 | 本机 socket（按需拉起） | A 重建 | 基线重放 | 清 | 清 | 重放夹具 | 对齐锚点 |
 | CI/IT 库 15432 `topems_test` | 本机 15432（按需拉起） | A 供给 | 基线重放 | 夹具按需 | 夹具按需 | 允许 | 对齐锚点 |
 | 门禁 `gate` / 冒烟 `web_smoke` | 本机 socket | A 重建 | 基线重放 | 清 | 清 | 测试栈自带 | 对齐锚点 |
 | 测试运行器 `test_runner` | 本机 socket | A 供给 | 基线重放 | 夹具按需 | 夹具按需 | 允许 | 对齐锚点 |
 | 演练 `drill_template` / w13 | 本机 socket | 独立 | — | — | — | 允许 | 独立账本 |
-| **远端生产机 `.115` `topems_prod`** | SSH `xingzhai@192.168.110.115`，远程 psql/scp/rsync | B 就地（上线前窗口） | 保留 | 清非 admin | 清演示/残留 | 禁播 | 不动 |
-| 真实 prod（上线后） | — | 禁止清业务数据 | 保留 | 仅清会话/日志/缓存 | **禁清** | 禁播 | 不动 |
+| **air dev `topems`（.96，开发/部署面）** | SSH `air@192.168.110.96`，库走本机 socket / SSH 隧道 | A 重建（仅开发库） | 基线重放 | 清后重建 admin | 清 | 按需 demo | 对齐链尾 |
+| **退役远端 `.115`** | 已退出现役拓扑，不再建立清理/部署连接 | — | — | — | — | — | — |
+| 真实 prod（上线后，宿主 xingzhai） | — | 禁止清业务数据 | 保留 | 仅清会话/日志/缓存 | **禁清** | 禁播 | 不动 |
 
-### 7.1 跨主机执行通道（本机 vs 远端 .115）
+> **角色边界**：air 上只允许存在 dev/测试/演练库与出包产物；一旦在 air 发现 `*_prod` 库、生产常驻 launchd 单元或指向生产 DSN 的实例，即属越界，按 §8 禁区处置。生产库与生产实例只允许存在于 xingzhai。
 
-- **本机库**：直连 socket（`host=/tmp user=xingzhai`）或 `.env` DSN；备份落本机 `backups/`，清理在本机事务内完成。
-- **远端 .115 库**：
-  1. **前置探活**：先 `ping` 与 ARP 核对二层是否可达，再 `ssh -o ConnectTimeout=5 xingzhai@192.168.110.115 hostname`；不可达则中止，不重试绕过（2026-11-28 实测 ping 100% 丢包、22 超时、ARP `incomplete`，属主机离线/IP 变更，先查物理与网络侧）。
-  2. **远程快照**：经 SSH 在远端 `pg_dump` 结构+数据，落远端备份目录（不回传本机明文）；清单与指纹回传留档；PII 脱敏审查。
-  3. **远程清理**：SQL 经 `scp` 到远端 `/tmp` 后 `ssh psql -f`，单事务、dry-run 先行；不把远端口令写进仓库/脚本/日志。
-  4. **远程恢复验证**：清库后远端重放 L1 基线/种子 → 起远端服务 → 健康/就绪探针 200 → 菜单/权限/可登录断言；前端 dist 与二进制按 `deploy-prod.sh` 既有链路 rsync/部署。
-  5. **回滚**：失败即远端事务 `ROLLBACK`；事后以远端快照恢复。
-- **待复核 `air`（.96）**：2026-11-28 在线但 SSH/DB/服务端口全关，暂不建连接、不纳入清理/部署脚本；待物理机用途复核后再定性。历史账本署名保留只读；仓库内两个 dev 脚本硬编码 `/Users/air` 路径列为后续技术债。
+### 7.1 跨主机执行通道（xingzhai / air / 退役 .115）
+
+- **xingzhai（开发 + 生产机，本机）**：
+  - 本机库直连 socket（`host=/tmp user=xingzhai`）或 `.env` DSN；备份落本机 `backups/`，清理在本机事务内完成。
+  - 生产面（`topems_prod` + 8099 实例 + nginx/cloudflared/备份常驻）与开发面（dev 库、验证/CI/门禁库）同机共存；清理生产库前先停 8099，开发库清理不影响生产实例。
+- **air（开发 + 部署机，.96）**：
+  1. **接入**：`ssh air@192.168.110.96` 免密；非交互 shell 需 `export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"`。服务只绑 `127.0.0.1`，跨机访问走 SSH 隧道（`-L 8099:... -L 5432:...`），不开 `0.0.0.0`。
+  2. **库操作边界**：只对 air 上的 dev / 测试 / 演练库做只读盘点或路径 A 重建；**不对任何 `*_prod` 库操作**（air 本就无 prod 库，发现即越界）。其 48 个历史残留库与快照按 #125 专门批次清理。
+  3. **部署职责**：air 按 `release-pipeline.md` 构建 arm64 release 包，经 rsync/scp 交付 xingzhai 安装；air 不直接向生产库写数据、不触发生产迁移。
+- **退役 `.115`**：
+  - 已退出现役拓扑，**不建立 SSH 清理/部署连接，不执行远程 psql/scp/rsync**。其离线状态（ping 丢包、22 超时、ARP `incomplete`）不再作为待恢复的生产通道跟踪。
+  - 历史脚本/台账中指向 `.115` 的生产目标与远程段属待清理冲突项（见 §9 #7），确认退役后统一摘除；在摘除前，任何脚本不得默认向 `.115` 推送。
 
 ### 7.2 清库后的服务与部署物衔接
 
-- **本机**：停 8099 实例 → 清库/重放 → 起 `com.topems.server`（或 `start-local.sh` dev 链路）→ 探针 200、`/users/me` 回显 roles/permissions 正确。
-- **远端**：清理窗口内停远端服务 → 清库/重放 → 部署二进制与前端 dist → 起服务 → 健康/就绪校验；nginx 与 `cloudflared` 隧道在服务起来后恢复。
+- **xingzhai 生产面**：停 8099 实例 → 清库/重放 → 起 `com.topems.server` → 探针 200、`/users/me` 回显 roles/permissions 正确；nginx 与 `cloudflared` 隧道在服务起来后恢复。
+- **xingzhai 开发面**：dev/验证/门禁库清理后由 `start-local.sh`/`deploy.sh` 本地链路起服恢复，不触碰生产实例与生产库。
+- **air 开发面**：dev 库清理后仅在本机起开发实例验证；不出包到生产、不替换 xingzhai 生产二进制。release 出包与交付走 `release-pipeline.md`，与清库动作解耦。
 - **Redis**：会话/缓存随库清理失效，清理后清空对应 Redis db，避免旧会话令牌残留。
 
 ## 8. 执行门禁与风险禁区
@@ -203,7 +214,8 @@ SRM/SCM：`suppliers` 各 3；PM：`projects` 3；HRM：`employees` 3、`job_ope
 **禁区**
 - 不清 `_sqlx_migrations` 账本、不清 L1 目录基线、不删初始超管。
 - 不改鉴权/令牌签发逻辑；不据静态或单次取证自动解绑/清权限码。
-- 本机副本与远端 .115 均为上线前受控环境，可按本方案清理；**真实 prod 一旦承载业务数据，业务单据/用户/档案禁清**；远端 .115 离线或未探活在线时不执行远程清理。
+- 本机副本与远端 .115 均为上线前受控环境，可按本方案清理；**真实 prod 一旦承载业务数据，业务单据/用户/档案禁清**；远端 .115 已退役，离线或未探活在线时不执行任何远程操作。
+- **角色边界禁区**：生产库、生产实例、生产常驻服务只允许存在于 xingzhai；air 上禁止出现 `*_prod` 库、生产 launchd 单元、指向生产 DSN 的实例，禁止在 air 上直接写生产库或触发生产迁移。
 - 不用 `TRUNCATE ... CASCADE` 波及目录表；外键保护表用逆序 `DELETE`。
 - 快照/口令/令牌不入 git；测试夹具口令不进生产；远程凭据走 SSH 密钥/钥匙串，不写明文。
 
@@ -217,18 +229,19 @@ SRM/SCM：`suppliers` 各 3；PM：`projects` 3；HRM：`employees` 3、`job_ope
 | 4 | 测试/演练种子目标库守卫 | 夹具仅注释警示，无连接守卫 | P2 |
 | 5 | 多环境清理口径固化进供给文档 | 现有文档只覆盖建库基线，未覆盖清库 | P3 |
 | 6 | 基线锚点在批量 DDL 后前移 | 现有流程已就位，继续遵守 | 常态 |
-| 7 | 远端 .115 通道清理前置（探活/远程快照/远程 psql/回滚） | 现有 `deploy-prod.sh` 仅远程灌种子，无远程清库与快照回滚分支 | P2 |
+| 7 | **摘除脚本/台账中 `.115` 生产目标与远程段**：`deploy-prod.sh` PROD_HOST、`verify_menu_authority.sh`/`window-execution.sh`/`w7_b2_auth_smoke.py`/`wms-rls-probe.sh`/`refresh-prod-cols.sh` 等指向 `.115` 的 SSH/psql 目标；生产部署收敛到 xingzhai，air 出包走 release-pipeline | 现脚本仍把 `.115` 当生产机，与「生产机=xingzhai」角色口径冲突 | P1 |
 | 8 | 开发/验证/CI 库口径（5432 dev、5433 重放、15432 IT、单测夹具） | 方案初版只列 prod 副本与门禁，未区分验证/CI 库恢复路径 | P1 |
 | 9 | 清库后服务/部署物衔接（停服→清库→重放→起服→探针；Redis 会话清空；前端/二进制/隧道恢复） | 现有 reset 流程未覆盖停服与恢复验证 | P2 |
-| 10 | 远端不可达兜底：.115 离线时只做本机库，远程段挂起待上线窗口 | 2026-11-28 探活二层 incomplete，主机离线/IP 变更 | 常态 |
+| 10 | `.115` 退役处置：物理确认开机/用途后按下线/导出留档/回收处理；在此之前不连不推 | 2026-11-28 二层 incomplete 离线；角色已定案退役，不再作为待恢复生产通道 | 常态 |
 | 11 | air 两个 dev 脚本硬编码 `/Users/air` 绝对路径改相对定位（`fix-a11y-labels.js`、`transform_i18n_v3.py`） | 本机跑会 file-not-found 全跳过；属 #78 后残留 | P3 |
+| 12 | air 越界排查与历史残留清理：确认 air 无 `*_prod` 库/生产常驻 launchd/生产 DSN；48 个历史残留库 + `20261115-step2` 快照按 #125 批次清理 | air 定位开发+部署机，不得承载生产面 | P2 |
 
 ## 10. 落地批次建议
 
-- **P1（盘点与开关）**：只读跑清单生成器，产出本机 dev / 副本 / 门禁 / 冒烟 / 验证 / CI 各库 L1/L2/L3/L4 表映射与行数指纹；demo 种子拆出独立开关默认关；复核边界表归属；补齐 5433/15432 验证与 CI 库恢复口径。
-- **P2（清理脚本与通道）**：在 `topems_test_runner` 或可废弃库上先验证路径 B 全流程（备份→dry-run→事务清理→断言→回滚演练），再推广 dev / prod 副本；随后补远端 .115 SSH 通道分支（探活→远程快照→远程清理→远程恢复验证），并衔接停服/起服/Redis 清空/前端二进制恢复。
-- **P3（口径固化）**：把多环境矩阵、清理顺序、断言清单补入 environment-provisioning.md；补 `deploy-prod` 全量重置分支（替代仅清 hrm 的 `--reset-db`）。
-- **常态**：新业务表纳入分类清单；新迁移改动 L1 纳入表列/约束时同步重生成基线 data 快照；远端 .115 离线期间不执行远程清理。
+- **P1（盘点与开关 + 角色冲突摘除）**：只读跑清单生成器，产出 xingzhai dev / 生产副本 / 门禁 / 冒烟 / 验证 / CI 各库 L1/L2/L3/L4 表映射与行数指纹；demo 种子拆出独立开关默认关；复核边界表归属；补齐 5433/15432 验证与 CI 库恢复口径；摘除脚本/台账中 `.115` 生产目标与远程段（§9 #7），生产部署目标收敛到 xingzhai。
+- **P2（清理脚本与通道）**：在 `topems_test_runner` 或可废弃库上先验证路径 B 全流程（备份→dry-run→事务清理→断言→回滚演练），再推广 dev / 生产副本；排查 air 越界（无 prod 库/生产常驻/生产 DSN），其历史残留库与快照按 #125 批次清理；衔接停服/起服/Redis 清空/前端二进制恢复。
+- **P3（口径固化）**：把多环境矩阵、清理顺序、断言清单补入 environment-provisioning.md；补 `deploy-prod` 全量重置分支（替代仅清 hrm 的 `--reset-db`），并改走本机/ release-pipeline 通道。
+- **常态**：新业务表纳入分类清单；新迁移改动 L1 纳入表列/约束时同步重生成基线 data 快照；`.115` 退役期间不连不推，待物理确认后另作下线处置。
 
 ---
 
