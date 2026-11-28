@@ -1645,6 +1645,24 @@ pub async fn ship_outbound_order(
         ));
     }
 
+    // 拣货批次顺序：由 WMS 设置页 /settings/picking-sequence 落到 wms.picking_policy，
+    // 这里真读真用；无配置时按有效期优先（原有行为）。
+    let pick_strategy: String = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "wms",
+        "SELECT pick_strategy FROM wms.picking_policy WHERE tenant_id = $1::uuid AND deleted_at IS NULL LIMIT 1"
+    ))
+    .bind(tenant)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(v) => v.unwrap_or_else(|| "expiry_first".to_string()),
+        Err(e) => {
+            tracing::error!("读取拣货顺序策略失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("读取拣货顺序策略失败");
+        }
+    };
+
     for item in &items {
         if item.shipped_quantity <= 0.0 {
             let _ = scope.rollback().await;
@@ -1747,7 +1765,11 @@ pub async fn ship_outbound_order(
               AND deleted_at IS NULL
               AND ($4::varchar IS NULL OR batch_number = $4::varchar)
               AND available_quantity >= $5
-            ORDER BY expiry_date NULLS LAST, created_at, id
+            ORDER BY
+                (CASE WHEN $6::text IN ('fifo', 'lifo') THEN NULL ELSE expiry_date END) NULLS LAST,
+                (CASE WHEN $6::text = 'lifo' THEN created_at END) DESC,
+                created_at ASC,
+                id
             LIMIT 1
             FOR UPDATE
             "#
@@ -1757,6 +1779,7 @@ pub async fn ship_outbound_order(
         .bind(tenant)
         .bind(batch_number.as_deref())
         .bind(item.shipped_quantity)
+        .bind(&pick_strategy)
         .fetch_optional(&mut scope)
         .await
         {

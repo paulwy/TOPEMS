@@ -368,12 +368,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             size='small'
             error={!!error}
           >
-            <InputLabel>{field.label}</InputLabel>
             <Select
               value={(value ?? '') as string}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               disabled={isDisabled}
-              label={field.label}
               error={!!error}
             >
               {field.options?.map((option) => (

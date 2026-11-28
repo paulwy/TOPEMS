@@ -14,6 +14,7 @@ pub mod discrepancy_logic;
 pub mod replenishment_logic;
 // V514-2: 恢复此前被注释的已实现模块（InventoryCyclePage 前端真实消费 /cycle-counts）
 pub mod cycle_count;
+pub mod policy_settings;
 // V514-2: 新增 slotting 模块（LocationRulePage 前端真实消费 /slotting/rules，此前后端无实现）
 pub mod slotting;
 pub mod slotting_status;
@@ -103,6 +104,7 @@ where
         .merge(labor::create_routes())
         // V514-2: 恢复 cycle_count 挂载（模块实现完整，此前仅注册被注释）
         .merge(cycle_count::create_routes())
+        .merge(policy_settings::create_routes())
         // V514-2: slotting 库位优化（P0-2 缺口补实现）
         .merge(slotting::create_routes())
         // V514-3: 恢复 discrepancy 挂载（修复存量编译错误后启用）
