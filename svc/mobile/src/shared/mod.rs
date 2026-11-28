@@ -121,7 +121,8 @@ use crate::modules::inventory::{
 };
 use crate::modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
 use crate::modules::missing_endpoints::{
-    get_push_config, get_usage_stats, list_inspection_tasks, update_push_config, update_push_template,
+    get_push_config, get_usage_stats, list_inspection_tasks, update_push_config,
+    update_push_template,
 };
 use crate::modules::notifications::{
     delete_notification, delete_read_notifications, get_notification, get_unread_count,

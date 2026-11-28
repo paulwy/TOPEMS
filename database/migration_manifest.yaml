@@ -3401,3 +3401,15 @@ pending_forward_patches:
     effect: "新建 mobile.user_settings（tenant_id + user_id 唯一、语言/主题/通知/同步偏好列）并挂 FORCE RLS"
     destructive_scan: "CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 策略 DROP+CREATE（幂等）；无 DELETE/TRUNCATE/DROP TABLE"
     note: "配套代码：GET /api/mobile/user/settings 由硬编码 JSON 改真实持久化；登记理由同上（unregistered_pending 阻断 pre-push）"
+  - version: "20261128130000"
+    file: "database/migrations/20261128130000_mobile_app_settings.sql"
+    status: to_apply
+    effect: "新建 mobile.app_settings（tenant_id 唯一、强制更新/自动更新/最低版本/AppKey 列）并挂 FORCE RLS；移动 App 配置由 localStorage 改真实持久化"
+    destructive_scan: "CREATE TABLE IF NOT EXISTS / CREATE UNIQUE INDEX IF NOT EXISTS / 主键 DO 块 / 策略 DROP+CREATE（幂等）；无 DELETE/TRUNCATE/DROP TABLE"
+    note: "登记依据：main 已存在该文件但 manifest/checksums 未登记，unregistered_pending=2 阻断所有分支 pre-push；待投放后改 applied"
+  - version: "20261128140000"
+    file: "database/migrations/20261128140000_wms_picking_policy.sql"
+    status: to_apply
+    effect: "新建 wms.picking_policy（tenant_id 唯一 + pick_strategy），承接设置页 /wms/setting/fifo-policy 并供出库批次分配消费"
+    destructive_scan: "CREATE TABLE IF NOT EXISTS / CREATE UNIQUE INDEX IF NOT EXISTS / 主键 DO 块 / 策略 DROP+CREATE（幂等）；无 DELETE/TRUNCATE/DROP TABLE"
+    note: "登记理由同上（unregistered_pending 阻断 pre-push）"

@@ -1379,7 +1379,6 @@ mod tests {
     }
 }
 
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["srm:supplier_performance:read"])),
