@@ -19,15 +19,15 @@
 
 ## 2. 现状实测盘点（2026-11-28 本机快照）
 
-### 2.0 环境拓扑（开发机 / 生产机 / 已退役远端 / CI）
+### 2.0 环境拓扑（开发机 / 生产机 / 待复核远端 / CI）
 
 | 端 | 主机 / 地址 | 端口 / 库 | 连接角色与凭据 | 当前可达性 | 说明 |
 | --- | --- | --- | --- | --- | --- |
 | **本机开发机** `xingzhai` | `xingzhaideMini.lan`（LAN .61 / .147），仓库 `/Users/xingzhai/TOPEMS` | 5432 brew postgres；dev 库 `topems` | 本机 socket / `topems_app`（运行）、`topems_owner`（迁移）；`.env` 的 `DATABASE_URL`/`MIGRATE_URL` | 5432 监听中 | 日常开发、单测、RLS/租户隔离验证；清理后由 `start-local.sh`/`deploy.sh` 本地起服恢复 |
 | **本机 production 副本实例** | 同上本机，launchd `com.topems.server`，端口 8099，二进制 `/Users/xingzhai/topems/bin/topems-server` | 5432 库 `topems_prod` | `DATABASE_URL=topems_app@localhost:5432/topems_prod`、`MIGRATE_URL=topems_owner@localhost:5432/topems_prod`；DSN 经 macOS 钥匙串注入（`TOPEMS_KEYCHAIN_KEYS=DATABASE_URL`），不写明文 plist/.env | 8099 监听中（PID 44977） | **连本机副本库，不是远端 .115**；清理该库前须先停 8099 实例，清完重放基线/种子后再起服验证 |
-| **远端生产机** | `xingzhai@192.168.110.115`（独立 macOS，目录与本机同名 `/Users/xingzhai/TOPEMS`、`/Users/xingzhai/topems/bin`） | 库 `topems_prod`，DB 用户 `topems_prod` | SSH 免密通道；`deploy-prod.sh` 远程 `psql` 清库/灌种子、`scp` SQL、`rsync` 前端 dist | **2026-11-28 探活 SSH:22 超时不可达**；远程段执行前必须先探活在线 | 清理/备份/回滚全部经 SSH 在远端执行；凭据走现有 SSH 密钥，不入仓库 |
+| **远端生产机** | `xingzhai@192.168.110.115`（独立 macOS，目录与本机同名 `/Users/xingzhai/TOPEMS`、`/Users/xingzhai/topems/bin`） | 库 `topems_prod`，DB 用户 `topems_prod` | SSH 免密通道；`deploy-prod.sh` 远程 `psql` 清库/灌种子、`scp` SQL、`rsync` 前端 dist | **2026-11-28 探活不可达**：同网段 ping 100% 丢包、22 超时，ARP 条目 `incomplete`（二层解析不出 MAC），mDNS 无记录；指向主机关机/睡眠/断网或 IP 已变更，**非凭据或 SSH 服务问题**；known_hosts 有历史成功记录 | 先在物理/网络侧确认开机、睡眠、网线/WiFi 与当前 IP；恢复在线后再经 SSH 执行清理/备份/回滚；凭据走现有 SSH 密钥，不入仓库 |
 | **CI / 验证实例** | 本机 5433（brew PG@18_5433 空库重放/双库账本核对/RLS 回归）；15432（IT 库 `topems_test`，`TOPEMS_IT_DATABASE_URL`） | 5433 / 15432 | 本机超级用户 `xingzhai` socket | 5433 未起、15432 未监听（按需拉起） | 验证/CI 库随测试栈重建，不纳入生产清理口径 |
-| **已退役远端 `air`** | 旧开发机 macOS 用户 | — | 双库 `pg_roles` 无此角色、对象属主 0；脚本残留已由 #78 归一 | 无现存实体 | **不作为部署/清理目标**；仅历史迁移 SQL、baseline ledger、exemptions 署名等不可变账本保留引用 |
+| **待复核远端 `air`** | 旧开发机，mDNS `airdeair.lan`，LAN `.96`（ARP 名 `airdeair.lan`，MAC `c0:c7:db:d1:2:50`） | 探测 22/5432/8099/6379/3000/80 全关 | 本机 `topems`/`topems_prod` 两库 `pg_roles` 无 air 角色、对象属主 0（#78 归一彻底）；仓库残留：`apps/web/scripts/fix-a11y-labels.js`、`apps/web/src/i18n/transform_i18n_v3.py` 硬编码 `/Users/air/...` 绝对路径（本机跑会失效跳过），`scripts/release/build-release.sh` 仅历史角色文案 | **2026-11-28 ping 通（在线），但 SSH/DB/服务端口全关**；当前不暴露 TOPEMS 服务，暂不作为部署/清理目标；是否退役待结合物理机用途复核 | 历史迁移 SQL、baseline ledger、exemptions 中 `/Users/air/...` 路径署名属不可变账本，保留只读；两个 dev 脚本硬编码路径建议后续改为相对脚本位置定位 |
 
 > 部署物（不在数据库清理范围，但清库后需衔接恢复）：后端二进制 `/Users/xingzhai/topems/bin`、前端 `dist/`（rsync 到远端）、launchd 单元 `com.topems.server`、nginx 与 `cloudflared` 隧道、Redis（`localhost:6379`，会话/缓存随库清理一并失效）。
 
@@ -180,12 +180,12 @@ SRM/SCM：`suppliers` 各 3；PM：`projects` 3；HRM：`employees` 3、`job_ope
 
 - **本机库**：直连 socket（`host=/tmp user=xingzhai`）或 `.env` DSN；备份落本机 `backups/`，清理在本机事务内完成。
 - **远端 .115 库**：
-  1. **前置探活**：`ssh -o ConnectTimeout=5 xingzhai@192.168.110.115 hostname`；不可达则中止，不重试绕过（2026-11-28 实测 SSH:22 超时）。
+  1. **前置探活**：先 `ping` 与 ARP 核对二层是否可达，再 `ssh -o ConnectTimeout=5 xingzhai@192.168.110.115 hostname`；不可达则中止，不重试绕过（2026-11-28 实测 ping 100% 丢包、22 超时、ARP `incomplete`，属主机离线/IP 变更，先查物理与网络侧）。
   2. **远程快照**：经 SSH 在远端 `pg_dump` 结构+数据，落远端备份目录（不回传本机明文）；清单与指纹回传留档；PII 脱敏审查。
   3. **远程清理**：SQL 经 `scp` 到远端 `/tmp` 后 `ssh psql -f`，单事务、dry-run 先行；不把远端口令写进仓库/脚本/日志。
   4. **远程恢复验证**：清库后远端重放 L1 基线/种子 → 起远端服务 → 健康/就绪探针 200 → 菜单/权限/可登录断言；前端 dist 与二进制按 `deploy-prod.sh` 既有链路 rsync/部署。
   5. **回滚**：失败即远端事务 `ROLLBACK`；事后以远端快照恢复。
-- **已退役 `air`**：不建连接、不纳入任何清理/部署脚本；历史账本署名保留只读。
+- **待复核 `air`（.96）**：2026-11-28 在线但 SSH/DB/服务端口全关，暂不建连接、不纳入清理/部署脚本；待物理机用途复核后再定性。历史账本署名保留只读；仓库内两个 dev 脚本硬编码 `/Users/air` 路径列为后续技术债。
 
 ### 7.2 清库后的服务与部署物衔接
 
@@ -220,7 +220,8 @@ SRM/SCM：`suppliers` 各 3；PM：`projects` 3；HRM：`employees` 3、`job_ope
 | 7 | 远端 .115 通道清理前置（探活/远程快照/远程 psql/回滚） | 现有 `deploy-prod.sh` 仅远程灌种子，无远程清库与快照回滚分支 | P2 |
 | 8 | 开发/验证/CI 库口径（5432 dev、5433 重放、15432 IT、单测夹具） | 方案初版只列 prod 副本与门禁，未区分验证/CI 库恢复路径 | P1 |
 | 9 | 清库后服务/部署物衔接（停服→清库→重放→起服→探针；Redis 会话清空；前端/二进制/隧道恢复） | 现有 reset 流程未覆盖停服与恢复验证 | P2 |
-| 10 | 远端不可达兜底：.115 离线时只做本机库，远程段挂起待上线窗口 | 2026-11-28 探活 SSH:22 超时 | 常态 |
+| 10 | 远端不可达兜底：.115 离线时只做本机库，远程段挂起待上线窗口 | 2026-11-28 探活二层 incomplete，主机离线/IP 变更 | 常态 |
+| 11 | air 两个 dev 脚本硬编码 `/Users/air` 绝对路径改相对定位（`fix-a11y-labels.js`、`transform_i18n_v3.py`） | 本机跑会 file-not-found 全跳过；属 #78 后残留 | P3 |
 
 ## 10. 落地批次建议
 
