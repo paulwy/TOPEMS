@@ -277,7 +277,6 @@ mod tests {
     }
 }
 
-
 /// CRM 模块健康探测（单体 /api/crm/health）
 #[utoipa::path(
     get,

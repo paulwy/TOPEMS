@@ -11,6 +11,8 @@ pub use modules::openapi::MesApiDoc as ApiDoc;
 pub use shared::AppState;
 
 #[cfg(test)]
+pub mod anomaly_no_fake_negative_ratchet;
+#[cfg(test)]
 pub mod aps_no_fabrication_ratchet;
 #[cfg(test)]
 pub mod cost_no_fabrication_ratchet;

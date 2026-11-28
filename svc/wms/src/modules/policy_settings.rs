@@ -21,6 +21,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::ScopedTxn;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -115,6 +116,16 @@ pub async fn get_inventory_threshold(
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::server_error("rls transaction unavailable");
     };
+    let mut scope = match crate::shared::scope::wms_db(&state.db)
+        .scope_with(txn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
     let row = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -126,7 +137,7 @@ pub async fn get_inventory_threshold(
         "#
     ))
     .bind(tenant)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -179,13 +190,23 @@ pub async fn put_inventory_threshold(
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::server_error("rls transaction unavailable");
     };
+    let mut scope = match crate::shared::scope::wms_db(&state.db)
+        .scope_with(txn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
 
     let existing: Option<Uuid> = match sqlx::query_scalar(only_own_schema_query!(
         "wms",
         "SELECT id FROM wms.inventory_alert_rules WHERE tenant_id = $1::uuid AND deleted_at IS NULL ORDER BY created_at, id LIMIT 1"
     ))
     .bind(tenant)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -216,7 +237,7 @@ pub async fn put_inventory_threshold(
         .bind(payload.severity.clone())
         .bind(payload.enabled)
         .bind(tenant)
-        .execute(&mut **txn)
+        .execute(&mut scope)
         .await
         .map(|_| id),
         None => sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
@@ -235,12 +256,12 @@ pub async fn put_inventory_threshold(
         .bind(payload.threshold_value.unwrap_or(0.0))
         .bind(payload.severity.unwrap_or_else(|| default_threshold().severity))
         .bind(payload.enabled.unwrap_or(true))
-        .fetch_one(&mut **txn)
+        .fetch_one(&mut scope)
         .await,
     };
 
     match result {
-        Ok(_) => match read_threshold(&mut **txn, tenant).await {
+        Ok(_) => match read_threshold(&mut scope, tenant).await {
             Ok(view) => ApiResponse::success(view, "库存阈值规则已保存"),
             Err(e) => {
                 tracing::error!("保存后回读库存阈值规则失败: {}", e);
@@ -309,6 +330,16 @@ pub async fn get_cycle_count_policy(
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::server_error("rls transaction unavailable");
     };
+    let mut scope = match crate::shared::scope::wms_db(&state.db)
+        .scope_with(txn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
     let row = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -320,7 +351,7 @@ pub async fn get_cycle_count_policy(
         "#
     ))
     .bind(tenant)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -378,12 +409,22 @@ pub async fn put_cycle_count_policy(
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::server_error("rls transaction unavailable");
     };
+    let mut scope = match crate::shared::scope::wms_db(&state.db)
+        .scope_with(txn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
     let existing: Option<Uuid> = match sqlx::query_scalar(only_own_schema_query!(
         "wms",
         "SELECT id FROM wms.cycle_count_configs WHERE tenant_id = $1::uuid AND deleted_at IS NULL ORDER BY is_active DESC, created_at LIMIT 1"
     ))
     .bind(tenant)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -411,7 +452,7 @@ pub async fn put_cycle_count_policy(
         .bind(payload.material_category.clone())
         .bind(payload.is_active)
         .bind(tenant)
-        .execute(&mut **txn)
+        .execute(&mut scope)
         .await
         .map(|_| ()),
         None => sqlx::query(only_own_schema_query!(
@@ -428,12 +469,12 @@ pub async fn put_cycle_count_policy(
         .bind(payload.priority_level.unwrap_or_else(|| "normal".into()))
         .bind(payload.material_category)
         .bind(payload.is_active.unwrap_or(true))
-        .execute(&mut **txn)
+        .execute(&mut scope)
         .await
         .map(|_| ()),
     };
     match result {
-        Ok(_) => match read_cycle_policy(&mut **txn, tenant).await {
+        Ok(_) => match read_cycle_policy(&mut scope, tenant).await {
             Ok(view) => ApiResponse::success(view, "循环盘点配置已保存"),
             Err(e) => {
                 tracing::error!("保存后回读循环盘点配置失败: {}", e);
@@ -502,12 +543,22 @@ pub async fn get_slotting_policy(
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::server_error("rls transaction unavailable");
     };
+    let mut scope = match crate::shared::scope::wms_db(&state.db)
+        .scope_with(txn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
     let warehouse_available: bool = sqlx::query_scalar::<_, bool>(only_own_schema_query!(
         "wms",
         "SELECT EXISTS (SELECT 1 FROM wms.warehouses WHERE tenant_id = $1::uuid AND deleted_at IS NULL)"
     ))
     .bind(tenant)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(false);
     let row = sqlx::query(only_own_schema_query!(
@@ -521,7 +572,7 @@ pub async fn get_slotting_policy(
         "#
     ))
     .bind(tenant)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
@@ -576,12 +627,22 @@ pub async fn put_slotting_policy(
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::server_error("rls transaction unavailable");
     };
+    let mut scope = match crate::shared::scope::wms_db(&state.db)
+        .scope_with(txn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
     let existing: Option<Uuid> = match sqlx::query_scalar(only_own_schema_query!(
         "wms",
         "SELECT id FROM wms.slotting_rules WHERE tenant_id = $1::uuid AND deleted_at IS NULL ORDER BY priority, created_at LIMIT 1"
     ))
     .bind(tenant)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -596,7 +657,7 @@ pub async fn put_slotting_policy(
         "SELECT id FROM wms.warehouses WHERE tenant_id = $1::uuid AND deleted_at IS NULL ORDER BY created_at LIMIT 1"
     ))
     .bind(tenant)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -619,7 +680,7 @@ pub async fn put_slotting_policy(
         .bind(payload.priority)
         .bind(payload.is_active)
         .bind(tenant)
-        .execute(&mut **txn)
+        .execute(&mut scope)
         .await
         .map(|_| ()),
         None => match default_warehouse {
@@ -637,7 +698,7 @@ pub async fn put_slotting_policy(
             .bind(payload.rule_type.unwrap_or_else(|| "velocity_class".into()))
             .bind(payload.priority.unwrap_or(10))
             .bind(payload.is_active.unwrap_or(true))
-            .execute(&mut **txn)
+            .execute(&mut scope)
             .await
             .map(|_| ()),
             None => {
@@ -646,7 +707,7 @@ pub async fn put_slotting_policy(
         },
     };
     match result {
-        Ok(_) => match read_slotting_policy(&mut **txn, tenant).await {
+        Ok(_) => match read_slotting_policy(&mut scope, tenant).await {
             Ok(view) => ApiResponse::success(view, "上架规则已保存"),
             Err(e) => {
                 tracing::error!("保存后回读上架规则失败: {}", e);
@@ -700,12 +761,22 @@ pub async fn get_picking_sequence(
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::server_error("rls transaction unavailable");
     };
+    let mut scope = match crate::shared::scope::wms_db(&state.db)
+        .scope_with(txn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
     let row = sqlx::query_scalar::<_, String>(only_own_schema_query!(
         "wms",
         "SELECT pick_strategy FROM wms.picking_policy WHERE tenant_id = $1::uuid AND deleted_at IS NULL LIMIT 1"
     ))
     .bind(tenant)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(strategy)) => ApiResponse::success(
@@ -762,6 +833,16 @@ pub async fn put_picking_sequence(
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::server_error("rls transaction unavailable");
     };
+    let mut scope = match crate::shared::scope::wms_db(&state.db)
+        .scope_with(txn)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立事务作用域失败: {}", e);
+            return ApiResponse::server_error("建立事务作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -774,10 +855,10 @@ pub async fn put_picking_sequence(
     .bind(Uuid::new_v4())
     .bind(tenant)
     .bind(&strategy)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
     match result {
-        Ok(_) => match read_picking_sequence(&mut **txn, tenant).await {
+        Ok(_) => match read_picking_sequence(&mut scope, tenant).await {
             Ok(view) => ApiResponse::success(view, "拣货顺序策略已保存"),
             Err(e) => {
                 tracing::error!("保存后回读拣货顺序策略失败: {}", e);
@@ -816,7 +897,7 @@ pub async fn load_pick_strategy(txn: &mut sqlx::PgConnection, tenant: Uuid) -> S
 // ---------------------------------------------------------------------------
 
 async fn read_threshold(
-    txn: &mut sqlx::PgConnection,
+    txn: &mut ScopedTxn<'_>,
     tenant: Uuid,
 ) -> Result<InventoryThresholdView, sqlx::Error> {
     let row = sqlx::query(only_own_schema_query!(
@@ -846,7 +927,7 @@ async fn read_threshold(
 }
 
 async fn read_cycle_policy(
-    txn: &mut sqlx::PgConnection,
+    txn: &mut ScopedTxn<'_>,
     tenant: Uuid,
 ) -> Result<CycleCountPolicyView, sqlx::Error> {
     let row = sqlx::query(only_own_schema_query!(
@@ -886,7 +967,7 @@ async fn read_cycle_policy(
 }
 
 async fn read_slotting_policy(
-    txn: &mut sqlx::PgConnection,
+    txn: &mut ScopedTxn<'_>,
     tenant: Uuid,
 ) -> Result<SlottingPolicyView, sqlx::Error> {
     let warehouse_available: bool = sqlx::query_scalar::<_, bool>(only_own_schema_query!(
@@ -927,7 +1008,7 @@ async fn read_slotting_policy(
 }
 
 async fn read_picking_sequence(
-    txn: &mut sqlx::PgConnection,
+    txn: &mut ScopedTxn<'_>,
     tenant: Uuid,
 ) -> Result<PickingSequenceView, sqlx::Error> {
     let row = sqlx::query_scalar::<_, String>(only_own_schema_query!(
