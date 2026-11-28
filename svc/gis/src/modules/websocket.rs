@@ -203,6 +203,16 @@ async fn send_ws_error(ws_manager: &WebSocketManager, conn_id: ConnectionId, mes
 
 use std::env;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:websocket:read"])),
+    path = "/ws/gis",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "websocket"
+)]
 pub async fn websocket_handler(
     ws: WebSocketUpgrade,
     State(ws_manager): State<SharedWebSocketManager>,
@@ -406,6 +416,19 @@ where
         .route("/ws/gis", get(websocket_handler))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:websocket:read"])),
+    path = "/ws/gis/device/{device_code}",
+    params(
+        ("device_code" = String, Path, description = "device_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "websocket"
+)]
 pub async fn websocket_device_handler(
     ws: WebSocketUpgrade,
     State(ws_manager): State<SharedWebSocketManager>,

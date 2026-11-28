@@ -113,6 +113,16 @@ pub fn get_plugin_info() -> PluginInfo {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:health:read"])),
+    path = "/health",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "health"
+)]
 pub async fn plugin_health_check() -> ApiResponse<ServiceHealth> {
     let health = ServiceHealth::healthy_with_message("topems-gis", "GIS 地理信息服务运行正常");
     ApiResponse::success(health, "插件健康检查")

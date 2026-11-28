@@ -1075,3 +1075,16 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 **踩坑**：批量插注解时用 `path = "..."` 字符串存在性做幂等判断，被同路径不同 method 的既有注解误判成"已存在"（如 `/contract-renewals/{id}` 已有 GET），导致 28 条只插入 5 条；改为按 `(method, path)` 二元组判重，并对首轮的 5 条重复注解做去重（`contract` 1、`dashboard` 1、`training` 3）。
 
 **结果**：hrm **128/128/0**；spec 3744 → **3751**；全量缺口 218 → **190**。
+
+---
+
+## 第 45 轮 · gis（26 → 0）
+
+**基线**：gis 61 调用 / 35 匹配 / 26 缺口。注意 gis 的真实路由组装在 `svc/gis/src/embedded.rs`（独立部署与单体共用），`modules/*::create_routes` 不是唯一入口。
+
+**处理**：
+1. **补一个真缺口端点**：前端 `trackApi.getDeviceTrack({device_id,start_time,end_time,page,page_size})` 打 `GET /api/gis/device-tracks`，后端此前只有 `/device-tracks/devices` 与 `/device-tracks/{device_id}/statistics`，没有列表端点。新增 `device::list_device_tracks`（复用 `gis.device_location_records`，COUNT + 分页查询，返回 `items/records/total/page/page_size`，前端 `PaginatedResponse` 两种键都能吃到），并在 `embedded.rs` 挂 `/device-tracks`。
+2. **别名挂载补注解**：`/device-locations` 与 `/devices` 是同一 handler 的两个挂载点，`/devices` 已有注解，`/device-locations`（GET 列表、GET 详情）没有。新增 `list_device_locations` / `get_device_location` 两个瘦包装（委托 `list_devices` / `get_device`），各自带注解，避免一个 fn 双注解冲突。
+3. **补注解并登记 23 处**：device 6（device-tracks 两条 + devices POST/PUT/DELETE）、geofence 5（`/fences` 全套 CRUD）、factory_map 5（`/factory-maps` 全套 CRUD）、business 1（`/business-locations/type/{business_type}`）、gis_plugin 1（`/health`）、websocket 2（`/ws/gis`、`/ws/gis/device/{device_code}`，WebSocket 升级端点如实按 GET 文档化）、embedded 4（`/device-locations` POST/PUT/DELETE、`/device-locations/map/{map_id}`，私有 fn 提 `pub(crate)`）。`svc/gis/src/modules/openapi.rs` 登记 26 条。
+
+**结果**：gis **61/61/0**；spec 3751 → **3765**；全量缺口 190 → **164**。

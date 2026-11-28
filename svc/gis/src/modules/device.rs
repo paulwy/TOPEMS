@@ -67,7 +67,60 @@ pub struct TrackingQuery {
     pub limit: Option<i32>,
 }
 
+/// GET /device-locations —— `/devices` 的只读别名挂载点（前端 deviceApi.listDevicePoints 使用）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:device:read"])),
+    path = "/device-locations",
+    tag = "device",
+    responses(
+        (status = 200, description = "获取设备列表成功", body = serde_json::Value),
+        (status = 500, description = "查询失败")
+    )
+)]
+pub async fn list_device_locations(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
+) -> ApiResponse<serde_json::Value> {
+    list_devices(Extension(txn_arc), State(db), Extension(claims)).await
+}
+
+/// GET /device-locations/{id} —— `/devices/{id}` 的只读别名挂载点
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:device:read"])),
+    path = "/device-locations/{id}",
+    tag = "device",
+    params(
+        ("id" = Uuid, Path, description = "设备ID")
+    ),
+    responses(
+        (status = 200, description = "获取设备详情成功", body = serde_json::Value),
+        (status = 404, description = "设备未找到"),
+        (status = 500, description = "查询失败")
+    )
+)]
+pub async fn get_device_location(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<Device> {
+    get_device(Extension(txn_arc), State(db), Extension(claims), Path(id)).await
+}
+
 /// 注册设备
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:device:write"])),
+    path = "/devices",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
 pub async fn register_device(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -218,6 +271,19 @@ pub async fn get_device(
 }
 
 /// 更新设备信息
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["gis:device:write"])),
+    path = "/devices/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
 pub async fn update_device(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -272,6 +338,19 @@ pub async fn update_device(
 }
 
 /// 删除设备
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:device:write"])),
+    path = "/devices/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
 pub async fn delete_device(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -577,9 +656,126 @@ pub async fn get_device_history(
     }
 }
 
+/// GET /device-tracks?device_id=&start_time=&end_time=&page=&page_size=
+/// 前端 trackApi.getDeviceTrack(params) → 按设备与时间窗分页返回轨迹点位。
+/// 与 `/device-tracks/{device_id}/statistics` 共用 `gis.device_location_records` 数据源。
+#[derive(Debug, Deserialize)]
+pub struct DeviceTrackParams {
+    pub device_id: Uuid,
+    pub start_time: Option<DateTime<Utc>>,
+    pub end_time: Option<DateTime<Utc>>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:device:read"])),
+    path = "/device-tracks",
+    tag = "device",
+    params(
+        ("device_id" = Uuid, Query, description = "设备ID"),
+        ("start_time" = Option<String>, Query, description = "起始时间（RFC3339）"),
+        ("end_time" = Option<String>, Query, description = "结束时间（RFC3339）"),
+        ("page" = Option<i64>, Query, description = "页码，默认 1"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，默认 20")
+    ),
+    responses(
+        (status = 200, description = "获取设备轨迹成功", body = serde_json::Value),
+        (status = 500, description = "查询失败")
+    )
+)]
+pub async fn list_device_tracks(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+    Extension(_claims): Extension<Claims>,
+    Query(params): Query<DeviceTrackParams>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 200);
+    let offset = (page - 1) * page_size;
+
+    let total: i64 = match sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM gis.device_location_records WHERE device_id = $1 \
+         AND ($2::timestamptz IS NULL OR recorded_at >= $2) \
+         AND ($3::timestamptz IS NULL OR recorded_at <= $3)",
+    )
+    .bind(params.device_id)
+    .bind(params.start_time)
+    .bind(params.end_time)
+    .fetch_one(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            return ApiResponse::from(TopemsError::internal("查询轨迹总数失败", e));
+        }
+    };
+
+    let result = sqlx::query_as::<_, DeviceLocationRecord>(
+        "SELECT id, tenant_id, device_id, position, accuracy, speed, direction, altitude, \
+         battery_level, signal_strength, recorded_at, created_at \
+         FROM gis.device_location_records WHERE device_id = $1 \
+         AND ($2::timestamptz IS NULL OR recorded_at >= $2) \
+         AND ($3::timestamptz IS NULL OR recorded_at <= $3) \
+         ORDER BY recorded_at DESC LIMIT $4 OFFSET $5",
+    )
+    .bind(params.device_id)
+    .bind(params.start_time)
+    .bind(params.end_time)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&mut scope)
+    .await;
+
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
+        Ok(records) => ApiResponse::success(
+            serde_json::json!({
+                "items": records,
+                "records": records,
+                "total": total,
+                "page": page,
+                "page_size": page_size
+            }),
+            "获取设备轨迹成功",
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询轨迹失败", e)),
+    }
+}
+
 /// GET /device-tracks/{device_id}/statistics
 /// 前端 trackApi.getTrackStatistics(deviceId) → 返回单设备轨迹统计汇总。
 /// 复用 services::track_stats::TrackStatisticsCalculator 计算距离/速度。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:device:read"])),
+    path = "/device-tracks/{device_id}/statistics",
+    params(
+        ("device_id" = String, Path, description = "device_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
 pub async fn get_device_track_statistics(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -658,6 +854,16 @@ pub async fn get_device_track_statistics(
 
 /// GET /device-tracks/devices
 /// 前端 trackApi.listDevicesWithTracks() → 返回最近有轨迹上报的设备列表（含最新位置）。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:device:read"])),
+    path = "/device-tracks/devices",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
 pub async fn list_devices_with_tracks(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,

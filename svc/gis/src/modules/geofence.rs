@@ -90,6 +90,16 @@ pub struct GeofenceQuery {
     pub shape_type: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:geofence:read"])),
+    path = "/fences",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "geofence"
+)]
 pub async fn list_geofences(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -153,6 +163,19 @@ pub async fn list_geofences(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:geofence:read"])),
+    path = "/fences/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "geofence"
+)]
 pub async fn get_geofence(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -191,6 +214,16 @@ pub async fn get_geofence(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:geofence:write"])),
+    path = "/fences",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "geofence"
+)]
 pub async fn create_geofence(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -259,6 +292,19 @@ pub async fn create_geofence(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["gis:geofence:write"])),
+    path = "/fences/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "geofence"
+)]
 pub async fn update_geofence(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -359,6 +405,19 @@ pub async fn update_geofence(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:geofence:write"])),
+    path = "/fences/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "geofence"
+)]
 pub async fn delete_geofence(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,

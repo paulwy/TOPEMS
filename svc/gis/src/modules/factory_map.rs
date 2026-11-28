@@ -22,6 +22,16 @@ pub struct CreateFactoryMap {
     pub description: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:factory_map:read"])),
+    path = "/factory-maps",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "factory_map"
+)]
 pub async fn list_factory_maps(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -49,6 +59,16 @@ pub async fn list_factory_maps(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:factory_map:write"])),
+    path = "/factory-maps",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "factory_map"
+)]
 pub async fn create_factory_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -82,6 +102,19 @@ pub async fn create_factory_map(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:factory_map:read"])),
+    path = "/factory-maps/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "factory_map"
+)]
 pub async fn get_factory_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -115,6 +148,19 @@ pub struct UpdateFactoryMap {
     pub description: Option<String>,
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["gis:factory_map:write"])),
+    path = "/factory-maps/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "factory_map"
+)]
 pub async fn update_factory_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
@@ -155,6 +201,19 @@ pub async fn update_factory_map(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:factory_map:write"])),
+    path = "/factory-maps/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "factory_map"
+)]
 pub async fn delete_factory_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,

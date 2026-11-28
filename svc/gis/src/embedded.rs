@@ -132,6 +132,10 @@ pub fn build_business_router(state: &AppState, rls_pool: sqlx::PgPool) -> Router
             axum::routing::get(modules::business::list_business_locations_by_type),
         )
         .route(
+            "/device-tracks",
+            axum::routing::get(modules::device::list_device_tracks),
+        )
+        .route(
             "/device-tracks/devices",
             axum::routing::get(modules::device::list_devices_with_tracks),
         )
@@ -459,7 +463,20 @@ pub fn build_business_router(state: &AppState, rls_pool: sqlx::PgPool) -> Router
         .merge(protected_api)
 }
 
-async fn list_device_locations_by_map(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:device:read"])),
+    path = "/device-locations/map/{map_id}",
+    params(
+        ("map_id" = String, Path, description = "map_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
+pub(crate) async fn list_device_locations_by_map(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(_claims): Extension<Claims>,
@@ -496,7 +513,17 @@ async fn list_device_locations_by_map(
     }
 }
 
-async fn create_device_location(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:device:write"])),
+    path = "/device-locations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
+pub(crate) async fn create_device_location(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
@@ -548,7 +575,20 @@ async fn create_device_location(
     }
 }
 
-async fn update_device_location(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["gis:device:write"])),
+    path = "/device-locations/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
+pub(crate) async fn update_device_location(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
@@ -602,7 +642,20 @@ async fn update_device_location(
     }
 }
 
-async fn delete_device_location(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:device:write"])),
+    path = "/device-locations/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "device"
+)]
+pub(crate) async fn delete_device_location(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
