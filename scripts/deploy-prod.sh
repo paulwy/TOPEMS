@@ -2,6 +2,11 @@
 # =============================================
 # TOPEMS 一键部署脚本
 # =============================================
+# 定位：现役版本升级走 docs/deploy/release-pipeline.md（air 出包 → xingzhai 本机
+#       免构建替换，生产机不构建）；本脚本为兼容/兜底入口。
+# 角色口径：生产机即本机 xingzhai。默认 PROD_HOST 留空 = 本机直连；仅显式
+#       部署到其他远端时经环境变量 PROD_HOST=user@host 提供。退役地址
+#       192.168.110.115 / 192.168.3.129 不再内置为本机目标。
 # 用法:
 #   ./scripts/deploy-prod.sh              # 部署后端（编译+上传+重启+健康检查）
 #   ./scripts/deploy-prod.sh --frontend   # 同时部署前端（编译 dist + rsync）
@@ -22,7 +27,10 @@ set -e
 
 # ── 配置 ──
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PROD_HOST="xingzhai@192.168.110.115"
+# 生产机即本机 xingzhai：PROD_HOST 留空（默认）时命令本地执行；
+# 仅当显式部署到其他远端时才经环境变量 PROD_HOST=user@host 提供。
+# 退役地址 192.168.110.115 / 192.168.3.129 不再内置为本机目标。
+PROD_HOST="${PROD_HOST:-}"
 PROD_BIN_DIR="/Users/xingzhai/topems/bin"
 PROD_REPO_DIR="/Users/xingzhai/TOPEMS"
 LOCAL_REPO="$ROOT"
@@ -36,6 +44,28 @@ HEALTH_TIMEOUT=60  # 秒
 PSQL_PATH="/opt/homebrew/bin/psql"
 DB_NAME="topems_prod"
 DB_USER="topems_prod"
+# 本机直连 prod 库（unix socket）；远端模式下经 ssh 以 DB_USER 连接
+PROD_LOCAL_USER="${PROD_LOCAL_USER:-xingzhai}"
+PROD_LOCAL_PGHOST="${PROD_LOCAL_PGHOST:-/tmp}"
+
+# ── 本机 / 远端双模式封装 ──
+# PROD_HOST 为空：生产机就是本机，命令本地执行；非空：ssh/scp/rsync 到指定远端（兜底）。
+run_prod() {
+  local cmd="$1"
+  if [ -n "$PROD_HOST" ]; then ssh $PROD_HOST "$cmd"; else bash -c "$cmd"; fi
+}
+push_prod() {  # $1 本地文件  $2 目标路径（本机路径或远端绝对路径）
+  local src="$1" dst="$2"
+  if [ -n "$PROD_HOST" ]; then scp "$src" "$PROD_HOST:$dst"; else cp "$src" "$dst"; fi
+}
+sync_prod() {  # $1 本地目录（带 /）  $2 目标目录
+  local src="$1" dst="$2"
+  if [ -n "$PROD_HOST" ]; then rsync -avz --delete "$src/" "$PROD_HOST:$dst/"; else rsync -a --delete "$src/" "$dst/"; fi
+}
+pipe_prod() {  # 把本地脚本经 stdin 送到目标执行，其余参数透传
+  local script="$1"; shift
+  if [ -n "$PROD_HOST" ]; then ssh $PROD_HOST 'bash -s -- "$@"' _ "$@" < "$script"; else bash "$script" "$@"; fi
+}
 
 # 颜色
 RED='\033[0;31m'
@@ -88,7 +118,7 @@ done
 # ── 状态模式 ──
 if [ "$DO_STATUS" = true ]; then
   info "=== 生产机状态 ==="
-  ssh $PROD_HOST "
+  run_prod "
     echo '--- 后端进程 ---'
     launchctl list | grep $LAUNCHD_LABEL || echo '未运行'
     echo '--- 端口监听 ---'
@@ -107,7 +137,7 @@ fi
 # ── 回滚模式 ──
 if [ "$DO_ROLLBACK" = true ]; then
   info "=== 回滚到上一个备份 ==="
-  ssh $PROD_HOST "
+  run_prod "
     cd $PROD_BIN_DIR
     LATEST_BAK=\$(ls -t topems-server-*.bak 2>/dev/null | head -1)
     if [ -z \"\$LATEST_BAK\" ]; then
@@ -122,7 +152,7 @@ if [ "$DO_ROLLBACK" = true ]; then
     echo '已重启，等待健康检查...'
   "
   sleep 10
-  ssh $PROD_HOST "curl -s -o /dev/null -w '%{http_code}' $HEALTH_URL" | grep -q 200 \
+  run_prod "curl -s -o /dev/null -w '%{http_code}' $HEALTH_URL" | grep -q 200 \
     && info "回滚成功" || error "回滚后健康检查失败"
   exit 0
 fi
@@ -157,10 +187,14 @@ if [ "$LOCAL_HEAD" != "$REMOTE_HEAD" ]; then
 fi
 info "git 状态 OK (HEAD=$(git rev-parse --short HEAD))"
 
-# SSH 连通性
-info "测试 SSH 连通性..."
-ssh -o ConnectTimeout=5 $PROD_HOST "hostname" > /dev/null || error "SSH 连接失败"
-info "SSH OK"
+# 连通性预检
+if [ -n "$PROD_HOST" ]; then
+  info "测试远端 SSH 连通性..."
+  ssh -o ConnectTimeout=5 $PROD_HOST "hostname" > /dev/null || error "SSH 连接失败"
+  info "SSH OK"
+else
+  info "本机模式：生产机即本机，跳过 SSH 连通性检查"
+fi
 
 # ── 1. 二进制解析 / 编译（必须先于任何破坏性步骤：避免"先清库、后报无二进制"）──
 # 2026-11-05 教训：旧版把本步骤放在 --reset-db 之后，二进制缺失时数据库已被清空才报错。
@@ -208,7 +242,12 @@ info "待部署二进制: $(ls -lh "$LOCAL_BIN" | awk '{print $5}')  $LOCAL_BIN"
 
 # ── 迁移账本预检（只提示不阻断；迁移不会随服务启动自动补跑，prod 唯一入口 apply-forward.sh）──
 LOCAL_MIG_COUNT=$(ls "$LOCAL_REPO"/database/migrations/*.sql 2>/dev/null | wc -l | tr -d ' ')
-PROD_MIG_COUNT=$(ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -Atc 'SELECT count(*) FROM _sqlx_migrations'" 2>/dev/null | head -1 | tr -d ' ')
+if [ -n "$PROD_HOST" ]; then
+  PSQL_PROD_PREFIX="$PSQL_PATH -U $DB_USER -d $DB_NAME"
+else
+  PSQL_PROD_PREFIX="$PSQL_PATH -h $PROD_LOCAL_PGHOST -U $PROD_LOCAL_USER -d $DB_NAME"
+fi
+PROD_MIG_COUNT=$(run_prod "$PSQL_PROD_PREFIX -Atc 'SELECT count(*) FROM _sqlx_migrations'" 2>/dev/null | head -1 | tr -d ' ')
 PROD_MIG_COUNT=${PROD_MIG_COUNT:-?}
 info "迁移账本: 本地 $LOCAL_MIG_COUNT 个迁移文件 / 生产 $PROD_MIG_COUNT 条"
 info "prod 迁移唯一入口: scripts/migration/apply-forward.sh --prod（基线 + 前向迁移）；禁止在 prod 执行 sqlx migrate run"
@@ -252,68 +291,68 @@ SELECT 'after reset: departments' AS tbl, count(*) FROM hrm.departments WHERE de
 UNION ALL SELECT 'after reset: positions', count(*) FROM hrm.positions WHERE deleted_at IS NULL;
 SQL_EOF
 
-  scp /tmp/topems-reset-only.sql $PROD_HOST:/tmp/topems-reset-only.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/topems-reset-only.sql"
+  push_prod /tmp/topems-reset-only.sql /tmp/topems-reset-only.sql
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/topems-reset-only.sql"
   info "数据库重置完成"
 
   # 重置后自动 seed 部门+岗位+角色+字典
   info "插入标准部门+岗位+角色+字典 seed..."
-  scp $LOCAL_REPO/database/seeds/standard_departments.sql $PROD_HOST:/tmp/seed_departments.sql
-  scp $LOCAL_REPO/database/seeds/standard_positions.sql $PROD_HOST:/tmp/seed_positions.sql
-  scp $LOCAL_REPO/database/seeds/default_roles.sql $PROD_HOST:/tmp/seed_roles.sql
-  scp $LOCAL_REPO/database/seeds/default_dict_data.sql $PROD_HOST:/tmp/seed_dict.sql
-  scp $LOCAL_REPO/database/seeds/system_settings.sql $PROD_HOST:/tmp/seed_settings.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_departments.sql"
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_positions.sql"
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_roles.sql"
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_dict.sql"
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_settings.sql"
+  push_prod $LOCAL_REPO/database/seeds/standard_departments.sql /tmp/seed_departments.sql
+  push_prod $LOCAL_REPO/database/seeds/standard_positions.sql /tmp/seed_positions.sql
+  push_prod $LOCAL_REPO/database/seeds/default_roles.sql /tmp/seed_roles.sql
+  push_prod $LOCAL_REPO/database/seeds/default_dict_data.sql /tmp/seed_dict.sql
+  push_prod $LOCAL_REPO/database/seeds/system_settings.sql /tmp/seed_settings.sql
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_departments.sql"
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_positions.sql"
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_roles.sql"
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_dict.sql"
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_settings.sql"
   info "标准部门+岗位+角色+字典+系统参数 seed 完成"
 fi
 
 # ── 只插入标准部门（不清库）──
 if [ "$SEED_DEPTS" = true ]; then
   info "=== 插入标准部门 seed ==="
-  scp $LOCAL_REPO/database/seeds/standard_departments.sql $PROD_HOST:/tmp/seed_departments.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_departments.sql"
+  push_prod $LOCAL_REPO/database/seeds/standard_departments.sql /tmp/seed_departments.sql
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_departments.sql"
   info "标准部门 seed 完成"
 fi
 
 # ── 只插入标准岗位（不清库）──
 if [ "$SEED_POSITIONS" = true ]; then
   info "=== 插入标准岗位 seed ==="
-  scp $LOCAL_REPO/database/seeds/standard_positions.sql $PROD_HOST:/tmp/seed_positions.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_positions.sql"
+  push_prod $LOCAL_REPO/database/seeds/standard_positions.sql /tmp/seed_positions.sql
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_positions.sql"
   info "标准岗位 seed 完成"
 fi
 
 # ── 只插入默认角色（不清库）──
 if [ "$SEED_ROLES" = true ]; then
   info "=== 插入默认角色 seed ==="
-  scp $LOCAL_REPO/database/seeds/default_roles.sql $PROD_HOST:/tmp/seed_roles.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_roles.sql"
+  push_prod $LOCAL_REPO/database/seeds/default_roles.sql /tmp/seed_roles.sql
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_roles.sql"
   info "默认角色 seed 完成"
 fi
 
 # ── 只插入系统字典（不清库）──
 if [ "$SEED_DICT" = true ]; then
   info "=== 插入系统字典 seed ==="
-  scp $LOCAL_REPO/database/seeds/default_dict_data.sql $PROD_HOST:/tmp/seed_dict.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_dict.sql"
+  push_prod $LOCAL_REPO/database/seeds/default_dict_data.sql /tmp/seed_dict.sql
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_dict.sql"
   info "系统字典 seed 完成"
 fi
 
 # ── 只插入系统参数（密码策略/会话超时/上传限制，不清库）──
 if [ "$SEED_SETTINGS" = true ]; then
   info "=== 插入系统参数 seed ==="
-  scp $LOCAL_REPO/database/seeds/system_settings.sql $PROD_HOST:/tmp/seed_settings.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_settings.sql"
+  push_prod $LOCAL_REPO/database/seeds/system_settings.sql /tmp/seed_settings.sql
+  run_prod "$PSQL_PROD_PREFIX -f /tmp/seed_settings.sql"
   info "系统参数 seed 完成"
 fi
 
 # ── 环境变量检查 ──
 info "=== 检查生产机环境变量配置 ==="
-ssh $PROD_HOST "
+run_prod "
   PLIST=~/Library/LaunchAgents/com.topems.server.plist
   echo 'ENCRYPTION_MASTER_KEY:' \$(grep -A1 'ENCRYPTION_MASTER_KEY' \$PLIST | grep -c '<string>' || echo '未配置')
   echo 'JWT_SECRET:' \$(grep -A1 'JWT_SECRET' \$PLIST | grep -c '<string>' || echo '未配置')
@@ -332,7 +371,7 @@ done
 info "=== 步骤 2/5: 生产机备份旧二进制 ==="
 COMMIT=$(git rev-parse --short HEAD)
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-ssh $PROD_HOST "
+run_prod "
   cd $PROD_BIN_DIR
   cp topems-server topems-server-${COMMIT}-${TIMESTAMP}.bak
   ls -lh topems-server-${COMMIT}-${TIMESTAMP}.bak | awk '{print \"备份: \" \$9 \" (\" \$5 \")\"}'
@@ -340,13 +379,13 @@ ssh $PROD_HOST "
 
 # ── 3. 上传新二进制 ──
 info "=== 步骤 3/5: 上传新二进制 ==="
-scp $LOCAL_BIN $PROD_HOST:$PROD_BIN_DIR/topems-server.new
-ssh $PROD_HOST "chmod +x $PROD_BIN_DIR/topems-server.new"
+push_prod "$LOCAL_BIN" "$PROD_BIN_DIR/topems-server.new"
+run_prod "chmod +x $PROD_BIN_DIR/topems-server.new"
 info "上传完成"
 
 # ── 4. 替换 + 重启 ──
 info "=== 步骤 4/5: 替换 + launchd 重启 ==="
-ssh $PROD_HOST "
+run_prod "
   cd $PROD_BIN_DIR
   mv topems-server.new topems-server
   chmod +x topems-server
@@ -357,17 +396,17 @@ ssh $PROD_HOST "
 # ── 5. 健康检查 ──
 info "=== 步骤 5/5: 健康检查 ==="
 for i in $(seq 1 $HEALTH_TIMEOUT); do
-  RESULT=$(ssh $PROD_HOST "curl -s -o /dev/null -w '%{http_code}' $HEALTH_URL 2>/dev/null" || echo "000")
+  RESULT=$(run_prod "curl -s -o /dev/null -w '%{http_code}' $HEALTH_URL 2>/dev/null" || echo "000")
   if [ "$RESULT" = "200" ]; then
     info "健康检查通过（${i}s）"
-    ssh $PROD_HOST "curl -s $HEALTH_URL" | head -c 200
+    run_prod "curl -s $HEALTH_URL" | head -c 200
     echo ""
     break
   fi
   sleep 1
   if [ $i -eq $HEALTH_TIMEOUT ]; then
     error "健康检查超时（${HEALTH_TIMEOUT}s），回滚中..."
-    ssh $PROD_HOST "cd $PROD_BIN_DIR && cp topems-server-${COMMIT}-${TIMESTAMP}.bak topems-server && launchctl kickstart -k gui/\$(id -u)/$LAUNCHD_LABEL"
+    run_prod "cd $PROD_BIN_DIR && cp topems-server-${COMMIT}-${TIMESTAMP}.bak topems-server && launchctl kickstart -k gui/\$(id -u)/$LAUNCHD_LABEL"
     error "已自动回滚"
   fi
 done
@@ -378,10 +417,10 @@ if [ "$DO_FRONTEND" = true ]; then
   cd apps/web && pnpm build 2>&1 | tail -5
   DIST_DIR="./dist"
   PROD_DIST_NAME="topems-${COMMIT}-$(date +%Y%m%d)"
-  ssh $PROD_HOST "mkdir -p $PROD_REPO_DIR/dist/$PROD_DIST_NAME"
-  rsync -avz --delete $DIST_DIR/ $PROD_HOST:$PROD_REPO_DIR/dist/$PROD_DIST_NAME/web/
+  run_prod "mkdir -p $PROD_REPO_DIR/dist/$PROD_DIST_NAME"
+  sync_prod "$DIST_DIR" "$PROD_REPO_DIR/dist/$PROD_DIST_NAME/web"
   # 更新 nginx root 软链接
-  ssh $PROD_HOST "
+  run_prod "
     cd $PROD_REPO_DIR/dist
     ln -sfn $PROD_DIST_NAME/web current
     # 更新 nginx 配置里的 root 路径（HTTP 与 HTTPS 同步到同一版本目录）
@@ -390,8 +429,8 @@ if [ "$DO_FRONTEND" = true ]; then
     done
   "
   # 门禁：nginx -t 必须语法通过且零 [warn]（stdout+stderr 都捕获），通过后才 reload
-  ssh $PROD_HOST 'bash -s -- --require' < "$LOCAL_REPO/scripts/verify-nginx-config.sh"
-  ssh $PROD_HOST '/opt/homebrew/bin/nginx -s reload'
+  pipe_prod "$LOCAL_REPO/scripts/verify-nginx-config.sh" --require
+  run_prod '/opt/homebrew/bin/nginx -s reload'
   info "前端部署完成: $PROD_DIST_NAME"
 fi
 
@@ -401,5 +440,5 @@ info "=========================================="
 info "  部署完成!"
 info "  版本: $COMMIT"
 info "  时间: $TIMESTAMP"
-info "  访问: http://192.168.110.115/"
+info "  访问: http://127.0.0.1:8099/（本机回环；nginx 对外入口见 macos-production-ops.md）"
 info "=========================================="

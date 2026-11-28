@@ -25,7 +25,7 @@
 #
 # 一键入口（prod SSH，需三重授权）：
 #   WINDOW_TARGET=prod ALLOW_PROD_WINDOW=yes WINDOW_CONFIRM=yes PROD_WINDOW_REASON='<工单>' \
-#   WINDOW_SSH_HOST=xingzhai@192.168.110.115 WINDOW_REMOTE_DB=topems_prod \
+#   WINDOW_SSH_HOST=xingzhai@<prod-host> WINDOW_REMOTE_DB=topems_prod \
 #   scripts/db/window-execution.sh all \
 #     --restore-dsn "$RESTORE_DSN" --anchor "$ANCHOR" \
 #     --allow-migrations 20261107000008,20261107000013 \

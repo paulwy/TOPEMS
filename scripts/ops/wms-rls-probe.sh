@@ -11,7 +11,7 @@
 #      验证 fail-closed 谓词真的在过滤；WMS 表本身为空，只验证机制不验证数据
 #   D. 形状与角色：39/39/0/39/38、策略谓词、应用角色非 super/bypassrls、窗口内 RLS 违例=0
 #
-# 运行位置：生产主机（xingzhai@192.168.110.115），人工执行，非常驻。
+# 运行位置：xingzhai 生产本机（127.0.0.1:8099 / unix socket），人工执行，非常驻。
 # 只读保证：
 #   - HTTP 仅 GET，无任何写接口；不修改配置、不重启服务
 #   - SQL 全部为 SELECT / pg_catalog / pg_stat_*，以及 BEGIN READ ONLY ... ROLLBACK

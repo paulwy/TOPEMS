@@ -38,7 +38,7 @@
       --username tenant_admin --tenant-id 00000000-0000-0000-0000-000000000001 \\
       --password "$W7B2_PASSWORD" \\
       --write --purge \\
-      --psql-cmd "ssh -o BatchMode=yes xingzhai@192.168.110.115 'PGHOST=/tmp /opt/homebrew/bin/psql -X -A -t -v ON_ERROR_STOP=1 -U topems_prod -d topems_prod'"
+      --psql-cmd "psql -h /tmp -U xingzhai -d topems_prod -X -A -t -v ON_ERROR_STOP=1"
 
   # 跨租户用第二租户账号（若存在）
   ... --foreign-token "<other-tenant-token>"

@@ -17,10 +17,11 @@
 #   scripts/ci/data/prod_cols.meta.json  导出时间 / 库名 / 账本 max / 行数 / sha256
 #
 # 环境变量：
-#   PROD_SSH_HOST  只读通道主机（默认 xingzhai@192.168.110.115）
+#   PROD_SSH_HOST  可选只读 SSH 通道主机（留空 = 本机直连 topems_prod，默认）
 #   PROD_DB        生产库名（默认 topems_prod）
-#   PROD_PSQL      远端 psql 路径（默认 /opt/homebrew/bin/psql）
+#   PROD_PSQL      远端 psql 路径（SSH 通道时默认 /opt/homebrew/bin/psql）
 #   PROD_DB_URL    可选：本地直连只读账号；设置后不再走 ssh
+#   PROD_LOCAL_USER / PROD_LOCAL_HOST  本机直连账号 / socket 目录（默认 xingzhai / /tmp）
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -28,10 +29,12 @@ cd "$ROOT_DIR" || exit 1
 
 OUT="scripts/ci/data/prod_cols.psv"
 META="scripts/ci/data/prod_cols.meta.json"
-PROD_SSH_HOST="${PROD_SSH_HOST:-xingzhai@192.168.3.129}"
+PROD_SSH_HOST="${PROD_SSH_HOST:-}"
 PROD_DB="${PROD_DB:-topems_prod}"
 PROD_PSQL="${PROD_PSQL:-/opt/homebrew/bin/psql}"
 PSQL_LOCAL="${PSQL_BIN:-psql}"
+PROD_LOCAL_USER="${PROD_LOCAL_USER:-xingzhai}"
+PROD_LOCAL_HOST="${PROD_LOCAL_HOST:-/tmp}"
 
 SQL_CATALOG="$(mktemp)"
 SQL_LEDGER="$(mktemp)"
@@ -60,9 +63,13 @@ run_psql() { # $1 = SQL 文件
   if [ -n "${PROD_DB_URL:-}" ]; then
     PGOPTIONS='-c default_transaction_read_only=on' \
       "$PSQL_LOCAL" "$PROD_DB_URL" -tA -F'|' -f - < "$1"
-  else
+  elif [ -n "$PROD_SSH_HOST" ]; then
     ssh "$PROD_SSH_HOST" \
       "PGOPTIONS='-c default_transaction_read_only=on' $PROD_PSQL -d $PROD_DB -tA -F'|' -f -" < "$1"
+  else
+    PGOPTIONS='-c default_transaction_read_only=on' \
+      "$PSQL_LOCAL" -h "$PROD_LOCAL_HOST" -U "$PROD_LOCAL_USER" -d "$PROD_DB" \
+      -tA -F'|' -f - < "$1"
   fi
 }
 
@@ -83,7 +90,7 @@ CLIENT_VERSION="$("$PSQL_LOCAL" --version 2>/dev/null || echo unknown)"
 ROWS="$(wc -l < "$TMP_OUT" | tr -d ' ')"
 SHA="$(shasum -a 256 "$TMP_OUT" | awk '{print $1}')"
 EXPORTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-if [ -n "${PROD_DB_URL:-}" ]; then SOURCE_HOST="local-psql"; else SOURCE_HOST="$PROD_SSH_HOST"; fi
+if [ -n "${PROD_DB_URL:-}" ]; then SOURCE_HOST="local-psql"; elif [ -n "$PROD_SSH_HOST" ]; then SOURCE_HOST="$PROD_SSH_HOST"; else SOURCE_HOST="local-socket"; fi
 GENERATOR_CMD="bash scripts/ci/refresh-prod-cols.sh（PROD_SSH_HOST=${SOURCE_HOST} PROD_DB=${PROD_DB}）"
 
 mkdir -p scripts/ci/data

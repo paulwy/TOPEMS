@@ -37,7 +37,7 @@
 | 操作 | 命令 |
 |---|---|
 | 本机 psql（旧库，**非生产**） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems` |
-| 生产 psql（xingzhai 机） | `ssh xingzhai@192.168.110.115 "psql -d topems_prod"`（库 `topems_prod`，`ehs` 71 表） |
+| 生产 psql（xingzhai 本机） | `psql -h /tmp -U xingzhai -d topems_prod`（库 `topems_prod`，本机 unix socket；退役远端 `.115` 目标已摘除） |
 | 验证库 psql（5433） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6）✅ **2026-11-02 起该实例已恢复**（数据目录 `/opt/homebrew/var/postgresql@18_5433`），可直接连接 |
 | 迁移执行（本机旧库/开发） | `DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems sqlx migrate run`（本机旧库，**非生产**；原 `topems_dev` 同 5432 库覆盖的做法已失效） |
 | 迁移执行（生产） | 在 xingzhai 机以 `DATABASE_URL=postgres://topems_prod:***@localhost:5432/topems_prod` 执行；当前账本 667 条 success、max `20261112190000`（2026-11-13 实测） |
@@ -132,7 +132,7 @@ bash scripts/db/check-consistency.sh
 | 库 | 端口 | 运行方式 | 角色 | 数据基线 |
 |---|---|---|---|---|
 | **生产库 `topems_prod`**（xingzhai 生产机） | `5432` | Homebrew PostgreSQL **18.4** | **生产权威库** | `ehs` 71 表；`_sqlx_migrations` 667 success、max `20261112190000`（2026-11-13 实测） |
-| **旧库 `topems`**（本机 air） | `5432` | Homebrew PostgreSQL 18.4 | 历史/开发库，**非生产** | `ehs` 65 表（2026-11-13 实测） |
+| **旧库 `topems`**（本机 xingzhai 开发/历史） | `5432` | Homebrew PostgreSQL 18.4 | 历史/开发库，**非生产** | `ehs` 65 表（2026-11-13 实测） |
 | ~~**开发库 `topems_dev`**~~ | `5432` | 同实例 | 开发/验证基线 | **2026-10-16 核实：该库已不存在**；原基线 235 表 / 955 权限（含 4 个开发独有 public 表 + 19 个模块表 + 开发数据）需从 `backups/topems_pre_clean_20261008.sql` 重建（该 dump 亦缺失，见 §7.4） |
 | **验证库 `topems`（5433）** | `5433` | Homebrew PostgreSQL 18.4（`/opt/homebrew/var/postgres5433`）——**2026-10-16 起实例已不存在**（数据目录缺失、端口无监听） | 迁移链重放 / 双库账本核对（§6） | 与生产一致（数据已复制）；复用需重建 |
 
@@ -148,7 +148,7 @@ bash scripts/db/check-consistency.sh
 ### 7.3 连接口径（应用/脚本）
 
 - **生产/部署（xingzhai 机）**：`postgres://topems_prod:***@localhost:5432/topems_prod`（口令在 launchd plist 环境变量，禁止明文落盘/入库）
-- **本机历史/开发（air 机）**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems`（旧库，`ehs` 65 表，**非生产**）
+- **本机历史/开发（xingzhai）**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems`（旧库，`ehs` 65 表，**非生产**）
 - **开发**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权）⚠️ **2026-10-16 核实 `topems_dev` 不存在**，该口径当前不可用；且本机 `.env.local` 的 `DATABASE_URL` 仍指向已消失的 **5433**，使用前须改为 5432 的 `topems` 或重建 `topems_dev`
 - **5433 验证库**：仅迁移链重放/账本核对（§6 命令），不承载应用；**2026-10-16 起该实例已不存在，执行前须先重建（§6.3）**
 

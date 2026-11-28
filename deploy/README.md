@@ -9,11 +9,11 @@
 > - 生产库：`topems_prod`（`ehs` schema 71 表）；旧库 `topems`（65 表）**不是生产**
 > - 迁移账本：`_sqlx_migrations` **667** 条成功、0 失败、无重复，max `20261112190000`（统计时点 2026-11-13）
 >
-> 下文 `systemd/`、Linux nginx 模板、Docker/K8s 均保留为**通用模板/历史参考**；本机现用生产链路是 `scripts/deploy-prod.sh` + launchd。
+> 下文 `systemd/`、Linux nginx 模板、Docker/K8s 均保留为**通用模板/历史参考**；本机现用生产形态是 macOS launchd 托管，版本升级主链路见 `docs/deploy/release-pipeline.md`。
 
 | 方案 | 定位 | 适用场景 | 目录/入口 |
 |------|------|---------|-----------|
-| **macOS launchd** | **本机生产（现用）** | xingzhai 生产机（macOS + brew nginx） | `scripts/deploy-prod.sh`；plist 在 `~/Library/LaunchAgents/`（不入库） |
+| **macOS launchd** | **本机生产（现用）** | xingzhai 生产机（macOS + brew nginx） | 升级：`docs/deploy/release-pipeline.md`；兜底脚本 `scripts/deploy-prod.sh`；plist 在 `~/Library/LaunchAgents/`（不入库） |
 | **systemd** | Linux 生产模板（**非本机现用**） | 裸机 Linux 目标机（`scripts/deploy/install.sh`/`update.sh`/`rollback.sh`） | `systemd/` |
 | **Docker Compose** | **已弃用**（临时验证/历史参考，非生产） | 一次性测试/演示；生产数据禁入容器 | `docker/`（DEPRECATED，见其 README） |
 | **Kubernetes** | 可选（当前未启用） | 多节点集群、云原生部署 | `k8s/` |
@@ -110,8 +110,8 @@ deploy/
 
 ## 生产部署（本机 macOS launchd；Linux 模板见下）
 
-本机生产使用 `scripts/deploy-prod.sh`（编译 → scp → launchd `com.topems.server` 重启 → 健康检查，库 `topems_prod`）；
-回滚用 `scripts/rollback-prod-mac.sh`。**不使用 docker-compose**，生产数据直连 PostgreSQL（5432），禁入容器。
+现役版本升级走 `docs/deploy/release-pipeline.md`：air 侧构建 arm64 交付包 → xingzhai 本机免构建替换 + 校验（生产机不构建、不拉源码编译），库 `topems_prod`；回滚用 `scripts/rollback-prod-mac.sh`。
+`scripts/deploy-prod.sh` 为兼容/兜底入口（本机模式直连；`PROD_HOST` 非空才走远端 SSH），不再内置退役生产地址。**不使用 docker-compose**，生产数据直连 PostgreSQL（5432），禁入容器。
 
 `scripts/deploy/` 下的 systemd 范式脚本（install/update/rollback/start-production 等）是 **Linux 目标机模板**，
 不是本机现用链路；对应执行清单见 `docs/deploy/production-execution-checklist.md`（Linux 目标清单）。

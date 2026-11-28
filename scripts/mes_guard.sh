@@ -25,11 +25,11 @@
 #   scripts/mes_guard.sh --db-url "postgresql://..."   # 指定编译库（CI 传入 service 地址）
 #   scripts/mes_guard.sh --skip-compile       # 只做遮蔽检查（快排）
 #
-# 以生产为真源重刷快照（唯一推荐路径，只读）：
+# 以生产为真源重刷快照（唯一推荐路径，只读；生产机即本机，可省略 --snapshot-ssh）：
 #   bash scripts/mes_guard.sh --sync-snapshot \
-#     --snapshot-ssh xingzhai@192.168.3.129 --snapshot-db topems_prod \
-#     --snapshot-pg-bin /opt/homebrew/bin
-#   → 远端 pg_dump 以 default_transaction_read_only=on 执行，不写任何对象；
+#     --snapshot-db topems_prod --snapshot-pg-bin /opt/homebrew/bin
+#   # 远端兜底：追加 --snapshot-ssh <user>@<prod-host>
+#   → pg_dump 以 default_transaction_read_only=on 执行，不写任何对象；
 #     头部写入基线日期 / 生成命令 / 客户端与服务端版本 / 账本水位，可一键复现。
 #
 # 环境变量：

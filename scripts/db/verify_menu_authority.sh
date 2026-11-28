@@ -18,7 +18,8 @@
 #
 # 环境变量（可选覆盖；默认从仓库根 .env 的 DATABASE_URL 派生）：
 #   TOPEMS_DB_URL / TOPEMS_TEST_URL / TOPEMS_5433_URL
-#   TOPEMS_PROD_SSH（默认 xingzhai@192.168.110.115）
+#   TOPEMS_PROD_SSH（可选：远端只读 SSH 通道；留空 = 本机直连 topems_prod，默认）
+#   TOPEMS_PROD_URL（本机直连 prod 连接串，默认 socket /tmp user=xingzhai）
 #   TOPEMS_PROD_DB（默认 topems_prod）
 #
 # 权威 schema 选择顺序：public(非空) → iam(非空) → 其余非空 schema（取最大行数）。
@@ -45,8 +46,10 @@ fi
 DEV_URL="${TOPEMS_DB_URL:-$BASE_URL}"
 TEST_URL="${TOPEMS_TEST_URL:-$(printf '%s' "$BASE_URL" | sed -E 's#/topems([?]|$)#/topems_test\1#')}"
 PORT5433_URL="${TOPEMS_5433_URL:-$(printf '%s' "$BASE_URL" | sed -E 's#:5432/#:5433/#; s#/topems([?]|$)#/topems\1#')}"
-PROD_SSH="${TOPEMS_PROD_SSH:-xingzhai@192.168.110.115}"
+PROD_SSH="${TOPEMS_PROD_SSH:-}"
 PROD_DB="${TOPEMS_PROD_DB:-topems_prod}"
+# 本机直连 prod（默认 socket /tmp，超级用户 xingzhai；只读核验）
+PROD_LOCAL_DSN="${TOPEMS_PROD_URL:-postgresql:///?host=/tmp&user=xingzhai&dbname=topems_prod}"
 
 mask_url() {
   printf '%s' "$1" | sed -E 's#(://[^:]+:)[^@]+@#\1***@#g'
@@ -90,6 +93,11 @@ codes_ssh() {
     "/opt/homebrew/bin/psql -tAc \"select code from $2.core_menus where deleted_at is null order by code\" $PROD_DB" 2>&1
 }
 
+# prod 本机直连（PROD_SSH 留空时使用）
+menu_schema_counts_prod() { menu_schema_counts_local "$PROD_LOCAL_DSN"; }
+ledger_prod()             { ledger_local "$PROD_LOCAL_DSN"; }
+codes_prod()              { codes_local "$PROD_LOCAL_DSN" "$1"; }
+
 # ---- 前端 navItems code 集合（与三联校验同源）----
 node scripts/verify_navigation.mjs --json > "$TMP_DIR/fe_nav.json"
 node -e '
@@ -109,8 +117,10 @@ collect_one() {
   local schema_out ledger_out rc
   if [[ "$kind" == "local" ]]; then
     if schema_out="$(menu_schema_counts_local "$target")"; then rc=0; else rc=1; fi
-  else
+  elif [[ -n "$PROD_SSH" ]]; then
     if schema_out="$(menu_schema_counts_ssh)"; then rc=0; else rc=1; fi
+  else
+    if schema_out="$(menu_schema_counts_prod)"; then rc=0; else rc=1; fi
   fi
 
   if [[ $rc -ne 0 || "$schema_out" == *"Connection refused"* || "$schema_out" == *"does not exist"* || "$schema_out" == *"错误"* || "$schema_out" == *"error"* || -z "$schema_out" ]]; then
@@ -139,9 +149,12 @@ collect_one() {
     if [[ "$kind" == "local" ]]; then
       TOTAL[$idx]="$(codes_local "$target" "$auth" | sed '/^$/d' | wc -l | tr -d ' ')"
       codes_local "$target" "$auth" | sed '/^$/d' > "$TMP_DIR/codes_$idx.txt"
-    else
+    elif [[ -n "$PROD_SSH" ]]; then
       TOTAL[$idx]="$(codes_ssh "" "$auth" | sed '/^$/d' | wc -l | tr -d ' ')"
       codes_ssh "" "$auth" | sed '/^$/d' > "$TMP_DIR/codes_$idx.txt"
+    else
+      TOTAL[$idx]="$(codes_prod "$auth" | sed '/^$/d' | wc -l | tr -d ' ')"
+      codes_prod "$auth" | sed '/^$/d' > "$TMP_DIR/codes_$idx.txt"
     fi
     CODE_FILES[$idx]="$TMP_DIR/codes_$idx.txt"
   else
@@ -151,8 +164,10 @@ collect_one() {
 
   if [[ "$kind" == "local" ]]; then
     ledger_out="$(ledger_local "$target" || true)"
-  else
+  elif [[ -n "$PROD_SSH" ]]; then
     ledger_out="$(ledger_ssh || true)"
+  else
+    ledger_out="$(ledger_prod || true)"
   fi
   LEDGER_LINES[$idx]="${ledger_out:-<none>}"
 }
@@ -168,7 +183,7 @@ emit() {
   echo
   echo "> 生成时间：$(date '+%Y-%m-%d %H:%M:%S %Z') ｜ 生成脚本：[verify_menu_authority.sh](scripts/db/verify_menu_authority.sh)"
   echo "> 口径：仅 SELECT；前端基线来自 [verify_navigation.mjs](scripts/verify_navigation.mjs) \`--json\`（395 条唯一 code）。"
-  echo "> dev 连接串：\`$(mask_url "$DEV_URL")\`（其余本地库按库名/端口派生，prod 走 SSH + psql）。"
+  echo "> dev 连接串：\`$(mask_url "$DEV_URL")\`（其余本地库按库名/端口派生；prod 默认本机直连 topems_prod，TOPEMS_PROD_SSH 非空时走 SSH + psql）。"
   echo
   echo "## 1. 四库核验"
   echo

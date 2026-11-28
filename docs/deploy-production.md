@@ -1,6 +1,10 @@
 # TOPEMS 生产机部署手册
 
-> 从 air 的 MacBook 一键部署到 xingzhai 生产机（192.168.110.115）。
+> ⚠️ **口径更正（2026-11-28）**：下文拓扑与命令中的 `192.168.110.115` 为**已退役、探活不可达**的旧生产机地址，**不得按其执行**。现役角色收敛为：**xingzhai（Mac mini）= 开发 + 唯一生产宿主**；**air（.96）= 开发 + 出包机构建交付包**；生产机不构建。
+> 现役权威通道：版本升级见 [release-pipeline.md](deploy/release-pipeline.md)（air 出包 → xingzhai 本机免构建替换）；首装与运维见 [macos-deployment.md](deploy/macos-deployment.md)、[macos-production-ops.md](deploy/macos-production-ops.md)。
+> 本文余下章节为 2026-11 早期 `air 编译 → scp/ssh 到 .115` 旧范式的历史记录，仅作留档，地址/命令勿照搬到现役环境。
+
+> 历史：从 air 的 MacBook 一键部署到旧生产机（192.168.110.115，已退役）。
 
 
 
