@@ -8662,5 +8662,8 @@
   "pages.equipment_status_panel.k4": "Total",
   "pages.equipment_status_panel.k5": "units",
   "pages.index.mes_footer_every": "Every",
-  "pages.index.mes_footer_suffix": "s auto refresh ·"
+  "pages.index.mes_footer_suffix": "s auto refresh ·",
+  "pages.mobile_home_page.just_now": "just now",
+  "pages.mobile_home_page.minutes_ago": " min ago",
+  "pages.mobile_home_page.hours_ago": " h ago"
 }

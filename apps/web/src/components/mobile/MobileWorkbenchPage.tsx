@@ -3,7 +3,6 @@ import { semanticTileSx } from '@/theme/semanticTile';
 import styles from './MobileWorkbenchPage.module.css';
 import React, { useCallback, useEffect } from 'react';
 import { Box, Typography, Paper, Chip, Avatar, useTheme, List, Badge } from '@mui/material';
-import { Grid } from '@/components/common';
 import { MobilePageTemplate } from '@/components/templates';
 import {
   Home,
@@ -26,9 +25,11 @@ import i18n from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { BottomTabBar, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { useAuthStore } from '@/store';
+import { useCurrentIamUser } from '@/hooks/useCurrentIamUser';
 import { type MobileWorkbenchData } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
+import { mobileApi } from '@/api/mobile';
 import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -62,25 +63,29 @@ const MobileWorkbenchPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const iamUser = useCurrentIamUser();
   const workbenchQuery = useQuery<{
     stats: StatCard[];
     workbenchItems: WorkbenchItem[];
     unreadCount: number;
+    attendanceStatus: MobileWorkbenchData['today_attendance_status'];
   }>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_WORKBENCH_BASE,
     queryFn: async () => {
-      const workbenchData: MobileWorkbenchData = {
-        pending_tasks: 8,
-        pending_approvals: 5,
-        unread_notifications: 12,
-        today_attendance_status: 'checked_in',
-        today_production_output: 1256,
-        today_quality_pass_rate: 98.5,
-        shortcuts: [],
-      };
+      // 真实来源：/api/mobile/workbench（后端聚合 workflow 待办数、通知未读数、考勤状态、MES 当日产量、QMS 合格率）
+      const response = await mobileApi.getWorkbenchData();
+      const workbenchData: MobileWorkbenchData | null = response?.data ?? null;
+      if (!workbenchData) {
+        return {
+          stats: [] as StatCard[],
+          workbenchItems: [] as WorkbenchItem[],
+          unreadCount: 0,
+          attendanceStatus: 'not_checked_in' as const,
+        };
+      }
       const stats: StatCard[] = [
         {
-          id: '1',
+          id: 'tasks',
           label: i18n.t('mobile.mobile_workbench_page.k0'),
           value: workbenchData.pending_tasks,
           icon: <ListTodo className={styles.il1} />,
@@ -88,7 +93,7 @@ const MobileWorkbenchPage: React.FC = () => {
           badge: workbenchData.pending_tasks,
         },
         {
-          id: '2',
+          id: 'approvals',
           label: i18n.t('mobile.mobile_workbench_page.k1'),
           value: workbenchData.pending_approvals,
           icon: <CheckSquare className={styles.il2} />,
@@ -96,73 +101,52 @@ const MobileWorkbenchPage: React.FC = () => {
           badge: workbenchData.pending_approvals,
         },
         {
-          id: '3',
+          id: 'production',
           label: i18n.t('mobile.mobile_workbench_page.k2'),
           value: workbenchData.today_production_output,
           icon: <Factory className={styles.il3} />,
           color: 'success' as const,
         },
         {
-          id: '4',
+          id: 'quality',
           label: i18n.t('mobile.mobile_workbench_page.k3'),
           value: `${workbenchData.today_quality_pass_rate}%`,
           icon: <TrendingUp className={styles.il4} />,
           color: 'info' as const,
         },
       ];
-      const workbenchItems: WorkbenchItem[] = [
-        {
-          id: 'task-1',
-          title: i18n.t('pages.mobile_workbench_page.a3_0'),
-          subtitle: i18n.t('mobile.mobile_workbench_page.k4'),
-          time: '10:30',
-          avatar: <ClipboardList className={styles.il5} />,
-          type: 'task',
-          status: i18n.t('mobile.mobile_workbench_page.k5'),
-        },
-        {
-          id: 'approval-1',
-          title: i18n.t('mobile.mobile_workbench_page.k6'),
-          subtitle: i18n.t('pages.mobile_workbench_page.12500_1'),
-          time: '09:45',
-          avatar: <CheckSquare className={styles.il6} />,
-          type: 'approval',
-          status: i18n.t('mobile.mobile_workbench_page.k7'),
-        },
-        {
-          id: 'production-1',
-          title: i18n.t('pages.mobile_workbench_page.po20240678_2'),
-          subtitle: i18n.t('mobile.mobile_workbench_page.500_8'),
-          time: '08:00',
-          avatar: <Factory className={styles.il7} />,
-          type: 'production',
-          status: i18n.t('mobile.mobile_workbench_page.k9'),
-        },
-        {
-          id: 'quality-1',
-          title: i18n.t('mobile.mobile_workbench_page.k10'),
-          subtitle: i18n.t('pages.mobile_workbench_page.b20240601_3'),
-          time: i18n.t('pages.mobile_workbench_page.1620_4'),
-          avatar: <ClipboardCheck className={styles.il8} />,
-          type: 'quality',
-          status: i18n.t('mobile.mobile_workbench_page.k11'),
-        },
-        {
-          id: 'notification-1',
-          title: i18n.t('mobile.mobile_workbench_page.k12'),
-          subtitle: i18n.t('pages.mobile_workbench_page.22002400_5'),
-          time: i18n.t('pages.mobile_workbench_page.1400_6'),
-          avatar: <Bell className={styles.il9} />,
-          type: 'notification',
-        },
-      ];
-      return { stats, workbenchItems, unreadCount: workbenchData.unread_notifications };
+      // 动态列表无后端聚合来源，不再编造条目；由各业务页承载。
+      const workbenchItems: WorkbenchItem[] = [];
+      return {
+        stats,
+        workbenchItems,
+        unreadCount: workbenchData.unread_notifications ?? 0,
+        attendanceStatus: workbenchData.today_attendance_status,
+      };
     },
     staleTime: 5 * 60 * 1000,
   });
   const stats = workbenchQuery.data?.stats ?? [];
   const workbenchItems = workbenchQuery.data?.workbenchItems ?? [];
   const unreadCount = workbenchQuery.data?.unreadCount ?? 0;
+  const displayName =
+    iamUser?.full_name ||
+    user?.realName ||
+    user?.full_name ||
+    user?.username ||
+    '';
+  const displayDepartment =
+    (iamUser as unknown as { department?: string } | null)?.department ?? '';
+  const attendanceStatusLabel = (() => {
+    switch (workbenchQuery.data?.attendanceStatus) {
+      case 'checked_in':
+        return i18n.t('mobile.mobile_workbench_page.attendance_checked_in');
+      case 'checked_out':
+        return i18n.t('mobile.mobile_workbench_page.attendance_checked_out');
+      default:
+        return i18n.t('mobile.mobile_workbench_page.attendance_not_checked_in');
+    }
+  })();
   const loading = workbenchQuery.isLoading;
   useEffect(() => {
     if (workbenchQuery.isError) {
@@ -368,20 +352,20 @@ const MobileWorkbenchPage: React.FC = () => {
                 fontSize: designTokens.typography.fontSize.scale['1rem'],
               }}
             >
-              {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+              {displayName.charAt(0) || 'U'}
             </Avatar>
             <Box sx={{ flex: 1 }}>
               <Typography
                 variant='h6'
                 sx={{ fontWeight: 600, mb: 0.5 }}
               >
-                {user?.fullName || user?.username || i18n.t('mobile.mobile_workbench_page.k32')}
+                {displayName || i18n.t('mobile.mobile_workbench_page.k32')}
               </Typography>
               <Typography
                 variant='body2'
                 sx={{ opacity: 0.8 }}
               >
-                {user?.department || i18n.t('mobile.mobile_workbench_page.k33')}
+                {displayDepartment}
               </Typography>
             </Box>
             <Badge
@@ -397,7 +381,7 @@ const MobileWorkbenchPage: React.FC = () => {
               variant='body2'
               sx={{ opacity: 0.9 }}
             >
-              {i18n.t('pages.mobile_workbench_page.k0')}
+              {attendanceStatusLabel}
             </Typography>
           </Box>
         </Paper>
@@ -408,16 +392,16 @@ const MobileWorkbenchPage: React.FC = () => {
           />
         ) : (
           <>
-            <Grid
-              container
-              spacing={2}
-              sx={{ mb: 3 }}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: 2,
+                mb: 3,
+              }}
             >
               {stats.map((stat) => (
-                <Grid
-                  xs={6}
-                  key={stat.id}
-                >
+                <Box key={stat.id}>
                   <Paper
                     elevation={0}
                     sx={{
@@ -456,9 +440,9 @@ const MobileWorkbenchPage: React.FC = () => {
                       {stat.label}
                     </Typography>
                   </Paper>
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
             <Paper
               elevation={0}
               sx={{
@@ -484,15 +468,15 @@ const MobileWorkbenchPage: React.FC = () => {
                   {i18n.t('pages.mobile_workbench_page.k1')}
                 </Typography>
               </Box>
-              <Grid
-                container
-                spacing={2}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                  gap: 2,
+                }}
               >
                 {quickActions.map((action) => (
-                  <Grid
-                    xs={3}
-                    key={action.id}
-                  >
+                  <Box key={action.id}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -539,9 +523,9 @@ const MobileWorkbenchPage: React.FC = () => {
                         {action.label}
                       </Typography>
                     </Box>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             </Paper>
             <Paper
               elevation={0}
@@ -584,6 +568,16 @@ const MobileWorkbenchPage: React.FC = () => {
                 </Box>
               </Box>
               <List disablePadding>
+                {workbenchItems.length === 0 && (
+                  <Box sx={{ p: 3, textAlign: 'center' }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('mobile.mobile_workbench_page.no_items')}
+                    </Typography>
+                  </Box>
+                )}
                 {workbenchItems.map((item, index) => (
                   <React.Fragment key={item.id}>
                     <MobileCard

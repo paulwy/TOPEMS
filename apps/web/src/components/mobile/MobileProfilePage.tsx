@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { BottomTabBar, MobileCard } from '@/components/mobile';
 import { MobilePageTemplate } from '@/components/templates';
 import { useAuthStore } from '@/store';
+import { useCurrentIamUser } from '@/hooks/useCurrentIamUser';
 import { MOBILE_PATHS } from '@/module-configs/mobile/config';
 import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
@@ -48,6 +49,7 @@ const MobileSettingsPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const iamUser = useCurrentIamUser();
   const { data: profile } = useQuery({
     queryKey: ['mobile-profile'],
     // 移动端 profile 读的是独立的 mobile.mobile_users 记录，控制台账号（走 iam.users）通常没有该行，
@@ -62,7 +64,13 @@ const MobileSettingsPage: React.FC = () => {
         }),
   });
   const displayName =
-    profile?.full_name || profile?.nickname || user?.fullName || user?.username || '';
+    profile?.full_name ||
+    profile?.nickname ||
+    iamUser?.full_name ||
+    user?.realName ||
+    user?.full_name ||
+    user?.username ||
+    '';
   const displayEmail = profile?.email || user?.email || '';
   const displayRole =
     profile?.position ||

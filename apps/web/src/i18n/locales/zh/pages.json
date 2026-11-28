@@ -4061,5 +4061,8 @@
   "pages.equipment_status_panel.k4": "共",
   "pages.equipment_status_panel.k5": "台设备",
   "pages.index.mes_footer_every": "数据每",
-  "pages.index.mes_footer_suffix": "秒自动刷新 ·"
+  "pages.index.mes_footer_suffix": "秒自动刷新 ·",
+  "pages.mobile_home_page.just_now": "刚刚",
+  "pages.mobile_home_page.minutes_ago": " 分钟前",
+  "pages.mobile_home_page.hours_ago": " 小时前"
 }

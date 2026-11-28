@@ -1798,5 +1798,20 @@
   "mobile.mobile_quality_page.error_load": "Failed to load quality tasks, please retry",
   "mobile.mobile_quality_page.error_load_defects": "Failed to load defect records, please retry",
   "mobile.mobile_quality_page.error_report": "Failed to report defect, please retry",
-  "mobile.mobile_quality_page.error_update_task": "Failed to update task status, please retry"
+  "mobile.mobile_quality_page.error_update_task": "Failed to update task status, please retry",
+  "mobile.mobile_home_page.todo_tasks": "Pending tasks",
+  "mobile.mobile_home_page.todo_approvals": "Pending approvals",
+  "mobile.mobile_home_page.todo_count": "{{count}} item(s)",
+  "mobile.mobile_home_page.no_todo": "No pending items",
+  "mobile.mobile_home_page.no_activity": "No activity yet",
+  "mobile.mobile_home_page.checkout": "Clock out",
+  "mobile.mobile_home_page.checkout_done": "Clocked out",
+  "mobile.mobile_home_page.checkout_success": "Clocked out successfully",
+  "mobile.mobile_home_page.punch_fail": "Clock-in failed",
+  "mobile.mobile_home_page.punch_fail_hint": "Please check attendance service and retry",
+  "mobile.mobile_home_page.quick_entries": "Quick actions",
+  "mobile.mobile_workbench_page.no_items": "No pending items",
+  "mobile.mobile_workbench_page.attendance_checked_in": "Checked in today",
+  "mobile.mobile_workbench_page.attendance_checked_out": "Checked out today",
+  "mobile.mobile_workbench_page.attendance_not_checked_in": "Not checked in yet"
 }

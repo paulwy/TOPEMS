@@ -900,5 +900,20 @@
   "mobile.mobile_quality_page.error_load": "质检任务加载失败，请重试",
   "mobile.mobile_quality_page.error_load_defects": "缺陷记录加载失败，请重试",
   "mobile.mobile_quality_page.error_report": "缺陷上报失败，请重试",
-  "mobile.mobile_quality_page.error_update_task": "任务状态更新失败，请重试"
+  "mobile.mobile_quality_page.error_update_task": "任务状态更新失败，请重试",
+  "mobile.mobile_home_page.todo_tasks": "待办任务",
+  "mobile.mobile_home_page.todo_approvals": "待审批",
+  "mobile.mobile_home_page.todo_count": "共 {{count}} 项",
+  "mobile.mobile_home_page.no_todo": "暂无待办",
+  "mobile.mobile_home_page.no_activity": "暂无动态",
+  "mobile.mobile_home_page.checkout": "下班打卡",
+  "mobile.mobile_home_page.checkout_done": "已下班",
+  "mobile.mobile_home_page.checkout_success": "下班打卡成功",
+  "mobile.mobile_home_page.punch_fail": "打卡失败",
+  "mobile.mobile_home_page.punch_fail_hint": "请检查考勤服务或稍后重试",
+  "mobile.mobile_home_page.quick_entries": "快捷入口",
+  "mobile.mobile_workbench_page.no_items": "暂无待处理动态",
+  "mobile.mobile_workbench_page.attendance_checked_in": "今日已打卡",
+  "mobile.mobile_workbench_page.attendance_checked_out": "今日已下班",
+  "mobile.mobile_workbench_page.attendance_not_checked_in": "今日未打卡"
 }
