@@ -261,7 +261,7 @@ pub async fn get_document_stats(
         StatusCode::OK,
         ApiResponse::success(
             serde_json::json!({
-                "total": rows.len() as i64,
+                "total": i64::try_from(rows.len()).unwrap_or(i64::MAX),
                 "by_status": by_status,
                 "by_category": by_category
             }),
