@@ -2,21 +2,30 @@ import { apiClient } from '../client';
 
 interface CostBreakdownItem {
   category: string;
+  sub_category: string;
+  description: string;
   amount: number;
+  unit: string;
+  unit_price: number;
+  quantity: number;
   percentage: number;
 }
 
 export interface WorkOrderCostResult {
   work_order_id: string;
   work_order_no: string;
-  production_order_no: string;
+  production_order_no: string | null;
   total_cost: number;
   material_cost: number;
   labor_cost: number;
   overhead_cost: number;
   cost_breakdown: CostBreakdownItem[];
   unit_cost: number;
-  produced_qty: number;
+  quantity: number;
+  currency: string;
+  calculated_at: string;
+  /** 空数组才代表料/工/费全部按真实口径计价；非空即这条成本不完整（后端 B373 起返回） */
+  data_gaps?: string[];
 }
 
 interface WorkOrderCostDetail {
@@ -89,11 +98,11 @@ interface PeriodCostReport {
 }
 
 interface ProductCostItem {
-  product_id: string;
   product_code: string;
   product_name: string;
   total_cost: number;
   unit_cost: number;
+  quantity: number;
   percentage: number;
 }
 
@@ -112,50 +121,15 @@ interface MonthlyCostItem {
   overhead_cost: number;
 }
 
-interface CostTrendData {
+/** 与后端 svc/mes CostTrendData 一一对应：按周期分桶后的并列数组，不是 [{period, cost}] */
+export interface CostTrendData {
   period: string;
-  total_cost: number;
-  material_cost: number;
-  labor_cost: number;
-  overhead_cost: number;
-  trend_direction: 'up' | 'down' | 'stable';
-  change_rate: number;
-}
-
-interface CostTrendResponse {
-  start_date: string;
-  end_date: string;
-  trend_data: CostTrendData[];
-  overall_trend: 'up' | 'down' | 'stable';
-  avg_change_rate: number;
-}
-
-interface CostComparisonResponse {
-  comparison_type: string;
-  baseline_total: number;
-  comparison_total: number;
-  difference: number;
-  difference_percent: number;
-  breakdown_comparison: ComparisonBreakdown[];
-}
-
-interface ComparisonBreakdown {
-  category: string;
-  baseline_amount: number;
-  comparison_amount: number;
-  difference: number;
-  difference_percent: number;
-}
-
-interface CostForecastResponse {
-  forecast_period: string;
-  forecast_total: number;
-  forecast_material: number;
-  forecast_labor: number;
-  forecast_overhead: number;
-  confidence_interval: [number, number];
-  trend_factor: number;
-  seasonality_factor: number;
+  labels: string[];
+  total_cost: number[];
+  material_cost: number[];
+  labor_cost: number[];
+  overhead_cost: number[];
+  avg_unit_cost: number[];
 }
 
 export const productionCostApi = {
@@ -181,13 +155,15 @@ export const productionCostApi = {
     end_date?: string;
     period_type?: 'week' | 'month';
     product_id?: string;
-  }) => apiClient.mes.get<CostTrendResponse>('/cost/trend', { params }),
+  }) => apiClient.mes.get<CostTrendData>('/cost/trend', { params }),
 
+  // 后端 get_cost_comparison / get_cost_forecast 自 B372 起显式返回 503（没有真实口径，
+  // 不再编造数值）。这里保留调用点语义（会 reject），页面按「未接入」空态处理，不再声明假响应类型。
   getCostComparison: (data: {
     compare_type: 'period' | 'product' | 'workshop';
     items: { id: string; name: string; type: string }[];
-  }) => apiClient.mes.post<CostComparisonResponse>('/cost/comparison', data),
+  }) => apiClient.mes.post<never>('/cost/comparison', data),
 
   getCostForecast: (params?: { months?: number; product_id?: string }) =>
-    apiClient.mes.get<CostForecastResponse>('/cost/forecast', { params }),
+    apiClient.mes.get<never>('/cost/forecast', { params }),
 };
