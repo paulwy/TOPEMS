@@ -841,6 +841,19 @@ pub async fn turnover_trend(
 
 /// 单物料库存周转统计（契约 inventoryTurnover.ts: GET /inventory-turnover/{id}）
 /// id 语义：material_code（物料编码）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/inventory-turnover/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 pub async fn get_turnover_detail(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

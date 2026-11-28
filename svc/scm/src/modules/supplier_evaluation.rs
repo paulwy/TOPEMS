@@ -148,6 +148,17 @@ pub async fn list_evaluations(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/evaluations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn create_evaluation(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -326,6 +337,20 @@ pub async fn get_evaluation(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/evaluations/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn update_evaluation(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -464,6 +489,20 @@ pub async fn update_evaluation(
 
     response
 }
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/evaluations/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn delete_evaluation(
     State(state): State<ApiState>,

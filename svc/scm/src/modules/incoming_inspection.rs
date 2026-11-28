@@ -369,6 +369,17 @@ pub struct CreateIncomingNoticeRequest {
     pub remarks: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/incoming-notices",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn create_notice(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -538,6 +549,20 @@ pub struct UpdateIncomingNoticeRequest {
     pub actual_arrival_date: Option<chrono::NaiveDate>,
     pub remarks: Option<String>,
 }
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/incoming-notices/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn update_notice(
     State(state): State<ApiState>,
@@ -789,6 +814,17 @@ pub struct CreateInspectionRequest {
     pub remarks: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/incoming-inspections",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn create_inspection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -974,6 +1010,20 @@ pub struct UpdateInspectionRequest {
     pub remarks: Option<String>,
     pub status: Option<String>,
 }
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/incoming-inspections/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn update_inspection(
     State(state): State<ApiState>,
@@ -1519,6 +1569,19 @@ pub async fn list_inspection_records(
 }
 
 /// POST /incoming-inspections/{id}/records — 创建检验记录明细
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/incoming-inspections/{id}/records",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 pub async fn create_inspection_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1607,6 +1670,19 @@ pub struct UpdateInspectionRecordRequest {
 }
 
 /// 单条检验记录明细查询（契约 inspectionRecord.ts: GET /inspection-records/{id}）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/inspection-records/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 pub async fn get_inspection_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1657,6 +1733,19 @@ pub async fn get_inspection_record(
 }
 
 /// 检验记录明细更新（契约 inspectionRecord.ts: PUT /inspection-records/{id}）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/inspection-records/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 pub async fn update_inspection_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1739,6 +1828,19 @@ pub async fn update_inspection_record(
 }
 
 /// 检验记录明细删除（契约 inspectionRecord.ts: DELETE /inspection-records/{id}）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/inspection-records/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 pub async fn delete_inspection_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

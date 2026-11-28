@@ -145,6 +145,17 @@ pub async fn list_admissions(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/supplier-admissions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn create_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -283,6 +294,20 @@ pub async fn get_admission(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/supplier-admissions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn update_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -391,6 +416,20 @@ pub async fn update_admission(
         }
     }
 }
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/supplier-admissions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn delete_admission(
     State(state): State<ApiState>,

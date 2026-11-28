@@ -358,6 +358,19 @@ pub async fn get_contract(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap
 )]
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/purchase-contracts/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 pub async fn update_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -525,6 +538,20 @@ pub async fn update_contract(
         }
     }
 }
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/purchase-contracts/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn delete_contract(
     State(state): State<ApiState>,

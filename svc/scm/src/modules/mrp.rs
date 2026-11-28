@@ -416,6 +416,20 @@ pub async fn get_suggestion(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/mrp/suggestions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn update_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -493,6 +507,20 @@ pub async fn update_suggestion(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/mrp/suggestions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn delete_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -542,6 +570,16 @@ pub async fn delete_suggestion(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/mrp/suggestions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 pub async fn compute_mrp(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -741,6 +779,20 @@ pub struct ConfirmSuggestionRequest {
     pub supplier_id: Option<Uuid>,
     pub remarks: Option<String>,
 }
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/mrp/suggestions/{id}/confirm",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn confirm_suggestion(
     State(state): State<ApiState>,

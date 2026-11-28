@@ -458,6 +458,17 @@ pub async fn list_quotes(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/quotes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn create_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -602,6 +613,20 @@ pub async fn get_quote(
         Err(e) => ApiResponse::from(TopemsError::internal("获取报价单详情失败", e)),
     }
 }
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/quotes/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn update_quote(
     State(state): State<ApiState>,
@@ -818,6 +843,17 @@ pub async fn list_comparisons(
         Err(e) => ApiResponse::from(TopemsError::internal("获取比价分析列表失败", e)),
     }
 }
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/comparisons",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn create_comparison(
     State(state): State<ApiState>,
@@ -1085,6 +1121,20 @@ pub async fn approve_comparison(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/comparisons/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn update_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1154,6 +1204,20 @@ pub async fn update_comparison(
         Err(e) => ApiResponse::from(TopemsError::internal("更新比价分析失败", e)),
     }
 }
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/comparisons/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn delete_comparison(
     State(state): State<ApiState>,

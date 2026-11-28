@@ -128,6 +128,17 @@ pub async fn list_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/purchase-items",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn create_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -275,6 +286,20 @@ pub async fn get_item(
         }
     }
 }
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/purchase-items/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn update_item(
     State(state): State<ApiState>,

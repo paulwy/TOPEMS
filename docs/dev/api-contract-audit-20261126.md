@@ -930,3 +930,18 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 **如实留缺口（4 条，后端确实没有实现）**：`POST /approvals/templates`、`POST /approvals/delegations`、`POST /inventory/stocktake`（只有 GET 列表，无创建）、`POST /production/orders/{id}/pause`（`contract_fallback.rs` 里刻意返回 503——MES 无 pause 动作，"写操作绝不假成功"）。
 
 **结果**：mobile **142/138/4**；spec 3592 → **3613**。
+
+## 第 37 轮 · scm（47 → 0）
+
+**基线**：scm 135 调用 / 88 匹配 / 47 缺口。路由真源 `svc/scm/src/modules/*::create_routes()`（141 条 `.route`，由 `modules/mod.rs` 逐个 merge），挂载前缀 `/api/scm`（单体走 `svc/server/src/modules/scm_real_module.rs` 的 `api_prefix`）。
+
+**做法**
+1. 47 条里 **41 条路由已存在、只缺注解**：按 `(method, path)` 对到 handler，37 个补 `#[utoipa::path]`，另 5 个（`mrp::list_suggestions`/`get_suggestion`、`purchase_order::confirm_order`/`cancel_order`/`close_order`）本就有注解、只是没登记。`register_annotated_handlers.py --crate-root svc/scm/src --crate-prefix crate` 补登记 41 条。
+2. `GET /api/scm/health` 是真实路由（`sync_records::scm_health`，实测 200），只是历史注解集里没有，一併补注解+登记。
+3. **删死代码**：`apps/web/src/api/scm/factory.ts` 是一个泛型 CRUD 工厂（`/${resource}`、`/${resource}/${id}`），全仓 **零引用**，却给契约工具贡献了 5 条 `*` 泛化调用（`GET /api/scm/*` 等）。删除后 scm 调用基数 135 → 130，缺口不再是"假缺口"。
+4. 2 条同义真实路径走 **spec 级别名 op**（`x-alias-of`）：`GET /api/scm/mrp-suggestions`、`GET /api/scm/mrp-suggestions/{id}` 与 `mrp.rs` 里真正挂载的 `/mrp/suggestions`、`/mrp/suggestions/{id}` 同一 handler，一个函数只能带一个注解，故克隆 op。
+
+**反向体检**：把 spec 里 94 条 scm 路径×方法逐条对回真实路由，**幻影 0 条**。
+**实测**：写接口返回 422（缺字段，说明路由与反序列化都在）/ 200 / 业务 404（"供应商评估不存在""检验记录明细不存在"），无 404 路由缺失、无 405。
+
+**结果**：scm **130/130/0**；spec 3613 → **3622**。

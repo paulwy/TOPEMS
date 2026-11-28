@@ -93,6 +93,16 @@ pub fn create_routes() -> Router<ApiState> {
 
 /// GET /health — 前端 scmApi.health() 探测服务存活。
 /// 轻量兜底：探一次 DB 连接，返回 ok 字符串。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/health",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 pub async fn scm_health(State(state): State<ApiState>) -> ApiResponse<String> {
     match sqlx::query("SELECT 1").execute(&state.system_pool).await {
         Ok(_) => ApiResponse::success("ok".to_string(), "SCM 服务正常"),
@@ -282,6 +292,17 @@ pub async fn get_sync_record(
         }
     }
 }
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/sync-records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn create_sync_record(
     State(state): State<ApiState>,

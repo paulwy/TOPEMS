@@ -144,6 +144,17 @@ pub async fn list_requisitions(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/purchase-requisitions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn create_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -302,6 +313,20 @@ pub async fn get_requisition(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/purchase-requisitions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn update_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -398,6 +423,20 @@ pub async fn update_requisition(
         }
     }
 }
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/purchase-requisitions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn delete_requisition(
     State(state): State<ApiState>,

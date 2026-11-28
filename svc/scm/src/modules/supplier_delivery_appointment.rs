@@ -465,6 +465,17 @@ fn generate_appointment_no() -> String {
     format!("DA{}", now.format("%Y%m%d%H%M%S%3f"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/delivery-appointments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn create_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -652,6 +663,20 @@ pub async fn get_appointment(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/delivery-appointments/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
+
 pub async fn update_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -825,6 +850,20 @@ pub async fn update_appointment(
 
     response
 }
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = [])),
+    path = "/api/scm/delivery-appointments/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM"
+)]
 
 pub async fn delete_appointment(
     State(state): State<ApiState>,
