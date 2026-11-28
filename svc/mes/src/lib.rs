@@ -12,3 +12,5 @@ pub use shared::AppState;
 
 #[cfg(test)]
 pub mod aps_no_fabrication_ratchet;
+#[cfg(test)]
+pub mod cost_no_fabrication_ratchet;
