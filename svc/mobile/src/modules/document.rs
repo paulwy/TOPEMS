@@ -249,7 +249,8 @@ pub async fn get_document_stats(
     };
 
     let mut by_status: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
-    let mut by_category: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+    let mut by_category: std::collections::BTreeMap<String, i64> =
+        std::collections::BTreeMap::new();
     for (status, category) in &rows {
         *by_status.entry(status.clone()).or_insert(0) += 1;
         *by_category.entry(category.clone()).or_insert(0) += 1;
@@ -260,7 +261,7 @@ pub async fn get_document_stats(
         StatusCode::OK,
         ApiResponse::success(
             serde_json::json!({
-                "total": rows.len() as i64,
+                "total": i64::try_from(rows.len()).unwrap_or(i64::MAX),
                 "by_status": by_status,
                 "by_category": by_category
             }),

@@ -9,8 +9,8 @@ use utoipa::ToSchema;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
-use topems_shared_db::scope::Db;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 use super::user::tenant_from_claims;
 
@@ -70,20 +70,29 @@ pub async fn get_app_settings(
     let tenant_id = match tenant_from_claims(&claims) {
         Some(t) => t,
         None => {
-            return (StatusCode::BAD_REQUEST, ApiResponse::<AppSettingsView>::bad_request("缺少租户上下文"))
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<AppSettingsView>::bad_request("缺少租户上下文"),
+            )
         }
     };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("数据库作用域创建失败"));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
     };
     let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("数据库作用域创建失败"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
         }
     };
 
@@ -100,13 +109,19 @@ pub async fn get_app_settings(
             Ok(view) => view,
             Err(e) => {
                 tracing::error!("解析应用配置失败: {}", e);
-                return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("配置行解析失败"));
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("配置行解析失败"),
+                );
             }
         },
         Ok(None) => AppSettingsView::defaults(),
         Err(e) => {
             tracing::error!("查询应用配置失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("内部服务器错误"),
+            );
         }
     };
 
@@ -131,31 +146,46 @@ pub async fn update_app_settings(
     let tenant_id = match tenant_from_claims(&claims) {
         Some(t) => t,
         None => {
-            return (StatusCode::BAD_REQUEST, ApiResponse::<AppSettingsView>::bad_request("缺少租户上下文"))
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<AppSettingsView>::bad_request("缺少租户上下文"),
+            )
         }
     };
 
     if let Some(ref key) = payload.app_key {
         if key.chars().count() > 200 {
-            return (StatusCode::BAD_REQUEST, ApiResponse::<AppSettingsView>::bad_request("AppKey 过长"));
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<AppSettingsView>::bad_request("AppKey 过长"),
+            );
         }
     }
     if let Some(ref version) = payload.min_version {
         if version.chars().count() > 20 {
-            return (StatusCode::BAD_REQUEST, ApiResponse::<AppSettingsView>::bad_request("版本号过长"));
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<AppSettingsView>::bad_request("版本号过长"),
+            );
         }
     }
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("数据库作用域创建失败"));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
     };
     let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("数据库作用域创建失败"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
         }
     };
 
@@ -170,7 +200,10 @@ pub async fn update_app_settings(
         Ok(row) => row.is_some(),
         Err(e) => {
             tracing::error!("查询应用配置失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("内部服务器错误"),
+            );
         }
     };
 
@@ -212,7 +245,10 @@ pub async fn update_app_settings(
         Ok(_) => {}
         Err(e) => {
             tracing::error!("保存应用配置失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("保存应用配置失败"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("保存应用配置失败"),
+            );
         }
     }
 
@@ -229,12 +265,18 @@ pub async fn update_app_settings(
             Ok(view) => view,
             Err(e) => {
                 tracing::error!("解析应用配置失败: {}", e);
-                return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("配置行解析失败"));
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("配置行解析失败"),
+                );
             }
         },
         Err(e) => {
             tracing::error!("回读应用配置失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("内部服务器错误"),
+            );
         }
     };
 

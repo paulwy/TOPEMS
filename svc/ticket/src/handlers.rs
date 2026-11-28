@@ -21,9 +21,9 @@ use crate::models::{
     CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, KnowledgeArticleRef,
     SeverityCount, SlaEscalationEvent, SourceCount, Ticket, TicketActivity, TicketComment,
     TicketExportRequest, TicketExportResult, TicketListResponse, TicketQuery, TicketSlaInfo,
-    TicketSlaPolicy, TicketSlaStats, TicketStats,
-    TicketStatus, TicketType, TypeCount, UpdateAutomationRuleRequest,
-    UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest, UpdateTicketRequest,
+    TicketSlaPolicy, TicketSlaStats, TicketStats, TicketStatus, TicketType, TypeCount,
+    UpdateAutomationRuleRequest, UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest,
+    UpdateTicketRequest,
 };
 use crate::sla_service::TicketSlaService;
 
@@ -2766,7 +2766,7 @@ pub async fn search_tickets_handler(
 fn percent_encode(input: &str) -> String {
     let mut out = String::with_capacity(input.len() * 2);
     for b in input.as_bytes() {
-        let c = *b as char;
+        let c = char::from(*b);
         if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | '~') {
             out.push(c);
         } else {
@@ -2813,7 +2813,6 @@ pub async fn export_tickets_handler(
     const MAX_PAGES: i64 = 50;
     let mut rows: Vec<Ticket> = Vec::new();
     let mut page = 1;
-    let mut total = 0i64;
     while page <= MAX_PAGES {
         query.page = Some(page);
         query.page_size = Some(PAGE);
@@ -2822,10 +2821,10 @@ pub async fn export_tickets_handler(
             .await
         {
             Ok(list) => {
-                total = list.total;
-                let got = list.items.len() as i64;
+                let total = list.total;
+                let got = i64::try_from(list.items.len()).unwrap_or(i64::MAX);
                 rows.extend(list.items);
-                if got < PAGE || rows.len() as i64 >= total {
+                if got < PAGE || i64::try_from(rows.len()).unwrap_or(i64::MAX) >= total {
                     break;
                 }
             }
@@ -2834,7 +2833,8 @@ pub async fn export_tickets_handler(
         page += 1;
     }
 
-    let mut csv = String::from("ticket_no,title,status,severity,ticket_type,assignee_id,created_at\n");
+    let mut csv =
+        String::from("ticket_no,title,status,severity,ticket_type,assignee_id,created_at\n");
     for t in &rows {
         csv.push_str(&format!(
             "{},{},{},{},{},{},{}\n",
@@ -2853,7 +2853,7 @@ pub async fn export_tickets_handler(
         TicketExportResult {
             format,
             filename,
-            total: rows.len() as i64,
+            total: i64::try_from(rows.len()).unwrap_or(i64::MAX),
             url,
         },
         "导出完成",
@@ -3030,7 +3030,13 @@ pub fn ticket_routes() -> Router<Db> {
         .route("/tickets/my", get(my_tickets_handler))
         .route("/tickets/search", get(search_tickets_handler))
         .route("/tickets/export", post(export_tickets_handler))
-        .route("/tickets/dashboard/by-severity", get(dashboard_by_severity_handler))
+        .route(
+            "/tickets/dashboard/by-severity",
+            get(dashboard_by_severity_handler),
+        )
         .route("/tickets/dashboard/by-type", get(dashboard_by_type_handler))
-        .route("/tickets/dashboard/by-source", get(dashboard_by_source_handler))
+        .route(
+            "/tickets/dashboard/by-source",
+            get(dashboard_by_source_handler),
+        )
 }

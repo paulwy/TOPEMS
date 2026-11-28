@@ -274,9 +274,7 @@ pub async fn execute_add_column(
         (status = 200, description = "只读迁移建议模式：不执行 DDL，返回 DROP COLUMN 建议 SQL", body = ApiResponse<String>),
     ),
 )]
-pub async fn execute_drop_column_delete(
-    path: Path<(String, String)>,
-) -> ApiResponse<String> {
+pub async fn execute_drop_column_delete(path: Path<(String, String)>) -> ApiResponse<String> {
     execute_drop_column(path).await
 }
 

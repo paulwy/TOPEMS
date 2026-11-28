@@ -1224,7 +1224,6 @@ mod tests {
     }
 }
 
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["srm:tender:read"])),

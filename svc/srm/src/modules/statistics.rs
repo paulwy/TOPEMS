@@ -739,7 +739,6 @@ mod tests {
     }
 }
 
-
 /// SRM 模块健康探测（单体 /api/srm/health；独立部署的 /health 由 shared health routes 提供）
 #[utoipa::path(
     get,

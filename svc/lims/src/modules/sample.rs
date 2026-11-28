@@ -772,7 +772,10 @@ async fn insert_sample_row(
     tenant_id: Uuid,
     req: &CreateSampleRequest,
 ) -> Result<(), String> {
-    let sample_no = format!("SMP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let sample_no = format!(
+        "SMP-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return Err("数据库事务上下文缺失".to_string());

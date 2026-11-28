@@ -167,7 +167,9 @@ pub async fn get_workflows(State(_db): State<Db>) -> ApiResponse<serde_json::Val
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn create_workflow(Json(body): Json<serde_json::Value>) -> ApiResponse<serde_json::Value> {
+pub async fn create_workflow(
+    Json(body): Json<serde_json::Value>,
+) -> ApiResponse<serde_json::Value> {
     let name = body
         .get("name")
         .and_then(|v| v.as_str())
@@ -715,7 +717,7 @@ pub async fn apply_transition(
 // ==================== 标签 ====================
 
 #[derive(Deserialize, utoipa::ToSchema)]
-struct TagRequest {
+pub(crate) struct TagRequest {
     tag: String,
 }
 
@@ -1430,7 +1432,7 @@ pub async fn batch_escalate_tickets(
 // ==================== 附件 ====================
 
 #[derive(Deserialize, utoipa::ToSchema)]
-struct UploadAttachmentRequest {
+pub(crate) struct UploadAttachmentRequest {
     file_name: String,
     #[serde(default)]
     mime_type: Option<String>,

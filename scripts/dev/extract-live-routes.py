@@ -115,6 +115,52 @@ def compute_full_path(path: str, crate: str) -> str:
     return prefix.rstrip("/") + path
 
 
+CHAIN_VERB_RE = re.compile(r"\s*\.\s*(?P<method>get|post|put|delete|patch)\s*\(", re.MULTILINE)
+
+
+def _skip_balanced_call(text: str, open_paren_index: int) -> int:
+    """从 `(` 位置开始找到与之配对的 `)`，返回右括号后的下标。"""
+    depth = 0
+    quote = ""
+    escaped = False
+    i = open_paren_index
+    while i < len(text):
+        ch = text[i]
+        if quote:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == quote:
+                quote = ""
+        elif ch in ("\"", "'"):
+            quote = ch
+        elif ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    return len(text)
+
+
+def _iter_route_methods(match, content: str):
+    """产出该 .route(...) 上的所有方法：首个方法 + 后续链式 `.verb(...)`。"""
+    yield match.group("method").upper(), match.group("handler").strip()
+
+    pos = match.end()
+    while True:
+        tail = CHAIN_VERB_RE.match(content, pos)
+        if not tail:
+            break
+        open_paren = tail.end() - 1
+        close_after = _skip_balanced_call(content, open_paren)
+        handler = content[open_paren + 1 : close_after - 1].strip()
+        yield tail.group("method").upper(), handler
+        pos = close_after
+
+
 def extract_from_file(filepath: str, repo_root: str) -> list[dict]:
     """从单个 Rust 文件抽取路由。"""
     crate = resolve_crate(filepath, repo_root)
@@ -132,25 +178,27 @@ def extract_from_file(filepath: str, repo_root: str) -> list[dict]:
     results = []
     for m in ROUTE_RE.finditer(content):
         path = m.group("path") if m.group("path") is not None else m.group("path_raw")
-        method = m.group("method").upper()
-        handler = m.group("handler").strip()
 
         # 计算行号：从文件开头到匹配位置的换行符数 + 1
         start = m.start()
         line = content.count("\n", 0, start) + 1
 
-        full_path = compute_full_path(path, crate)
-        rel_file = os.path.relpath(filepath, repo_root)
+        # 链式方法：.route("/x", get(a).post(b).put(c).delete(d))
+        # ROUTE_RE 只匹配到第一个方法调用；其后紧跟的 `.<verb>(...)` 属于同一路由，
+        # 必须逐个补抽，否则这些方法在 live 集合里凭空消失（openapi 侧会被判“文档多出”）。
+        for method, handler in _iter_route_methods(m, content):
+            full_path = compute_full_path(path, crate)
+            rel_file = os.path.relpath(filepath, repo_root)
 
-        results.append({
-            "method": method,
-            "full_path": full_path,
-            "path": path,
-            "handler": handler,
-            "crate": crate,
-            "file": rel_file,
-            "line": line,
-        })
+            results.append({
+                "method": method,
+                "full_path": full_path,
+                "path": path,
+                "handler": handler,
+                "crate": crate,
+                "file": rel_file,
+                "line": line,
+            })
 
     return results
 

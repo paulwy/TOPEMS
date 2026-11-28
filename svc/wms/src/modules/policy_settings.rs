@@ -16,12 +16,12 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::modules::ApiState;
@@ -325,9 +325,20 @@ pub async fn get_cycle_count_policy(
     match row {
         Ok(Some(r)) => ApiResponse::success(
             CycleCountPolicyView {
-                count_frequency: r.try_get::<Option<String>, _>("count_frequency").ok().flatten().unwrap_or_else(|| "monthly".into()),
-                priority_level: r.try_get::<Option<String>, _>("priority_level").ok().flatten().unwrap_or_else(|| "normal".into()),
-                material_category: r.try_get::<Option<String>, _>("material_category").ok().flatten(),
+                count_frequency: r
+                    .try_get::<Option<String>, _>("count_frequency")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "monthly".into()),
+                priority_level: r
+                    .try_get::<Option<String>, _>("priority_level")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "normal".into()),
+                material_category: r
+                    .try_get::<Option<String>, _>("material_category")
+                    .ok()
+                    .flatten(),
                 is_active: r.try_get("is_active").unwrap_or(true),
                 configured: true,
             },
@@ -515,7 +526,9 @@ pub async fn get_slotting_policy(
     match row {
         Ok(Some(r)) => ApiResponse::success(
             SlottingPolicyView {
-                rule_type: r.try_get("rule_type").unwrap_or_else(|_| "velocity_class".into()),
+                rule_type: r
+                    .try_get("rule_type")
+                    .unwrap_or_else(|_| "velocity_class".into()),
                 priority: r.try_get("priority").unwrap_or(10),
                 is_active: r.try_get("is_active").unwrap_or(true),
                 warehouse_available: true,
@@ -861,7 +874,10 @@ async fn read_cycle_policy(
                 .ok()
                 .flatten()
                 .unwrap_or_else(|| "normal".into()),
-            material_category: r.try_get::<Option<String>, _>("material_category").ok().flatten(),
+            material_category: r
+                .try_get::<Option<String>, _>("material_category")
+                .ok()
+                .flatten(),
             is_active: r.try_get("is_active").unwrap_or(true),
             configured: true,
         },

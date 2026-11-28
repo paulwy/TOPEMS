@@ -227,7 +227,7 @@ async fn sum_overdue_with_tenant(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
+    security(("BearerAuth" = ["finance:account:create"])),
     path = "/accounts",
     tag = "Accounting",
     request_body = CreateAccountRequest,
@@ -264,7 +264,7 @@ pub async fn create_account(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/api/finance/accounts/{account_id}",
     tag = "Auto-Backfill",
     params(
@@ -305,7 +305,7 @@ pub async fn get_account(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/api/finance/accounts/code/{code}",
     tag = "Auto-Backfill",
     params(
@@ -346,7 +346,7 @@ pub async fn get_account_by_code(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:read"])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/accounts/balances",
     tag = "Accounting",
     responses(
@@ -395,7 +395,7 @@ pub async fn get_account_balances(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/api/finance/accounts",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/accounts"), (status = 500, description = "服务内部错误")),
@@ -939,7 +939,7 @@ async fn get_income_statement(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:period:write"])),
     path = "/api/finance/periods/{year}/{month}/close",
     tag = "Auto-Backfill",
     params(
@@ -979,7 +979,7 @@ pub async fn close_period(
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:period:write"])),
     path = "/periods/{year}/{month}/open",
     responses(
         (status = 200, description = "成功"),
@@ -1025,7 +1025,7 @@ pub async fn open_period(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:create"])),
     path = "/api/finance/aux-accounts",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/aux-accounts"), (status = 500, description = "服务内部错误")),
@@ -1057,7 +1057,6 @@ pub async fn create_aux_account(
 }
 
 #[utoipa::path(
-    security(("BearerAuth" = [])),
     get,
     path = "/api/finance/aux-accounts",
     tag = "Filled",
@@ -1415,7 +1414,7 @@ pub async fn export_vouchers(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:period:write"])),
     path = "/api/finance/year-end-close",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/year-end-close"), (status = 500, description = "服务内部错误")),
@@ -2824,7 +2823,7 @@ pub async fn set_default_template_handler(
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:voucher:create"])),
     path = "/voucher-templates/apply",
     responses(
         (status = 200, description = "成功"),
@@ -2957,7 +2956,7 @@ pub struct ToggleTemplateRequest {
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["finance:mod:write"])),
+    security(("BearerAuth" = ["finance:voucher:update"])),
     path = "/api/finance/voucher-templates/{template_id}/toggle",
     params(
         ("template_id" = String, Path, description = "template_id")
@@ -3044,7 +3043,7 @@ pub struct MatchTemplateRequest {
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:mod:write"])),
+    security(("BearerAuth" = ["finance:voucher:read"])),
     path = "/api/finance/voucher-templates/match",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
@@ -3142,7 +3141,7 @@ pub struct UsageStatsQueryParams {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:mod:read"])),
+    security(("BearerAuth" = ["finance:voucher:read"])),
     path = "/api/finance/voucher-templates/{template_id}/usage-stats",
     params(
         ("template_id" = String, Path, description = "template_id")
@@ -3504,7 +3503,7 @@ pub struct ReorderEntriesRequest {
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["finance:mod:write"])),
+    security(("BearerAuth" = ["finance:voucher:update"])),
     path = "/api/finance/voucher-templates/{template_id}/entries/reorder",
     params(
         ("template_id" = String, Path, description = "template_id")
@@ -3611,7 +3610,7 @@ pub struct ExportQueryParams {
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["finance:mod:read"])),
+    security(("BearerAuth" = ["finance:voucher:read"])),
     path = "/api/finance/voucher-templates/{template_id}/export",
     params(
         ("template_id" = String, Path, description = "template_id")
@@ -3667,7 +3666,7 @@ pub async fn export_template_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:mod:write"])),
+    security(("BearerAuth" = ["finance:voucher:create"])),
     path = "/api/finance/voucher-templates/import",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
@@ -4079,7 +4078,7 @@ pub async fn toggle_generation_rule_handler(
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:voucher:read"])),
     path = "/voucher-generation-rules/test",
     responses(
         (status = 200, description = "成功"),
@@ -4787,7 +4786,7 @@ pub async fn get_payable_aging_handler(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:receivable_payable:create"])),
     path = "/payables/batch",
     tag = "Payable",
     operation_id = "batch_create_payables_handler",
@@ -5114,7 +5113,7 @@ async fn delete_collection_handler(
 }
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:receivable:update"])),
     path = "/collections/write-off",
     responses(
         (status = 200, description = "成功"),
@@ -6365,7 +6364,7 @@ pub async fn import_vouchers_u8(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/api/finance/period/current",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/period/current"), (status = 500, description = "服务内部错误")),
@@ -6387,7 +6386,7 @@ pub async fn get_current_period(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:report:read"])),
     path = "/api/finance/periods",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/periods"), (status = 500, description = "服务内部错误")),
@@ -6481,7 +6480,7 @@ pub async fn list_periods(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:period:write"])),
     path = "/periods/open",
     tag = "Finance",
     request_body = PeriodActionRequest,
@@ -6625,7 +6624,7 @@ pub async fn open_period_v2(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:period:write"])),
     path = "/api/finance/periods/close",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/periods/close"), (status = 500, description = "服务内部错误")),
@@ -6720,7 +6719,7 @@ pub async fn close_period_v2(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:period:write"])),
     path = "/api/finance/periods/close-income",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/periods/close-income"), (status = 500, description = "服务内部错误")),
@@ -6762,7 +6761,7 @@ pub async fn close_income_period(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["finance:write"])),
+    security(("BearerAuth" = ["finance:period:write"])),
     path = "/periods/year-end-close",
     tag = "Finance",
     request_body = PeriodActionRequest,
@@ -6879,7 +6878,7 @@ pub async fn get_ap_aging(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/api/finance/accounts/tree",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/accounts/tree"), (status = 500, description = "服务内部错误")),
@@ -6954,7 +6953,7 @@ fn account_transition_allowed(from: &str, to: &str) -> bool {
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:update"])),
     path = "/api/finance/accounts/{account_id}",
     tag = "Auto-Backfill",
     params(
@@ -7079,7 +7078,7 @@ pub async fn update_account(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:delete"])),
     path = "/api/finance/accounts/{account_id}",
     tag = "Auto-Backfill",
     params(
@@ -7179,7 +7178,7 @@ pub async fn delete_account(
 /// 单次上限 500 条；编码重复按 23505 转 409 并指明具体编码。
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:create"])),
     path = "/api/finance/accounts/{account_id}/children-batch",
     tag = "Auto-Backfill",
     params(
@@ -7311,7 +7310,7 @@ pub async fn batch_create_account_children(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:opening_balance:read"])),
     path = "/api/finance/accounts/opening-balances",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/accounts/opening-balances"), (status = 500, description = "服务内部错误")),
@@ -7444,7 +7443,7 @@ pub async fn get_opening_balances(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:opening_balance:read"])),
     path = "/api/finance/accounts/opening-balances/{id}",
     tag = "Auto-Backfill",
     params(
@@ -7516,7 +7515,7 @@ pub async fn get_opening_balance(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:opening_balance:update"])),
     path = "/api/finance/accounts/opening-balances/{id}",
     tag = "Auto-Backfill",
     params(
@@ -7615,7 +7614,7 @@ pub async fn update_opening_balance(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:opening_balance:delete"])),
     path = "/api/finance/accounts/opening-balances/{id}",
     tag = "Auto-Backfill",
     params(
@@ -7667,7 +7666,7 @@ pub async fn delete_opening_balance(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:opening_balance:create"])),
     path = "/api/finance/accounts/opening-balances/batch",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/accounts/opening-balances/batch"), (status = 500, description = "服务内部错误")),
@@ -7806,7 +7805,7 @@ pub async fn import_opening_balances(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:opening_balance:create"])),
     path = "/api/finance/accounts/opening-balances",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/accounts/opening-balances"), (status = 500, description = "服务内部错误")),
@@ -7920,7 +7919,7 @@ pub async fn create_opening_balances(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:opening_balance:create"])),
     path = "/api/finance/accounts/{account_id}/opening-balance",
     tag = "Auto-Backfill",
     params(
@@ -8051,7 +8050,7 @@ pub async fn set_opening_balance(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:opening_balance:create"])),
     path = "/api/finance/accounts/opening-balances/carry-forward",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/accounts/opening-balances/carry-forward"), (status = 500, description = "服务内部错误")),
@@ -8122,7 +8121,7 @@ pub async fn carry_forward_opening_balance(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/api/finance/counterparty/customers",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/counterparty/customers"), (status = 500, description = "服务内部错误")),
@@ -8137,7 +8136,7 @@ pub async fn list_counterparty_customers(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/api/finance/counterparty/customers/{customer_id}",
     tag = "Auto-Backfill",
     params(
@@ -8155,7 +8154,7 @@ pub async fn get_counterparty_customer(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:update"])),
     path = "/api/finance/counterparty/customers/{customer_id}",
     tag = "Auto-Backfill",
     params(
@@ -8177,7 +8176,7 @@ pub async fn update_counterparty_customer(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/api/finance/counterparty/suppliers",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/counterparty/suppliers"), (status = 500, description = "服务内部错误")),
@@ -8192,7 +8191,7 @@ pub async fn list_counterparty_suppliers(
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:read"])),
     path = "/api/finance/counterparty/suppliers/{supplier_id}",
     tag = "Auto-Backfill",
     params(
@@ -8210,7 +8209,7 @@ pub async fn get_counterparty_supplier(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:account:update"])),
     path = "/api/finance/counterparty/suppliers/{supplier_id}",
     tag = "Auto-Backfill",
     params(
@@ -9286,48 +9285,98 @@ pub fn create_routes() -> Router<AppState> {
         .merge(event_routes::event_routes());
 
     // ===== 科目/总账/对家 域 =====
-    let account_routes = Router::new()
+    // B377：此前整个科目/期初域只挂 finance:account:read，只读角色可建/改/删会计科目、
+    // 建辅助核算、批量建子科目、期初余额建/改/删/批量导入/结转、改客户与供应商主数据。
+    // 按动作拆子 Router，各挂字典里真实存在的 finance:account:* 与 finance:opening_balance:*。
+    let account_read_routes = Router::new()
         .route("/dashboard", axum::routing::get(get_dashboard_handler))
-        .route(
-            "/accounts",
-            axum::routing::post(create_account).get(list_accounts),
-        )
+        .route("/accounts", axum::routing::get(list_accounts))
         .route(
             "/accounts/balances",
             axum::routing::get(get_account_balances),
         )
-        .route(
-            "/accounts/{account_id}",
-            axum::routing::get(get_account)
-                .put(update_account)
-                .delete(delete_account),
-        )
+        .route("/accounts/{account_id}", axum::routing::get(get_account))
         .route(
             "/accounts/code/{code}",
             axum::routing::get(get_account_by_code),
         )
-        .route(
-            "/aux-accounts",
-            axum::routing::post(create_aux_account).get(list_aux_accounts),
-        )
+        .route("/aux-accounts", axum::routing::get(list_aux_accounts))
         .route("/accounts/tree", axum::routing::get(get_account_tree))
+        .route(
+            "/counterparty/customers",
+            axum::routing::get(list_counterparty_customers),
+        )
+        .route(
+            "/counterparty/customers/{customer_id}",
+            axum::routing::get(get_counterparty_customer),
+        )
+        .route(
+            "/counterparty/suppliers",
+            axum::routing::get(list_counterparty_suppliers),
+        )
+        .route(
+            "/counterparty/suppliers/{supplier_id}",
+            axum::routing::get(get_counterparty_supplier),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:account:read",
+        )));
+
+    let account_create_routes = Router::new()
+        .route("/accounts", axum::routing::post(create_account))
+        .route("/aux-accounts", axum::routing::post(create_aux_account))
         .route(
             "/accounts/{account_id}/children-batch",
             axum::routing::post(batch_create_account_children),
         )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:account:create",
+        )));
+
+    let account_update_routes = Router::new()
+        .route("/accounts/{account_id}", axum::routing::put(update_account))
+        .route(
+            "/counterparty/customers/{customer_id}",
+            axum::routing::put(update_counterparty_customer),
+        )
+        .route(
+            "/counterparty/suppliers/{supplier_id}",
+            axum::routing::put(update_counterparty_supplier),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:account:update",
+        )));
+
+    let account_delete_routes = Router::new()
+        .route(
+            "/accounts/{account_id}",
+            axum::routing::delete(delete_account),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:account:delete",
+        )));
+
+    let opening_balance_read_routes = Router::new()
         .route(
             "/accounts/opening-balances",
-            axum::routing::get(get_opening_balances).post(create_opening_balances),
+            axum::routing::get(get_opening_balances),
+        )
+        .route(
+            "/accounts/opening-balances/{id}",
+            axum::routing::get(get_opening_balance),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:opening_balance:read",
+        )));
+
+    let opening_balance_create_routes = Router::new()
+        .route(
+            "/accounts/opening-balances",
+            axum::routing::post(create_opening_balances),
         )
         .route(
             "/accounts/opening-balances/batch",
             axum::routing::post(import_opening_balances),
-        )
-        .route(
-            "/accounts/opening-balances/{id}",
-            axum::routing::get(get_opening_balance)
-                .put(update_opening_balance)
-                .delete(delete_opening_balance),
         )
         .route(
             "/accounts/{account_id}/opening-balance",
@@ -9337,25 +9386,37 @@ pub fn create_routes() -> Router<AppState> {
             "/accounts/opening-balances/carry-forward",
             axum::routing::post(carry_forward_opening_balance),
         )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:opening_balance:create",
+        )));
+
+    let opening_balance_update_routes = Router::new()
         .route(
-            "/counterparty/customers",
-            axum::routing::get(list_counterparty_customers),
-        )
-        .route(
-            "/counterparty/customers/{customer_id}",
-            axum::routing::get(get_counterparty_customer).put(update_counterparty_customer),
-        )
-        .route(
-            "/counterparty/suppliers",
-            axum::routing::get(list_counterparty_suppliers),
-        )
-        .route(
-            "/counterparty/suppliers/{supplier_id}",
-            axum::routing::get(get_counterparty_supplier).put(update_counterparty_supplier),
+            "/accounts/opening-balances/{id}",
+            axum::routing::put(update_opening_balance),
         )
         .layer(axum::middleware::from_fn(require_permission(
-            "finance:account:read",
+            "finance:opening_balance:update",
         )));
+
+    let opening_balance_delete_routes = Router::new()
+        .route(
+            "/accounts/opening-balances/{id}",
+            axum::routing::delete(delete_opening_balance),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:opening_balance:delete",
+        )));
+
+    let account_routes = Router::new()
+        .merge(account_read_routes)
+        .merge(account_create_routes)
+        .merge(account_update_routes)
+        .merge(account_delete_routes)
+        .merge(opening_balance_read_routes)
+        .merge(opening_balance_create_routes)
+        .merge(opening_balance_update_routes)
+        .merge(opening_balance_delete_routes);
 
     // ===== 凭证/模板/生成/U8导入 域 =====
     // B343: 凭证域按读/创建/更新/删除拆成四个子 Router，各自挂对应权限码。
@@ -9615,7 +9676,10 @@ pub fn create_routes() -> Router<AppState> {
     let voucher_routes = voucher_read_routes.merge(voucher_write_routes);
 
     // ===== 报表/总账/期间 域 =====
-    let report_routes = Router::new()
+    // B377：此前报表/期间域只挂 finance:report:read，只读角色可年结、开账期、关账期、
+    // 结转损益。报表全 GET 留 read 块；期间写动作（年结/开/关/结转）统一挂
+    // finance:period:write（字典已有该码）。
+    let report_read_routes = Router::new()
         .route("/ledger", axum::routing::get(get_ledger))
         .route("/aux-ledger", axum::routing::get(get_aux_ledger))
         .route("/aux-balance", axum::routing::get(get_aux_balance))
@@ -9632,27 +9696,8 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_income_statement),
         )
         .route("/cash-flow/{period}", axum::routing::get(get_cash_flow))
-        .route("/year-end-close", axum::routing::post(year_end_close))
         .route("/period/current", axum::routing::get(get_current_period))
         .route("/periods", axum::routing::get(list_periods))
-        .route("/periods/open", axum::routing::post(open_period_v2))
-        .route("/periods/close", axum::routing::post(close_period_v2))
-        .route(
-            "/periods/close-income",
-            axum::routing::post(close_income_period),
-        )
-        .route(
-            "/periods/year-end-close",
-            axum::routing::post(year_end_close_v2),
-        )
-        .route(
-            "/periods/{year}/{month}/open",
-            axum::routing::post(open_period),
-        )
-        .route(
-            "/periods/{year}/{month}/close",
-            axum::routing::post(close_period),
-        )
         .route(
             "/reports/account-balance",
             axum::routing::get(get_account_balance_report),
@@ -9680,6 +9725,34 @@ pub fn create_routes() -> Router<AppState> {
         .layer(axum::middleware::from_fn(require_permission(
             "finance:report:read",
         )));
+
+    let period_write_routes = Router::new()
+        .route("/year-end-close", axum::routing::post(year_end_close))
+        .route("/periods/open", axum::routing::post(open_period_v2))
+        .route("/periods/close", axum::routing::post(close_period_v2))
+        .route(
+            "/periods/close-income",
+            axum::routing::post(close_income_period),
+        )
+        .route(
+            "/periods/year-end-close",
+            axum::routing::post(year_end_close_v2),
+        )
+        .route(
+            "/periods/{year}/{month}/open",
+            axum::routing::post(open_period),
+        )
+        .route(
+            "/periods/{year}/{month}/close",
+            axum::routing::post(close_period),
+        )
+        .layer(axum::middleware::from_fn(require_permission(
+            "finance:period:write",
+        )));
+
+    let report_routes = Router::new()
+        .merge(report_read_routes)
+        .merge(period_write_routes);
 
     // ===== 付款/付款记录 域 =====
     // B376：此前整个付款域只挂 finance:payment:read，只读角色可建/改/删付款单、
