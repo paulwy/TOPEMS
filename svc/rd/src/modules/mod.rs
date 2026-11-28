@@ -82,7 +82,16 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 /// RD 模块健康检查（业务面）：返回 ok + 数据库探活。
-async fn rd_health(State(state): State<ApiState>) -> ApiResponse<String> {
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/health",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value)
+    ),
+    tag = "rd"
+)]
+pub(crate) async fn rd_health(State(state): State<ApiState>) -> ApiResponse<String> {
     let db_ok = sqlx::query("SELECT 1")
         .fetch_one(&state.system_pool)
         .await

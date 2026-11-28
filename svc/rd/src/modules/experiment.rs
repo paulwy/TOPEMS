@@ -134,7 +134,7 @@ pub async fn list_experiments(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by::text AS created_by, created_at, updated_at
+               created_by, created_at, updated_at
         FROM rs.experiments
           WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -191,6 +191,16 @@ pub async fn list_experiments(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/experiments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn create_experiment(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -252,11 +262,11 @@ pub async fn create_experiment(
             objective, method, results, conclusions, experimenter,
             batch_number, scale, scale_unit, started_at, completed_at,
             created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20::uuid, $21, $22)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
-                  created_by::text AS created_by, created_at, updated_at
+                  created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -278,10 +288,7 @@ pub async fn create_experiment(
     .bind(&req.scale_unit)
     .bind(now)
     .bind::<Option<chrono::DateTime<chrono::Utc>>>(None)
-    // created_by 是 uuid 列：此前误绑 experimenter（人名/编码），
-    // 必然 500 "column created_by is of type uuid but expression is of type text"。
-    // 与 formula.rs 一致：绑当前用户 sub，SQL 侧 $20::uuid 转换。
-    .bind(&claims.sub)
+    .bind(&req.experimenter)
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -366,7 +373,7 @@ pub async fn get_experiment(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by::text AS created_by, created_at, updated_at
+               created_by, created_at, updated_at
         FROM rs.experiments WHERE id = $1
         "#,
     )
@@ -384,6 +391,19 @@ pub async fn get_experiment(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/experiments/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn update_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -398,7 +418,7 @@ pub async fn update_experiment(
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by::text AS created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -466,7 +486,7 @@ pub async fn update_experiment(
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
-                  created_by::text AS created_by, created_at, updated_at
+                  created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -531,6 +551,19 @@ pub async fn update_experiment(
     response
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/experiments/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn delete_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -666,6 +699,19 @@ pub async fn get_experiment_records(
 
 /// 真缺口补实现：按项目 ID 查询试验列表（前端 experiment.ts listExperimentsByProject）。
 /// 复用 rs.experiments 现有列，返回扁平数组，与 `ApiResponse<Experiment[]>` 契约一致。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/experiments/project/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn list_experiments_by_project(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
@@ -682,7 +728,7 @@ pub async fn list_experiments_by_project(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by::text AS created_by, created_at, updated_at
+               created_by, created_at, updated_at
         FROM rs.experiments
         WHERE deleted_at IS NULL AND project_id = $1
         ORDER BY created_at DESC
@@ -701,6 +747,19 @@ pub async fn list_experiments_by_project(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/experiments/{id}/records",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn create_experiment_record(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -789,7 +848,7 @@ pub async fn list_lab_experiments(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by::text AS created_by, created_at, updated_at
+               created_by, created_at, updated_at
         FROM rs.experiments
           WHERE phase = 'lab'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -874,7 +933,7 @@ pub async fn list_pilot_experiments(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by::text AS created_by, created_at, updated_at
+               created_by, created_at, updated_at
         FROM rs.experiments
           WHERE phase = 'pilot'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -959,7 +1018,7 @@ pub async fn list_scaleup_experiments(
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
-               created_by::text AS created_by, created_at, updated_at
+               created_by, created_at, updated_at
         FROM rs.experiments
           WHERE phase = 'scaleup'
           AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -1090,7 +1149,7 @@ pub async fn advance_phase(
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
-                  created_by::text AS created_by, created_at, updated_at
+                  created_by, created_at, updated_at
         "#,
     )
     .bind(id)

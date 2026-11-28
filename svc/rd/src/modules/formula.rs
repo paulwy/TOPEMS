@@ -192,6 +192,16 @@ pub async fn list_formulas(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/formulas",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "formula"
+)]
 pub async fn create_formula(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -377,6 +387,19 @@ pub async fn get_formula(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/formulas/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "formula"
+)]
 pub async fn update_formula(
     State(state): State<super::ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -535,6 +558,19 @@ pub async fn update_formula(
     response
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/formulas/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "formula"
+)]
 pub async fn delete_formula(
     State(state): State<super::ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -658,6 +694,19 @@ pub async fn get_formula_versions(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/formulas/{id}/versions",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "formula"
+)]
 pub async fn create_formula_version(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,

@@ -1088,3 +1088,16 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 3. **补注解并登记 23 处**：device 6（device-tracks 两条 + devices POST/PUT/DELETE）、geofence 5（`/fences` 全套 CRUD）、factory_map 5（`/factory-maps` 全套 CRUD）、business 1（`/business-locations/type/{business_type}`）、gis_plugin 1（`/health`）、websocket 2（`/ws/gis`、`/ws/gis/device/{device_code}`，WebSocket 升级端点如实按 GET 文档化）、embedded 4（`/device-locations` POST/PUT/DELETE、`/device-locations/map/{map_id}`，私有 fn 提 `pub(crate)`）。`svc/gis/src/modules/openapi.rs` 登记 26 条。
 
 **结果**：gis **61/61/0**；spec 3751 → **3765**；全量缺口 190 → **164**。
+
+---
+
+## 第 46 轮 · rd（21 → 0）
+
+**基线**：rd 64 调用 / 43 匹配 / 21 缺口。
+
+**处理**：
+1. **18 个写/新增 handler 补注解**：rd_ci_cd 8（bugs POST/PUT/DELETE、builds POST、deploys POST、tests POST/PUT/DELETE）、experiment 5（POST、PUT、DELETE、`/experiments/project/{id}`、`/{id}/records` POST）、formula 4（POST、PUT、DELETE、`/{id}/versions` POST）、settings PUT。这些模块此前只给 GET 补了注解，spec 里对应路径只有 get，写操作全缺。
+2. **`GET /health`**：`modules/mod.rs` 里的 `rd_health` 是私有 fn 且无注解，补注解并提 `pub(crate)`，登记为 `crate::modules::rd_health`（注意 `mod.rs` 的注册前缀不能写成 `crate::modules::mod::rd_health`，否则 `mod` 是关键字直接编译失败）。
+3. **登记**：`svc/rd/src/modules/openapi.rs` 补 22 条；批量插入把 `rs_plugin::plugin_health_check` 重复加了一次（既有条目是多行格式，正则没匹配上），编译报 `PathConfig` 冲突后做列表去重。
+
+**结果**：rd **64/64/0**；spec 3765 → **3768**；全量缺口 164 → **143**。

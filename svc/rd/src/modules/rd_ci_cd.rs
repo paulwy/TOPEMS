@@ -228,6 +228,16 @@ pub async fn get_bug(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/bugs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn create_bug(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -272,6 +282,19 @@ pub async fn create_bug(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/bugs/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn update_bug(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -361,6 +384,19 @@ pub async fn update_bug(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/bugs/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn delete_bug(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -500,6 +536,16 @@ pub async fn get_build(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/builds",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn create_build(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -722,6 +768,16 @@ pub async fn get_deploy(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/deploys",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn create_deploy(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -876,6 +932,16 @@ pub async fn get_test(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/tests",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn create_test(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -920,6 +986,19 @@ pub async fn create_test(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/tests/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn update_test(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -968,6 +1047,19 @@ pub async fn update_test(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/tests/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn delete_test(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
