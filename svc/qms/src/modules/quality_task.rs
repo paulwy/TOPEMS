@@ -85,6 +85,16 @@ pub struct DefectRecord {
 }
 
 /// GET /quality-tasks —— 质检任务列表（数据源 qa_quality_inspections）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:quality_task:read"])),
+    path = "/quality-tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/quality_task"
+)]
 pub async fn list_quality_tasks(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -177,6 +187,19 @@ pub async fn list_quality_tasks(
 }
 
 /// GET /quality-tasks/{id} —— 质检任务详情
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:quality_task:read"])),
+    path = "/quality-tasks/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/quality_task"
+)]
 pub async fn get_quality_task(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -307,6 +330,16 @@ pub async fn update_quality_task_status(
 }
 
 /// GET /defect-records —— 缺陷记录列表（数据源 qa_inspection_results，未合格项）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:quality_task:read"])),
+    path = "/defect-records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/quality_task"
+)]
 pub async fn list_defect_records(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

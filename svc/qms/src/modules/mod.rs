@@ -41,6 +41,10 @@ pub fn create_routes() -> Router<AppState> {
         .merge(quality_dashboard::create_routes())
         .merge(apqp::create_routes())
         .merge(qms_plugin::create_routes())
+        .route(
+            "/health",
+            axum::routing::get(qms_plugin::qms_health),
+        )
         .merge(quality_task::create_routes())
         // integration 编排侧 internal 接收端点（/api/internal/ 已在 auth 白名单）
         .merge(integration::integration_routes())

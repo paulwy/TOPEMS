@@ -243,3 +243,19 @@ mod tests {
         });
     }
 }
+
+
+/// QMS 模块健康探测（单体 /api/qms/health）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/health",
+    responses((status = 200, description = "OK", body = serde_json::Value)),
+    tag = "qms_plugin"
+)]
+pub async fn qms_health() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
+        serde_json::json!({ "module": "qms", "status": "ok" }),
+        "module health ok",
+    )
+}

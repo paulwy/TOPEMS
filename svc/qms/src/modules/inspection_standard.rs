@@ -224,7 +224,17 @@ pub struct ListResponse<T> {
 
 // ==================== 检验项 ====================
 
-async fn list_inspection_items(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection_standard:read"])),
+    path = "/inspection-items",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn list_inspection_items(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -316,7 +326,20 @@ async fn list_inspection_items(
     )
 }
 
-async fn get_inspection_item(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection_standard:read"])),
+    path = "/inspection-items/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn get_inspection_item(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -370,7 +393,17 @@ async fn get_inspection_item(
     }
 }
 
-async fn create_inspection_item(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/inspection-items",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn create_inspection_item(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -435,7 +468,20 @@ async fn create_inspection_item(
     ApiResponse::success(serde_json::json!({ "id": id }), "检验项创建成功")
 }
 
-async fn update_inspection_item(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/inspection-items/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn update_inspection_item(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -517,7 +563,20 @@ async fn update_inspection_item(
     }
 }
 
-async fn delete_inspection_item(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/inspection-items/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn delete_inspection_item(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -568,7 +627,17 @@ async fn delete_inspection_item(
 
 // ==================== 抽样方案 ====================
 
-async fn list_sampling_plans(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection_standard:read"])),
+    path = "/sampling-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn list_sampling_plans(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -658,7 +727,20 @@ async fn list_sampling_plans(
     )
 }
 
-async fn get_sampling_plan(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection_standard:read"])),
+    path = "/sampling-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn get_sampling_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -710,7 +792,17 @@ async fn get_sampling_plan(
     }
 }
 
-async fn create_sampling_plan(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/sampling-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn create_sampling_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -772,7 +864,20 @@ async fn create_sampling_plan(
     ApiResponse::success(serde_json::json!({ "id": id }), "抽样方案创建成功")
 }
 
-async fn update_sampling_plan(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/sampling-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn update_sampling_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -845,7 +950,20 @@ async fn update_sampling_plan(
     }
 }
 
-async fn delete_sampling_plan(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/sampling-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn delete_sampling_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -896,7 +1014,17 @@ async fn delete_sampling_plan(
 
 // ==================== 检验方案 ====================
 
-async fn list_inspection_plans(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection_standard:read"])),
+    path = "/inspection-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn list_inspection_plans(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -987,7 +1115,20 @@ async fn list_inspection_plans(
     )
 }
 
-async fn get_inspection_plan(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection_standard:read"])),
+    path = "/inspection-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn get_inspection_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -1038,7 +1179,17 @@ async fn get_inspection_plan(
     }
 }
 
-async fn create_inspection_plan(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/inspection-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn create_inspection_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -1099,7 +1250,20 @@ async fn create_inspection_plan(
     ApiResponse::success(serde_json::json!({ "id": id }), "检验方案创建成功")
 }
 
-async fn update_inspection_plan(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/inspection-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn update_inspection_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -1169,7 +1333,20 @@ async fn update_inspection_plan(
     }
 }
 
-async fn delete_inspection_plan(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/inspection-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn delete_inspection_plan(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -1220,7 +1397,20 @@ async fn delete_inspection_plan(
 
 // ==================== 方案-检验项 关联 ====================
 
-async fn list_plan_items(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection_standard:read"])),
+    path = "/inspection-plans/{id}/items",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn list_plan_items(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -1271,7 +1461,20 @@ async fn list_plan_items(
     ApiResponse::success(serde_json::json!({ "items": items }), "查询成功")
 }
 
-async fn add_plan_item(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/inspection-plans/{id}/items",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn add_plan_item(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
@@ -1339,7 +1542,21 @@ async fn add_plan_item(
     ApiResponse::success(serde_json::json!({ "id": pid }), "检验项添加成功")
 }
 
-async fn remove_plan_item(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:inspection_standard:write"])),
+    path = "/inspection-plans/{id}/items/{id}",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/inspection_standard"
+)]
+pub(crate) async fn remove_plan_item(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,

@@ -1047,3 +1047,16 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 3. **删掉 2 条死声明**：`apps/web/src/api/crm/readOps2.ts` 的 `getFunnelTrend2` 与整个 `readOps3.ts`（`/sales-funnel/trend/{tail}`、`/sales-funnel/conversion/{tail}` 把 `{tail}` 字面写进 URL，无任何调用方、无参数可传，属不可执行的脚手架），crm 调用基数 121 → 119。
 
 **结果**：crm **119/119/0**；spec 3728 → **3730**；全量缺口 283 → **250**。
+
+---
+
+## 第 43 轮 · qms（32 → 0）
+
+**基线**：qms 165 调用 / 133 匹配 / 32 缺口。
+
+**处理**：
+1. **23 个 handler 补注解**：`inspection_standard.rs` 18 条（inspection-items、sampling-plans、inspection-plans 及 `/{id}/items` 全套 CRUD，原私有 `async fn` 提 `pub(crate)`）；`quality_task.rs` 3 条（`/quality-tasks`、`/quality-tasks/{id}`、`/defect-records`）；`spc.rs` 2 条（`/spc/charts/{id}/data-points` GET、`/spc/charts/{id}/calculate` POST）。全部登记进真身 `svc/qms/src/openapi.rs`（非 `modules/openapi.rs`）。
+2. **新增 `GET /health`**：新增 `qms_plugin::qms_health`，在 `modules/mod.rs::create_routes` 末尾挂 `/health`。
+3. **删掉 4 条不可执行死声明**：`apps/web/src/api/qms/index.ts` 的整个 `qmsApprovalApi`（含 `process` 分发器，动态拼 `/{entityType}/{id}/approve|reject|rework|cancel`），检索确认无任何外部调用方。
+
+**结果**：qms **161/161/0**；spec 3730 → **3744**；全量缺口 250 → **218**。

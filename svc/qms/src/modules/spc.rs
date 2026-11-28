@@ -779,6 +779,19 @@ pub async fn calculate_control_limits(
 }
 
 /// GET /spc/charts/{id}/data-points —— 按控制图 chart 作用域查询数据点（前端契约形状 data_points）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:spc:read"])),
+    path = "/spc/charts/{id}/data-points",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/spc"
+)]
 pub async fn get_spc_chart_data_points(
     State(state): State<crate::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -820,6 +833,19 @@ pub async fn get_spc_chart_data_points(
 
 /// POST /spc/charts/{id}/calculate —— 返回指定控制图的当前控制限
 /// 注：基于图内历史数据点的完整重算待上游支持，这里先回读已存储的控制限（ucl/cl/lcl/cp/cpk）。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:spc:write"])),
+    path = "/spc/charts/{id}/calculate",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QMS/spc"
+)]
 pub async fn calculate_spc_chart_limits(
     State(state): State<crate::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
