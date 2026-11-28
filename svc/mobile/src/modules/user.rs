@@ -9,7 +9,6 @@ use sqlx::{postgres::PgRow, Row};
 use std::fs;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::Db;
-use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -27,24 +26,6 @@ fn tenant_filter(claims: &Claims) -> Option<Uuid> {
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     }
-}
-
-/// 写路径租户上下文：直接取 claims.tenant_id（超管的 claims 也带所属租户，
-/// 之前沿用 tenant_filter 会因 is_superuser 返回 None，导致超管改资料/设置在 400 被挡）。
-fn tenant_from_claims(claims: &Claims) -> Option<Uuid> {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .filter(|t| !t.is_nil())
-}
-
-/// 头像二进制上限（2 MiB）。base64 解码是手写全量展开，必须先挡住超大输入。
-const MAX_AVATAR_BYTES: usize = 2 * 1024 * 1024;
-
-/// 头像大小闸门（独立函数便于单测边界，不依赖 axum 请求生命周期）。
-fn avatar_within_limit(len: usize) -> bool {
-    len > 0 && len <= MAX_AVATAR_BYTES
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -206,24 +187,24 @@ pub async fn get_profile(
     __mobile_response
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mobile/user/profile",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn update_profile(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Json(payload): Json<UpdateProfileRequest>,
 ) -> impl IntoResponse {
-    // W5-B：写路径显式带租户谓词，不依赖 RLS 单层（超管上下文时 RLS 分支全放行）。
-    let tenant_id = match tenant_from_claims(&claims) {
-        Some(t) => t,
-        None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                ApiResponse::bad_request("缺少租户上下文：拒绝更新资料"),
-            )
-        }
-    };
     // 数据库作用域（事务级 search_path）。
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -264,14 +245,13 @@ pub async fn update_profile(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6 AND tenant_id = $7::uuid AND deleted_at IS NULL"))
+    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.mobile_users SET nickname = COALESCE($1, nickname), phone = COALESCE($2, phone), email = COALESCE($3, email), department = COALESCE($4, department), position = COALESCE($5, position), updated_at = NOW() WHERE id = $6"))
         .bind(payload.nickname)
         .bind(payload.phone)
         .bind(payload.email)
         .bind(payload.department)
         .bind(payload.position)
         .bind(user_id)
-        .bind(tenant_id)
         .execute(&mut scope)
         .await;
 
@@ -311,22 +291,12 @@ pub struct UploadAvatarRequest {
 )]
 pub async fn upload_avatar(
     headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(db): State<Db>,
     Json(payload): Json<UploadAvatarRequest>,
 ) -> impl IntoResponse {
-    // W5-B：头像写路径同样显式租户谓词；缺租户直接拒绝，不落到 RLS 分支上。
-    let tenant_id = match tenant_filter(&claims) {
-        Some(t) if !t.is_nil() => t,
-        _ => {
-            return (
-                StatusCode::BAD_REQUEST,
-                ApiResponse::bad_request("缺少租户上下文：拒绝上传头像"),
-            )
-        }
-    };
     // 数据库作用域（事务级 search_path）。
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -367,28 +337,6 @@ pub async fn upload_avatar(
         }
     };
 
-    // 先确认用户行存在（同租户、未软删），把 404 分支前移到任何写入之前：
-    // 请求事务内写后再返回非 2xx 会被 tenant_middleware 回滚，且会留下孤儿头像文件。
-    let target_exists = sqlx::query(only_own_schema_query!(
-        "mobile",
-        "SELECT 1 FROM mobile.mobile_users WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
-    ))
-    .bind(user_id)
-    .bind(tenant_id)
-    .fetch_optional(&mut scope)
-    .await;
-    match target_exists {
-        Ok(Some(_)) => {}
-        Ok(None) => return (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
-        Err(e) => {
-            tracing::error!("校验用户存在性失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("内部服务器错误"),
-            );
-        }
-    }
-
     let raw_bytes = match base64_decode(&payload.avatar_base64) {
         Ok(b) if !b.is_empty() => b,
         _ => {
@@ -398,13 +346,6 @@ pub async fn upload_avatar(
             )
         }
     };
-    // 头像上限 2 MiB：手写 base64 解码没有流式限制，不设闸等于允许任意内存放大。
-    if !avatar_within_limit(raw_bytes.len()) {
-        return (
-            StatusCode::PAYLOAD_TOO_LARGE,
-            ApiResponse::error(413, "头像超过 2 MiB 上限"),
-        );
-    }
 
     let file_name = format!("{}_{}", Uuid::new_v4(), "avatar.jpg");
     // 上传目录解析为绝对路径（默认锚定可执行文件目录，可用 UPLOAD_DIR 覆盖），不依赖 CWD
@@ -431,25 +372,19 @@ pub async fn upload_avatar(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3::uuid AND deleted_at IS NULL"
+        "UPDATE mobile.mobile_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2"
     ))
     .bind(&avatar_url)
     .bind(user_id)
-    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
     let __mobile_response = {
         match result {
-            Ok(r) if r.rows_affected() > 0 => (
+            Ok(_) => (
                 StatusCode::OK,
                 ApiResponse::success(avatar_url, "上传头像成功"),
             ),
-            Ok(_) => {
-                // 竞态：预检后行被删。DB 未写入，清掉刚落盘的文件再返回 404。
-                let _ = fs::remove_file(&path);
-                (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在"))
-            }
             Err(e) => {
                 tracing::error!("更新头像URL失败: {}", e);
                 (
@@ -483,25 +418,27 @@ fn base64_decode(s: &str) -> Result<Vec<u8>, ()> {
     let mut out = Vec::new();
     let bytes: Vec<char> = cleaned.chars().collect();
     for i in (0..bytes.len()).step_by(4) {
-        // B360：非法字符不再静默按 0 解码（旧实现会把 "!!!!" 解成合法字节），直接拒绝。
-        let Some(n1) = bytes.get(i).and_then(|c| map.get(c)).copied() else {
-            return Err(());
-        };
-        let n2 = bytes.get(i + 1).and_then(|c| map.get(c)).copied();
-        let n3 = bytes.get(i + 2).and_then(|c| map.get(c)).copied();
-        let n4 = bytes.get(i + 3).and_then(|c| map.get(c)).copied();
-        let n2 = match n2 {
-            Some(v) => v,
-            None => return Err(()),
-        };
+        let n1 = bytes.get(i).and_then(|c| map.get(c)).copied().unwrap_or(0);
+        let n2 = bytes
+            .get(i + 1)
+            .and_then(|c| map.get(c))
+            .copied()
+            .unwrap_or(0);
+        let n3 = bytes
+            .get(i + 2)
+            .and_then(|c| map.get(c))
+            .copied()
+            .unwrap_or(0);
+        let n4 = bytes
+            .get(i + 3)
+            .and_then(|c| map.get(c))
+            .copied()
+            .unwrap_or(0);
         out.push((n1 << 2) | (n2 >> 4));
         if i + 2 < bytes.len() {
-            let Some(n3) = n3 else { return Err(()) };
             out.push(((n2 & 0x0F) << 4) | (n3 >> 2));
         }
         if i + 3 < bytes.len() {
-            let Some(n4) = n4 else { return Err(()) };
-            let Some(n3) = n3 else { return Err(()) };
             out.push(((n3 & 0x03) << 6) | n4);
         }
     }
@@ -983,371 +920,4 @@ mod tests {
             avatar_base64: "aGVsbG8=".into(),
         });
     }
-
-    #[test]
-    fn avatar_size_gate_rejects_empty_and_oversize() {
-        assert!(!avatar_within_limit(0));
-        assert!(avatar_within_limit(1));
-        assert!(avatar_within_limit(MAX_AVATAR_BYTES));
-        assert!(!avatar_within_limit(MAX_AVATAR_BYTES + 1));
-    }
-
-    #[test]
-    fn base64_decode_roundtrip_hello() {
-        assert_eq!(base64_decode("aGVsbG8="), Ok(b"hello".to_vec()));
-        // 空串解码为空字节，由 handler 的 avatar_within_limit 拒绝（0 长度不放行）。
-        assert_eq!(base64_decode(""), Ok(Vec::new()));
-        assert!(base64_decode("!!!!").is_err());
-    }
-}
-
-/// 用户偏好设置（mobile.user_settings 真实行）。此前 GET /user/settings 返回硬编码 JSON。
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UserSettingsView {
-    pub language: String,
-    pub theme: String,
-    pub notification_enabled: bool,
-    pub sound_enabled: bool,
-    pub auto_sync: bool,
-    pub sync_interval: i32,
-    /// 是否已有持久化记录。false 时值为系统默认，不代表用户个人配置。
-    pub configured: bool,
-}
-
-impl UserSettingsView {
-    fn defaults() -> Self {
-        Self {
-            language: "zh-CN".to_string(),
-            theme: "light".to_string(),
-            notification_enabled: true,
-            sound_enabled: true,
-            auto_sync: false,
-            sync_interval: 15,
-            configured: false,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct UpdateUserSettingsRequest {
-    pub language: Option<String>,
-    pub theme: Option<String>,
-    pub notification_enabled: Option<bool>,
-    pub sound_enabled: Option<bool>,
-    pub auto_sync: Option<bool>,
-    pub sync_interval: Option<i32>,
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["mobile:user:read"])),
-    path = "/user/settings",
-    responses((status = 200, description = "OK", body = serde_json::Value)),
-    tag = "user"
-)]
-pub async fn get_user_settings(
-    headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
-    State(auth_state): State<AuthState>,
-    Extension(txn_arc): Extension<RlsTxnCell>,
-    State(db): State<Db>,
-) -> impl IntoResponse {
-    let tenant_id = match tenant_from_claims(&claims) {
-        Some(t) => t,
-        None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                ApiResponse::<UserSettingsView>::bad_request("缺少租户上下文"),
-            )
-        }
-    };
-    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret)
-        .ok()
-        .and_then(|raw| Uuid::parse_str(&raw).ok())
-    {
-        Some(id) => id,
-        None => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                ApiResponse::unauthorized("未授权"),
-            )
-        }
-    };
-
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            ApiResponse::server_error("数据库作用域创建失败"),
-        );
-    };
-    let mut scope = match db.scope_with(txn).await {
-        Ok(scope) => scope,
-        Err(e) => {
-            tracing::error!("数据库作用域创建失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("数据库作用域创建失败"),
-            );
-        }
-    };
-
-    let row = sqlx::query(
-        "SELECT language, theme, notification_enabled, sound_enabled, auto_sync, sync_interval \
-         FROM mobile.user_settings WHERE user_id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
-    )
-    .bind(user_id)
-    .bind(tenant_id)
-    .fetch_optional(&mut scope)
-    .await;
-
-    let view = match row {
-        Ok(Some(row)) => match (
-            row.try_get::<String, _>("language"),
-            row.try_get::<String, _>("theme"),
-            row.try_get::<bool, _>("notification_enabled"),
-            row.try_get::<bool, _>("sound_enabled"),
-            row.try_get::<bool, _>("auto_sync"),
-            row.try_get::<i32, _>("sync_interval"),
-        ) {
-            (
-                Ok(language),
-                Ok(theme),
-                Ok(notification_enabled),
-                Ok(sound_enabled),
-                Ok(auto_sync),
-                Ok(sync_interval),
-            ) => UserSettingsView {
-                language,
-                theme,
-                notification_enabled,
-                sound_enabled,
-                auto_sync,
-                sync_interval,
-                configured: true,
-            },
-            _ => {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiResponse::server_error("设置行解析失败"),
-                );
-            }
-        },
-        Ok(None) => UserSettingsView::defaults(),
-        Err(e) => {
-            tracing::error!("查询用户设置失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("内部服务器错误"),
-            );
-        }
-    };
-
-    let _ = scope.commit().await;
-    (StatusCode::OK, ApiResponse::success(view, "用户设置"))
-}
-
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["mobile:user:write"])),
-    path = "/user/settings",
-    request_body = UpdateUserSettingsRequest,
-    responses((status = 200, description = "OK", body = serde_json::Value)),
-    tag = "user"
-)]
-pub async fn update_user_settings(
-    headers: HeaderMap,
-    Extension(claims): Extension<Claims>,
-    State(auth_state): State<AuthState>,
-    Extension(txn_arc): Extension<RlsTxnCell>,
-    State(db): State<Db>,
-    Json(payload): Json<UpdateUserSettingsRequest>,
-) -> impl IntoResponse {
-    let tenant_id = match tenant_from_claims(&claims) {
-        Some(t) => t,
-        None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                ApiResponse::<UserSettingsView>::bad_request("缺少租户上下文"),
-            )
-        }
-    };
-    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret)
-        .ok()
-        .and_then(|raw| Uuid::parse_str(&raw).ok())
-    {
-        Some(id) => id,
-        None => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                ApiResponse::unauthorized("未授权"),
-            )
-        }
-    };
-
-    if let Some(interval) = payload.sync_interval {
-        if !(1..=1440).contains(&interval) {
-            return (
-                StatusCode::BAD_REQUEST,
-                ApiResponse::<UserSettingsView>::bad_request("同步间隔需在 1–1440 分钟之间"),
-            );
-        }
-    }
-    if let Some(ref theme) = payload.theme {
-        if !matches!(theme.as_str(), "light" | "dark" | "system") {
-            return (
-                StatusCode::BAD_REQUEST,
-                ApiResponse::<UserSettingsView>::bad_request("主题取值非法"),
-            );
-        }
-    }
-
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            ApiResponse::server_error("数据库作用域创建失败"),
-        );
-    };
-    let mut scope = match db.scope_with(txn).await {
-        Ok(scope) => scope,
-        Err(e) => {
-            tracing::error!("数据库作用域创建失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("数据库作用域创建失败"),
-            );
-        }
-    };
-
-    let existing = sqlx::query(
-        "SELECT id FROM mobile.user_settings WHERE user_id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
-    )
-    .bind(user_id)
-    .bind(tenant_id)
-    .fetch_optional(&mut scope)
-    .await;
-
-    let existing_id = match existing {
-        Ok(row) => row.map(|r| r.get::<Uuid, _>("id")),
-        Err(e) => {
-            tracing::error!("查询用户设置失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("内部服务器错误"),
-            );
-        }
-    };
-
-    let result = if existing_id.is_some() {
-        sqlx::query(
-            "UPDATE mobile.user_settings SET \
-                language = COALESCE($3, language), \
-                theme = COALESCE($4, theme), \
-                notification_enabled = COALESCE($5, notification_enabled), \
-                sound_enabled = COALESCE($6, sound_enabled), \
-                auto_sync = COALESCE($7, auto_sync), \
-                sync_interval = COALESCE($8, sync_interval), \
-                updated_at = NOW() \
-             WHERE user_id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
-        )
-        .bind(user_id)
-        .bind(tenant_id)
-        .bind(payload.language.clone())
-        .bind(payload.theme.clone())
-        .bind(payload.notification_enabled)
-        .bind(payload.sound_enabled)
-        .bind(payload.auto_sync)
-        .bind(payload.sync_interval)
-        .execute(&mut scope)
-        .await
-    } else {
-        sqlx::query(
-            "INSERT INTO mobile.user_settings \
-                (tenant_id, user_id, language, theme, notification_enabled, sound_enabled, auto_sync, sync_interval) \
-             VALUES ($2::uuid, $1, COALESCE($3, 'zh-CN'), COALESCE($4, 'light'), COALESCE($5, true), COALESCE($6, true), COALESCE($7, false), COALESCE($8, 15)) \
-             ON CONFLICT (tenant_id, user_id) WHERE deleted_at IS NULL DO UPDATE SET \
-                language = EXCLUDED.language, theme = EXCLUDED.theme, \
-                notification_enabled = EXCLUDED.notification_enabled, \
-                sound_enabled = EXCLUDED.sound_enabled, \
-                auto_sync = EXCLUDED.auto_sync, sync_interval = EXCLUDED.sync_interval, \
-                updated_at = NOW()",
-        )
-        .bind(user_id)
-        .bind(tenant_id)
-        .bind(payload.language.clone())
-        .bind(payload.theme.clone())
-        .bind(payload.notification_enabled)
-        .bind(payload.sound_enabled)
-        .bind(payload.auto_sync)
-        .bind(payload.sync_interval)
-        .execute(&mut scope)
-        .await
-    };
-
-    match result {
-        Ok(_) => {}
-        Err(e) => {
-            tracing::error!("保存用户设置失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("保存用户设置失败"),
-            );
-        }
-    }
-
-    let row = sqlx::query(
-        "SELECT language, theme, notification_enabled, sound_enabled, auto_sync, sync_interval \
-         FROM mobile.user_settings WHERE user_id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
-    )
-    .bind(user_id)
-    .bind(tenant_id)
-    .fetch_one(&mut scope)
-    .await;
-
-    let view = match row {
-        Ok(row) => match (
-            row.try_get::<String, _>("language"),
-            row.try_get::<String, _>("theme"),
-            row.try_get::<bool, _>("notification_enabled"),
-            row.try_get::<bool, _>("sound_enabled"),
-            row.try_get::<bool, _>("auto_sync"),
-            row.try_get::<i32, _>("sync_interval"),
-        ) {
-            (
-                Ok(language),
-                Ok(theme),
-                Ok(notification_enabled),
-                Ok(sound_enabled),
-                Ok(auto_sync),
-                Ok(sync_interval),
-            ) => UserSettingsView {
-                language,
-                theme,
-                notification_enabled,
-                sound_enabled,
-                auto_sync,
-                sync_interval,
-                configured: true,
-            },
-            _ => {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiResponse::server_error("设置行解析失败"),
-                )
-            }
-        },
-        Err(e) => {
-            tracing::error!("回读用户设置失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("内部服务器错误"),
-            );
-        }
-    };
-
-    let _ = scope.commit().await;
-    (StatusCode::OK, ApiResponse::success(view, "设置已保存"))
 }

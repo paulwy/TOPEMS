@@ -149,6 +149,16 @@ pub async fn get_shortcuts(
     __mobile_response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/shortcuts",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_shortcut(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,

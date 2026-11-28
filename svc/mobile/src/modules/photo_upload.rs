@@ -685,6 +685,16 @@ pub async fn get_upload_progress(
     __mobile_response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mobile/photos/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn delete_photo(
     headers: HeaderMap,
     Extension(_claims): Extension<Claims>,

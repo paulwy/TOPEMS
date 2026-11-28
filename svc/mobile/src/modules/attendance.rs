@@ -301,6 +301,16 @@ pub async fn get_today_attendance(
 // ===== 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
 
 /// 考勤统计（前端 GET /attendance/statistics → HRM 统计，上游未接入时降级空统计）
+#[utoipa::path(
+    get,
+    path = "/api/mobile/attendance/statistics",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn get_attendance_statistics(
     State(_auth_state): State<AuthState>,
     State(_client): State<TypedServiceClient<HrmApi>>,
@@ -332,6 +342,16 @@ pub async fn get_attendance_statistics(
 }
 
 /// 班次列表（前端 GET /attendance/shifts → HRM 班次，上游未接入时降级空列表）
+#[utoipa::path(
+    get,
+    path = "/api/mobile/attendance/shifts",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn list_attendance_shifts(
     State(_auth_state): State<AuthState>,
     State(_client): State<TypedServiceClient<HrmApi>>,
@@ -635,6 +655,16 @@ pub async fn list_leave_applications(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/attendance/leaves",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn apply_leave(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,

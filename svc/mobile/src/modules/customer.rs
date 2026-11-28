@@ -8,6 +8,16 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::crm_api::CrmApi, TypedServiceClient};
 
 /// 客户列表（前端 GET /customer）
+#[utoipa::path(
+    get,
+    path = "/api/mobile/customers",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn list_customers(
     State(client): State<TypedServiceClient<CrmApi>>,
 ) -> ApiResponse<serde_json::Value> {
@@ -25,6 +35,16 @@ pub async fn list_customers(
 }
 
 /// 客户详情（前端 GET /customer/{id}）
+#[utoipa::path(
+    get,
+    path = "/api/mobile/customers/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn get_customer(
     State(client): State<TypedServiceClient<CrmApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -42,6 +62,16 @@ pub async fn get_customer(
 }
 
 /// 新建客户（前端 POST /customer）
+#[utoipa::path(
+    post,
+    path = "/api/mobile/customers",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_customer(
     State(client): State<TypedServiceClient<CrmApi>>,
     Json(payload): Json<serde_json::Value>,
@@ -62,6 +92,16 @@ pub async fn create_customer(
 }
 
 /// 更新客户（前端 PUT /customer/{id}）
+#[utoipa::path(
+    put,
+    path = "/api/mobile/customers/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn update_customer(
     State(client): State<TypedServiceClient<CrmApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -82,6 +122,16 @@ pub async fn update_customer(
 }
 
 /// 删除客户（前端 DELETE /customer/{id}）
+#[utoipa::path(
+    delete,
+    path = "/api/mobile/customers/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn delete_customer(
     State(client): State<TypedServiceClient<CrmApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,

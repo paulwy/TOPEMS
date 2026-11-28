@@ -915,3 +915,18 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 - 只看"往前 1500 字符内是否有 `utoipa::path`"会把上一个函数的注解误算成本函数的（8 条被跳过），确认方式仍是"自上一个顶格 `\n}\n` 起这段是否含 `utoipa::path`"。
 
 **结果**：pm **153/153/0**；`--probe` 下 pm 的 SPEC_GAP / REAL_MISSING / NEEDS_PARAM 全为 0；spec 3590 → **3592**。
+
+## 第 36 轮 · mobile（49 → 4）
+
+**基线**：mobile 142 调用 / 93 匹配 / 49 缺口；前缀 `/api/mobile`（`main.rs` 的 `api_prefix`），路由真源是 `svc/mobile/src/shared/mod.rs::build_protected_routes()` 一张 222 条的大平表（另有 `modules/mobile_plugin.rs::create_routes()` 合到 public 侧）。
+
+**做法**
+1. 按 `(method, path)` 把 49 条缺口对回真实路由：**44 条路由已存在、只是没有注解**。给 handler 插最小注解（全路径 `/api/mobile/...`），`register_annotated_handlers.py --crate-root svc/mobile/src --crate-prefix crate` 登记 41 项。`register_push_device` 是 import 别名（真身 `push_notification::register_device`），需按真身注解。
+2. **补 3 条真路由**（handler 早已存在，缺挂载）：`POST /attendance/clock-in`、`POST /attendance/clock-out`（与 `check-in/out` 同一动作，前端 `attendance.ts` 两个名字都声明）、`PUT /mobile-tasks/{id}/status`（原只有 POST，前端 `updateTaskStatus` 用 PUT）。
+3. **补 1 个真实现**：`GET /documents/stats`。它此前没有路由，被 `/documents/{id}` 的 `Path<Uuid>` 吞掉返回 **400**（`Cannot parse id with value stats`），前端 `document.ts` 又确实在调。新增 `get_document_stats` 按 status/category 聚合当前用户可见文档，静态段显式成路由。
+4. **修字面星号路径**：`api-contract.mjs` 报的缺口路径是 `*`，插注解时照抄会写成 `path = "/api/mobile/documents/*"` 这类非法模板（14 处）。统一改回 `{id}`，并把 spec 里 8 条历史遗留的 `*` 字面路径删掉。
+5. 4 条同义路径用 **spec 级别名 op（`x-alias-of`）**：`/attendance/overview`→`/attendance`、`/dashboard/stats`→`/stats/dashboard`、`/attendance/clock-in|out`→`/attendance/check-in|out`（这几条共用同一 handler，一个函数只能带一个注解）。
+
+**如实留缺口（4 条，后端确实没有实现）**：`POST /approvals/templates`、`POST /approvals/delegations`、`POST /inventory/stocktake`（只有 GET 列表，无创建）、`POST /production/orders/{id}/pause`（`contract_fallback.rs` 里刻意返回 503——MES 无 pause 动作，"写操作绝不假成功"）。
+
+**结果**：mobile **142/138/4**；spec 3592 → **3613**。

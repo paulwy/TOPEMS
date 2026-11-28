@@ -110,7 +110,8 @@ use crate::modules::device::{
     register_device, test_push_device, unregister_device, update_device, update_push_token,
 };
 use crate::modules::document::{
-    create_document, delete_document, get_document, get_document_categories, list_documents,
+    create_document, delete_document, get_document, get_document_categories, get_document_stats,
+    list_documents,
     update_document,
 };
 use crate::modules::inventory::{
@@ -120,7 +121,7 @@ use crate::modules::inventory::{
 };
 use crate::modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
 use crate::modules::missing_endpoints::{
-    get_push_config, get_usage_stats, list_inspection_tasks, update_push_config,
+    get_push_config, get_usage_stats, get_user_settings, list_inspection_tasks, update_push_config,
     update_push_template,
 };
 use crate::modules::notifications::{
@@ -183,8 +184,7 @@ use crate::modules::task::{
 };
 use crate::modules::user::{
     change_password, get_department_members, get_permissions, get_profile, get_user_by_id,
-    get_user_settings, list_users, update_profile, update_user_settings, update_user_status,
-    upload_avatar,
+    list_users, update_profile, update_user_status, upload_avatar,
 };
 use crate::modules::workbench::get_workbench_data;
 use axum::Router;
@@ -356,10 +356,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::get(list_inspection_tasks),
         )
         .route("/analytics/usage", axum::routing::get(get_usage_stats))
-        .route(
-            "/user/settings",
-            axum::routing::get(get_user_settings).put(update_user_settings),
-        )
+        .route("/user/settings", axum::routing::get(get_user_settings))
         .route(
             "/push/config",
             axum::routing::get(get_push_config).put(update_push_config),
@@ -442,7 +439,8 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         )
         .route(
             "/mobile-tasks/{id}/status",
-            axum::routing::post(update_task_status),
+            axum::routing::post(update_task_status)
+                .put(update_task_status),
         )
         // Attendance Routes
         .route(
@@ -470,6 +468,9 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         )
         .route("/attendance/check-in", axum::routing::post(check_in))
         .route("/attendance/check-out", axum::routing::post(check_out))
+        // 前端 attendance.ts 声明的是 clock-in / clock-out（与 check-in/out 同一动作）
+        .route("/attendance/clock-in", axum::routing::post(check_in))
+        .route("/attendance/clock-out", axum::routing::post(check_out))
         .route(
             "/attendance/leaves",
             axum::routing::get(list_leave_applications).post(apply_leave),
@@ -824,6 +825,11 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/documents/categories",
             axum::routing::get(get_document_categories),
         )
+        // 静态段必须显式成路由，否则会被 /documents/{id} 的 UUID 解析吞掉（前端 document.ts 的 stats）
+        .route(
+            "/documents/stats",
+            axum::routing::get(get_document_stats),
+        )
         .route(
             "/documents/{id}",
             axum::routing::get(get_document)
@@ -1016,6 +1022,16 @@ async fn list_scan_records(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/scan-records",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_scan_record(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1085,6 +1101,16 @@ async fn list_photo_evidences(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/photo-evidences",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_photo_evidence(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1154,6 +1180,16 @@ async fn list_audio_recordings(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/audio-recordings",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_audio_recording(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1223,6 +1259,16 @@ async fn list_video_recordings(
     )
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/video-recordings",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 async fn create_video_recording(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

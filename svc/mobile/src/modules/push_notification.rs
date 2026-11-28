@@ -71,6 +71,16 @@ pub struct CreatePushTemplateRequest {
     pub description: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/push/devices/register",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn register_device(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -505,6 +515,16 @@ pub async fn send_broadcast(
     __mobile_response
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/mobile/push/notifications",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn get_notification_list(
     headers: HeaderMap,
     Extension(_claims): Extension<Claims>,
@@ -747,6 +767,16 @@ pub async fn get_templates(
     __mobile_response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/push/templates",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_template(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

@@ -646,6 +646,16 @@ pub async fn get_sync_policy(
     __mobile_response
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mobile/offline/sync-policy",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn update_sync_policy(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

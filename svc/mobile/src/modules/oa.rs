@@ -275,6 +275,16 @@ pub async fn get_meeting(
     __mobile_response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/meetings",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_meeting(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -336,6 +346,16 @@ pub async fn create_meeting(
     __mobile_response
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mobile/meetings/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn update_meeting(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -397,6 +417,16 @@ pub async fn update_meeting(
     __mobile_response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mobile/meetings/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn delete_meeting(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -995,6 +1025,16 @@ pub async fn remove_event_attendee(
     __mobile_response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/calendar/events",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_calendar_event(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1123,6 +1163,16 @@ pub async fn update_calendar_event(
     __mobile_response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mobile/calendar/events/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn delete_calendar_event(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1282,6 +1332,16 @@ pub async fn get_oa_task(
     __mobile_response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/tasks",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_oa_task(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1341,6 +1401,16 @@ pub async fn create_oa_task(
     __mobile_response
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mobile/tasks/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn update_oa_task(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1402,6 +1472,16 @@ pub async fn update_oa_task(
     __mobile_response
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/mobile/tasks/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn delete_oa_task(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -286,6 +286,16 @@ pub async fn get_task(
     __mobile_response
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/mobile-tasks",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_task(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
@@ -497,6 +507,16 @@ pub async fn update_task(
     __mobile_response
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/mobile/mobile-tasks/{id}/status",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn update_task_status(
     headers: HeaderMap,
     Extension(_claims): Extension<Claims>,

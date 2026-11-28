@@ -68,6 +68,16 @@ pub struct CreateDocumentRequest {
 }
 
 /// 文档列表（前端 GET /documents）
+#[utoipa::path(
+    get,
+    path = "/api/mobile/documents",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn list_documents(
     headers: HeaderMap,
     Extension(_claims): Extension<Claims>,
@@ -172,7 +182,104 @@ pub async fn get_document_categories() -> impl IntoResponse {
     )
 }
 
+/// 文档统计（前端 GET /documents/stats）—— 按状态/分类聚合当前用户可见文档。
+#[utoipa::path(
+    get,
+    path = "/api/mobile/documents/stats",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 401, description = "Unauthorized")
+    )
+)]
+pub async fn get_document_stats(
+    headers: HeaderMap,
+    Extension(_claims): Extension<Claims>,
+    State(auth_state): State<AuthState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(db): State<Db>,
+) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::server_error("数据库作用域创建失败"),
+        );
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                ApiResponse::unauthorized("未授权"),
+            );
+        }
+    };
+
+    let rows: Result<Vec<(String, String)>, sqlx::Error> = sqlx::query_as(only_own_schema_query!(
+        "mobile",
+        "SELECT COALESCE(status, ''), COALESCE(category, '')
+         FROM mobile.documents
+         WHERE deleted_at IS NULL AND (author_id::text = $1 OR author_id IS NULL)"
+    ))
+    .bind(&user_id)
+    .fetch_all(&mut scope)
+    .await;
+
+    let rows = match rows {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询文档统计失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("查询文档统计失败"),
+            );
+        }
+    };
+
+    let mut by_status: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+    let mut by_category: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+    for (status, category) in &rows {
+        *by_status.entry(status.clone()).or_insert(0) += 1;
+        *by_category.entry(category.clone()).or_insert(0) += 1;
+    }
+    let _ = scope.commit().await;
+
+    (
+        StatusCode::OK,
+        ApiResponse::success(
+            serde_json::json!({
+                "total": rows.len() as i64,
+                "by_status": by_status,
+                "by_category": by_category
+            }),
+            "获取文档统计成功",
+        ),
+    )
+}
+
 /// 文档详情（前端 GET /documents/{id}）
+#[utoipa::path(
+    get,
+    path = "/api/mobile/documents/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn get_document(
     headers: HeaderMap,
     Extension(_claims): Extension<Claims>,
@@ -244,6 +351,16 @@ pub async fn get_document(
 }
 
 /// 新建文档（前端 POST /documents）
+#[utoipa::path(
+    post,
+    path = "/api/mobile/documents",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn create_document(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
@@ -346,6 +463,16 @@ pub async fn create_document(
 }
 
 /// 更新文档（前端 PUT /documents/{id}）
+#[utoipa::path(
+    put,
+    path = "/api/mobile/documents/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn update_document(
     headers: HeaderMap,
     Extension(_claims): Extension<Claims>,
@@ -435,6 +562,16 @@ pub async fn update_document(
 }
 
 /// 删除文档（前端 DELETE /documents/{id}）
+#[utoipa::path(
+    delete,
+    path = "/api/mobile/documents/{id}",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn delete_document(
     headers: HeaderMap,
     Extension(_claims): Extension<Claims>,

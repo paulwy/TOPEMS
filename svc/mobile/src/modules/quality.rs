@@ -115,6 +115,16 @@ pub async fn list_defect_records(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/quality/defects",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn report_defect(
     State(client): State<TypedServiceClient<QmsApi>>,
     Json(payload): Json<CreateDefectRequest>,

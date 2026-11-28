@@ -83,6 +83,16 @@ pub async fn get_production_order(
 // 保留 start/complete：`pauseOrder` 同族页面真实在用。
 
 /// 开始生产订单（前端 POST /production/orders/{id}/start → MES PUT /orders/{id}/start）
+#[utoipa::path(
+    post,
+    path = "/api/mobile/production/orders/{id}/start",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn start_production_order(
     State(client): State<TypedServiceClient<MesApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -101,6 +111,16 @@ pub async fn start_production_order(
 }
 
 /// 完成生产订单（前端 POST /production/orders/{id}/complete → MES PUT /orders/{id}/complete）
+#[utoipa::path(
+    post,
+    path = "/api/mobile/production/orders/{id}/complete",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn complete_production_order(
     State(client): State<TypedServiceClient<MesApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -218,6 +238,16 @@ pub async fn list_work_reports(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/mobile/production/work-reports",
+    tag = "mobile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found")
+    )
+)]
 pub async fn submit_work_report(
     State(client): State<TypedServiceClient<MesApi>>,
     Json(payload): Json<CreateWorkReportRequest>,
