@@ -113,3 +113,138 @@ fn risk_write_routes_are_not_in_read_block() {
         assert!(!read.contains(path), "风险读块不应包含写路由 {path}");
     }
 }
+
+fn block<'a>(src: &'a str, start: &str, end: &str) -> &'a str {
+    let s = src.find(start).expect("块起始标记缺失");
+    let e = src[s..].find(end).expect("块结束标记缺失") + s;
+    &src[s..e]
+}
+
+/// B376: 付款域读块只放 GET；建/改/删各挂字典里真实存在的细码。
+#[test]
+fn payment_routes_are_split_by_action() {
+    let src = include_str!("modules/mod.rs");
+    let read = block(
+        src,
+        "let payment_read_routes = Router::new()",
+        "let payment_create_routes = Router::new()",
+    );
+    assert_no_write_verb(read, "payment_read_routes");
+    assert!(
+        read.contains("\"finance:payment:read\""),
+        "付款读块必须挂 finance:payment:read"
+    );
+
+    for (start, end, code) in [
+        (
+            "let payment_create_routes = Router::new()",
+            "let payment_update_routes = Router::new()",
+            "finance:payment:create",
+        ),
+        (
+            "let payment_update_routes = Router::new()",
+            "let payment_delete_routes = Router::new()",
+            "finance:payment:update",
+        ),
+        (
+            "let payment_delete_routes = Router::new()",
+            "let payment_admin_routes = Router::new()",
+            "finance:payment:delete",
+        ),
+    ] {
+        let w = block(src, start, end);
+        assert!(w.contains(&format!("\"{code}\"")), "付款写块必须挂 {code}");
+    }
+
+    let admin = block(
+        src,
+        "let payment_admin_routes = Router::new()",
+        "let payment_routes = Router::new()",
+    );
+    assert!(
+        admin.contains("require_module_write(\"finance\")"),
+        "付款导出必须挂模块管理员（finance:admin）"
+    );
+    assert!(
+        !src.contains("finance:payment:admin"),
+        "finance:payment:admin 不在权限字典里，注解不得再引用"
+    );
+}
+
+/// B376: 应收/应付域读块只放 GET；收款单建/改/删与批量建应收应付各有写门。
+#[test]
+fn ar_ap_routes_are_split_by_action() {
+    let src = include_str!("modules/mod.rs");
+    let read = block(
+        src,
+        "let ar_ap_read_routes = Router::new()",
+        "let ar_ap_create_routes = Router::new()",
+    );
+    assert_no_write_verb(read, "ar_ap_read_routes");
+    assert!(
+        read.contains("\"finance:receivable:read\""),
+        "应收应付读块必须挂 finance:receivable:read"
+    );
+
+    for (start, end, code) in [
+        (
+            "let ar_ap_create_routes = Router::new()",
+            "let ar_ap_batch_payable_routes = Router::new()",
+            "finance:receivable:create",
+        ),
+        (
+            "let ar_ap_batch_payable_routes = Router::new()",
+            "let ar_ap_update_routes = Router::new()",
+            "finance:receivable_payable:create",
+        ),
+        (
+            "let ar_ap_update_routes = Router::new()",
+            "let ar_ap_delete_routes = Router::new()",
+            "finance:receivable:update",
+        ),
+        (
+            "let ar_ap_delete_routes = Router::new()",
+            "let ar_ap_routes = Router::new()",
+            "finance:receivable:delete",
+        ),
+    ] {
+        let w = block(src, start, end);
+        assert!(
+            w.contains(&format!("\"{code}\"")),
+            "应收应付写块必须挂 {code}"
+        );
+    }
+}
+
+/// B376: 收款单/付款单的写路径不能回落到读块。
+#[test]
+fn collection_and_payment_write_paths_are_not_in_read_blocks() {
+    let src = include_str!("modules/mod.rs");
+    let pay_read = block(
+        src,
+        "let payment_read_routes = Router::new()",
+        "let payment_create_routes = Router::new()",
+    );
+    let arap_read = block(
+        src,
+        "let ar_ap_read_routes = Router::new()",
+        "let ar_ap_create_routes = Router::new()",
+    );
+    for path in [
+        "\"/payments/{payment_id}/approve\"",
+        "\"/payments/{payment_id}/execute\"",
+        "\"/payment-records/batch-write-off\"",
+    ] {
+        assert!(!pay_read.contains(path), "付款读块不应包含写路由 {path}");
+    }
+    for path in [
+        "\"/collections/write-off\"",
+        "\"/collections/batch-write-off\"",
+        "\"/receivables/batch\"",
+    ] {
+        assert!(
+            !arap_read.contains(path),
+            "应收应付读块不应包含写路由 {path}"
+        );
+    }
+}
