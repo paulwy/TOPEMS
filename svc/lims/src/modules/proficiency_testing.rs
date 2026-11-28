@@ -446,6 +446,26 @@ pub async fn list_plans(
     }
 }
 
+#[utoipa::path(
+
+    post,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/pt-plans",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn create_plan(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -620,6 +640,29 @@ pub async fn get_plan(
     }
 }
 
+#[utoipa::path(
+
+    put,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/pt-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn update_plan(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -727,6 +770,29 @@ pub async fn update_plan(
         }
     }
 }
+
+#[utoipa::path(
+
+    delete,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/pt-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn delete_plan(
     State(state): State<crate::shared::AppState>,
@@ -971,6 +1037,16 @@ pub async fn list_plan_samples(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = [])),
+    path = "/api/lims/pt-results",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "LIMS"
+)]
 pub async fn submit_result(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,

@@ -97,7 +97,7 @@ function normCall(p, consts = {}) {
   // 模板没闭合（如 `${queryString`）时按变量处理
   s = s.replace(/\$\{[^`]*$/g, '*');
   s = s.replace(/\+/g, '');
-  // 多模板相邻（`/${id}${qs}`）折叠成 `**`，先归一成一个 `*` 再判尾部
+  // 多模板相邻（`/${id}${qs}`）会折叠成 `**`，先归一成一个 `*` 再判尾部
   s = s.replace(/\*{2,}/g, '*');
   // 尾部 `*` 只有"黏在文字后面"时才是 query/后缀拼串占位（如 /audit/operations${qs}）；
   // `/*` 结尾是真变量段（等价 spec 的 `{id}`），必须保留
@@ -132,6 +132,137 @@ function match(specPaths, method, callPath) {
   return null;
 }
 
+/**
+ * 泛型 CRUD 工厂解析。
+ * `function createCrudApi(endpoint: string)` 内部的 `apiClient.x.get(`${endpoint}/${id}`)`
+ * 不是一条契约（路径由调用点决定），真正的契约在调用点 `createCrudApi('/samples')`。
+ * 这里：泛型模板记为「工厂内部调用」不参与对账，同时把每个字面量调用点展开成具体调用。
+ */
+const FACTORY_DEF_RE = /(?:export\s+)?function\s+([A-Za-z_$][\w$]*)\s*(?:<[^>]*>)?\s*\(\s*([A-Za-z_$][\w$]*)\s*:\s*string/g;
+
+function materialize(tpl, param, endpoint) {
+  let bad = false;
+  const out = tpl.replace(/\$\{\s*([^}]*?)\s*\}/g, (all, expr) => {
+    if (expr === param) return endpoint;
+    if (/^[A-Za-z_$][\w$]*$/.test(expr)) return '*';
+    bad = true;
+    return '*';
+  });
+  return bad ? null : out;
+}
+
+function resolveFactoryCalls(files) {
+  const fileText = new Map();
+  const factoriesByFile = new Map(); // file -> Map(name -> tpls)
+  const importsByFile = new Map(); // file -> Map(localName -> resolvedAbsPath)
+  const genericKeys = new Set();
+  const resolveMod = (from, spec) => {
+    const base = path.resolve(path.dirname(from), spec);
+    for (const cand of [base + '.ts', base + '.tsx', path.join(base, 'index.ts')]) {
+      if (fileText.has(cand)) return cand;
+    }
+    return null;
+  };
+  for (const f of files) fileText.set(f, fs.readFileSync(f, 'utf8'));
+  for (const f of files) {
+    const src = fileText.get(f);
+    // import { a, b as c } from './x'
+    const impRe = /import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g;
+    let im;
+    const imps = new Map();
+    while ((im = impRe.exec(src))) {
+      const mod = resolveMod(f, im[2]);
+      if (!mod) continue;
+      for (const piece of im[1].split(',')) {
+        const seg = piece.trim();
+        if (!seg) continue;
+        const asMatch = seg.match(/^([A-Za-z_$][\w$]*)\s+as\s+([A-Za-z_$][\w$]*)$/);
+        if (asMatch) imps.set(asMatch[2], mod);
+        else if (/^[A-Za-z_$][\w$]*$/.test(seg)) imps.set(seg, mod);
+      }
+    }
+    importsByFile.set(f, imps);
+
+    FACTORY_DEF_RE.lastIndex = 0;
+    let m;
+    const defs = new Map();
+    while ((m = FACTORY_DEF_RE.exec(src))) {
+      const name = m[1];
+      const param = m[2];
+      const body = src.slice(m.index, m.index + 4000);
+      const inner = new RegExp(
+        'apiClient\\.([\\w]+)\\.(get|post|put|patch|delete)\\s*(?:<[^>]*>)?\\s*\\(\\s*(`[^`]*`|\'[^\']*\'|"[^"]*"|[A-Za-z_$][\\w$]*)',
+        'g'
+      );
+      let n;
+      const tpls = [];
+      while ((n = inner.exec(body))) {
+        let raw = n[3];
+        if (!/^[`'"]/.test(raw)) {
+          // 裸标识符形态：apiClient.lims.get(endpoint, …)
+          if (raw !== param) continue;
+          raw = '${' + raw + '}';
+        } else {
+          raw = raw.slice(1, -1);
+          if (!raw.includes(param)) continue;
+        }
+        tpls.push({ ns: n[1], method: n[2].toUpperCase(), raw, param });
+        genericKeys.add(`${n[1]}|${n[2].toUpperCase()}|${raw}`);
+      }
+      if (tpls.length) defs.set(name, tpls);
+    }
+    if (defs.size) factoriesByFile.set(f, defs);
+  }
+
+  const factoryFor = (file, name) => {
+    const own = factoriesByFile.get(file);
+    if (own && own.has(name)) return own.get(name);
+    const mod = importsByFile.get(file)?.get(name);
+    if (mod) {
+      const defs = factoriesByFile.get(mod);
+      if (defs && defs.has(name)) return defs.get(name);
+    }
+    return null;
+  };
+
+  const synth = [];
+  const names = new Set();
+  for (const defs of factoriesByFile.values()) for (const n of defs.keys()) names.add(n);
+  for (const f of files) {
+    const src = fileText.get(f);
+    for (const name of names) {
+      const tpls = factoryFor(f, name);
+      if (!tpls) continue;
+      const callRe = new RegExp(`\\b${name}\\s*(?:<[^>]*>)?\\s*\\(\\s*(['"])([^'"]*)\\1`, 'g');
+      let c;
+      while ((c = callRe.exec(src))) {
+        const endpoint = c[2];
+        if (!endpoint.startsWith('/')) continue;
+        const line = src.slice(0, c.index).split('\n').length;
+        // 只按调用点真正用到的方法展开：createCrudApi('/x').list(...) 不应虚构 POST/DELETE
+        const tail = src.slice(c.index + c[0].length, c.index + c[0].length + 40);
+        const mem = tail.match(/^\s*\)\s*\.\s*([A-Za-z_$][\w$]*)\s*\(/);
+        const member = mem ? mem[1] : null;
+        const want = {
+          list: (t) => t.method === 'GET' && t.raw === '${' + t.param + '}',
+          get: (t) => t.method === 'GET' && t.raw.startsWith('${' + t.param + '}/'),
+          create: (t) => t.method === 'POST' && t.raw === '${' + t.param + '}',
+          update: (t) => t.method === 'PUT' && t.raw.startsWith('${' + t.param + '}/'),
+          delete: (t) => t.method === 'DELETE' && t.raw.startsWith('${' + t.param + '}/'),
+        }[member];
+        if (!want) continue;
+        for (const t of tpls) {
+          if (!want(t)) continue;
+          const concrete = materialize(t.raw, t.param, endpoint);
+          if (!concrete) continue;
+          synth.push({ ns: t.ns, method: t.method, raw: concrete, file: path.relative(WEB, f), line });
+        }
+      }
+    }
+  }
+  return { genericKeys, synth };
+}
+
 const CALL_RE = /apiClient\.([\w]+)\.(get|post|put|patch|delete|head)\s*(?:<[^>]*>)?\s*\(\s*(`[^`]*`|'[^']*'|"[^"]*")/g;
 
 async function main() {
@@ -141,6 +272,7 @@ async function main() {
 
   // namespace 是否存在 baseURL：不在 map 里的（如 pm 走 alias）也允许，直接按 /api/<ns> 拼
   const files = walk(API_DIR);
+  const { genericKeys, synth } = resolveFactoryCalls(files);
   const calls = [];
   for (const f of files) {
     const rel = path.relative(WEB, f);
@@ -156,10 +288,20 @@ async function main() {
       const norm = normCall(raw, consts);
       const prefix = bases[ns];
       if (!prefix) continue;
+      if (genericKeys.has(`${ns}|${method}|${raw}`)) continue; // 泛型工厂内部模板，契约在调用点展开
       const full = norm.startsWith(prefix) ? norm : `${prefix}${norm}`.replace(/\/+/g, '/');
       const line = src.slice(0, m.index).split('\n').length;
       calls.push({ ns, method, raw, full, file: rel, line });
     }
+  }
+
+  // 泛型工厂调用点展开成具体调用（createCrudApi('/samples') → GET/POST /samples …）
+  for (const s of synth) {
+    const prefix = bases[s.ns];
+    if (!prefix) continue;
+    const norm = normCall(s.raw, {});
+    const full = norm.startsWith(prefix) ? norm : `${prefix}${norm}`.replace(/\/+/g, '/');
+    calls.push({ ns: s.ns, method: s.method, raw: s.raw, full, file: s.file, line: s.line, via: 'factory' });
   }
 
   // 已知桩：后端显形为 X-Stub、刻意不进 spec 的接口，单列不进缺口

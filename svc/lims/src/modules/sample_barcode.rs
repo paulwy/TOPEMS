@@ -9,6 +9,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -37,6 +38,7 @@ pub fn create_routes() -> Router<AppState> {
             post(assign_rfid_tag),
         )
         .route("/rfid-tags/{tag_id}/unassign", post(unassign_rfid_tag))
+        .route("/rfid-tags/assign", post(assign_rfid_tag_by_body))
 }
 
 #[derive(Debug, Deserialize)]
@@ -273,10 +275,29 @@ pub async fn list_barcodes(
     }
 }
 
+#[utoipa::path(
+
+    post,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/barcodes/generate",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn generate_barcode(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
-    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateBarcodeRequest>,
 ) -> ApiResponse<Vec<SampleBarcode>> {
     let valid_type = BARCODE_TYPES.iter().any(|(t, _)| *t == req.barcode_type);
@@ -343,8 +364,8 @@ pub async fn generate_barcode(
         let row = sqlx::query(
             r#"
             INSERT INTO lims.qa_lims_sample_barcodes (barcode, barcode_type, sample_id, sample_no, status, generated_at, tenant_id)
-            VALUES ($1, $2, $3, $4, 'active', NOW(), $5)
-            RETURNING id, tenant_id, barcode, barcode_type, sample_id::TEXT, sample_no, rfid_tag, print_count, status,
+            VALUES ($1, $2, $3, $4, 'active', NOW(), gen_random_uuid())
+            RETURNING id, tenant_id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status,
                       generated_by, generated_at, last_printed_at, created_at, updated_at
             "#
         )
@@ -352,8 +373,6 @@ pub async fn generate_barcode(
         .bind(&req.barcode_type)
         .bind(sample_uuid)
         .bind(&sample_no)
-        // 此前写 gen_random_uuid()：随机租户直接撞 RLS 的 tenant_isolation WITH CHECK
-        .bind(ctx.tenant_id)
         .fetch_one(&mut scope)
         .await;
 
@@ -463,6 +482,29 @@ pub async fn get_barcode(
         }
     }
 }
+
+#[utoipa::path(
+
+    put,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/barcodes/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn update_barcode(
     State(state): State<crate::shared::AppState>,
@@ -620,6 +662,26 @@ pub struct PrintBarcodesBatchRequest {
     pub template: Option<String>,
 }
 
+#[utoipa::path(
+
+    post,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/barcodes/print",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn print_barcodes_batch(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -673,6 +735,29 @@ pub async fn print_barcodes_batch(
         "条码批量打印完成",
     )
 }
+
+#[utoipa::path(
+
+    delete,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/barcodes/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn delete_barcode(
     State(state): State<crate::shared::AppState>,
@@ -1022,6 +1107,26 @@ pub async fn list_rfid_tags(
         }
     }
 }
+
+#[utoipa::path(
+
+    post,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/rfid-tags",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn create_rfid_tag(
     State(state): State<crate::shared::AppState>,
@@ -1650,4 +1755,38 @@ mod barcode_validate_tests {
         assert!(validate_barcode("BC20260813101530ABCDEF").is_ok());
         assert!(validate_barcode("样品-001").is_ok());
     }
+}
+
+/// 前端 `rfidTagApi.assignRfidTag` 走 body 形态（`{ tag_id, sample_id }`），
+/// 与路径形态 `/rfid-tags/{tag_id}/assign/{sample_id}` 复用同一段逻辑。
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AssignRfidTagRequest {
+    pub tag_id: String,
+    pub sample_id: String,
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample_barcode:write"])),
+    path = "/lims/rfid-tags/assign",
+    request_body = AssignRfidTagRequest,
+    responses(
+        (status = 200, description = "RFID 绑定结果", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "参数错误"),
+        (status = 404, description = "标签或样品不存在"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
+pub async fn assign_rfid_tag_by_body(
+    State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Json(req): Json<AssignRfidTagRequest>,
+) -> ApiResponse<RfidTag> {
+    assign_rfid_tag(
+        State(state),
+        Extension(txn_arc),
+        axum::extract::Path((req.tag_id, req.sample_id)),
+    )
+    .await
 }

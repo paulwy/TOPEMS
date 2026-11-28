@@ -7,6 +7,26 @@ use topems_shared_core::health::{simple_health_check, ServiceHealth};
 
 use crate::shared::AppState;
 
+#[utoipa::path(
+
+    get,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/health",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn health_check(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&state.health_config).await
 }

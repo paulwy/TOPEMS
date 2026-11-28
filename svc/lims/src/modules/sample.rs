@@ -19,6 +19,11 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/samples", get(list_samples).post(register_sample))
         .route(
+            "/samples/batch",
+            post(batch_create_samples).delete(batch_delete_samples),
+        )
+        .route("/samples/import", post(import_samples))
+        .route(
             "/samples/{id}",
             get(get_sample).put(update_sample).delete(delete_sample),
         )
@@ -465,6 +470,29 @@ pub async fn get_sample(
     }
 }
 
+#[utoipa::path(
+
+    put,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/samples/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn update_sample(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -572,6 +600,29 @@ pub async fn update_sample(
     }
     ApiResponse::success(sample, "样品更新成功")
 }
+
+#[utoipa::path(
+
+    delete,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/samples/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn delete_sample(
     State(state): State<crate::shared::AppState>,
@@ -692,6 +743,276 @@ const LIFECYCLE_STAGES: &[(&str, &str)] = &[
 
 /// 样品生命周期合法转移边（P2 制造域 B 审计补 FSM 边校验）：
 /// 严格按 LIFECYCLE_STAGES 顺序逐阶前进——不允许跨阶跳转、回退或同阶空转。
+// =============================================================================
+// 批量登记 / 批量删除 / CSV 导入（前端 sampleApi.batchCreateSamples /
+// batchDeleteSamples / importSamples 的真实契约）
+// =============================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct BatchCreateSamplesRequest {
+    pub samples: Vec<CreateSampleRequest>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct BatchDeleteSamplesRequest {
+    pub ids: Vec<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct BatchOperationResult {
+    pub total: usize,
+    pub success: usize,
+    pub failed: usize,
+    pub errors: Vec<String>,
+}
+
+async fn insert_sample_row(
+    state: &crate::shared::AppState,
+    txn_arc: &RlsTxnCell,
+    tenant_id: Uuid,
+    req: &CreateSampleRequest,
+) -> Result<(), String> {
+    let sample_no = format!("SMP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err("数据库事务上下文缺失".to_string());
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => return Err(format!("写作用域创建失败: {}", e)),
+    };
+    let res = sqlx::query(
+        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+    )
+    .bind(tenant_id)
+    .bind(sample_no)
+    .bind(&req.sample_name)
+    .bind(&req.sample_type)
+    .bind(&req.source)
+    .bind(req.quantity)
+    .bind(&req.unit)
+    .bind(LabSampleStatus::DEFAULT.as_db_str())
+    .execute(&mut scope)
+    .await;
+    match res {
+        Ok(_) => match scope.commit().await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(format!("提交失败: {}", e)),
+        },
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+fn invalidate_sample_list(state: &crate::shared::AppState, tenant_id: Uuid, reason: &str) {
+    if let Some(publisher) = &state.event_publisher {
+        let publisher = publisher.clone();
+        let tenant = tenant_id.to_string();
+        let reason = reason.to_string();
+        tokio::spawn(async move {
+            let _ = publisher
+                .publish_cache_invalidated(
+                    &format!("lims:sample:list:{}:*", tenant),
+                    "pattern",
+                    Some(reason.as_str()),
+                )
+                .await;
+        });
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample:write"])),
+    path = "/lims/samples/batch",
+    responses(
+        (status = 200, description = "批量登记结果", body = ApiResponse<BatchOperationResult>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
+pub async fn batch_create_samples(
+    State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(ctx): Extension<TenantContext>,
+    Json(req): Json<BatchCreateSamplesRequest>,
+) -> ApiResponse<BatchOperationResult> {
+    let total = req.samples.len();
+    if total == 0 {
+        return ApiResponse::bad_request("samples 不能为空");
+    }
+    if total > 500 {
+        return ApiResponse::bad_request("单次批量登记不得超过 500 条");
+    }
+    let mut success = 0usize;
+    let mut errors: Vec<String> = Vec::new();
+    for (idx, item) in req.samples.iter().enumerate() {
+        match insert_sample_row(&state, &txn_arc, ctx.tenant_id, item).await {
+            Ok(()) => success += 1,
+            Err(e) => errors.push(format!("第{}条: {}", idx + 1, e)),
+        }
+    }
+    if success > 0 {
+        invalidate_sample_list(&state, ctx.tenant_id, "samples_batch_created");
+    }
+    ApiResponse::success(
+        BatchOperationResult {
+            total,
+            success,
+            failed: total - success,
+            errors,
+        },
+        "批量登记完成",
+    )
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["lims:sample:write"])),
+    path = "/lims/samples/batch",
+    request_body = BatchDeleteSamplesRequest,
+    responses(
+        (status = 200, description = "批量删除结果", body = ApiResponse<BatchOperationResult>),
+        (status = 400, description = "参数错误"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
+pub async fn batch_delete_samples(
+    State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(ctx): Extension<TenantContext>,
+    Json(req): Json<BatchDeleteSamplesRequest>,
+) -> ApiResponse<BatchOperationResult> {
+    let total = req.ids.len();
+    if total == 0 {
+        return ApiResponse::bad_request("ids 不能为空");
+    }
+    let mut success = 0usize;
+    let mut errors: Vec<String> = Vec::new();
+    for (idx, raw) in req.ids.iter().enumerate() {
+        let id = match Uuid::parse_str(raw) {
+            Ok(u) => u,
+            Err(_) => {
+                errors.push(format!("第{}条: 无效的样品ID {}", idx + 1, raw));
+                continue;
+            }
+        };
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            errors.push(format!("第{}条: 数据库事务上下文缺失", idx + 1));
+            continue;
+        };
+        let mut scope = match state.db.scope_with(txn).await {
+            Ok(s) => s,
+            Err(e) => {
+                errors.push(format!("第{}条: 写作用域创建失败: {}", idx + 1, e));
+                continue;
+            }
+        };
+        let res = sqlx::query(
+            "UPDATE public.qa_lab_samples SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        )
+        .bind(id)
+        .execute(&mut scope)
+        .await;
+        match res {
+            Ok(r) => {
+                if r.rows_affected() == 0 {
+                    errors.push(format!("第{}条: 样品不存在或已删除", idx + 1));
+                    continue;
+                }
+                match scope.commit().await {
+                    Ok(_) => success += 1,
+                    Err(e) => errors.push(format!("第{}条: 提交失败: {}", idx + 1, e)),
+                }
+            }
+            Err(e) => errors.push(format!("第{}条: {}", idx + 1, e)),
+        }
+    }
+    if success > 0 {
+        invalidate_sample_list(&state, ctx.tenant_id, "samples_batch_deleted");
+    }
+    ApiResponse::success(
+        BatchOperationResult {
+            total,
+            success,
+            failed: total - success,
+            errors,
+        },
+        "批量删除完成",
+    )
+}
+
+/// CSV 导入：首行可为表头 `sample_name,sample_type,source,quantity,unit`，
+/// 逐行登记；返回逐行错误，整体保持 200（部分成功是正常业务结果）。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample:write"])),
+    path = "/lims/samples/import",
+    request_body(content = String, content_type = "text/csv"),
+    responses(
+        (status = 200, description = "导入结果", body = ApiResponse<BatchOperationResult>),
+        (status = 400, description = "CSV 为空或格式错误"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
+pub async fn import_samples(
+    State(state): State<crate::shared::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(ctx): Extension<TenantContext>,
+    body: String,
+) -> ApiResponse<BatchOperationResult> {
+    let mut lines = body.lines().filter(|l| !l.trim().is_empty());
+    let first = match lines.next() {
+        Some(f) => f,
+        None => return ApiResponse::bad_request("CSV 内容为空"),
+    };
+    let has_header = first.to_lowercase().starts_with("sample_name");
+    let mut rows: Vec<&str> = Vec::new();
+    if !has_header {
+        rows.push(first);
+    }
+    rows.extend(lines);
+    if rows.is_empty() {
+        return ApiResponse::bad_request("CSV 没有数据行");
+    }
+    let total = rows.len();
+    let mut success = 0usize;
+    let mut errors: Vec<String> = Vec::new();
+    for (idx, line) in rows.iter().enumerate() {
+        let cols: Vec<&str> = line.split(',').map(|c| c.trim()).collect();
+        if cols.is_empty() || cols[0].is_empty() {
+            errors.push(format!("第{}行: sample_name 为空", idx + 1));
+            continue;
+        }
+        let req = CreateSampleRequest {
+            sample_name: cols[0].to_string(),
+            sample_type: cols.get(1).filter(|c| !c.is_empty()).map(|c| c.to_string()),
+            source: cols.get(2).filter(|c| !c.is_empty()).map(|c| c.to_string()),
+            quantity: cols.get(3).and_then(|c| c.parse::<f64>().ok()),
+            unit: cols.get(4).filter(|c| !c.is_empty()).map(|c| c.to_string()),
+        };
+        match insert_sample_row(&state, &txn_arc, ctx.tenant_id, &req).await {
+            Ok(()) => success += 1,
+            Err(e) => errors.push(format!("第{}行: {}", idx + 1, e)),
+        }
+    }
+    if success > 0 {
+        invalidate_sample_list(&state, ctx.tenant_id, "samples_imported");
+    }
+    ApiResponse::success(
+        BatchOperationResult {
+            total,
+            success,
+            failed: total - success,
+            errors,
+        },
+        "CSV 导入完成",
+    )
+}
+
 #[cfg(test)]
 const SAMPLE_STAGE_EDGES: &[(&str, &str)] = &[
     ("received", "registered"),

@@ -393,6 +393,26 @@ pub async fn get_collection_task(
     }
 }
 
+#[utoipa::path(
+
+    post,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/collection-tasks",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn create_collection_task(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -490,6 +510,29 @@ pub async fn create_collection_task(
     }
 }
 
+#[utoipa::path(
+
+    put,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/collection-tasks/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn update_collection_task(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -581,6 +624,29 @@ pub async fn update_collection_task(
         }
     }
 }
+
+#[utoipa::path(
+
+    delete,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/collection-tasks/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn delete_collection_task(
     State(state): State<crate::shared::AppState>,

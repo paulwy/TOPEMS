@@ -353,6 +353,26 @@ pub async fn list_projects(
     }
 }
 
+#[utoipa::path(
+
+    post,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/uncertainty-projects",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn create_project(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -525,6 +545,29 @@ pub async fn get_project(
     }
 }
 
+#[utoipa::path(
+
+    put,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/uncertainty-projects/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
 pub async fn update_project(
     State(state): State<crate::shared::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -631,6 +674,29 @@ pub async fn update_project(
         }
     }
 }
+
+#[utoipa::path(
+
+    delete,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/uncertainty-projects/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn delete_project(
     State(state): State<crate::shared::AppState>,
@@ -942,6 +1008,29 @@ pub async fn update_source(
         }
     }
 }
+
+#[utoipa::path(
+
+    delete,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/uncertainty-sources/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn delete_source(
     State(state): State<crate::shared::AppState>,
@@ -1297,6 +1386,29 @@ pub async fn update_component(
         }
     }
 }
+
+#[utoipa::path(
+
+    delete,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/uncertainty-components/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
 
 pub async fn delete_component(
     State(state): State<crate::shared::AppState>,

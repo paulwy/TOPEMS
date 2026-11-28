@@ -945,3 +945,27 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 **实测**：写接口返回 422（缺字段，说明路由与反序列化都在）/ 200 / 业务 404（"供应商评估不存在""检验记录明细不存在"），无 404 路由缺失、无 405。
 
 **结果**：scm **130/130/0**；spec 3613 → **3622**。
+
+## 第 38 轮 · lims（47 → 0）＋ 尺子升级：泛型 CRUD 工厂解析
+
+**基线**：lims 102 调用 / 55 匹配 / 47 缺口。路由真源 `svc/lims/src/modules/*::create_routes()`（由 `modules/mod.rs` 逐个 merge），前缀 `/api/lims`。
+
+**尺子升级（重要）**：`apps/web/src/api/lims/utils.ts::createCrudApi(endpoint)` 这类泛型工厂，内部 `apiClient.lims.get(`${endpoint}/${id}`)` 本身不是一条契约——路径由调用点决定。旧版尺子把工厂内模板当调用，报出 `GET /api/lims/*/*` 这种无法对账的假缺口；同时**调用点的真实调用反而不在统计里**。本轮给 `scripts/ci/api-contract.mjs` 加了工厂解析：
+1. 识别 `function X(param: string)` 且函数体里直接 `apiClient.<ns>.<m>(param)` / (`${param}/...`) 的工厂；
+2. 工厂内部模板从对账里剔除；
+3. 扫调用点 `X('/samples')` 并按**真实用到的方法**（`.list/.get/.create/.update/.delete`）展开成具体调用；
+4. 工厂可跨文件（`import { createCrudApi } from './utils'`，按相对路径解析），也支持工厂定义在文件内（hrm/workflow 那种）。
+> 这一步把"假缺口"换成"真调用"，lims 的调用基数 102 → 144，同时暴露出 21 条此前被工厂模板遮住的真实缺口（PUT/DELETE 等方法 spec 里没有）。
+
+**做法**
+1. 36 个 handler 补 `#[utoipa::path]` + 41 条登记（`--crate-root svc/lims/src/modules --crate-prefix crate::modules`；`instrument_data/*` 子模块是私有 `mod` + `pub use`，登记要写 `crate::modules::instrument_data::fn`）。
+2. **真实现 3 个缺失写接口**（前端确实在调）：
+   - `POST /samples/batch`、`DELETE /samples/batch`（`BatchOperationResult{total,success,failed,errors}` 逐条返回，单次上限 500）
+   - `POST /samples/import`（`text/csv`，表头可选 `sample_name,sample_type,source,quantity,unit`）
+   - `POST /rfid-tags/assign`（body `{tag_id,sample_id}`；真实路径形态 `/rfid-tags/{tag_id}/assign/{sample_id}` 已挂载，两者复用同一逻辑）
+3. `POST /samples/lifecycle-event` → 真实路由是 `/samples/lifecycle`，走 spec 级别名 op（`x-alias-of`）。
+4. 21 条"方法级缺口"（`/samples/{id}` 的 PUT/DELETE、`/barcodes/{id}`、`/tasks/{id}`、`/records`、`/instruments/{id}`、`/pt-plans`、`/reagents/{id}`、`/test-methods`、`/uncertainty-projects`）补注解 + 登记；`analyte.rs` 的 5 个 handler 原本是私有 `async fn`，改 `pub(crate)` 才能被 ApiDoc 引用。
+5. 踩坑复现三连：登记脚本插在 `plugin_health_check` 后漏逗号（`expected ','`）、重复插入（E0428）、插入行被压成 `...,),` 把 `paths(...)` 收尾破坏（手工拆行 + 全量去重）。
+
+**结果**：lims **144/144/0**；spec 3622 → **3644**。
+**全量**：4690 条静态调用 / 匹配 4054 / 缺口 386（**新尺子下**；旧尺子同期 486，差额来自假缺口剔除 + 工厂调用点展开，后者多出的都是真缺口）。

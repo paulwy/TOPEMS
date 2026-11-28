@@ -80,7 +80,27 @@ fn resolve_tenant(ctx: &TenantContext, claims: &Claims) -> Option<Uuid> {
     }
 }
 
-async fn list_analytes(
+#[utoipa::path(
+
+    get,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/analytes",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
+pub(crate) async fn list_analytes(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
@@ -178,7 +198,30 @@ async fn list_analytes(
     )
 }
 
-async fn get_analyte(
+#[utoipa::path(
+
+    get,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/analytes/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
+pub(crate) async fn get_analyte(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_ctx): Extension<TenantContext>,
@@ -231,7 +274,27 @@ async fn get_analyte(
     }
 }
 
-async fn create_analyte(
+#[utoipa::path(
+
+    post,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/analytes",
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
+pub(crate) async fn create_analyte(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
@@ -290,7 +353,30 @@ async fn create_analyte(
     }
 }
 
-async fn update_analyte(
+#[utoipa::path(
+
+    put,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/analytes/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
+pub(crate) async fn update_analyte(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
@@ -367,7 +453,30 @@ async fn update_analyte(
     }
 }
 
-async fn delete_analyte(
+#[utoipa::path(
+
+    delete,
+
+    security(("BearerAuth" = [])),
+
+    path = "/api/lims/analytes/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+
+    responses(
+
+        (status = 200, description = "OK", body = serde_json::Value),
+
+        (status = 500, description = "Internal server error")
+
+    ),
+
+    tag = "LIMS"
+
+)]
+
+pub(crate) async fn delete_analyte(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(ctx): Extension<TenantContext>,
