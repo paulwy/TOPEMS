@@ -121,7 +121,21 @@ pub async fn get_workbench_data(
         None => 0,
     };
 
-    let pending_approvals: i64 = 0;
+    // 待审批数：与 /mobile/approvals 同源（Workflow 我的待办任务 total），不再写 0。
+    let pending_approvals: i64 = match &bearer_token {
+        Some(token) => {
+            let mut client = workflow_client.clone();
+            client.set_auth_token(token);
+            match client.get_my_pending_tasks(1, 1).await {
+                Ok(result) => result.total,
+                Err(e) => {
+                    tracing::warn!("调用Workflow服务获取待审批数失败: {}", e);
+                    0
+                }
+            }
+        }
+        None => 0,
+    };
 
     let unread_notifications = match &bearer_token {
         Some(token) => {
