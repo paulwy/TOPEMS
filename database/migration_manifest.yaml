@@ -3388,3 +3388,16 @@ pending_forward_patches:
     effect: "18 张业务表：NULL 行快照到 archive.rls_backfill_tenant_before_20261127 → 归入默认租户 → ALTER COLUMN tenant_id SET NOT NULL → 同表策略删 OR (tenant_id IS NULL)；dev 处理 417 行、收紧 19 条策略，生产 6 张不存在其余 0 行纯空跑"
     destructive_scan: "UPDATE 18 次（仅 tenant_id IS NULL 的行，最大单表 62 行，先落 jsonb 快照）；无 DELETE/DROP"
     note: "配套代码修复：search_recent、core_user_roles（iam roles/user_permission/tenant handlers 三处）写入补 tenant_id 绑定；cargo check -p topems-search -p topems-unified-core --tests 通过"
+  # ===== 2026-11-28：并行批次新增迁移登记（pre-push manifest-drift 放行） =====
+  - version: "20261128010000"
+    file: "database/migrations/20261128010000_hrm_employee_monthly_salary.sql"
+    status: to_apply
+    effect: "hrm.employees 补 monthly_salary NUMERIC(14,2)（ADD COLUMN IF NOT EXISTS）+ 列注释；仅为幂等补列，无数据变更"
+    destructive_scan: "仅 ALTER TABLE ADD COLUMN IF NOT EXISTS + COMMENT ON COLUMN；无 DELETE/UPDATE/TRUNCATE/DROP"
+    note: "登记依据：main 已存在该文件但 manifest/checksums 未登记，导致 pre-push manifest-drift 对所有分支报 unregistered_pending；待对应批次投放后改 applied"
+  - version: "20261128120000"
+    file: "database/migrations/20261128120000_mobile_user_settings.sql"
+    status: to_apply
+    effect: "新建 mobile.user_settings（tenant_id + user_id 唯一、语言/主题/通知/同步偏好列）并挂 FORCE RLS"
+    destructive_scan: "CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 策略 DROP+CREATE（幂等）；无 DELETE/TRUNCATE/DROP TABLE"
+    note: "配套代码：GET /api/mobile/user/settings 由硬编码 JSON 改真实持久化；登记理由同上（unregistered_pending 阻断 pre-push）"
