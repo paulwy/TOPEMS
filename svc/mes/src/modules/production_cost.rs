@@ -60,6 +60,9 @@ pub struct WorkOrderCostResult {
     pub currency: String,
     pub calculated_at: DateTime<Utc>,
     pub cost_breakdown: Vec<CostBreakdownItem>,
+    /// 本条成本里「有量无价/有工无率」等缺口。空数组才代表料工费全部按真实口径计价。
+    #[serde(default)]
+    pub data_gaps: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -343,24 +346,36 @@ async fn calculate_work_order_cost_detail_db(
         planned_qty
     };
 
-    let actual_start: Option<DateTime<Utc>> =
-        work_order.try_get("actual_start_time").ok().flatten();
-    let actual_end: Option<DateTime<Utc>> = work_order.try_get("actual_end_time").ok().flatten();
-    let duration_hours = if let (Some(start), Some(end)) = (actual_start, actual_end) {
-        (end - start).num_seconds() as f64 / 3600.0
-    } else {
-        8.0
+    // 列名必须是 actual_start_date/actual_end_date（work_orders 无 *_time 列）；
+    // 读列失败要显形，不能再回落成「默认 8 小时」这种编出来的工时
+    let actual_start: Option<DateTime<Utc>> = work_order
+        .try_get("actual_start_date")
+        .map_err(|e| TopemsError::DatabaseQuery(format!("读取实际开工时间失败: {e}")))?;
+    let actual_end: Option<DateTime<Utc>> = work_order
+        .try_get("actual_end_date")
+        .map_err(|e| TopemsError::DatabaseQuery(format!("读取实际完工时间失败: {e}")))?;
+    let duration_hours: Option<f64> = match (actual_start, actual_end) {
+        (Some(start), Some(end)) => {
+            let hours = (end - start).num_seconds() as f64 / 3600.0;
+            (hours > 0.0).then_some(hours)
+        }
+        _ => None,
     };
+    let mut data_gaps: Vec<String> = Vec::new();
+    if duration_hours.is_none() {
+        data_gaps
+            .push("工单无可用实际开完工时间（actual_start_date/actual_end_date 缺失或非正区间），人工工时未计入".to_string());
+    }
 
     let mut cost_breakdown = Vec::new();
     let mut material_cost = 0.0;
-    let mut labor_cost = 0.0;
-    let mut overhead_cost = 0.0;
 
-    // 计算材料成本（简化：基于BOM）
+    // 材料成本：用量按 BOM 损耗率放大，单价取共享层 public.inventory.unit_price。
+    // 权威单价在 wms.inventory.standard_cost / erp.materials.unit_price，但 mes 的 schema 边界
+    // （scripts/schema_boundary.json: services.mes.allow=[]）不允许跨 schema 读，缺口显式记入 data_gaps。
     let bom_items = sqlx::query(
         r#"
-        SELECT bi.material_code, bi.material_name, bi.quantity, bi.unit
+        SELECT bi.material_code, bi.material_name, bi.quantity, bi.unit, bi.loss_rate
         FROM mes.bom_items bi
         JOIN mes.material_boms b ON bi.bom_id = b.id
         WHERE b.product_code = $1
@@ -373,62 +388,123 @@ async fn calculate_work_order_cost_detail_db(
     .bind(&product_code)
     .bind(tenant_id)
     .fetch_all(&mut *scope)
-    .await;
+    .await
+    .map_err(|e| TopemsError::DatabaseQuery(format!("查询 BOM 用料失败: {e}")))?;
 
-    if let Ok(items) = bom_items {
-        for item in items {
-            let mat_code: String = item.try_get("material_code").unwrap_or_default();
-            let mat_name: String = item.try_get("material_name").unwrap_or_default();
-            let bom_qty = big_decimal_to_f64(
-                item.try_get::<Option<BigDecimal>, _>("quantity")
-                    .ok()
-                    .flatten(),
-            );
-            let unit: String = item.try_get("unit").unwrap_or_default();
+    let mut bom_rows: Vec<(String, String, f64, String)> = Vec::new();
+    let mut material_codes: Vec<String> = Vec::new();
+    for item in bom_items {
+        let mat_code: String = item
+            .try_get("material_code")
+            .map_err(|e| TopemsError::DatabaseQuery(format!("读取 BOM 物料编码失败: {e}")))?;
+        let mat_name: String = item
+            .try_get("material_name")
+            .map_err(|e| TopemsError::DatabaseQuery(format!("读取 BOM 物料名称失败: {e}")))?;
+        let bom_qty = big_decimal_to_f64(
+            item.try_get::<Option<BigDecimal>, _>("quantity")
+                .map_err(|e| TopemsError::DatabaseQuery(format!("读取 BOM 用量失败: {e}")))?,
+        );
+        let loss_rate = big_decimal_to_f64(
+            item.try_get::<Option<BigDecimal>, _>("loss_rate")
+                .map_err(|e| TopemsError::DatabaseQuery(format!("读取 BOM 损耗率失败: {e}")))?,
+        );
+        let unit: String = item
+            .try_get("unit")
+            .map_err(|e| TopemsError::DatabaseQuery(format!("读取 BOM 单位失败: {e}")))?;
+        material_codes.push(mat_code.clone());
+        // 用量 = BOM 单耗 × (1 + 损耗率) × 产出量
+        let per_unit = bom_qty * (1.0 + loss_rate);
+        bom_rows.push((mat_code, mat_name, per_unit, unit));
+    }
 
-            let unit_price = 10.0 + (mat_code.len() as f64) * 2.0;
-            let item_total = bom_qty * output_qty * unit_price;
-            material_cost += item_total;
-
-            cost_breakdown.push(CostBreakdownItem {
-                category: "材料成本".to_string(),
-                sub_category: mat_code.clone(),
-                description: mat_name,
-                amount: item_total,
-                unit,
-                unit_price,
-                quantity: bom_qty * output_qty,
-                percentage: 0.0,
-            });
+    let mut unit_prices: HashMap<String, f64> = HashMap::new();
+    if !material_codes.is_empty() {
+        let price_rows = sqlx::query(
+            r#"
+            SELECT material_code, MAX(NULLIF(unit_price, 0)) AS unit_price
+            FROM public.inventory
+            WHERE tenant_id = $1
+              AND deleted_at IS NULL
+              AND material_code = ANY($2)
+            GROUP BY material_code
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(&material_codes)
+        .fetch_all(&mut *scope)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询库存单价失败: {e}")))?;
+        for r in price_rows {
+            let code: String = r.try_get("material_code").map_err(|e| {
+                TopemsError::DatabaseQuery(format!("读取库存单价物料编码失败: {e}"))
+            })?;
+            let price: Option<f64> = r
+                .try_get("unit_price")
+                .map_err(|e| TopemsError::DatabaseQuery(format!("读取库存单价失败: {e}")))?;
+            if let Some(price) = price.filter(|p| *p > 0.0) {
+                unit_prices.insert(code, price);
+            }
         }
     }
 
-    // 计算人工成本（简化：按工时 * 时薪）
-    let hourly_rate = 50.0;
-    labor_cost = duration_hours * hourly_rate;
-    cost_breakdown.push(CostBreakdownItem {
-        category: "人工成本".to_string(),
-        sub_category: "直接人工".to_string(),
-        description: format!("工时 {} 小时 × 时薪 {}", duration_hours, hourly_rate),
-        amount: labor_cost,
-        unit: "元".to_string(),
-        unit_price: hourly_rate,
-        quantity: duration_hours,
-        percentage: 0.0,
-    });
+    for (mat_code, mat_name, per_unit, unit) in bom_rows {
+        let quantity = per_unit * output_qty;
+        match unit_prices.get(&mat_code) {
+            Some(&unit_price) => {
+                let item_total = quantity * unit_price;
+                material_cost += item_total;
+                cost_breakdown.push(CostBreakdownItem {
+                    category: "材料成本".to_string(),
+                    sub_category: mat_code,
+                    description: mat_name,
+                    amount: item_total,
+                    unit,
+                    unit_price,
+                    quantity,
+                    percentage: 0.0,
+                });
+            }
+            None => {
+                // 有量无价：并入缺口清单，金额不进 total，避免把 0 当成真实成本
+                data_gaps.push(format!(
+                    "物料 {mat_code} 在 public.inventory 无有效单价（用量 {quantity:.4}{unit}），材料成本未计入"
+                ));
+                cost_breakdown.push(CostBreakdownItem {
+                    category: "材料成本".to_string(),
+                    sub_category: mat_code,
+                    description: mat_name,
+                    amount: 0.0,
+                    unit,
+                    unit_price: 0.0,
+                    quantity,
+                    percentage: 0.0,
+                });
+            }
+        }
+    }
 
-    // 计算制造费用（简化：人工成本的一定比例）
-    overhead_cost = labor_cost * 1.5;
-    cost_breakdown.push(CostBreakdownItem {
-        category: "制造费用".to_string(),
-        sub_category: "制造费用".to_string(),
-        description: "设备折旧、水电、管理费用等分摊".to_string(),
-        amount: overhead_cost,
-        unit: "元".to_string(),
-        unit_price: 0.0,
-        quantity: 1.0,
-        percentage: 0.0,
-    });
+    // 人工成本：只按真实工时计，费率无来源就不计（原 50.0 元/小时是编的）
+    if let Some(duration_hours) = duration_hours {
+        data_gaps.push(
+            "人工费率无权威来源（HR 月薪/工艺工时定额未接入 mes），人工成本按 0 计，仅记真实工时"
+                .to_string(),
+        );
+        cost_breakdown.push(CostBreakdownItem {
+            category: "人工成本".to_string(),
+            sub_category: "直接人工".to_string(),
+            description: format!("实际工时 {duration_hours:.2} 小时；小时费率未接入，金额不计"),
+            amount: 0.0,
+            unit: "元".to_string(),
+            unit_price: 0.0,
+            quantity: duration_hours,
+            percentage: 0.0,
+        });
+    }
+    let labor_cost = 0.0;
+
+    // 制造费用：原先按人工成本的固定倍数编分摊系数，已删；无费率与分摊依据就不计
+    let overhead_cost = 0.0;
+    data_gaps.push("制造费用无分摊依据（设备折旧/能耗/管理费用费率未接入），按 0 计".to_string());
 
     let total_cost = material_cost + labor_cost + overhead_cost;
 
@@ -461,6 +537,7 @@ async fn calculate_work_order_cost_detail_db(
             currency: "CNY".to_string(),
             calculated_at: Utc::now(),
             cost_breakdown,
+            data_gaps,
         },
         vec![],
     ))
