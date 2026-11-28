@@ -557,7 +557,7 @@ pub struct LineageTraceQueryParams {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/trace-lineage-handler",
+    path = "/master-data-refs/lineage/trace",
     tag = "MasterDataRefs",
     operation_id = "trace_lineage_handler",
     responses(
@@ -590,7 +590,7 @@ pub async fn trace_lineage_handler(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/trace-upstream-handler",
+    path = "/master-data-refs/lineage/trace/{id}/upstream",
     tag = "MasterDataRefs",
     operation_id = "trace_upstream_handler",
     responses(
@@ -612,7 +612,7 @@ pub async fn trace_upstream_handler(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/trace-downstream-handler",
+    path = "/master-data-refs/lineage/trace/{id}/downstream",
     tag = "MasterDataRefs",
     operation_id = "trace_downstream_handler",
     responses(

@@ -60,10 +60,8 @@ export const erpWriteApi = {
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data-refs/audit/rules', data ?? {}),
-  generateAuditReport: async (
-    data?: Record<string, unknown>
-  ): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.post('/master-data-refs/generate-audit-report-handler', data ?? {}),
+  generateAuditReport: async (): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.erp.get('/master-data-refs/audit/report'),
   getSyncJobV2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data/sync/v2/jobs/{id}'),
   batchRetryDeadLetters: async (
@@ -79,9 +77,13 @@ export const erpWriteApi = {
   getGeneratedReport: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data-refs/reports/generated/{report_id}'),
   exportEliminationWorksheet: async (
+    scopeId: string,
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.post('/consolidation/elimination-rules/export-elimination-worksheet', data ?? {}),
+    apiClient.erp.post(
+      `/consolidation/scopes/${scopeId}/elimination-worksheet/export`,
+      data ?? {}
+    ),
   exportReport: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/consolidation/reports/export-report'),
   getSyncJobV22: async (): Promise<ApiResponse<Record<string, unknown>>> =>
@@ -97,7 +99,11 @@ export const erpWriteApi = {
   ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data-refs/audit/report', data ?? {}),
   exportEliminationWorksheet2: async (
+    scopeId: string,
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.post('/consolidation/scopes/{scopeId}/elimination-worksheet/export', data ?? {}),
+    apiClient.erp.post(
+      `/consolidation/scopes/${scopeId}/elimination-worksheet/export`,
+      data ?? {}
+    ),
 };

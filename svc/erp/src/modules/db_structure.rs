@@ -186,7 +186,7 @@ pub async fn get_table_detail(
     ApiResponse::success(detail, "获取表详情成功")
 }
 #[utoipa::path(
-    get,
+    post,
     security(("BearerAuth" = ["erp:read"])),
     path = "/db/columns/preview",
     tag = "DbStructure",
@@ -264,6 +264,22 @@ pub async fn execute_add_column(
     let sql = build_add_column_suggestion(&req.table_name, &req.column);
     ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE)
 }
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["erp:delete"])),
+    path = "/db/columns/{table}/{column}",
+    tag = "DbStructure",
+    operation_id = "execute_drop_column_delete",
+    responses(
+        (status = 200, description = "只读迁移建议模式：不执行 DDL，返回 DROP COLUMN 建议 SQL", body = ApiResponse<String>),
+    ),
+)]
+pub async fn execute_drop_column_delete(
+    path: Path<(String, String)>,
+) -> ApiResponse<String> {
+    execute_drop_column(path).await
+}
+
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),

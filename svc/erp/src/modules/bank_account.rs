@@ -44,7 +44,7 @@ pub struct ListBankAccountsQuery {
     pub keyword: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateBankAccountRequest {
     pub bank_name: String,
     pub account_number: String,
@@ -56,7 +56,7 @@ pub struct CreateBankAccountRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateBankAccountRequest {
     pub bank_name: Option<String>,
     pub account_number: Option<String>,
@@ -222,6 +222,19 @@ pub async fn get_bank_account(
     Ok(ApiResponse::success(row_to_json(&row), "获取银行账户成功"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/bank-accounts",
+    tag = "ERP",
+    request_body = CreateBankAccountRequest,
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_bank_account(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -276,6 +289,20 @@ pub async fn create_bank_account(
     Ok(ApiResponse::success(row_to_json(&row), "创建银行账户成功"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/bank-accounts/{id}",
+    tag = "ERP",
+    request_body = UpdateBankAccountRequest,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_bank_account(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -332,6 +359,19 @@ pub async fn update_bank_account(
     Ok(ApiResponse::success(row_to_json(&row), "更新银行账户成功"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/bank-accounts/{id}",
+    tag = "ERP",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_bank_account(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

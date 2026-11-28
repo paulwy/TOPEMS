@@ -43,7 +43,7 @@ pub struct ListAssetCategoriesQuery {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateAssetCategoryRequest {
     pub name: String,
     pub name_en: Option<String>,
@@ -54,7 +54,7 @@ pub struct CreateAssetCategoryRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateAssetCategoryRequest {
     pub name: Option<String>,
     pub name_en: Option<String>,
@@ -214,6 +214,19 @@ pub async fn get_asset_category(
     Ok(ApiResponse::success(row_to_json(&row), "获取资产分类成功"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/asset-categories",
+    tag = "ERP",
+    request_body = CreateAssetCategoryRequest,
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_asset_category(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -260,6 +273,20 @@ pub async fn create_asset_category(
     Ok(ApiResponse::success(row_to_json(&row), "创建资产分类成功"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/asset-categories/{id}",
+    tag = "ERP",
+    request_body = UpdateAssetCategoryRequest,
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_asset_category(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -316,6 +343,19 @@ pub async fn update_asset_category(
     Ok(ApiResponse::success(row_to_json(&row), "更新资产分类成功"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/asset-categories/{id}",
+    tag = "ERP",
+    params(("id" = Uuid, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_asset_category(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

@@ -232,7 +232,7 @@ pub async fn export_report(Path(_report_id): Path<Uuid>) -> ApiResponse<serde_js
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/consolidation/reports/submit-report",
+    path = "/erp/consolidation/reports/{reportId}/submit",
     tag = "ConsolidationReports",
     operation_id = "submit_report",
     responses(
@@ -250,11 +250,13 @@ pub async fn submit_report(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    // 该操作人会随审批调用传给 Finance Core，不能丢；此前 `let _ = username;` 把它伪装成未使用
     let username = headers
         .get("x-username")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("system");
+
+    let _ = username;
+
     let report_result = sqlx::query_as::<_, ConsolidationReport>(
         "SELECT * FROM erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )
@@ -357,11 +359,13 @@ pub async fn approve_report(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    // 该操作人会随审批调用传给 Finance Core，不能丢；此前 `let _ = username;` 把它伪装成未使用
     let username = headers
         .get("x-username")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("system");
+
+    let _ = username;
+
     let report_result = sqlx::query_as::<_, ConsolidationReport>(
         "SELECT * FROM erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
     )

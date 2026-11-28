@@ -72,7 +72,7 @@ pub struct SearchResult {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/search/global-search",
+    path = "/search/global",
     tag = "Search",
     operation_id = "global_search",
     responses(

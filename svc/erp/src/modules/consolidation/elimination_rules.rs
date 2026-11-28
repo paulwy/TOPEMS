@@ -337,9 +337,9 @@ pub async fn delete_elimination_rule(
 }
 
 #[utoipa::path(
-    get,
+    post,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/consolidation/elimination-rules/export-elimination-worksheet",
+    path = "/erp/consolidation/scopes/{scopeId}/elimination-worksheet/export",
     tag = "ConsolidationEliminationRules",
     operation_id = "export_elimination_worksheet",
     responses(

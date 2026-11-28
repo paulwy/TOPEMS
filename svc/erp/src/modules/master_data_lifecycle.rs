@@ -534,6 +534,26 @@ pub async fn cancel_destruction(
     }
 }
 
+/// V38.0 AC-10: 执行销毁（软删除，DELETE 语义）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["erp:master-data:read"])),
+    path = "/api/erp/master-data-refs/{master_data_id}/destroy",
+    tag = "Master Data",
+    operation_id = "destroy_master_data_ref_delete",
+    params(("masterDataId" = String, Path, description = "主数据ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn destroy_master_data_ref_delete(
+    state: State<ApiState>,
+    claims: Extension<Claims>,
+    path: Path<String>,
+    txn: Extension<RlsTxnCell>,
+    body: Json<DestroyRequest>,
+) -> ApiResponse<MasterDataRef> {
+    destroy_master_data_ref(state, claims, path, txn, body).await
+}
+
 /// V38.0 AC-10: 执行销毁（软删除）
 #[utoipa::path(
     post,

@@ -993,3 +993,26 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 5. 登记 81 个 handler 进 `svc/ticket/src/openapi.rs`；`TicketExportRequest` / `TicketExportResult` 补进 components。
 
 **结果**：ticket **98/98/0**；spec 3644 → **3672**。
+
+---
+
+## 第 40 轮 · erp（53 → 0）
+
+**基线（新尺子）**：erp 438 调用 / 385 匹配 / 53 缺口；route 级 141 条（erp crate 503 条 route、449 个 handler，其中 106 个未登记进 `svc/erp/src/modules/openapi.rs`）。
+
+**处理**：
+1. **补登记 105 个未登记 handler** 进 `openapi.rs` 的 `paths(...)`。踩坑：`addressbook.rs` 的共享兜底 `stub_pending_upstream` 不是 handler、`mdm_v49_*` 六个文件在 `mdm_v49.rs` 里用 `#[path]` 声明为子模块（登记路径必须 `crate::modules::mdm_v49::mdm_v49_xxx::fn`）、`paths(...)` 收尾被脚本压成顶格 `),` 导致语法错。
+2. **补 14 条新注解**：bank_account 3、asset_category 3、sales_order 2、settings 3、customer 2、consolidation 1（脚本 `/tmp/ann_erp.py`，tag=ERP、security `erp:read|write`）。
+3. **修 8 处前端/后端路径与方法不匹配**（全部为前端声明与真实路由不一致，且无 UI 调用方时改前端对齐后端）：
+   - `consolidation/scopes/{scopeId}/elimination-worksheet/export`：路由补 `.post()`，前端 `exportEliminationWorksheet/2` 签名改 `(scopeId, data?)`；
+   - `consolidation/reports/{reportId}/submit`：前端 `submitConsolidationReport` 改 POST `(reportId, data={})`；
+   - `/master-data-refs/audit/report`：真实路由 `get().post()` 双挂，补 GET 注解包装；
+   - `/master-data-refs/{master_data_id}/destroy`、`/master-data/services/{service_id}/deregister`：路由本就 `post().delete()` 双挂，补 DELETE 注解包装；
+   - `/master-data/quality-ai/predict/{id}`：补 GET 包装；
+   - `/db/columns/{table}/{column}`：路由 `put().delete()`，补 DELETE 注解包装。
+4. **纠正 5 处 method 写错的注解**（PUT/GET 从未注册，实测 405）：`production-orders/{id}/status` PUT→POST、`mdm-v49/retirement/plans/{id}/rollback|cancel` PUT→POST、`archive/records/{id}/restore` PUT→POST、`db/columns/preview` GET→POST；同步把 spec 里 5 条幻影 method 剪掉并写入 `scripts/ci/spec-prune-allowlist.json`（带实测 405 证据）。
+5. **`mdm-v49` 三条 REST 注解 path 纠偏**：`create/update/delete-archive-policy` 三个注解原来指向扁平动词路径（与 `_verb` 处理器撞车），改为真实 REST 路径 `/mdm-v49/archive/policies[/{policy_id}]`。
+6. **ToSchema 补齐**：`customer::BatchUpdateRequest/BatchUpdateItem/BatchDeleteRequest`、`sales_order::BatchCreateOrdersRequest/BatchUpdateOrdersRequest/BatchUpdateOrderItem`、asset_category/bank_account/settings/master_data_quality_ai 各 Create/Update。
+7. **通讯录 2 条如实兜底**：`POST /addressbook/batch/delete`、`POST /addressbook/import/execute` 后端走 `stub_pending_upstream`（200 空信封 `{"items":[],"total":0}` + “该功能待上游支持”），本轮补注解文档化，**未伪造业务实现**。
+
+**结果**：erp **438/438/0**；spec 3672 → **3724**；全量缺口 426 → **324**。

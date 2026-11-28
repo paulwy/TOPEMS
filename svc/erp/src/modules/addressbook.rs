@@ -552,6 +552,34 @@ async fn stub_pending_upstream() -> ApiResponse<serde_json::Value> {
     )
 }
 
+/// 批量删除通讯录（前端契约：POST /addressbook/batch/delete）
+/// 通讯录批量删除依赖上游通讯录主表，当前统一返回空信封 {"items":[],"total":0}。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/addressbook/batch/delete",
+    tag = "AddressBook",
+    request_body = serde_json::Value,
+    responses((status = 200, description = "空信封（待上游支持）", body = ApiResponse<serde_json::Value>)),
+)]
+pub async fn batch_delete_doc() -> ApiResponse<serde_json::Value> {
+    stub_pending_upstream().await
+}
+
+/// 执行导入（前端契约：POST /addressbook/import/execute）
+/// 导入执行依赖上游异步任务队列，当前统一返回空信封。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/addressbook/import/execute",
+    tag = "AddressBook",
+    request_body = serde_json::Value,
+    responses((status = 200, description = "空信封（待上游支持）", body = ApiResponse<serde_json::Value>)),
+)]
+pub async fn import_execute_doc() -> ApiResponse<serde_json::Value> {
+    stub_pending_upstream().await
+}
+
 /// 上述待上游支持端点的路由组（死代码端点轻量兜底）。
 fn stub_routes() -> Router<ApiState> {
     use axum::routing::{delete, get, post, put};

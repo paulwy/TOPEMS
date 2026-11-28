@@ -468,18 +468,18 @@ pub struct BatchCreateRequest {
     customers: Vec<CreateCustomerRequest>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct BatchUpdateItem {
     id: Uuid,
     payload: UpdateCustomerRequest,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct BatchUpdateRequest {
     updates: Vec<BatchUpdateItem>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct BatchDeleteRequest {
     ids: Vec<Uuid>,
 }
@@ -651,6 +651,19 @@ pub async fn batch_create_customers(
     ApiResponse::success(created, "批量创建成功")
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/customers/batch",
+    tag = "ERP",
+    request_body = BatchUpdateRequest,
+    responses(
+        (status = 200, description = "OK", body = Vec<Customer>),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 async fn batch_update_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -700,6 +713,19 @@ async fn batch_update_customers(
     ApiResponse::success(updated, "批量更新成功")
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/customers/batch",
+    tag = "ERP",
+    request_body = BatchDeleteRequest,
+    responses(
+        (status = 200, description = "OK", body = String),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 async fn batch_delete_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

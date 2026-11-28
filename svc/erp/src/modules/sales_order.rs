@@ -859,18 +859,18 @@ pub async fn cancel_sales_order(
 
 // ============ #27: 批量/统计端点 ============
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct BatchCreateOrdersRequest {
     orders: Vec<CreateSalesOrderRequest>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct BatchUpdateOrderItem {
     id: Uuid,
     payload: UpdateSalesOrderRequest,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 struct BatchUpdateOrdersRequest {
     updates: Vec<BatchUpdateOrderItem>,
 }
@@ -917,6 +917,19 @@ struct CustomerOrderCount {
 
 const SALES_ORDER_SELECT_COLS: &str = "id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at";
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/sales-orders/batch",
+    tag = "ERP",
+    request_body = BatchCreateOrdersRequest,
+    responses(
+        (status = 200, description = "OK", body = Vec<SalesOrder>),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 async fn batch_create_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1017,6 +1030,19 @@ async fn batch_create_sales_orders(
     ApiResponse::success(created, "批量创建销售订单成功")
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/sales-orders/batch",
+    tag = "ERP",
+    request_body = BatchUpdateOrdersRequest,
+    responses(
+        (status = 200, description = "OK", body = Vec<SalesOrder>),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 async fn batch_update_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

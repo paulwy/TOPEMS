@@ -957,6 +957,24 @@ pub async fn resolve_finding_handler(
     }
 }
 
+/// GET /audit/report — 生成审计报告（GET 语义）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/master-data-refs/audit/report",
+    tag = "MasterDataRefs",
+    operation_id = "generate_audit_report_handler_get",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
+pub async fn generate_audit_report_handler_get(
+    state: State<ApiState>,
+    params: Query<ComplianceRuleQuery>,
+) -> ApiResponse<ComplianceAuditReport> {
+    generate_audit_report_handler(state, params).await
+}
+
 /// GET /audit/report — 生成审计报告
 #[utoipa::path(
     post,

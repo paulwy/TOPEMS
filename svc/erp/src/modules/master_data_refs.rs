@@ -90,7 +90,7 @@ use super::master_data_metadata::{
 };
 use super::master_data_quality_ai::{
     quality_ai_batch_score, quality_ai_get_anomalies, quality_ai_get_stats,
-    quality_ai_predict_quality, quality_ai_score_entity,
+    quality_ai_predict_quality, quality_ai_predict_quality_get, quality_ai_score_entity,
 };
 use super::master_data_quality_loop::{
     approve_repair_workflow, assign_quality_ticket, close_quality_ticket, create_data_domain,
@@ -204,7 +204,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         )
         .route(
             "/master-data-refs/{master_data_id}/destroy",
-            post(destroy_master_data_ref),
+            post(destroy_master_data_ref).delete(destroy_master_data_ref),
         )
         // V39.0 AC-11: 主数据质量规则引擎
         .route(
@@ -417,7 +417,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         .route("/master-data/services/register", post(mdm_service_register))
         .route(
             "/master-data/services/{service_id}/deregister",
-            post(mdm_service_deregister),
+            post(mdm_service_deregister).delete(mdm_service_deregister),
         )
         .route(
             "/master-data/services/{service_id}/heartbeat",
@@ -451,7 +451,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         )
         .route(
             "/master-data/quality-ai/predict/{id}",
-            post(quality_ai_predict_quality),
+            post(quality_ai_predict_quality).get(quality_ai_predict_quality_get),
         )
         .route("/master-data/quality-ai/stats", get(quality_ai_get_stats))
         // V45.0 AC-17: 智能匹配
@@ -687,7 +687,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         )
         .route(
             "/master-data-refs/audit/report",
-            get(generate_audit_report_handler),
+            get(generate_audit_report_handler).post(generate_audit_report_handler),
         )
         .route(
             "/master-data-refs/audit/scorecard",

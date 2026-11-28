@@ -80,6 +80,31 @@
     {
       "path": "/api/monitor/metrics/history",
       "reason": "注解路径与真实挂载不符：真实为 GET /api/monitor/metrics（实测 200，/metrics/history 实测 404），属他轮遗留幻影"
+    },
+    {
+      "path": "/api/erp/production-orders/{id}/status",
+      "method": "put",
+      "reason": "实测 405：production_order.rs 只挂 post(update_production_status)，PUT 从未注册（原注解 method 写错）"
+    },
+    {
+      "path": "/api/erp/mdm-v49/retirement/plans/{plan_id}/rollback",
+      "method": "put",
+      "reason": "实测 405：mdm_v49.rs 只挂 post(rollback_retirement_plan)，PUT 从未注册（原注解 method 写错）"
+    },
+    {
+      "path": "/api/erp/mdm-v49/retirement/plans/{plan_id}/cancel",
+      "method": "put",
+      "reason": "实测 405：mdm_v49.rs 只挂 post(cancel_retirement_plan)，PUT 从未注册（原注解 method 写错）"
+    },
+    {
+      "path": "/api/erp/mdm-v49/archive/records/{record_id}/restore",
+      "method": "put",
+      "reason": "实测 405：mdm_v49.rs 只挂 post(restore_archive_record)，PUT 从未注册（原注解 method 写错）"
+    },
+    {
+      "path": "/api/erp/db/columns/preview",
+      "method": "get",
+      "reason": "实测 405：db_structure.rs 只挂 post(preview_add_column)，GET 从未注册（原注解 method 写错）"
     }
   ]
 }

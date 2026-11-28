@@ -89,7 +89,7 @@ pub struct QualityAnomaly {
 }
 
 /// 质量预测（基于历史趋势线性回归）
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
 pub struct QualityPrediction {
     pub entity_id: String,
     pub domain: String,
@@ -965,6 +965,23 @@ pub async fn quality_ai_predict_quality(
     let history = history_store.get(&entity_id).cloned().unwrap_or_default();
     let prediction = predict_quality_internal(&entity_id, &profile.domain, &history);
     ApiResponse::success(prediction, "质量预测完成")
+}
+
+/// GET /quality-ai/predict/{id} — 质量预测（读写同源，GET 版供前端预测查询）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/master-data/quality-ai/predict/{id}",
+    tag = "Master Data",
+    params(("id" = String, Path, description = "实体ID")),
+    responses((status = 200, description = "质量预测成功", body = QualityPrediction))
+)]
+pub async fn quality_ai_predict_quality_get(
+    state: axum::extract::State<ApiState>,
+    id: axum::extract::Path<String>,
+    req: axum::extract::Query<PredictQualityRequest>,
+) -> ApiResponse<QualityPrediction> {
+    quality_ai_predict_quality(state, id, req).await
 }
 
 /// GET /quality-ai/stats — 质量 AI 统计

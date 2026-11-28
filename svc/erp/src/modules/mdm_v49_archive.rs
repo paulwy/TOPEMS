@@ -91,7 +91,7 @@ pub struct ArchivePolicyQuery {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:master-data:write"])),
-    path = "/erp/mdm-v49/create-archive-policy",
+    path = "/mdm-v49/archive/policies",
     tag = "MdmV49",
     operation_id = "create_archive_policy",
     responses(
@@ -164,7 +164,7 @@ pub async fn get_archive_policy(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
-    path = "/erp/mdm-v49/update-archive-policy",
+    path = "/mdm-v49/archive/policies/{policy_id}",
     tag = "MdmV49",
     operation_id = "update_archive_policy",
     responses(
@@ -216,7 +216,7 @@ pub async fn update_archive_policy(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["erp:delete"])),
-    path = "/erp/mdm-v49/delete-archive-policy",
+    path = "/mdm-v49/archive/policies/{policy_id}",
     tag = "MdmV49",
     operation_id = "delete_archive_policy",
     responses(
@@ -478,7 +478,7 @@ pub async fn get_archive_record(
 }
 
 #[utoipa::path(
-    put,
+    post,
     security(("BearerAuth" = ["erp:update"])),
     path = "/mdm-v49/archive/records/{record_id}/restore",
     tag = "MdmV49",

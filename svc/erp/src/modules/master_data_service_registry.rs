@@ -137,6 +137,22 @@ pub async fn mdm_service_register(
 
 // gate: admin-only
 #[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["erp:mdm:admin"])),
+    path = "/master-data/services/{service_id}/deregister",
+    tag = "Master Data",
+    params(("serviceId" = String, Path, description = "服务ID")),
+    responses((status = 200, description = "注销 MDM 服务成功（DELETE 语义同 POST）", body = ApiResponse<serde_json::Value>))
+)]
+pub async fn mdm_service_deregister_delete(
+    state: State<ApiState>,
+    path: Path<String>,
+) -> ApiResponse<serde_json::Value> {
+    mdm_service_deregister(state, path).await
+}
+
+// gate: admin-only
+#[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:mdm:admin"])),
     path = "/master-data/services/{service_id}/deregister",

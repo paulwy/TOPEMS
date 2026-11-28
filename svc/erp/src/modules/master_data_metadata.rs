@@ -806,7 +806,7 @@ pub async fn upsert_record_handler(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/query-records-handler",
+    path = "/master-data-refs/metadata/records",
     tag = "MasterDataRefs",
     operation_id = "query_records_handler",
     responses(

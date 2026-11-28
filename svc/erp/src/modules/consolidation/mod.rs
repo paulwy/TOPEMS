@@ -58,7 +58,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route(
             "/consolidation/scopes/{scopeId}/elimination-worksheet/export",
-            get(export_elimination_worksheet),
+            get(export_elimination_worksheet).post(export_elimination_worksheet),
         )
         .route("/consolidation/scopes/companies", post(add_scope_company))
         .route(

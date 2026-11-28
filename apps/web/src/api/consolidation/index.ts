@@ -383,7 +383,11 @@ export default {
 
 // ── v74 to_bind 补绑（2026-10-29）──
 export const submitConsolidationReport = async (
-  data: Record<string, unknown>
+  reportId: string,
+  data: Record<string, unknown> = {}
 ): Promise<ApiResponse<ConsolidationReport>> => {
-  return apiClient.erp.post<ConsolidationReport>('/consolidation/reports/submit-report', data);
+  return apiClient.erp.post<ConsolidationReport>(
+    `/consolidation/reports/${reportId}/submit`,
+    data
+  );
 };

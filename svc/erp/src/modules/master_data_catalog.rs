@@ -557,7 +557,7 @@ async fn get_popular_entries(limit: usize) -> Vec<CatalogEntry> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/master-data-refs/search-catalog-handler",
+    path = "/master-data-refs/catalog/search",
     tag = "MasterDataRefs",
     operation_id = "search_catalog_handler",
     responses(

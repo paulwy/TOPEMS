@@ -64,7 +64,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 // ─── Models ──────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct SystemSetting {
     pub id: Uuid,
     pub tenant_id: Option<Uuid>,
@@ -84,7 +84,7 @@ pub struct ListSettingsQuery {
     pub search: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct CreateSettingRequest {
     pub key: String,
     pub value: String,
@@ -94,7 +94,7 @@ pub struct CreateSettingRequest {
     pub override_policy: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UpdateSettingRequest {
     pub value: Option<String>,
     pub description: Option<String>,
@@ -388,6 +388,19 @@ pub async fn get_setting(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/system/settings",
+    tag = "ERP",
+    request_body = CreateSettingRequest,
+    responses(
+        (status = 200, description = "OK", body = SystemSetting),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn create_setting(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -451,6 +464,20 @@ pub async fn create_setting(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/system/settings/{key}",
+    tag = "ERP",
+    request_body = UpdateSettingRequest,
+    params(("key" = String, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = SystemSetting),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_setting(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -534,6 +561,19 @@ pub async fn update_setting(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/system/settings/{key}",
+    tag = "ERP",
+    params(("key" = String, Path, description = "")),
+    responses(
+        (status = 200, description = "OK", body = String),
+        (status = 400, description = "Bad Request"),
+        (status = 404, description = "Not Found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_setting(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

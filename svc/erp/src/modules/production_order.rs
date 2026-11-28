@@ -187,7 +187,7 @@ pub async fn list_production_orders(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["erp:master-data:write"])),
-    path = "/erp/production-order/create-production-order",
+    path = "/production-orders",
     tag = "ProductionOrder",
     operation_id = "create_production_order",
     responses(
@@ -335,7 +335,7 @@ pub async fn get_production_order(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["erp:update"])),
-    path = "/erp/production-order/update-production-order",
+    path = "/production-orders/{id}",
     tag = "ProductionOrder",
     operation_id = "update_production_order",
     responses(
@@ -419,7 +419,7 @@ pub async fn update_production_order(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["erp:delete"])),
-    path = "/erp/production-order/delete-production-order",
+    path = "/production-orders/{id}",
     tag = "ProductionOrder",
     operation_id = "delete_production_order",
     responses(
@@ -553,7 +553,7 @@ pub struct UpdateStatusRequest {
 }
 
 #[utoipa::path(
-    put,
+    post,
     security(("BearerAuth" = ["erp:update"])),
     path = "/production-orders/{id}/status",
     tag = "ProductionOrder",

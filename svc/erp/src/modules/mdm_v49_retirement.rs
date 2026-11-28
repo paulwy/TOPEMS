@@ -383,7 +383,7 @@ pub async fn execute_retirement_plan(
 }
 
 #[utoipa::path(
-    put,
+    post,
     security(("BearerAuth" = ["erp:update"])),
     path = "/mdm-v49/retirement/plans/{plan_id}/rollback",
     tag = "MdmV49",
@@ -438,7 +438,7 @@ pub async fn rollback_retirement_plan(
 }
 
 #[utoipa::path(
-    put,
+    post,
     security(("BearerAuth" = ["erp:update"])),
     path = "/mdm-v49/retirement/plans/{plan_id}/cancel",
     tag = "MdmV49",
