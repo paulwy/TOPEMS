@@ -135,6 +135,16 @@ pub async fn list_plans(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn create_plan(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -259,6 +269,19 @@ pub async fn get_plan(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn update_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -352,6 +375,19 @@ pub async fn update_plan(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-plans/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn delete_plan(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -473,6 +509,16 @@ pub async fn list_courses(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-courses",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn create_course(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -585,6 +631,19 @@ pub async fn get_course(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-courses/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn update_course(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -651,6 +710,19 @@ pub async fn update_course(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-courses/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn delete_course(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -783,6 +855,16 @@ pub async fn list_records(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn create_record(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -959,6 +1041,19 @@ pub async fn get_record(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-records/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn update_record(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -1067,6 +1162,19 @@ pub async fn update_record(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-records/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn delete_record(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -1317,6 +1425,19 @@ async fn set_plan_status(
 }
 
 /// PUT /training-plans/{id}/activate —— 启用培训计划
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-plans/{id}/activate",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn activate_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -1333,6 +1454,19 @@ pub async fn activate_plan(
 }
 
 /// PUT /training-plans/{id}/deactivate —— 停用培训计划
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-plans/{id}/deactivate",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn deactivate_plan(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -1349,6 +1483,19 @@ pub async fn deactivate_plan(
 }
 
 /// PUT /training-records/{id}/complete —— 标记培训记录完成
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["hrm:training:write"])),
+    path = "/training-records/{id}/complete",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "training"
+)]
 pub async fn complete_record(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

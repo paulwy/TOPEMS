@@ -74,6 +74,19 @@ pub async fn get_settings(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["hrm:settings:write"])),
+    path = "/settings/{category}",
+    params(
+        ("category" = String, Path, description = "category")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settings"
+)]
 pub async fn update_settings(
     State(_state): State<ApiState>,
     Path(category): Path<String>,

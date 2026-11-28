@@ -1060,3 +1060,18 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 3. **删掉 4 条不可执行死声明**：`apps/web/src/api/qms/index.ts` 的整个 `qmsApprovalApi`（含 `process` 分发器，动态拼 `/{entityType}/{id}/approve|reject|rework|cancel`），检索确认无任何外部调用方。
 
 **结果**：qms **161/161/0**；spec 3730 → **3744**；全量缺口 250 → **218**。
+
+---
+
+## 第 44 轮 · hrm（28 → 0）
+
+**基线**：hrm 128 调用 / 100 匹配 / 28 缺口。
+
+**处理**：
+1. **28 个 handler 补注解**（全部已是 `pub async fn`，只需插注解）：contract 2（renewals 的 PUT/DELETE）+ `list_expiring_tail` 1、recruitment 9（job-openings / candidates / interviews 各 POST+PUT+DELETE）、training 12（plans / courses / records 各 POST+PUT+DELETE 及 activate/deactivate/complete）、payroll 2（runs POST、DELETE）、dashboard 1、settings 1。路径一律取真实路由表（`/settings/{category}` 而非 `{id}`）。
+2. **登记**：hrm 的 openapi 真身是 `svc/hrm/src/modules/openapi.rs`（不是 `src/openapi.rs`），`paths(...)` 补 30 条——其中 `/api/hrm/attendance/records`、`/api/hrm/attendance/stats` 是此前有注解但从未登记的两条，顺带补上。
+3. **尺子口径**：`list_expiring_tail` 是后端为容忍冒烟脚本尾段误折叠保留的兜底端点，前端 `readOps.ts` 里也确实声明了 `listExpiringTail`，因此如实补注解文档化，不删除。
+
+**踩坑**：批量插注解时用 `path = "..."` 字符串存在性做幂等判断，被同路径不同 method 的既有注解误判成"已存在"（如 `/contract-renewals/{id}` 已有 GET），导致 28 条只插入 5 条；改为按 `(method, path)` 二元组判重，并对首轮的 5 条重复注解做去重（`contract` 1、`dashboard` 1、`training` 3）。
+
+**结果**：hrm **128/128/0**；spec 3744 → **3751**；全量缺口 218 → **190**。

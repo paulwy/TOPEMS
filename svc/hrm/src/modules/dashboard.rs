@@ -15,6 +15,16 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 /// GET /dashboard — HRM 工作台概览（零值兜底，待上游支持）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:dashboard:read"])),
+    path = "/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "dashboard"
+)]
 pub async fn get_dashboard(State(_state): State<ApiState>) -> ApiResponse<serde_json::Value> {
     // 待上游支持：替换为员工/在职/请假/薪资等真实聚合统计
     ApiResponse::success(

@@ -235,6 +235,16 @@ pub async fn list_payroll_runs(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["hrm:payroll:write"])),
+    path = "/payroll-runs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn create_payroll_run(
     State(state): State<ApiState>,
     headers: HeaderMap,
@@ -372,6 +382,19 @@ pub async fn get_payroll_run(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["hrm:payroll:write"])),
+    path = "/payroll-runs/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn delete_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

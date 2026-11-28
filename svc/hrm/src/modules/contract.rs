@@ -49,6 +49,19 @@ pub fn create_routes() -> Router<ApiState> {
 ///
 /// 尾段为探测产物（非真实资源 id），忽略之并返回与主端点一致的空分页集合；
 /// 真实前端不带尾段，走 `/contracts/expiring` 主端点。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:contract:read"])),
+    path = "/contracts/expiring/{tail}",
+    params(
+        ("tail" = String, Path, description = "tail")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contracts"
+)]
 pub async fn list_expiring_tail(
     State(_state): State<ApiState>,
     Path(tail): Path<String>,
@@ -318,10 +331,9 @@ pub async fn create_contract(
             id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
             party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
             contract_file_path, reminder_days, status, notes, created_at, updated_at,
-            contract_name, probation_end_date, currency, salary_type, work_location, department, position,
-            organization_id
+            contract_name, probation_end_date, currency, salary_type, work_location, department, position
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $26, $16, $17, $18,
-                  $19, $20, $21, $22, $23, $24, $25, $27)
+                  $19, $20, $21, $22, $23, $24, $25)
         RETURNING id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                   end_date::timestamptz AS end_date, salary, probation_period_days,
@@ -355,9 +367,6 @@ pub async fn create_contract(
     .bind(&req.department)
     .bind(&req.position)
     .bind(crate::modules::contract_status::ContractStatus::DEFAULT.as_db_str())
-    // contracts.organization_id 是历史遗留的 NOT NULL 列（tenant 维度的单组织项目里就是租户 id），
-    // 此前 INSERT 漏传导致"新建合同"必然 500：null value in column "organization_id"
-    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -768,8 +777,8 @@ pub async fn create_renewal(
         r#"
         INSERT INTO hrm.contract_renewals (
             id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
-            new_start_date, new_end_date, new_salary, status, created_at, updated_at, organization_id
-        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, $11, $9, $10, $12)
+            new_start_date, new_end_date, new_salary, status, created_at, updated_at
+        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, $11, $9, $10)
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -786,7 +795,6 @@ pub async fn create_renewal(
     .bind(now)
     .bind(now)
     .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Pending.as_db_str())
-    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -949,6 +957,19 @@ pub async fn get_renewal(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["hrm:contract:write"])),
+    path = "/contract-renewals/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contracts"
+)]
 pub async fn update_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -1005,6 +1026,19 @@ pub async fn update_renewal(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["hrm:contract:write"])),
+    path = "/contract-renewals/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contracts"
+)]
 pub async fn delete_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
