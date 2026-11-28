@@ -8,7 +8,8 @@
 --   2. 按迁移前原谓词恢复 rls_tenant_isolation（USING 与 WITH CHECK 同式）；
 --   3. 保持 RLS ENABLE + FORCE；
 --   4. 清理账本行 20261123150000；
---   5. 后置断言：两表各恰好 1 条 rls_tenant_isolation、新策略 0 条、RLS FORCE。
+--   5. 后置断言：两表各恰好 1 条 rls_tenant_isolation、W14 公司级新策略 0 条、RLS FORCE；
+--      后续迁移引入的 *_public_read 等非公司级策略允许共存，不计入残留。
 --
 -- 影响（必须知悉）：
 --   * 不改任何数据，不动 company_id；回滚后同租户子公司重新可互看；
@@ -95,24 +96,34 @@ DELETE FROM public._sqlx_migrations WHERE version = 20261123150000;
 -- ------------------------------------------------------------
 DO $w14_rb_assert$
 DECLARE
-    v_policies integer;
+    v_tenant   integer;
     v_bad      integer;
 BEGIN
-    SELECT count(*) INTO v_policies
+    -- 租户级策略：两表各恰 1 条 rls_tenant_isolation。
+    SELECT count(*) INTO v_tenant
       FROM pg_policies
      WHERE schemaname = 'erp'
-       AND tablename IN ('sales_orders', 'purchase_orders');
-    IF v_policies <> 2 THEN
-        RAISE EXCEPTION '回滚后置断言失败：订单两表策略共 % 条，期望 2（每表 1 条）', v_policies;
+       AND tablename IN ('sales_orders', 'purchase_orders')
+       AND policyname = 'rls_tenant_isolation';
+    IF v_tenant <> 2 THEN
+        RAISE EXCEPTION '回滚后置断言失败：tenant 策略共 % 条，期望 2（每表 1 条）', v_tenant;
     END IF;
 
+    -- W14 公司级策略零残留；后续迁移引入的 *_public_read 等非公司级策略允许共存，不计入残留。
     SELECT count(*) INTO v_bad
       FROM pg_policies
      WHERE schemaname = 'erp'
        AND tablename IN ('sales_orders', 'purchase_orders')
-       AND policyname <> 'rls_tenant_isolation';
+       AND policyname IN (
+           'sales_orders_company_read',
+           'sales_orders_company_write',
+           'sales_orders_system',
+           'purchase_orders_company_read',
+           'purchase_orders_company_write',
+           'purchase_orders_system'
+       );
     IF v_bad > 0 THEN
-        RAISE EXCEPTION '回滚后置断言失败：仍残留 % 条公司级策略', v_bad;
+        RAISE EXCEPTION '回滚后置断言失败：仍残留 % 条 W14 公司级策略', v_bad;
     END IF;
 
     IF NOT EXISTS (
