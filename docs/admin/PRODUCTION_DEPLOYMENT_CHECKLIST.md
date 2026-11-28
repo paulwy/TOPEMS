@@ -1,6 +1,6 @@
 # TOPEMS 生产环境部署验证清单
 
-> **环境边界（2026-11-13 实测）**：本文按 **Linux + systemd** 模板编写，**不适用于当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`（`ehs` 71 表）。macOS 生产验收见 `docs/deploy-production.md` 与 `docs/deploy/macos-production-ops.md`。
+> **环境边界（2026-11-13 实测）**：本文按 **Linux + systemd** 模板编写，**不适用于当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`（`ehs` 71 表）。macOS 生产验收见 `docs/deploy/release-pipeline.md` 与 `docs/deploy/macos-production-ops.md`。
 
 ## 概述
 

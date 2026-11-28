@@ -4,7 +4,7 @@
 > 更新日期：2026-09-16
 > 适用版本：TOPEMS v5.15.0+
 
-> **环境边界（2026-11-13 实测）**：本文为 2026-09 的部署方式记录（docker/systemd 口径），**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`），生产库 `topems_prod`。当前部署以 `docs/deploy-production.md` 为准。
+> **环境边界（2026-11-13 实测）**：本文为 2026-09 的部署方式记录（docker/systemd 口径），**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`），生产库 `topems_prod`。当前部署以 `docs/deploy/macos-deployment.md` 为准。
 
 ---
 

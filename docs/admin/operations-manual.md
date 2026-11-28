@@ -1,6 +1,6 @@
 # TOPEMS 运维手册
 
-> **环境边界（2026-11-13 实测）**：本文命令按 **Linux + systemd** 模板编写，**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`（`ehs` 71 表）；文中 `topems` 库、`/etc/systemd`、`/var/log/nginx` 等为 Linux 模板/历史示例。当前生产操作以 `docs/deploy-production.md` 为准。
+> **环境边界（2026-11-13 实测）**：本文命令按 **Linux + systemd** 模板编写，**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`（`ehs` 71 表）；文中 `topems` 库、`/etc/systemd`、`/var/log/nginx` 等为 Linux 模板/历史示例。当前生产操作以 `docs/deploy/macos-production-ops.md` 为准。
 
 ## 概述
 

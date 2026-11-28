@@ -1,7 +1,7 @@
 # 环境供给与基线锚点（「基线即唯一供给入口」）
 
 > 定案：2026-11-05 ｜ 入口：`scripts/db/provision-env.sh`
-> 相关：[部署手册 §4.6](../deploy-production.md)、[P4 报告 §16/§19](./p4-reverse-tables-triage-2026-11-05.md)
+> 相关：[macOS 部署指南](../deploy/macos-deployment.md)、[P4 报告 §16/§19](./p4-reverse-tables-triage-2026-11-05.md)
 
 ## 1. 结论
 

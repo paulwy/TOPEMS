@@ -4,7 +4,7 @@
 **最后更新：** 2026-08-28  
 **适用对象：** 运维工程师、SRE、系统管理员、开发人员
 
-> **环境边界（2026-11-13 实测）**：本文第 3 节等 systemd 内容按 **Linux 模板**编写，**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`，KeepAlive+RunAtLoad）+ `com.topems.nginx`；生产库 `topems_prod`。当前生产运维以 `docs/deploy-production.md` 为准。
+> **环境边界（2026-11-13 实测）**：本文第 3 节等 systemd 内容按 **Linux 模板**编写，**不是当前本机生产**。当前 xingzhai 生产机为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`，KeepAlive+RunAtLoad）+ `com.topems.nginx`；生产库 `topems_prod`。当前生产运维以 `docs/deploy/macos-production-ops.md` 为准。
 
 ---
 

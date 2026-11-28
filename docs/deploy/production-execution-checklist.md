@@ -1,6 +1,6 @@
 # 生产任务执行清单（部署收尾）
 
-> **适用范围（2026-11-13 更正）**：本文是 **Linux + systemd 目标机**的执行清单，**不适用于当前本机生产**。本机生产实际为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`。macOS 生产部署/验收见 `docs/deploy-production.md` 与 `docs/deploy/macos-production-ops.md`；下文保留作为 Linux 迁移目标清单。
+> **适用范围（2026-11-13 更正）**：本文是 **Linux + systemd 目标机**的执行清单，**不适用于当前本机生产**。本机生产实际为 **macOS launchd**：`com.topems.server`（`/Users/xingzhai/topems/bin/topems-server`，`:8099`）+ `com.topems.nginx`（80/443 直接 `proxy_pass http://127.0.0.1:8099`，无 upstream 块），生产库 `topems_prod`。macOS 生产部署/验收见 `docs/deploy/release-pipeline.md` 与 `docs/deploy/macos-production-ops.md`；下文保留作为 Linux 迁移目标清单。
 
 > 来源：`TODO.md` 未勾选的生产环境任务（2026-10-22 整理）。所有任务均阻塞于**生产机/外部环境**，本机工具与演练已就绪，到环境后逐项执行并勾选回写。
 > 依据文档：`docs/deploy/nginx-prod-first-deploy-runbook.md`、`docs/deploy/windows-deployment.md`、`scripts/deploy/*`、`scripts/verify-nginx-prod.sh`。

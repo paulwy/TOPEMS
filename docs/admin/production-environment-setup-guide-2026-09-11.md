@@ -4,7 +4,7 @@
 **版本**：v1.0
 **范围**：PostgreSQL 配置调优、pg_stat_statements、PgBouncer、Prometheus + Grafana 监控
 
-> **环境边界（2026-11-13 实测）**：本文是 2026-09-11 的 **Linux 模板记录**，其中 systemd unit、`/etc/systemd`、`/var/log` 路径不适用于当前 macOS launchd 生产（`com.topems.server`，`:8099`；生产库 `topems_prod`）。当前生产配置以 `docs/deploy-production.md` 为准。
+> **环境边界（2026-11-13 实测）**：本文是 2026-09-11 的 **Linux 模板记录**，其中 systemd unit、`/etc/systemd`、`/var/log` 路径不适用于当前 macOS launchd 生产（`com.topems.server`，`:8099`；生产库 `topems_prod`）。当前生产配置以 `docs/deploy/macos-deployment.md` 为准。
 
 ---
 

@@ -1,6 +1,6 @@
 # 主库半迁移运维模式约定（2026-10-01 收口）
 
-> **2026-11-13 实测更正**：当前生产库是 xingzhai 机 **`topems_prod`**，`_sqlx_migrations` **667** 条 success、0 失败、无重复，max `20261112190000`（统计时点 2026-11-13）。本文所称"生产主库 `topems` / 280 条记录 / 298 个迁移文件"是 **2026-10-01 的时点记录**，该库（`ehs` 65 表）**不是当前生产**；当前生产账本与操作口径以 `database-primary-instance.md` 与 `docs/deploy-production.md` 为准。下文历史数字保留不改写。
+> **2026-11-13 实测更正**：当前生产库是 xingzhai 机 **`topems_prod`**，`_sqlx_migrations` **667** 条 success、0 失败、无重复，max `20261112190000`（统计时点 2026-11-13）。本文所称"生产主库 `topems` / 280 条记录 / 298 个迁移文件"是 **2026-10-01 的时点记录**，该库（`ehs` 65 表）**不是当前生产**；当前生产账本与操作口径以 `database-primary-instance.md` 与 `docs/deploy/macos-production-ops.md` 为准。下文历史数字保留不改写。
 
 > 本文档定义 TOPEMS 本机旧库 `topems`（2026-10-01 时点，**非当前生产**）的既有"半迁移状态"处置决策与后续结构演进的**强制运维模式**，作为 `database-primary-instance.md` 的补充约定。凡涉及生产主库结构变更，**一律以本文档为准**。
 

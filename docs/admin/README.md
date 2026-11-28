@@ -7,7 +7,7 @@
 - **服务管理**：macOS launchd，`gui/501/com.topems.server`（`KeepAlive=true`、`RunAtLoad=true`）运行 `/Users/xingzhai/topems/bin/topems-server`，监听 `:8099`。
 - **反向代理**：`gui/501/com.topems.nginx` 托管 Homebrew nginx；80/443 全部直接 `proxy_pass http://127.0.0.1:8099`，**无 upstream 块**；配置 `/opt/homebrew/etc/nginx/nginx.conf`（include `servers/topems.conf`、`servers/topems-ssl.conf`），入口日志 `/Users/xingzhai/topems/nginx/logs/access.log`。排障用绝对路径 `/opt/homebrew/bin/nginx -t|-T`（非登录 SSH 的 PATH 不含 brew，裸 `nginx` 会 command not found）。
 - **数据库**：生产库 `topems_prod`（`ehs` 71 表）；旧库 `topems`（65 表）**不是生产**；`_sqlx_migrations` **667** 条 success、0 失败、无重复，max `20261112190000`（统计时点 2026-11-13）。
-- **适用范围**：本目录中按 Linux + systemd 编写的部署/运维文档（`/etc/systemd`、`/var/log/nginx`、`topems` 库示例）是**通用模板/历史参考**，不是本机现用生产路径；当前生产以 [deploy-production.md](../deploy-production.md) 与 [macos-production-ops.md](../deploy/macos-production-ops.md) 为准。
+- **适用范围**：本目录中按 Linux + systemd 编写的部署/运维文档（`/etc/systemd`、`/var/log/nginx`、`topems` 库示例）是**通用模板/历史参考**，不是本机现用生产路径；当前生产以 [release-pipeline.md](../deploy/release-pipeline.md) 与 [macos-production-ops.md](../deploy/macos-production-ops.md) 为准。
 
 ## 快速开始
 

@@ -1,6 +1,6 @@
 # AI 业务智能模块 - 部署验证指南
 
-> **环境边界（2026-11-13 实测）**：文中 docker-compose 与 `topems` 库示例为历史/通用模板，**不是当前本机生产**。当前生产为 macOS launchd（`com.topems.server`，`:8099`），生产库 `topems_prod`（`ehs` 71 表）；旧库 `topems`（65 表）不是生产。当前部署以 `docs/deploy-production.md` 为准。
+> **环境边界（2026-11-13 实测）**：文中 docker-compose 与 `topems` 库示例为历史/通用模板，**不是当前本机生产**。当前生产为 macOS launchd（`com.topems.server`，`:8099`），生产库 `topems_prod`（`ehs` 71 表）；旧库 `topems`（65 表）不是生产。当前部署以 `docs/deploy/macos-deployment.md` 为准。
 
 ## 概述
 
