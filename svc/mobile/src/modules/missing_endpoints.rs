@@ -1,7 +1,6 @@
 //! 前端页面真实消费但缺失的端点（主题二③ mobile 专项补充）
 //! - GET  /inspection/tasks             MobileScanPage:listTasks
 //! - GET  /analytics/usage              MobileHomePage:getUsageStats
-//! - GET  /user/settings                MobileSettingsPage:getSettings
 //! - GET  /push/config                  PushNotificationPage:getPushConfig
 //! - PUT  /push/config                  PushNotificationPage:updatePushConfig
 //! - PUT  /push/templates/{id}          PushNotificationPage:updatePushTemplate
@@ -182,31 +181,6 @@ pub async fn get_usage_stats(
     let __mobile_response = { (StatusCode::OK, ApiResponse::success(v, "使用量统计")) };
     let _ = scope.commit().await;
     __mobile_response
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["mobile:user:read"])),
-    path = "/user/settings",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "user"
-)]
-pub async fn get_user_settings(
-    headers: HeaderMap,
-    State(auth_state): State<topems_shared::AuthState>,
-    State(_db): State<Db>,
-) -> impl IntoResponse {
-    let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
-    let settings = json!({
-        "notifications": {"push": true, "email": false, "inApp": true},
-        "language": "zh-CN",
-        "theme": "light",
-        "offlineSync": {"auto": true, "intervalMinutes": 15}
-    });
-    (StatusCode::OK, ApiResponse::success(settings, "用户设置"))
 }
 
 #[utoipa::path(

@@ -1,3 +1,4 @@
+pub mod app_settings;
 pub mod approval;
 pub mod attendance;
 pub mod auth_utils;

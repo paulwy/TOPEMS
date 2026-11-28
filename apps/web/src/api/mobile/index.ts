@@ -286,6 +286,14 @@ export interface MobileWorkbenchData {
   }[];
 }
 
+export interface AppSettings {
+  force_update: boolean;
+  auto_update: boolean;
+  min_version: string;
+  app_key: string;
+  configured: boolean;
+}
+
 export const mobileApi = {
   getDashboardStats: async (): Promise<ApiResponse<DashboardStats>> => {
     return apiClient.mobile.get<DashboardStats>('dashboard/stats');
@@ -293,6 +301,14 @@ export const mobileApi = {
 
   getWorkbenchData: async (): Promise<ApiResponse<MobileWorkbenchData>> => {
     return apiClient.mobile.get<MobileWorkbenchData>('workbench');
+  },
+
+  getAppSettings: async (): Promise<ApiResponse<AppSettings>> => {
+    return apiClient.mobile.get<AppSettings>('app-settings');
+  },
+
+  updateAppSettings: async (data: Partial<AppSettings>): Promise<ApiResponse<AppSettings>> => {
+    return apiClient.mobile.put<AppSettings>('app-settings', data);
   },
 
   listPatrolRecords: async (): Promise<ApiResponse<ListResponse<PatrolRecord>>> => {

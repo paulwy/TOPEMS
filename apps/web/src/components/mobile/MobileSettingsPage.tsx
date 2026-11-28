@@ -20,6 +20,7 @@ interface MobileSetting {
   description: string;
   type: 'switch' | 'text' | 'number';
 }
+// 无持久化记录时的默认展示（configured=false，页面提示尚未配置）
 const defaultMobileSettings: MobileSetting[] = [
   {
     key: 'force_update',
@@ -38,7 +39,7 @@ const defaultMobileSettings: MobileSetting[] = [
   {
     key: 'version_min',
     label: i18n.t('mobile.mobile_settings_page.k4'),
-    value: '2.0.0',
+    value: '',
     description: i18n.t('mobile.mobile_settings_page.k5'),
     type: 'text',
   },
@@ -51,28 +52,24 @@ const defaultMobileSettings: MobileSetting[] = [
   },
 ];
 const MobileSettingsPage: React.FC = () => {
-  const {} = useQuery({
-    queryKey: ['mobile-settings-page'],
-    queryFn: async () => {
-      try {
-        return (await mobileApi.user.getSettings()) ?? {};
-      } catch {
-        return {};
-      }
-    },
-  });
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery<MobileSetting[]>({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_SETTINGS_BASE,
     queryFn: async () => {
-      const stored = localStorage.getItem('mobile_settings');
-      if (stored) {
-        return JSON.parse(stored) as MobileSetting[];
+      const response = await mobileApi.getAppSettings();
+      const settings = response?.data;
+      if (!settings) {
+        return defaultMobileSettings;
       }
-      return defaultMobileSettings;
+      return [
+        { ...defaultMobileSettings[0], value: settings.force_update },
+        { ...defaultMobileSettings[1], value: settings.auto_update },
+        { ...defaultMobileSettings[2], value: settings.min_version },
+        { ...defaultMobileSettings[3], value: settings.app_key },
+      ];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
   const mobileSettings = settingsQuery.data ?? defaultMobileSettings;
   const loading = settingsQuery.isLoading;
@@ -86,9 +83,18 @@ const MobileSettingsPage: React.FC = () => {
       });
     }
   }, [settingsQuery.isError, settingsQuery.error, addNotification]);
+  const toPayload = (settings: MobileSetting[]) => ({
+    force_update: Boolean(settings.find((s) => s.key === 'force_update')?.value),
+    auto_update: Boolean(settings.find((s) => s.key === 'auto_update')?.value),
+    min_version: String(settings.find((s) => s.key === 'version_min')?.value ?? ''),
+    app_key: String(settings.find((s) => s.key === 'app_key')?.value ?? ''),
+  });
   const saveMutation = useMutation({
     mutationFn: async (settings: MobileSetting[]) => {
-      localStorage.setItem('mobile_settings', JSON.stringify(settings));
+      const response = await mobileApi.updateAppSettings(toPayload(settings));
+      if (!response?.success) {
+        throw new Error(response?.message || 'save failed');
+      }
       return settings;
     },
     onSuccess: () => {
@@ -122,7 +128,15 @@ const MobileSettingsPage: React.FC = () => {
   };
   const resetMutation = useMutation({
     mutationFn: async () => {
-      localStorage.setItem('mobile_settings', JSON.stringify(defaultMobileSettings));
+      const response = await mobileApi.updateAppSettings({
+        force_update: false,
+        auto_update: true,
+        min_version: '',
+        app_key: '',
+      });
+      if (!response?.success) {
+        throw new Error(response?.message || 'reset failed');
+      }
       return defaultMobileSettings;
     },
     onSuccess: () => {

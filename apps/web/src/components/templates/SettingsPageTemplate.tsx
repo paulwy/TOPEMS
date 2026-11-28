@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { iconSm, iconLg } from '../sharedStyles';
 import type { BoxProps } from '@mui/material';
 import {
@@ -169,7 +169,25 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
     [tabs, activeTab, externalSections]
   );
 
+  // sections 常以内联数组传入，每次渲染都是新引用；以字段值指纹为依赖，
+  // 避免上游重新渲染把用户输入/变更状态反复冲掉（曾导致文本项无法编辑、保存按钮永久禁用）。
+  const sectionsFingerprint = useMemo(
+    () =>
+      JSON.stringify(
+        allSections.map((section) => ({
+          id: section.id,
+          fields: (section.fields ?? []).map((field) => ({ id: field.id, value: field.value })),
+        }))
+      ),
+    [allSections]
+  );
+  const initializedFingerprint = useRef<string | null>(null);
+
   useEffect(() => {
+    if (initializedFingerprint.current === sectionsFingerprint) {
+      return;
+    }
+    initializedFingerprint.current = sectionsFingerprint;
     const initialValues: Record<string, SettingValueType> = {};
     allSections.forEach((section) => {
       section.fields?.forEach((field) => {
@@ -179,7 +197,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
     setValues(initialValues);
     setErrors({});
     setHasChanges(false);
-  }, [allSections]);
+  }, [sectionsFingerprint, allSections]);
 
   const handleFieldChange = useCallback(
     (fieldId: string, value: SettingValueType) => {
