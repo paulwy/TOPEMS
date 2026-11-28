@@ -457,7 +457,12 @@ else
         [[ "$v" -gt "$W9_VERSION" ]] || continue
         fwd="$(ls "$ROOT/database/migrations/${v}"_*.sql 2>/dev/null | head -1 || true)"
         [[ -n "$fwd" ]] || continue
-        if grep -qE 'erp\.(company_readable|parent_visible_company_ids|current_company_id)' "$fwd"; then
+        # 纳入两类 W9 链依赖方（均须先于 W9 回滚、后于 W9 重放）：
+        #   ① 前向引用 W9 公司级函数（company_readable/parent_visible_company_ids/current_company_id）；
+        #   ② 在既有 erp 表上叠加并列 *_public_read 读策略（后建）。回滚 W9/W14 链前须先撤它，
+        #      否则回滚件/前向前置断言会把共存策略误判为非预期；重放时由前向幂等重建。
+        if grep -qE 'erp\.(company_readable|parent_visible_company_ids|current_company_id)' "$fwd" \
+           || grep -qE "'_public_read'" "$fwd"; then
             W9_DEPENDENT_VERSIONS+=("$v")
         fi
     done < <(ls "$ROOT"/database/rollback/*.rollback.sql 2>/dev/null | sort -r)
