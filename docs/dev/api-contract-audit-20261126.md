@@ -1101,3 +1101,23 @@ mes 收口后跑全量冒烟，从 1215 条涨到 1232 条（spec 增大），�
 3. **登记**：`svc/rd/src/modules/openapi.rs` 补 22 条；批量插入把 `rs_plugin::plugin_health_check` 重复加了一次（既有条目是多行格式，正则没匹配上），编译报 `PathConfig` 冲突后做列表去重。
 
 **结果**：rd **64/64/0**；spec 3765 → **3768**；全量缺口 164 → **143**。
+
+---
+
+## 第 47 轮 · im（19 → 0，其中 19 条为脚手架死声明，后端真缺口 8 项如实留档）
+
+**基线**：im 47 调用 / 28 匹配 / 19 缺口。IM 的 base 是 `/api/communication/im`，路由在 `svc/communication/src/main.rs`（`im_read` / `im_write` 两组 Router）。
+
+**关键取证**：`apps/web/src/api/im/index.ts` 里 19 条缺口声明全部没有任何生产页面调用——全仓 `imApi.*` 的真实消费者只有 `im/DashboardPage.tsx` 的 `listChatRooms()`；其余只被 `__tests__/ImModule.test.tsx` 的 `toBeDefined()` 断言覆盖（断言的是 vi.mock 里的假对象，不是真模块）。
+
+**处理**：
+1. **删掉 20 条不可执行声明**：`markMessageRead`（后端只有房间级 `POST /rooms/{id}/read`，没有消息级）、`removeChatRoomMember`（后端 `DELETE /rooms/{id}/members` 走 body，没有 `/{userId}` 形态）、`createNotification`/`markNotificationRead`/`markAllNotificationsRead`（IM 通知从未在 `/im/*` 下实现，真实通知在 `/api/communication/notification/*`）、`health`、`uploadFile`、好友 5 条（`listFriends`/`sendFriendRequest`/`acceptFriendRequest`/`rejectFriendRequest`/`removeFriend`——后端 `svc/communication` 全仓 grep 无 friend 概念）、联系人群组 6 条、`unmuteChatRoom`/`unpinChatRoom`（后端只有 mute/pin）。
+2. **清掉随之失效的 8 个类型**（`Friend`/`CreateFriendRequest`/`ContactGroup`/`CreateContactGroupRequest`/`UploadFileResponseData`/`ListFriendsResponseData`/`ListContactGroupsResponseData`/`Notification`/`CreateNotificationRequest`）与测试里对应的 mock 键、断言块。
+
+**如实留档的真缺口（需产品口径，未做假通）**：
+- IM 消息级已读：后端只有房间级 `POST /im/rooms/{id}/read`，若产品要消息级需新增表字段与端点；
+- IM 好友关系：后端无 friend request 表/状态机，属未立项能力；
+- IM 通知面板：真实能力在 notification 模块（`/api/communication/notification/notifications`），IM 面板是否另建聚合端点需产品定；
+- 文件上传：`POST /im/files/upload` 后端未实现（附件当前走 `file_url` 字段外链）。
+
+**结果**：im **27/27/0**（调用基数 47 → 27）；spec 不变 **3768**；全量缺口 143 → **124**。

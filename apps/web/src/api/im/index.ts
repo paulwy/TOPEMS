@@ -64,69 +64,6 @@ export interface CreateProjectGroupRequest {
   created_by: string;
 }
 
-export interface Notification {
-  id: string;
-  user_id: string;
-  title: string;
-  content: string;
-  notification_type: string;
-  related_id?: string;
-  related_type?: string;
-  is_read: boolean;
-  created_at: string;
-}
-
-export interface CreateNotificationRequest {
-  user_id: string;
-  title: string;
-  content: string;
-  notification_type: string;
-  related_id?: string;
-  related_type?: string;
-}
-
-export interface Friend {
-  id: string;
-  friend_id: string;
-  friend_name: string;
-  status: 'pending' | 'accepted';
-  created_at: string;
-  is_online?: boolean;
-  last_seen?: string;
-}
-
-interface CreateFriendRequest {
-  friend_id: string;
-  friend_name: string;
-}
-
-export interface ContactGroup {
-  id: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface CreateContactGroupRequest {
-  name: string;
-}
-
-interface UploadedFileInfo {
-  file_path: string;
-  file_name: string;
-}
-
-interface UploadFileResponseData {
-  files: UploadedFileInfo[];
-}
-
-interface ListFriendsResponseData {
-  friends: Friend[];
-}
-
-interface ListContactGroupsResponseData {
-  groups: ContactGroup[];
-}
 
 // ==================== 聚合 API ====================
 
@@ -160,9 +97,6 @@ export const imApi = {
   createChatMessage: async (data: CreateChatMessageRequest): Promise<ApiResponse<ChatMessage>> => {
     return apiClient.im.post<ChatMessage>(`/rooms/${data.chat_id}/messages`, data);
   },
-  markMessageRead: async (id: string): Promise<ApiResponse<ChatMessage>> => {
-    return apiClient.im.put<ChatMessage>(`/messages/${id}/read`);
-  },
   updateChatMessage: async (id: string, content: string): Promise<ApiResponse<ChatMessage>> => {
     return apiClient.im.put<ChatMessage>(`/messages/${id}`, {
       content,
@@ -182,15 +116,6 @@ export const imApi = {
       user_id: userId,
     });
   },
-  removeChatRoomMember: async (
-    chatRoomId: string,
-    userId: string
-  ): Promise<ApiResponse<ChatRoom>> => {
-    return apiClient.im.delete<ChatRoom>(`/rooms/${chatRoomId}/members/${userId}`);
-  },
-
-  // ==================== 项目群组 ====================
-
   listProjectGroups: async (): Promise<ApiResponse<unknown>> => {
     return apiClient.im.get<unknown>('/project-groups');
   },
@@ -205,115 +130,17 @@ export const imApi = {
   listNotifications: async (userId: string): Promise<ApiResponse<unknown>> => {
     return apiClient.im.get<unknown>(`/notifications/${userId}`);
   },
-  createNotification: async (
-    data: CreateNotificationRequest
-  ): Promise<ApiResponse<Notification>> => {
-    return apiClient.im.post<Notification>('/notifications', data);
-  },
-  markNotificationRead: async (id: string): Promise<ApiResponse<Notification>> => {
-    return apiClient.im.put<Notification>(`/notifications/${id}/read`);
-  },
-  markAllNotificationsRead: async (userId: string): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.put<unknown>(`/notifications/${userId}/read-all`);
-  },
-
-  // ==================== 在线状态 ====================
-
-  health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.im.get<string>('/health');
-  },
-
-  uploadFile: async (formData: FormData): Promise<ApiResponse<UploadFileResponseData>> => {
-    // 走 apiClient.im：复用 401 重试 / CSRF / trace 等拦截器
-    const token = localStorage.getItem('token');
-    return apiClient.im.post<UploadFileResponseData>('/files/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    });
-  },
-
   getUserOnlineStatus: async (userId: string): Promise<ApiResponse<unknown>> => {
     return apiClient.im.get<unknown>(`/online-status/${userId}`);
   },
 
   // ==================== 好友/联系人 ====================
 
-  listFriends: async (userId: string): Promise<ApiResponse<ListFriendsResponseData>> => {
-    return apiClient.im.get<ListFriendsResponseData>(`/contacts/${userId}`);
-  },
-  sendFriendRequest: async (
-    userId: string,
-    data: CreateFriendRequest
-  ): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.post<unknown>(`/contacts/${userId}`, data);
-  },
-  acceptFriendRequest: async (userId: string, friendId: string): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.put<unknown>(`/contacts/${userId}/${friendId}/accept`);
-  },
-  rejectFriendRequest: async (userId: string, friendId: string): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.put<unknown>(`/contacts/${userId}/${friendId}/reject`);
-  },
-  removeFriend: async (userId: string, friendId: string): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.delete<unknown>(`/contacts/${userId}/${friendId}`);
-  },
-
-  // ==================== 联系人分组 ====================
-
-  listContactGroups: async (
-    userId: string
-  ): Promise<ApiResponse<ListContactGroupsResponseData>> => {
-    return apiClient.im.get<ListContactGroupsResponseData>(`/contact-groups/${userId}`);
-  },
-  createContactGroup: async (
-    userId: string,
-    data: CreateContactGroupRequest
-  ): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.post<unknown>(`/contact-groups/${userId}`, data);
-  },
-  updateContactGroup: async (
-    userId: string,
-    groupId: string,
-    data: CreateContactGroupRequest
-  ): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.put<unknown>(`/contact-groups/${userId}/${groupId}`, data);
-  },
-  deleteContactGroup: async (userId: string, groupId: string): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.delete<unknown>(`/contact-groups/${userId}/${groupId}`);
-  },
-  addContactGroupMember: async (
-    userId: string,
-    groupId: string,
-    memberUserId: string
-  ): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.post<unknown>(`/contact-groups/${userId}/${groupId}/members`, {
-      user_id: memberUserId,
-    });
-  },
-  removeContactGroupMember: async (
-    userId: string,
-    groupId: string,
-    memberUserId: string
-  ): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.delete<unknown>(
-      `/contact-groups/${userId}/${groupId}/members/${memberUserId}`
-    );
-  },
-
-  // ==================== 聊天房间操作 ====================
-
   muteChatRoom: async (chatId: string): Promise<ApiResponse<unknown>> => {
     return apiClient.im.put<unknown>(`/rooms/${chatId}/mute`);
   },
-  unmuteChatRoom: async (chatId: string): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.put<unknown>(`/rooms/${chatId}/unmute`);
-  },
   pinChatRoom: async (chatId: string): Promise<ApiResponse<unknown>> => {
     return apiClient.im.put<unknown>(`/rooms/${chatId}/pin`);
-  },
-  unpinChatRoom: async (chatId: string): Promise<ApiResponse<unknown>> => {
-    return apiClient.im.put<unknown>(`/rooms/${chatId}/unpin`);
   },
 };
 
