@@ -23103,6 +23103,28 @@
             ]
           }
         ]
+      },
+      "post": {
+        "tags": [
+          "Auto-Backfill"
+        ],
+        "summary": "POST /api/finance/reconcile",
+        "operationId": "create_reconcile_order",
+        "responses": {
+          "200": {
+            "description": "post /api/finance/reconcile"
+          },
+          "500": {
+            "description": "服务内部错误"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": [
+              "finance:reconcile_orders:write"
+            ]
+          }
+        ]
       }
     },
     "/api/finance/reconcile/{order_id}": {

@@ -30,14 +30,22 @@ use crate::modules::reconcile_status::{
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new()
-        .route(
-            "/reconcile",
-            get(list_reconcile_orders).post(create_reconcile_order),
-        )
-        .route("/reconcile/auto", post(auto_reconcile))
+    // B375：此前整个 Router 只挂 `finance:reconcile_orders:read`，
+    // `POST /reconcile`（建单）、`POST /reconcile/auto`（批量建单）、
+    // `POST /reconcile/{id}/confirm|dispute|cancel`、`PUT /reconcile/{id}/items/{item_id}`
+    // 这些写端点在独立部署（不经网关 `require_finance_write`）时对只读角色敞开。
+    // 按 B363 口径把门槛下沉到服务内：读 = `finance:reconcile_orders:read`，写 = `finance:admin`。
+    let read_routes = Router::new()
+        .route("/reconcile", get(list_reconcile_orders))
         .route("/reconcile/{order_id}", get(get_reconcile_order))
         .route("/reconcile/{order_id}/items", get(get_reconcile_items))
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:reconcile_orders:read"),
+        ));
+
+    let write_routes = Router::new()
+        .route("/reconcile", post(create_reconcile_order))
+        .route("/reconcile/auto", post(auto_reconcile))
         .route(
             "/reconcile/{order_id}/confirm",
             post(confirm_reconcile_order),
@@ -51,11 +59,11 @@ pub fn create_routes() -> Router<AppState> {
             "/reconcile/{order_id}/items/{item_id}",
             put(update_reconcile_item),
         )
-        // 批 40：对账单路由挂 finance:reconcile_orders:read 细码（纵深防御；
-        // 写端点在网关层 require_finance_write 已要求 finance:admin）
         .layer(axum::middleware::from_fn(
-            topems_shared_auth::middleware::require_permission("finance:reconcile_orders:read"),
-        ))
+            topems_shared_auth::middleware::require_permission("finance:reconcile_orders:write"),
+        ));
+
+    read_routes.merge(write_routes)
 }
 
 #[derive(Debug, Deserialize)]
@@ -435,8 +443,8 @@ pub async fn get_reconcile_items(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:reconcile_orders:write"])),
     post,
-    security(("BearerAuth" = [])),
     path = "/api/finance/reconcile",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/reconcile"), (status = 500, description = "服务内部错误")),
@@ -526,12 +534,11 @@ pub async fn create_reconcile_order(
 /// 自动对账：按 counterparty_ids（缺省为全部未完成订单）批量建单并返回汇总。
 /// 匹配明细通过 updateItem 写入，差异实时聚合。
 #[utoipa::path(
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:reconcile_orders:write"])),
     post,
     path = "/api/finance/reconcile/auto",
     tag = "Filled",
     responses((status = 200, description = "ok")),
-    security(("BearerAuth" = ["finance:reconcile_orders:read"])),
 )]
 pub async fn auto_reconcile(
     State(state): State<AppState>,

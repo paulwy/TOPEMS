@@ -1311,8 +1311,8 @@ impl AutoComplianceReviewer {
 // --- Risk Dashboard & Alerts ---
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:risk:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/risk/dashboard",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/finance-v54/risk/dashboard"), (status = 500, description = "服务内部错误")),
@@ -1346,8 +1346,8 @@ pub struct AlertQueryParams {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:risk:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/risk/alerts",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/finance-v54/risk/alerts"), (status = 500, description = "服务内部错误")),
@@ -1390,13 +1390,12 @@ pub async fn get_risk_alerts_handler(
 }
 
 #[utoipa::path(
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:admin"])),
     put,
     path = "/finance/finance-v54/risk/alerts/{id}/acknowledge",
     tag = "Finance",
     params(("id" = Uuid, Path, description = "预警 ID")),
     responses((status = 200, description = "确认预警成功")),
-    security(("BearerAuth" = ["finance:risk:read"])),
 )]
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
@@ -1417,8 +1416,8 @@ async fn acknowledge_alert_handler(
     }
 }
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     put,
-    security(("BearerAuth" = ["finance:update"])),
     path = "/finance/finance-v54/risk/alerts/{id}/resolve",
     responses(
         (status = 200, description = "成功"),
@@ -1433,7 +1432,6 @@ async fn acknowledge_alert_handler(
     tag = "Finance Risk V54",
     operation_id = "resolve_alert_handler",
 )]
-
 async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -1456,8 +1454,8 @@ async fn resolve_alert_handler(
 // --- Fraud ---
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     post,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/fraud/score",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/finance-v54/fraud/score"), (status = 500, description = "服务内部错误")),
@@ -1482,8 +1480,8 @@ pub async fn score_transaction_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:risk:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/fraud/rules",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/finance-v54/fraud/rules"), (status = 500, description = "服务内部错误")),
@@ -1519,8 +1517,8 @@ pub struct UpdateFraudRuleRequest {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     put,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/fraud/rules/{id}",
     tag = "Auto-Backfill",
     params(
@@ -1560,8 +1558,8 @@ pub async fn update_fraud_rule_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:risk:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/fraud/scores/{transaction_id}",
     tag = "Auto-Backfill",
     params(
@@ -1591,8 +1589,8 @@ pub async fn get_fraud_score_handler(
 // --- Compliance ---
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     post,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/compliance/review",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/finance-v54/compliance/review"), (status = 500, description = "服务内部错误")),
@@ -1624,8 +1622,8 @@ pub struct ReviewResultQueryParams {
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:risk:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/compliance/results",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/finance-v54/compliance/results"), (status = 500, description = "服务内部错误")),
@@ -1662,8 +1660,8 @@ pub async fn get_review_results_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:risk:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/compliance/status/{entity_type}/{entity_id}",
     tag = "Auto-Backfill",
     params(
@@ -1698,8 +1696,8 @@ pub async fn get_compliance_status_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     post,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/compliance/workflow",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/finance-v54/compliance/workflow"), (status = 500, description = "服务内部错误")),
@@ -1724,8 +1722,8 @@ pub async fn create_workflow_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     put,
-    security(("BearerAuth" = [])),
     path = "/api/finance/finance-v54/compliance/workflow/{id}/advance",
     tag = "Auto-Backfill",
     params(
@@ -1759,12 +1757,11 @@ pub struct ComplianceReportQueryParams {
 }
 
 #[utoipa::path(
-    security(("BearerAuth" = [])),
+    security(("BearerAuth" = ["finance:risk:read"])),
     get,
     path = "/finance/finance-v54/compliance/report",
     tag = "Filled",
     responses((status = 200, description = "ok")),
-    security(("BearerAuth" = ["finance:risk:read"])),
 )]
 pub async fn generate_compliance_report_handler(
     State(state): State<AppState>,
@@ -1796,7 +1793,12 @@ pub async fn generate_compliance_report_handler(
 // ==================== 路由注册 ====================
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new()
+    // B375：风险/反欺诈/合规此前整个 Router 只挂 `finance:risk:read`，
+    // `PUT alerts/{id}/acknowledge|resolve`、`PUT fraud/rules/{id}`、`POST fraud/score`、
+    // `POST compliance/review|workflow`、`PUT compliance/workflow/{id}/advance` 这些写端点
+    // 在独立部署（不经网关 `require_finance_write`）时对只读角色敞开。
+    // 按 B363 口径把门槛下沉到服务内：读 = `finance:risk:read`，写 = `finance:admin`。
+    let read_routes = Router::new()
         // Risk Monitoring
         .route(
             "/finance-v54/risk/dashboard",
@@ -1806,36 +1808,16 @@ pub fn create_routes() -> Router<AppState> {
             "/finance-v54/risk/alerts",
             axum::routing::get(get_risk_alerts_handler),
         )
-        .route(
-            "/finance-v54/risk/alerts/{id}/acknowledge",
-            axum::routing::put(acknowledge_alert_handler),
-        )
-        .route(
-            "/finance-v54/risk/alerts/{id}/resolve",
-            axum::routing::put(resolve_alert_handler),
-        )
         // Fraud
-        .route(
-            "/finance-v54/fraud/score",
-            axum::routing::post(score_transaction_handler),
-        )
         .route(
             "/finance-v54/fraud/rules",
             axum::routing::get(get_fraud_rules_handler),
-        )
-        .route(
-            "/finance-v54/fraud/rules/{id}",
-            axum::routing::put(update_fraud_rule_handler),
         )
         .route(
             "/finance-v54/fraud/scores/{transaction_id}",
             axum::routing::get(get_fraud_score_handler),
         )
         // Compliance
-        .route(
-            "/finance-v54/compliance/review",
-            axum::routing::post(review_entity_handler),
-        )
         .route(
             "/finance-v54/compliance/results",
             axum::routing::get(get_review_results_handler),
@@ -1845,6 +1827,35 @@ pub fn create_routes() -> Router<AppState> {
             axum::routing::get(get_compliance_status_handler),
         )
         .route(
+            "/finance-v54/compliance/report",
+            axum::routing::get(generate_compliance_report_handler),
+        )
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:risk:read"),
+        ));
+
+    let write_routes = Router::new()
+        .route(
+            "/finance-v54/risk/alerts/{id}/acknowledge",
+            axum::routing::put(acknowledge_alert_handler),
+        )
+        .route(
+            "/finance-v54/risk/alerts/{id}/resolve",
+            axum::routing::put(resolve_alert_handler),
+        )
+        .route(
+            "/finance-v54/fraud/score",
+            axum::routing::post(score_transaction_handler),
+        )
+        .route(
+            "/finance-v54/fraud/rules/{id}",
+            axum::routing::put(update_fraud_rule_handler),
+        )
+        .route(
+            "/finance-v54/compliance/review",
+            axum::routing::post(review_entity_handler),
+        )
+        .route(
             "/finance-v54/compliance/workflow",
             axum::routing::post(create_workflow_handler),
         )
@@ -1852,15 +1863,11 @@ pub fn create_routes() -> Router<AppState> {
             "/finance-v54/compliance/workflow/{id}/advance",
             axum::routing::put(advance_workflow_handler),
         )
-        .route(
-            "/finance-v54/compliance/report",
-            axum::routing::get(generate_compliance_report_handler),
-        )
-        // 批 41：风险监控/反欺诈/合规审查路由统一挂 finance:risk:read 细码（纵深防御；
-        // 写端点在网关层 require_finance_write 已要求 finance:admin）
         .layer(axum::middleware::from_fn(
-            topems_shared_auth::middleware::require_permission("finance:risk:read"),
-        ))
+            topems_shared_auth::middleware::require_module_write("finance"),
+        ));
+
+    read_routes.merge(write_routes)
 }
 
 #[cfg(test)]

@@ -1950,8 +1950,8 @@ pub async fn auto_audit_scheduler(db: Db) {
 // ==================== API Handlers ====================
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/audit-v52/rules",
     tag = "Audit-V52",
     operation_id = "create_audit_rule_handler",
@@ -1976,8 +1976,8 @@ pub async fn create_audit_rule_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:audit:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/rules",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/audit-v52/rules"), (status = 500, description = "服务内部错误")),
@@ -2006,8 +2006,8 @@ pub async fn list_audit_rules_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     put,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/rules/{id}",
     tag = "Auto-Backfill",
     params(
@@ -2034,8 +2034,8 @@ pub async fn update_audit_rule_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     delete,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/rules/{id}",
     tag = "Auto-Backfill",
     params(
@@ -2061,8 +2061,8 @@ pub async fn delete_audit_rule_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:audit:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/findings",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/audit-v52/findings"), (status = 500, description = "服务内部错误")),
@@ -2117,8 +2117,8 @@ pub async fn get_audit_findings_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     post,
-    security(("BearerAuth" = ["finance:write"])),
     path = "/audit-v52/findings/{id}/resolve",
     tag = "Audit-V52",
     operation_id = "resolve_finding_handler",
@@ -2153,8 +2153,8 @@ pub async fn resolve_finding_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     post,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/run",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/audit-v52/run"), (status = 500, description = "服务内部错误")),
@@ -2194,8 +2194,8 @@ async fn detect_anomalies_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:audit:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/anomaly/alerts",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/audit-v52/anomaly/alerts"), (status = 500, description = "服务内部错误")),
@@ -2243,8 +2243,8 @@ pub async fn get_anomaly_alerts_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:audit:read"])),
     get,
-    security(("BearerAuth" = ["finance:read"])),
     path = "/audit-v52/anomaly/summary",
     tag = "Audit-V52",
     operation_id = "get_detection_summary_handler",
@@ -2271,8 +2271,8 @@ pub async fn get_detection_summary_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     post,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/anomaly/config",
     tag = "Auto-Backfill",
     responses((status = 200, description = "post /api/finance/audit-v52/anomaly/config"), (status = 500, description = "服务内部错误")),
@@ -2317,8 +2317,8 @@ pub async fn configure_detection_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:audit:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/alerts",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/audit-v52/alerts"), (status = 500, description = "服务内部错误")),
@@ -2366,8 +2366,8 @@ pub async fn get_alerts_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:admin"])),
     post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
     path = "/audit-v52/alerts/config",
     tag = "Audit-V52",
     operation_id = "create_alert_config_handler",
@@ -2391,8 +2391,8 @@ pub async fn create_alert_config_handler(
 }
 
 #[utoipa::path(
+    security(("BearerAuth" = ["finance:audit:read"])),
     get,
-    security(("BearerAuth" = [])),
     path = "/api/finance/audit-v52/alerts/config/list",
     tag = "Auto-Backfill",
     responses((status = 200, description = "get /api/finance/audit-v52/alerts/config/list"), (status = 500, description = "服务内部错误")),
@@ -2438,15 +2438,46 @@ pub async fn acknowledge_alert_handler(
 // ==================== 路由注册 ====================
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new()
-        // A. 审计规则 CRUD
-        .route(
-            "/audit-v52/rules",
-            axum::routing::post(create_audit_rule_handler),
-        )
+    // B375：此前整个 Router 只挂 `finance:audit:read`，
+    // `POST/PUT/DELETE audit-v52/rules*`、`POST findings/{id}/resolve`、`POST audit-v52/run`、
+    // `POST anomaly/detect`、`POST anomaly/config`、`POST alerts/config`、
+    // `POST alerts/{id}/acknowledge` 这些写端点在独立部署（不经网关 `require_finance_write`）时
+    // 对只读角色敞开。按 B363 口径下沉：读 = `finance:audit:read`，写 = `finance:admin`。
+    let read_routes = Router::new()
+        // A. 审计规则（读）
         .route(
             "/audit-v52/rules",
             axum::routing::get(list_audit_rules_handler),
+        )
+        // B. 审计发现（读）
+        .route(
+            "/audit-v52/findings",
+            axum::routing::get(get_audit_findings_handler),
+        )
+        // D. 异常检测（读）
+        .route(
+            "/audit-v52/anomaly/alerts",
+            axum::routing::get(get_anomaly_alerts_handler),
+        )
+        .route(
+            "/audit-v52/anomaly/summary",
+            axum::routing::get(get_detection_summary_handler),
+        )
+        // E. 实时预警（读）
+        .route("/audit-v52/alerts", axum::routing::get(get_alerts_handler))
+        .route(
+            "/audit-v52/alerts/config/list",
+            axum::routing::get(list_alert_configs_handler),
+        )
+        .layer(axum::middleware::from_fn(
+            topems_shared_auth::middleware::require_permission("finance:audit:read"),
+        ));
+
+    let write_routes = Router::new()
+        // A. 审计规则 CRUD（写）
+        .route(
+            "/audit-v52/rules",
+            axum::routing::post(create_audit_rule_handler),
         )
         .route(
             "/audit-v52/rules/{id}",
@@ -2456,53 +2487,36 @@ pub fn create_routes() -> Router<AppState> {
             "/audit-v52/rules/{id}",
             axum::routing::delete(delete_audit_rule_handler),
         )
-        // B. 审计发现
-        .route(
-            "/audit-v52/findings",
-            axum::routing::get(get_audit_findings_handler),
-        )
+        // B. 审计发现处置（写）
         .route(
             "/audit-v52/findings/{id}/resolve",
             axum::routing::post(resolve_finding_handler),
         )
-        // C. 运行审计
+        // C. 运行审计（写）
         .route("/audit-v52/run", axum::routing::post(run_audit_handler))
-        // D. 异常检测
+        // D. 异常检测（写）
         .route(
             "/audit-v52/anomaly/detect",
             axum::routing::post(detect_anomalies_handler),
         )
         .route(
-            "/audit-v52/anomaly/alerts",
-            axum::routing::get(get_anomaly_alerts_handler),
-        )
-        .route(
-            "/audit-v52/anomaly/summary",
-            axum::routing::get(get_detection_summary_handler),
-        )
-        .route(
             "/audit-v52/anomaly/config",
             axum::routing::post(configure_detection_handler),
         )
-        // E. 实时预警
-        .route("/audit-v52/alerts", axum::routing::get(get_alerts_handler))
+        // E. 实时预警（写）
         .route(
             "/audit-v52/alerts/config",
             axum::routing::post(create_alert_config_handler),
         )
         .route(
-            "/audit-v52/alerts/config/list",
-            axum::routing::get(list_alert_configs_handler),
-        )
-        .route(
             "/audit-v52/alerts/{id}/acknowledge",
             axum::routing::post(acknowledge_alert_handler),
         )
-        // 批 41：审计/异常检测路由统一挂 finance:audit:read 细码（纵深防御；
-        // 写端点在网关层 require_finance_write 已要求 finance:admin）
         .layer(axum::middleware::from_fn(
-            topems_shared_auth::middleware::require_permission("finance:audit:read"),
-        ))
+            topems_shared_auth::middleware::require_module_write("finance"),
+        ));
+
+    read_routes.merge(write_routes)
 }
 
 #[cfg(test)]
